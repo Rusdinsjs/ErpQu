@@ -96,7 +96,7 @@ export default function ConversionRequests() {
                     <LoadingOverlay visible={loading} />
 
                     {requests.length === 0 && !loading ? (
-                        <div className="flex items-center justify-center py-12 text-slate-400">
+                        <div className="flex items-center justify-center py-12 text-muted-foreground">
                             <p>No pending conversion requests.</p>
                         </div>
                     ) : (
@@ -121,7 +121,7 @@ export default function ConversionRequests() {
                                             <span className="font-mono text-sm">{item.request_number}</span>
                                         </TableTd>
                                         <TableTd>
-                                            <span className="font-mono text-xs text-slate-400">
+                                            <span className="font-mono text-xs text-muted-foreground">
                                                 {item.asset_id.substring(0, 8)}...
                                             </span>
                                         </TableTd>

@@ -70,6 +70,26 @@ pub fn create_router(state: AppState) -> Router {
             get(finance_handler::list_sales_shipments).post(finance_handler::create_sales_shipment),
         )
         .route(
+            "/api/finance/sales/shipments/:id/submit",
+            post(finance_handler::submit_sales_shipment),
+        )
+        .route(
+            "/api/finance/purchase/receipts/company/:company_id",
+            get(finance_handler::list_purchase_receipts),
+        )
+        .route(
+            "/api/finance/purchase/receipts",
+            post(finance_handler::create_purchase_receipt),
+        )
+        .route(
+            "/api/finance/purchase/receipts/:id",
+            get(finance_handler::get_purchase_receipt),
+        )
+        .route(
+            "/api/finance/purchase/receipts/:id/submit",
+            post(finance_handler::submit_purchase_receipt),
+        )
+        .route(
             "/api/finance/purchase/quotes",
             get(finance_handler::list_purchase_quotes).post(finance_handler::create_purchase_quote),
         )
@@ -681,6 +701,10 @@ pub fn create_router(state: AppState) -> Router {
         .nest(
             "/api/inventory",
             crate::api::routes::inventory_routes::inventory_routes(),
+        )
+        .nest(
+            "/api/ops",
+            crate::api::routes::ops_quality_trip_routes::ops_quality_trip_routes(),
         )
         .nest(
             "/api/maintenance",

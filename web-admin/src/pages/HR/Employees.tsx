@@ -369,7 +369,7 @@ export default function Employees() {
             <Card padding="lg">
                 <div className="mb-4">
                     <div className="relative max-w-md">
-                        <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+                        <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                         <Input
                             placeholder="Cari nama, NIK, atau email..."
                             value={search}
@@ -415,7 +415,7 @@ export default function Employees() {
                                             )}
                                             <div>
                                                 <p className="font-medium text-white">{employee.name}</p>
-                                                <p className="text-xs text-slate-500">{employee.nik}</p>
+                                                <p className="text-xs text-muted-foreground">{employee.nik}</p>
                                             </div>
                                         </div>
                                     </TableTd>
@@ -503,8 +503,8 @@ export default function Employees() {
                                             }}
                                         />
                                     ) : (
-                                        <div className="w-16 h-16 rounded-full bg-slate-800 text-slate-400 font-semibold text-xs flex flex-col items-center justify-center border border-slate-700">
-                                            <Camera size={20} className="mb-1 text-slate-500" />
+                                        <div className="w-16 h-16 rounded-full bg-slate-800 text-muted-foreground font-semibold text-xs flex flex-col items-center justify-center border border-slate-700">
+                                            <Camera size={20} className="mb-1 text-muted-foreground" />
                                             <span>Foto</span>
                                         </div>
                                     )}
@@ -539,7 +539,7 @@ export default function Employees() {
                                             </Button>
                                         )}
                                     </div>
-                                    <p className="text-[11px] text-slate-500">Format: JPG, PNG, WEBP. Maks 5MB.</p>
+                                    <p className="text-[11px] text-muted-foreground">Format: JPG, PNG, WEBP. Maks 5MB.</p>
                                 </div>
                             </div>
 
@@ -739,14 +739,14 @@ export default function Employees() {
                                             type="checkbox"
                                             checked={createUser}
                                             onChange={(e) => setCreateUser(e.target.checked)}
-                                            className="w-4 h-4 rounded border-slate-600 bg-slate-700 text-purple-600 focus:ring-purple-500"
+                                            className="w-4 h-4 rounded border-slate-600 bg-slate-700 text-purple-400 focus:ring-purple-500"
                                         />
                                         <span className="text-white font-medium">Buat Akun Login untuk Pegawai ini</span>
                                     </label>
 
                                     {createUser && (
                                         <div className="space-y-4 pl-6 border-l-2 border-slate-700">
-                                            <p className="text-sm text-slate-400">
+                                            <p className="text-sm text-muted-foreground">
                                                 Email login akan menggunakan: <strong className="text-white">{formData.email || '(Isi email di tab Personal)'}</strong>
                                             </p>
                                             <Input
@@ -850,34 +850,34 @@ export default function Employees() {
                             <TabsContent value="personal" className="space-y-3">
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     <div className="p-3 rounded-lg bg-slate-950/40 border border-slate-800/80">
-                                        <span className="text-xs text-slate-400 font-medium uppercase tracking-wider block mb-1">Nama Lengkap</span>
+                                        <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider block mb-1">Nama Lengkap</span>
                                         <p className="text-sm font-semibold text-white">{selectedEmployee.name}</p>
                                     </div>
                                     <div className="p-3 rounded-lg bg-slate-950/40 border border-slate-800/80">
-                                        <span className="text-xs text-slate-400 font-medium uppercase tracking-wider block mb-1">No. KTP (NIK)</span>
+                                        <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider block mb-1">No. KTP (NIK)</span>
                                         <p className="text-sm font-semibold text-white">{selectedEmployee.ktp_number || '-'}</p>
                                     </div>
                                     <div className="p-3 rounded-lg bg-slate-950/40 border border-slate-800/80">
-                                        <span className="text-xs text-slate-400 font-medium uppercase tracking-wider block mb-1">Tempat, Tgl Lahir</span>
+                                        <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider block mb-1">Tempat, Tgl Lahir</span>
                                         <p className="text-sm font-semibold text-white">
                                             {selectedEmployee.place_of_birth || '-'}, {selectedEmployee.date_of_birth ? dayjs(selectedEmployee.date_of_birth).format('DD MMMM YYYY') : '-'}
                                         </p>
                                     </div>
                                     <div className="p-3 rounded-lg bg-slate-950/40 border border-slate-800/80">
-                                        <span className="text-xs text-slate-400 font-medium uppercase tracking-wider block mb-1">Jenis Kelamin</span>
+                                        <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider block mb-1">Jenis Kelamin</span>
                                         <p className="text-sm font-semibold text-white">{selectedEmployee.gender === 'L' ? 'Laki-laki' : selectedEmployee.gender === 'P' ? 'Perempuan' : '-'}</p>
                                     </div>
                                     <div className="p-3 rounded-lg bg-slate-950/40 border border-slate-800/80">
-                                        <span className="text-xs text-slate-400 font-medium uppercase tracking-wider block mb-1">Agama & Gol. Darah</span>
+                                        <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider block mb-1">Agama & Gol. Darah</span>
                                         <p className="text-sm font-semibold text-white">{selectedEmployee.religion || '-'} (Gol. Darah: {selectedEmployee.blood_type || '-'})</p>
                                     </div>
                                     <div className="p-3 rounded-lg bg-slate-950/40 border border-slate-800/80">
-                                        <span className="text-xs text-slate-400 font-medium uppercase tracking-wider block mb-1">Status Pernikahan</span>
+                                        <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider block mb-1">Status Pernikahan</span>
                                         <p className="text-sm font-semibold text-white">{selectedEmployee.marital_status || '-'}</p>
                                     </div>
                                 </div>
                                 <div className="p-3 rounded-lg bg-slate-950/40 border border-slate-800/80">
-                                    <span className="text-xs text-slate-400 font-medium uppercase tracking-wider block mb-1">Alamat Domisili</span>
+                                    <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider block mb-1">Alamat Domisili</span>
                                     <p className="text-sm font-medium text-slate-200">{selectedEmployee.address || '-'}</p>
                                 </div>
                             </TabsContent>
@@ -885,33 +885,33 @@ export default function Employees() {
                             <TabsContent value="employment" className="space-y-3">
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     <div className="p-3 rounded-lg bg-slate-950/40 border border-slate-800/80">
-                                        <span className="text-xs text-slate-400 font-medium uppercase tracking-wider block mb-1">Departemen</span>
+                                        <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider block mb-1">Departemen</span>
                                         <p className="text-sm font-semibold text-cyan-400">{selectedEmployee.department_name || '-'}</p>
                                     </div>
                                     <div className="p-3 rounded-lg bg-slate-950/40 border border-slate-800/80">
-                                        <span className="text-xs text-slate-400 font-medium uppercase tracking-wider block mb-1">Jabatan</span>
+                                        <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider block mb-1">Jabatan</span>
                                         <p className="text-sm font-semibold text-white">{selectedEmployee.position || '-'}</p>
                                     </div>
                                     <div className="p-3 rounded-lg bg-slate-950/40 border border-slate-800/80">
-                                        <span className="text-xs text-slate-400 font-medium uppercase tracking-wider block mb-1">Status Kepegawaian</span>
+                                        <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider block mb-1">Status Kepegawaian</span>
                                         <p className="text-sm font-semibold text-white">{getStatusLabel(selectedEmployee.employment_status)}</p>
                                     </div>
                                     <div className="p-3 rounded-lg bg-slate-950/40 border border-slate-800/80">
-                                        <span className="text-xs text-slate-400 font-medium uppercase tracking-wider block mb-1">Tanggal Mulai Kerja</span>
+                                        <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider block mb-1">Tanggal Mulai Kerja</span>
                                         <p className="text-sm font-semibold text-white">
                                             {selectedEmployee.start_date ? dayjs(selectedEmployee.start_date).format('DD MMMM YYYY') : '-'}
                                         </p>
                                     </div>
                                     <div className="p-3 rounded-lg bg-slate-950/40 border border-slate-800/80">
-                                        <span className="text-xs text-slate-400 font-medium uppercase tracking-wider block mb-1">Sisa Cuti Tahunan</span>
+                                        <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider block mb-1">Sisa Cuti Tahunan</span>
                                         <p className="text-sm font-semibold text-emerald-400">{selectedEmployee.leave_balance ?? 12} Hari (Terpakai: {selectedEmployee.leave_used ?? 0})</p>
                                     </div>
                                     <div className="p-3 rounded-lg bg-slate-950/40 border border-slate-800/80">
-                                        <span className="text-xs text-slate-400 font-medium uppercase tracking-wider block mb-1">Akun User Login</span>
+                                        <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider block mb-1">Akun User Login</span>
                                         {selectedEmployee.user_id ? (
                                             <Badge variant="success">Terhubung ke User Login</Badge>
                                         ) : (
-                                            <span className="text-sm text-slate-500 italic">Belum Ada Akun Login</span>
+                                            <span className="text-sm text-muted-foreground italic">Belum Ada Akun Login</span>
                                         )}
                                     </div>
                                 </div>
@@ -920,19 +920,19 @@ export default function Employees() {
                             <TabsContent value="contact" className="space-y-3">
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     <div className="p-3 rounded-lg bg-slate-950/40 border border-slate-800/80">
-                                        <span className="text-xs text-slate-400 font-medium uppercase tracking-wider block mb-1">Email Utama</span>
+                                        <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider block mb-1">Email Utama</span>
                                         <p className="text-sm font-semibold text-white">{selectedEmployee.email}</p>
                                     </div>
                                     <div className="p-3 rounded-lg bg-slate-950/40 border border-slate-800/80">
-                                        <span className="text-xs text-slate-400 font-medium uppercase tracking-wider block mb-1">No. Telepon / HP</span>
+                                        <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider block mb-1">No. Telepon / HP</span>
                                         <p className="text-sm font-semibold text-white">{selectedEmployee.phone || '-'}</p>
                                     </div>
                                     <div className="p-3 rounded-lg bg-slate-950/40 border border-slate-800/80">
-                                        <span className="text-xs text-slate-400 font-medium uppercase tracking-wider block mb-1">Kontak Darurat (Nama)</span>
+                                        <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider block mb-1">Kontak Darurat (Nama)</span>
                                         <p className="text-sm font-semibold text-white">{selectedEmployee.emergency_contact_name || '-'}</p>
                                     </div>
                                     <div className="p-3 rounded-lg bg-slate-950/40 border border-slate-800/80">
-                                        <span className="text-xs text-slate-400 font-medium uppercase tracking-wider block mb-1">Kontak Darurat (No & Hubungan)</span>
+                                        <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider block mb-1">Kontak Darurat (No & Hubungan)</span>
                                         <p className="text-sm font-semibold text-white">
                                             {selectedEmployee.emergency_contact_phone || '-'} ({selectedEmployee.emergency_contact_relation || '-'})
                                         </p>
@@ -943,21 +943,21 @@ export default function Employees() {
                             <TabsContent value="payroll" className="space-y-3">
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                     <div className="p-3 rounded-lg bg-slate-950/40 border border-slate-800/80">
-                                        <span className="text-xs text-slate-400 font-medium uppercase tracking-wider block mb-1">Bank & Rekening</span>
+                                        <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider block mb-1">Bank & Rekening</span>
                                         <p className="text-sm font-semibold text-white">{selectedEmployee.bank_name || '-'} - {selectedEmployee.bank_account || '-'}</p>
                                     </div>
                                     <div className="p-3 rounded-lg bg-slate-950/40 border border-slate-800/80">
-                                        <span className="text-xs text-slate-400 font-medium uppercase tracking-wider block mb-1">Gaji Pokok</span>
+                                        <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider block mb-1">Gaji Pokok</span>
                                         <p className="text-sm font-semibold text-emerald-400">
                                             {selectedEmployee.basic_salary ? `Rp ${Number(selectedEmployee.basic_salary).toLocaleString('id-ID')}` : '-'}
                                         </p>
                                     </div>
                                     <div className="p-3 rounded-lg bg-slate-950/40 border border-slate-800/80">
-                                        <span className="text-xs text-slate-400 font-medium uppercase tracking-wider block mb-1">BPJS Kesehatan</span>
+                                        <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider block mb-1">BPJS Kesehatan</span>
                                         <p className="text-sm font-semibold text-white">{selectedEmployee.bpjs_kesehatan || '-'}</p>
                                     </div>
                                     <div className="p-3 rounded-lg bg-slate-950/40 border border-slate-800/80">
-                                        <span className="text-xs text-slate-400 font-medium uppercase tracking-wider block mb-1">BPJS Ketenagakerjaan</span>
+                                        <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider block mb-1">BPJS Ketenagakerjaan</span>
                                         <p className="text-sm font-semibold text-white">{selectedEmployee.bpjs_tenaga_kerja || '-'}</p>
                                     </div>
                                 </div>
@@ -984,7 +984,7 @@ export default function Employees() {
                 title="Buat Akun User"
             >
                 <div className="space-y-4">
-                    <p className="text-sm text-slate-400">
+                    <p className="text-sm text-muted-foreground">
                         Membuat akun untuk pegawai: <strong className="text-white">{editingEmployee?.name}</strong>
                     </p>
                     <Input

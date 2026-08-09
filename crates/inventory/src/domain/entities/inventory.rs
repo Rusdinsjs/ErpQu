@@ -61,3 +61,28 @@ pub struct InventoryMovement {
     pub created_by: Option<Uuid>,
     pub created_at: DateTime<Utc>,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct ProductBundle {
+    pub id: Uuid,
+    pub parent_item_id: Uuid,
+    pub description: Option<String>,
+    pub created_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct ProductBundleItem {
+    pub id: Uuid,
+    pub bundle_id: Uuid,
+    pub item_id: Uuid,
+    pub qty: Decimal,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct ItemAlternative {
+    pub id: Uuid,
+    pub item_id: Uuid,
+    pub alternative_item_id: Uuid,
+    pub created_at: DateTime<Utc>,
+}
+

@@ -1,10 +1,11 @@
 use axum::{
     extract::{Path, State},
     http::HeaderMap,
-    Json,
+    Extension, Json,
 };
 use serde_json::{json, Value};
 use uuid::Uuid;
+use management_system_core::domain::entities::UserClaims as Claims;
 
 use crate::api::server::AppState;
 use management_system_core::shared::errors::AppError;
@@ -13,6 +14,9 @@ use management_system_finance::domain::entities::finance::{
     CreatePurchaseBillRequest, CreatePurchaseOrderRequest, CreatePurchaseQuoteRequest,
     CreatePurchaseShipmentRequest, CreateSalesInvoiceRequest, CreateSalesOrderRequest,
     CreateSalesQuoteRequest, CreateSalesShipmentRequest, UpdateAccountRequest,
+};
+use management_system_finance::domain::entities::commercial_graph::{
+    CreatePurchaseReceiptRequest,
 };
 
 /// Create a new account
@@ -263,4 +267,47 @@ pub async fn create_purchase_shipment(
         .create_purchase_shipment(payload)
         .await?;
     Ok(Json(json!({ "success": true, "data": shipment })))
+}
+
+pub async fn list_purchase_receipts(
+    State(state): State<AppState>,
+    Path(company_id): Path<Uuid>,
+) -> Result<Json<Value>, AppError> {
+    let receipts = state.finance_service.list_purchase_receipts(company_id).await?;
+    Ok(Json(json!({ "success": true, "data": receipts })))
+}
+
+pub async fn get_purchase_receipt(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+) -> Result<Json<Value>, AppError> {
+    let receipt = state.finance_service.get_purchase_receipt(id).await?;
+    Ok(Json(json!({ "success": true, "data": receipt })))
+}
+
+pub async fn create_purchase_receipt(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Json(payload): Json<CreatePurchaseReceiptRequest>,
+) -> Result<Json<Value>, AppError> {
+    let receipt = state.finance_service.create_purchase_receipt(payload, Some(claims.user_id())).await?;
+    Ok(Json(json!({ "success": true, "data": receipt })))
+}
+
+pub async fn submit_purchase_receipt(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+) -> Result<Json<Value>, AppError> {
+    state.stock_document_service.submit_purchase_receipt(id, Some(claims.user_id())).await?;
+    Ok(Json(json!({ "success": true })))
+}
+
+pub async fn submit_sales_shipment(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+) -> Result<Json<Value>, AppError> {
+    state.stock_document_service.submit_sales_shipment(id, Some(claims.user_id())).await?;
+    Ok(Json(json!({ "success": true })))
 }

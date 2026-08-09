@@ -86,8 +86,8 @@ export default function AttendanceDashboard() {
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
-                <h1 className="text-2xl font-bold text-gray-900">Attendance Dashboard</h1>
-                <div className="flex items-center gap-2 text-sm text-gray-500">
+                <h1 className="text-2xl font-bold text-foreground">Attendance Dashboard</h1>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Calendar className="h-4 w-4" />
                     {dayjs().format('dddd, D MMMM YYYY')}
                 </div>
@@ -98,13 +98,13 @@ export default function AttendanceDashboard() {
                 <Card className="col-span-1 p-6 relative overflow-hidden bg-gradient-to-br from-white to-gray-50 dark:from-gray-800 dark:to-gray-900">
                     <div className="relative z-10 flex flex-col h-full justify-between space-y-6">
                         <div>
-                            <h2 className="text-lg font-semibold text-gray-700 dark:text-gray-200">Today's Status</h2>
+                            <h2 className="text-lg font-semibold text-foreground dark:text-gray-200">Today's Status</h2>
                             <div className="mt-2 flex items-center gap-2">
                                 <Badge variant={hasCheckedOut ? 'success' : hasCheckedIn ? 'warning' : 'default'}>
                                     {hasCheckedOut ? 'Finished' : hasCheckedIn ? 'Working' : 'Not Started'}
                                 </Badge>
                                 {currentSession && (
-                                    <span className="text-xs text-gray-500">
+                                    <span className="text-xs text-muted-foreground">
                                         Since {dayjs(currentSession.check_in_time).format('HH:mm')}
                                     </span>
                                 )}
@@ -112,7 +112,7 @@ export default function AttendanceDashboard() {
                         </div>
 
                         <div className="flex flex-col items-center justify-center p-4">
-                            <Clock className={`h-16 w-16 mb-4 ${hasCheckedIn && !hasCheckedOut ? 'text-orange-500 animate-pulse' : 'text-gray-400'
+                            <Clock className={`h-16 w-16 mb-4 ${hasCheckedIn && !hasCheckedOut ? 'text-orange-500 animate-pulse' : 'text-muted-foreground'
                                 }`} />
 
                             {!hasCheckedIn && (
@@ -127,7 +127,7 @@ export default function AttendanceDashboard() {
 
                             {hasCheckedIn && !hasCheckedOut && (
                                 <div className="w-full space-y-2">
-                                    <div className="text-center text-sm text-gray-600 mb-2">
+                                    <div className="text-center text-sm text-muted-foreground mb-2">
                                         Working for hours...
                                     </div>
                                     <Button
@@ -153,7 +153,7 @@ export default function AttendanceDashboard() {
                 {/* History Card */}
                 <Card className="col-span-1 md:col-span-2 p-6">
                     <div className="flex justify-between items-center mb-4">
-                        <h2 className="text-lg font-semibold text-gray-700">My Recent History</h2>
+                        <h2 className="text-lg font-semibold text-foreground">My Recent History</h2>
                         <Button variant="ghost" size="sm">View All</Button>
                     </div>
                     <div className="overflow-x-auto">
@@ -184,7 +184,7 @@ export default function AttendanceDashboard() {
                                     </TableRow>
                                 )) || (
                                         <TableRow>
-                                            <TableTd colSpan={4} className="text-center text-gray-500 py-4">
+                                            <TableTd colSpan={4} className="text-center text-muted-foreground py-4">
                                                 No attendance history found
                                             </TableTd>
                                         </TableRow>
@@ -199,7 +199,7 @@ export default function AttendanceDashboard() {
             {(user?.role === 'admin' || user?.role === 'manager') && (
                 <Card className="p-6 mt-6">
                     <div className="flex justify-between items-center mb-4">
-                        <h2 className="text-lg font-semibold text-gray-700">Team Status (Today)</h2>
+                        <h2 className="text-lg font-semibold text-foreground">Team Status (Today)</h2>
                         <Badge variant="outline">{allToday?.data?.length || 0} Present</Badge>
                     </div>
                     {allLoading ? (
@@ -238,7 +238,7 @@ export default function AttendanceDashboard() {
                                     ))}
                                     {(!allToday?.data || allToday.data.length === 0) && (
                                         <TableRow>
-                                            <TableTd colSpan={5} className="text-center text-gray-500 py-8">
+                                            <TableTd colSpan={5} className="text-center text-muted-foreground py-8">
                                                 No one has checked in today yet.
                                             </TableTd>
                                         </TableRow>

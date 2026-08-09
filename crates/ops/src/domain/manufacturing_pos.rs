@@ -28,7 +28,7 @@ pub struct BomItem {
 
 /// Production Order Entity (QMFG-003)
 /// Explicit naming: Production Order to avoid collision with EAM Work Order
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct ProductionOrder {
     pub id: Uuid,
     pub company_id: Uuid,
@@ -44,7 +44,7 @@ pub struct ProductionOrder {
 }
 
 /// Quality Inspection Entity (QQLT-002, QQLT-004)
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct QualityInspection {
     pub id: Uuid,
     pub company_id: Uuid,
@@ -59,7 +59,7 @@ pub struct QualityInspection {
 }
 
 /// POS Profile Entity (QPOS-001)
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct PosProfile {
     pub id: Uuid,
     pub company_id: Uuid,
@@ -71,7 +71,7 @@ pub struct PosProfile {
 }
 
 /// POS Shift Cash Reconciliation Entity (QPOS-003)
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct PosShift {
     pub id: Uuid,
     pub pos_profile_id: Uuid,

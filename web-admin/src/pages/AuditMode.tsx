@@ -121,7 +121,7 @@ export default function AuditMode() {
                 <Card padding="lg" className="text-center">
                     <div className="space-y-6">
                         <h2 className="text-2xl font-bold text-white">Asset Audit</h2>
-                        <p className="text-slate-400">No active audit session found.</p>
+                        <p className="text-muted-foreground">No active audit session found.</p>
                         <Button
                             size="lg"
                             onClick={handleStart}
@@ -144,7 +144,7 @@ export default function AuditMode() {
             <div className="flex items-start justify-between">
                 <div>
                     <h1 className="text-2xl font-bold text-white">Audit in Progress</h1>
-                    <p className="text-sm text-slate-400">
+                    <p className="text-sm text-muted-foreground">
                         Started: {new Date(activeSession.created_at).toLocaleString()}
                     </p>
                 </div>
@@ -171,7 +171,7 @@ export default function AuditMode() {
                                 fill="none"
                                 stroke="currentColor"
                                 strokeWidth="12"
-                                className="text-slate-800"
+                                className="text-foreground"
                             />
                             {/* Progress circle */}
                             <circle
@@ -188,7 +188,7 @@ export default function AuditMode() {
                         </svg>
                         <div className="absolute inset-0 flex flex-col items-center justify-center">
                             <span className="text-2xl font-bold text-white">{progressValue}%</span>
-                            <span className="text-xs text-slate-400">Completed</span>
+                            <span className="text-xs text-muted-foreground">Completed</span>
                         </div>
                     </div>
 

@@ -5,7 +5,7 @@ import { Plus, CheckCircle, Clock, FileText, Eye, Edit2, Trash2, BarChart2, X } 
 import { contractApi } from '../../api/contract'
 import type { Contract } from '../../types/contract';
 import ContractForm from '../../components/Contracts/ContractForm';
-import { Card, Modal, Button, useToast, TableSkeleton, Skeleton } from '../../components/ui';
+import { Card, Modal, Button, useToast, TableSkeleton, Skeleton, Table, TableHead, TableBody, TableRow, TableTh, TableTd, TableEmpty, Checkbox, ActionIcon } from '../../components/ui';
 import { format } from 'date-fns';
 
 import AdvancedFilterPanel, { type FilterOptions } from '../../components/Contracts/AdvancedFilterPanel';
@@ -168,7 +168,7 @@ const Contracts: React.FC = () => {
                 <div className="flex gap-3">
                     <button
                         onClick={() => navigate('/contract-analytics')}
-                        className="w-full md:w-auto bg-purple-600 hover:bg-purple-500 text-white px-6 py-3 rounded-2xl shadow-lg 
+                        className="w-full md:w-auto bg-purple-600 hover:bg-purple-500/100 text-white px-6 py-3 rounded-2xl shadow-lg 
                                  shadow-purple-500/20 flex items-center justify-center gap-2 transition-all duration-200 font-semibold"
                     >
                         <BarChart2 size={20} />
@@ -273,116 +273,90 @@ const Contracts: React.FC = () => {
 
                 {/* Contracts Table */}
                 <div className="overflow-x-auto">
-                    <table className="w-full">
-                        <thead className="bg-muted/50">
-                            <tr>
-                                <th className="px-6 py-4 text-left">
-                                    <input
-                                        type="checkbox"
-                                        className="rounded border-border bg-card text-primary focus:ring-primary"
+                    <Table>
+                        <TableHead>
+                            <TableRow>
+                                <TableTh>
+                                    <Checkbox
                                         checked={selectedIds.size === filteredContracts.length && filteredContracts.length > 0}
                                         onChange={handleSelectAll}
                                     />
-                                </th>
-                                <th className="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Contract Number</th>
-                                <th className="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Client</th>
-                                <th className="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Period</th>
-                                <th className="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Status</th>
-                                <th className="px-6 py-4 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">Terms</th>
-                                <th className="px-6 py-4 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wider">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-border/50">
+                                </TableTh>
+                                <TableTh>Contract Number</TableTh>
+                                <TableTh>Client</TableTh>
+                                <TableTh>Period</TableTh>
+                                <TableTh>Status</TableTh>
+                                <TableTh>Terms</TableTh>
+                                <TableTh align="center">Actions</TableTh>
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
                             {isLoading ? (
-                                <tr>
-                                    <td colSpan={7} className="p-4">
+                                <TableRow>
+                                    <TableTd colSpan={7} className="p-4">
                                         <TableSkeleton rows={5} cols={7} />
-                                    </td>
-                                </tr>
+                                    </TableTd>
+                                </TableRow>
                             ) : filteredContracts.length === 0 ? (
-                                <tr>
-                                    <td colSpan={6} className="px-6 py-12 text-center">
-                                        <div className="flex flex-col items-center justify-center text-muted-foreground">
-                                            <div className="bg-muted/50 p-4 rounded-full mb-3">
-                                                <FileText size={32} />
-                                            </div>
-                                            <p className="text-lg font-medium text-foreground">No contracts found</p>
-                                            <p className="text-sm">Try adjusting your filters or create a new contract.</p>
-                                        </div>
-                                    </td>
-                                </tr>
+                                <TableEmpty colSpan={7} message="No contracts found. Try adjusting your filters or create a new contract." />
                             ) : (
                                 filteredContracts.map((contract: Contract) => (
-                                    <tr
+                                    <TableRow
                                         key={contract.id}
-                                        className={`hover:bg-muted/30 transition-colors duration-150 group ${selectedIds.has(contract.id) ? 'bg-primary/5 border-l-2 border-primary' : ''}`}
+                                        className={selectedIds.has(contract.id) ? 'bg-primary/5 border-l-2 border-primary' : ''}
                                     >
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <input
-                                                type="checkbox"
-                                                className="rounded border-border bg-card text-primary focus:ring-primary"
+                                        <TableTd className="whitespace-nowrap">
+                                            <Checkbox
                                                 checked={selectedIds.has(contract.id)}
                                                 onChange={() => handleToggleSelect(contract.id)}
                                             />
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <span className="font-mono text-sm text-primary font-medium group-hover:text-primary/80 transition-colors">
+                                        </TableTd>
+                                        <TableTd className="whitespace-nowrap">
+                                            <span className="font-mono text-primary font-medium group-hover:text-primary/80 transition-colors">
                                                 {contract.contract_number}
                                             </span>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="text-sm font-medium text-foreground">
+                                        </TableTd>
+                                        <TableTd className="whitespace-nowrap">
+                                            <div className="font-medium text-foreground">
                                                 {contract.client_name || 'Unknown Client'}
                                             </div>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
+                                        </TableTd>
+                                        <TableTd className="whitespace-nowrap">
                                             <div className="text-sm text-muted-foreground">
                                                 <span className="text-gray-300">{format(new Date(contract.start_date), 'MMM d, yyyy')}</span>
                                                 <span className="mx-2 text-muted-foreground/50">→</span>
                                                 <span className="text-gray-300">{format(new Date(contract.end_date), 'MMM d, yyyy')}</span>
                                             </div>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
+                                        </TableTd>
+                                        <TableTd className="whitespace-nowrap">
                                             <ApprovalStatusBadge
                                                 status={contract.status}
                                                 size="sm"
                                                 currentStep={contract.current_approval_step}
                                                 totalSteps={contract.total_approval_steps}
                                             />
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
+                                        </TableTd>
+                                        <TableTd className="whitespace-nowrap text-muted-foreground">
                                             {contract.payment_terms.replace('_', ' ')}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                            <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <button
-                                                    onClick={() => handleViewDetails(contract)}
-                                                    className="text-primary hover:text-primary/80 transition-colors p-1.5 hover:bg-primary/10 rounded-lg"
-                                                    title="View Details"
-                                                >
+                                        </TableTd>
+                                        <TableTd align="center" className="whitespace-nowrap">
+                                            <div className="flex items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <ActionIcon onClick={() => handleViewDetails(contract)} title="View Details">
                                                     <Eye size={16} />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleEdit(contract)}
-                                                    className="text-warning hover:text-warning/80 transition-colors p-1.5 hover:bg-warning/10 rounded-lg"
-                                                    title="Edit"
-                                                >
+                                                </ActionIcon>
+                                                <ActionIcon onClick={() => handleEdit(contract)} title="Edit">
                                                     <Edit2 size={16} />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDeleteClick(contract)}
-                                                    className="text-destructive hover:text-destructive/80 transition-colors p-1.5 hover:bg-destructive/10 rounded-lg"
-                                                    title="Delete"
-                                                >
+                                                </ActionIcon>
+                                                <ActionIcon variant="danger" onClick={() => handleDeleteClick(contract)} title="Delete">
                                                     <Trash2 size={16} />
-                                                </button>
+                                                </ActionIcon>
                                             </div>
-                                        </td>
-                                    </tr>
+                                        </TableTd>
+                                    </TableRow>
                                 ))
                             )}
-                        </tbody>
-                    </table>
+                        </TableBody>
+                    </Table>
                 </div>
 
                 {/* Mobile View (Hidden on Desktop) */}

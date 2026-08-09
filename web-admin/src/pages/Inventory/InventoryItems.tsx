@@ -256,9 +256,9 @@ export default function InventoryItems() {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 relative z-10">
                 {[
                     { label: 'Total Item', value: stats.total.toLocaleString(), icon: Box, color: 'text-blue-400', bg: 'bg-blue-500/10 border-blue-500/20' },
-                    { label: 'Low Stock', value: stats.low.toString(), icon: AlertTriangle, color: 'text-amber-400', bg: 'bg-amber-500/10 border-amber-500/20' },
+                    { label: 'Low Stock', value: stats.low.toString(), icon: AlertTriangle, color: 'text-amber-400', bg: 'bg-amber-500/100/10 border-amber-500/20' },
                     { label: 'Out of Stock', value: stats.out.toString(), icon: Package, color: 'text-red-400', bg: 'bg-red-500/10 border-red-500/20' },
-                    { label: 'Nilai Inventory', value: `Rp ${stats.value.toLocaleString()}`, icon: BarChart2, color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20' },
+                    { label: 'Nilai Inventory', value: `Rp ${stats.value.toLocaleString()}`, icon: BarChart2, color: 'text-emerald-400', bg: 'bg-emerald-500/100/10 border-emerald-500/20' },
                 ].map((stat, i) => (
                     <div key={i} className="bg-card/60 backdrop-blur-xl border border-border p-5 rounded-3xl hover:-translate-y-1 hover:shadow-xl transition-all duration-300 group overflow-hidden relative flex flex-col justify-between min-h-[120px]">
                         <div className={`absolute -top-4 -right-4 w-24 h-24 ${stat.bg.split(' ')[0]} rounded-full blur-[30px] group-hover:scale-150 transition-transform pointer-events-none`} />
@@ -391,14 +391,14 @@ export default function InventoryItems() {
                                             <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                                 <button
                                                     onClick={() => handleOpenHistory(item)}
-                                                    className="w-8 h-8 flex items-center justify-center hover:bg-indigo-500/20 rounded-xl text-indigo-400 transition-colors shadow-sm"
+                                                    className="w-8 h-8 flex items-center justify-center hover:bg-indigo-500/100/100/20 rounded-xl text-indigo-400 transition-colors shadow-sm"
                                                     title="History"
                                                 >
                                                     <History size={16} />
                                                 </button>
                                                 <button
                                                     onClick={() => handleOpenEdit(item)}
-                                                    className="w-8 h-8 flex items-center justify-center hover:bg-amber-500/20 rounded-xl text-amber-400 transition-colors shadow-sm"
+                                                    className="w-8 h-8 flex items-center justify-center hover:bg-amber-500/100/20 rounded-xl text-amber-400 transition-colors shadow-sm"
                                                     title="Edit"
                                                 >
                                                     <Edit2 size={16} />
@@ -440,7 +440,7 @@ export default function InventoryItems() {
                                         {editingItem && <TabsTrigger value="visuals" className="px-4 py-1.5 text-xs rounded-lg data-[state=active]:bg-cyan-600 data-[state=active]:text-white transition-all">Visuals (4-Sisi)</TabsTrigger>}
                                     </TabsList>
                                 </div>
-                                <button onClick={() => setModalOpen(false)} className="text-slate-400 hover:text-white transition-colors">
+                                <button onClick={() => setModalOpen(false)} className="text-muted-foreground hover:text-white transition-colors">
                                     <X size={24} />
                                 </button>
                             </div>
@@ -456,7 +456,7 @@ export default function InventoryItems() {
                                             disabled={!!editingItem}
                                         />
                                         <div className="space-y-1.5">
-                                            <label className="text-sm font-medium text-slate-400">Kategori</label>
+                                            <label className="text-sm font-medium text-muted-foreground">Kategori</label>
                                             <select
                                                 className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white outline-none focus:ring-2 focus:ring-cyan-500/50"
                                                 value={formData.category_id}
@@ -479,7 +479,7 @@ export default function InventoryItems() {
                                     />
 
                                     <div>
-                                        <label className="block text-sm font-medium text-slate-400 mb-1.5">Deskripsi</label>
+                                        <label className="block text-sm font-medium text-muted-foreground mb-1.5">Deskripsi</label>
                                         <textarea
                                             className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50 min-h-[80px]"
                                             value={formData.description}
@@ -555,10 +555,10 @@ export default function InventoryItems() {
                             <div>
                                 <h2 className="text-xl font-bold text-white">Riwayat Mutasi Barang</h2>
                                 {selectedItemForHistory && (
-                                    <p className="text-sm text-slate-400 mt-1">Menampilkan history untuk <span className="text-cyan-400 font-medium">{selectedItemForHistory.name}</span> ({selectedItemForHistory.sku})</p>
+                                    <p className="text-sm text-muted-foreground mt-1">Menampilkan history untuk <span className="text-cyan-400 font-medium">{selectedItemForHistory.name}</span> ({selectedItemForHistory.sku})</p>
                                 )}
                             </div>
-                            <button onClick={() => setHistoryModalOpen(false)} className="text-slate-400 hover:text-white transition-colors">
+                            <button onClick={() => setHistoryModalOpen(false)} className="text-muted-foreground hover:text-white transition-colors">
                                 <X size={24} />
                             </button>
                         </div>
@@ -567,25 +567,25 @@ export default function InventoryItems() {
                             {movementsLoading ? (
                                 <div className="flex flex-col items-center justify-center p-20 gap-4">
                                     <Loader2 size={40} className="animate-spin text-cyan-500" />
-                                    <p className="text-slate-500">Memuat riwayat mutasi...</p>
+                                    <p className="text-muted-foreground">Memuat riwayat mutasi...</p>
                                 </div>
                             ) : movements.length > 0 ? (
                                 <table className="w-full text-left border-collapse">
                                     <thead className="sticky top-0 bg-slate-900 z-10 shadow-sm">
                                         <tr className="border-b border-slate-800 bg-slate-800/50">
-                                            <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-500">Tanggal</th>
-                                            {!selectedItemForHistory && <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-500">Barang</th>}
-                                            <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-500">Tipe</th>
-                                            <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-500 text-right">Qty</th>
-                                            <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-500 text-right">Harga</th>
-                                            <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-500">Referensi</th>
-                                            <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-slate-500">Keterangan</th>
+                                            <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Tanggal</th>
+                                            {!selectedItemForHistory && <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Barang</th>}
+                                            <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Tipe</th>
+                                            <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground text-right">Qty</th>
+                                            <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground text-right">Harga</th>
+                                            <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Referensi</th>
+                                            <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Keterangan</th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-800/50">
                                         {movements.map((m: InventoryMovement) => (
                                             <tr key={m.id} className="hover:bg-slate-800/20 transition-colors group">
-                                                <td className="px-6 py-4 text-sm text-slate-400">
+                                                <td className="px-6 py-4 text-sm text-muted-foreground">
                                                     {format(new Date(m.created_at), 'dd MMM yyyy HH:mm')}
                                                 </td>
                                                 {!selectedItemForHistory && (
@@ -619,10 +619,10 @@ export default function InventoryItems() {
                                                             {m.reference_id && <ExternalLink size={12} />}
                                                         </div>
                                                     ) : (
-                                                        <span className="text-slate-600">-</span>
+                                                        <span className="text-muted-foreground">-</span>
                                                     )}
                                                 </td>
-                                                <td className="px-6 py-4 text-sm text-slate-400 max-w-xs truncate">
+                                                <td className="px-6 py-4 text-sm text-muted-foreground max-w-xs truncate">
                                                     {m.notes || '-'}
                                                 </td>
                                             </tr>
@@ -631,10 +631,10 @@ export default function InventoryItems() {
                                 </table>
                             ) : (
                                 <div className="flex flex-col items-center justify-center p-20 gap-4">
-                                    <div className="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center text-slate-600">
+                                    <div className="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center text-muted-foreground">
                                         <History size={32} />
                                     </div>
-                                    <p className="text-slate-500">Belum ada riwayat mutasi.</p>
+                                    <p className="text-muted-foreground">Belum ada riwayat mutasi.</p>
                                 </div>
                             )}
                         </div>

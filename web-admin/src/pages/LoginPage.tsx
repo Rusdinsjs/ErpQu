@@ -7,6 +7,8 @@ import { useAuthStore } from '../store/useAuthStore';
 import { useQuery } from '@tanstack/react-query';
 import { settingsApi } from '../api/settings';
 import { getImageUrl } from '../utils/image';
+import { Input } from '../components/ui/Input';
+import { Button } from '../components/ui/Button';
 
 export default function LoginPage() {
     const [email, setEmail] = useState('');
@@ -74,7 +76,7 @@ export default function LoginPage() {
                 <div className="text-center mb-10 space-y-6">
                     <div className="relative group inline-block">
                         <div className="absolute -inset-4 bg-blue-500/20 rounded-full blur-2xl opacity-25 group-hover:opacity-50 transition duration-700"></div>
-                        <div className="relative inline-flex items-center justify-center w-24 h-24 bg-white border border-border/50 rounded-full shadow-2xl p-2 transform group-hover:scale-110 transition duration-500 ease-out overflow-hidden">
+                        <div className="relative inline-flex items-center justify-center w-24 h-24 bg-card border border-border/50 rounded-full shadow-2xl p-2 transform group-hover:scale-110 transition duration-500 ease-out overflow-hidden">
                             {companyLogo && companyLogo !== 'null' ? (
                                 <img
                                     src={getImageUrl(companyLogo)}
@@ -123,56 +125,45 @@ export default function LoginPage() {
 
                     <form onSubmit={handleSubmit} className="space-y-5">
                         <div className="space-y-1.5">
-                            <label className="block text-sm font-medium text-muted-foreground">
-                                Email
-                            </label>
-                            <input
+                            <Input
+                                label="Email"
                                 type="email"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                className="w-full px-4 py-3 bg-background border border-border rounded-xl focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition text-foreground placeholder-muted-foreground/50 focus:bg-background"
                                 placeholder="nama@perusahaan.com"
                                 required
                             />
                         </div>
 
                         <div className="space-y-1.5">
-                            <label className="block text-sm font-medium text-muted-foreground">
-                                Password
-                            </label>
                             <div className="relative">
-                                <input
+                                <Input
+                                    label="Password"
                                     type={showPassword ? "text" : "password"}
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    className="w-full pl-4 pr-12 py-3 bg-background border border-border rounded-xl focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 outline-none transition text-foreground placeholder-muted-foreground/50 focus:bg-background"
                                     placeholder="••••••••"
                                     required
                                 />
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-blue-500 transition p-1 hover:bg-muted rounded-lg"
+                                    className="absolute right-3 top-2/3 -translate-y-1/2 text-muted-foreground hover:text-blue-500 transition p-1 hover:bg-muted rounded-lg"
                                 >
                                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                 </button>
                             </div>
                         </div>
 
-                        <button
+                        <Button
                             type="submit"
                             disabled={loading}
-                            className="w-full py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl flex items-center justify-center gap-2 transition-all disabled:opacity-50 mt-2 shadow-lg shadow-blue-500/20 active:scale-[0.98] ring-1 ring-white/10"
+                            loading={loading}
+                            className="w-full py-3.5 mt-2"
+                            leftIcon={<LogIn size={18} />}
                         >
-                            {loading ? (
-                                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                            ) : (
-                                <>
-                                    <LogIn size={18} />
-                                    Masuk
-                                </>
-                            )}
-                        </button>
+                            Masuk
+                        </Button>
                     </form>
 
                     <p className="text-center text-xs text-muted-foreground mt-8 font-light">

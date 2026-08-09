@@ -46,25 +46,25 @@ export const FuelApprovalModal: React.FC<FuelApprovalModalProps> = ({ isOpen, on
                         {/* Info Grid */}
                         <div className="bg-slate-950/50 border border-slate-800 rounded-2xl p-6 grid grid-cols-2 gap-y-6 gap-x-8">
                             <div className="space-y-1">
-                                <div className="flex items-center gap-2 text-slate-500 text-[10px] uppercase tracking-widest">
+                                <div className="flex items-center gap-2 text-muted-foreground text-[10px] uppercase tracking-widest">
                                     <Hash size={12} /> Tracking Number
                                 </div>
                                 <p className="font-mono text-white text-sm">{log.tracking_number}</p>
                             </div>
                             <div className="space-y-1">
-                                <div className="flex items-center gap-2 text-slate-500 text-[10px] uppercase tracking-widest">
+                                <div className="flex items-center gap-2 text-muted-foreground text-[10px] uppercase tracking-widest">
                                     <User size={12} /> Requested By
                                 </div>
                                 <p className="text-white text-sm font-medium">{log.requester_name}</p>
                             </div>
                             <div className="space-y-1">
-                                <div className="flex items-center gap-2 text-slate-500 text-[10px] uppercase tracking-widest">
+                                <div className="flex items-center gap-2 text-muted-foreground text-[10px] uppercase tracking-widest">
                                     <Package size={12} /> Asset
                                 </div>
                                 <p className="text-white text-sm font-medium">{log.asset_name}</p>
                             </div>
                             <div className="space-y-1">
-                                <div className="flex items-center gap-2 text-slate-500 text-[10px] uppercase tracking-widest">
+                                <div className="flex items-center gap-2 text-muted-foreground text-[10px] uppercase tracking-widest">
                                     <Fuel size={12} /> Requested Amount
                                 </div>
                                 <p className="text-blue-400 text-lg font-bold">
@@ -77,7 +77,7 @@ export const FuelApprovalModal: React.FC<FuelApprovalModalProps> = ({ isOpen, on
                         <div className="space-y-3">
                             <div className="flex items-center justify-between">
                                 <p className="text-slate-300 text-sm font-medium">Odometer Check</p>
-                                <span className="bg-slate-800 text-slate-400 px-2 py-0.5 rounded text-[10px] font-mono">
+                                <span className="bg-slate-800 text-muted-foreground px-2 py-0.5 rounded text-[10px] font-mono">
                                     {Number(log.odometer_reading).toLocaleString()} KM
                                 </span>
                             </div>
@@ -118,7 +118,7 @@ export const FuelApprovalModal: React.FC<FuelApprovalModalProps> = ({ isOpen, on
                     /* Success State */
                     <div className="text-center py-6 space-y-8 animate-in fade-in zoom-in-95 duration-500">
                         <div className="relative">
-                            <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center mx-auto ring-4 ring-blue-500/10 p-2 overflow-hidden">
+                            <div className="w-24 h-24 bg-card rounded-full flex items-center justify-center mx-auto ring-4 ring-blue-500/10 p-2 overflow-hidden">
                                 <img src="/logo-sjs.png" alt="SJS Logo" className="w-full h-full object-contain" />
                             </div>
                             <div className="absolute -top-1 -right-1 w-6 h-6 bg-green-500 rounded-full border-4 border-slate-900 animate-bounce" />
@@ -126,12 +126,12 @@ export const FuelApprovalModal: React.FC<FuelApprovalModalProps> = ({ isOpen, on
 
                         <div className="space-y-2">
                             <h3 className="text-2xl font-bold text-white tracking-tight">{log.asset_name}</h3>
-                            <p className="text-slate-400">Voucher untuk pengisian BBM/Pencairan uang BBM</p>
+                            <p className="text-muted-foreground">Voucher untuk pengisian BBM/Pencairan uang BBM</p>
                         </div>
 
                         <div className="bg-slate-950/50 p-8 rounded-[2rem] border-2 border-dashed border-slate-800 relative overflow-hidden group">
                             <div className="absolute inset-0 bg-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity" />
-                            <p className="text-[10px] text-slate-500 uppercase tracking-[0.3em] mb-3 relative z-10">Voucher Code</p>
+                            <p className="text-[10px] text-muted-foreground uppercase tracking-[0.3em] mb-3 relative z-10">Voucher Code</p>
                             <p className="text-3xl font-mono font-black text-white tracking-widest relative z-10 drop-shadow-2xl">
                                 {generatedCoupon}
                             </p>

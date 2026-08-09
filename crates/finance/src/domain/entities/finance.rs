@@ -338,6 +338,7 @@ pub struct SalesShipment {
     pub shipment_number: String,
     pub sales_order_id: Uuid,
     pub client_id: Option<Uuid>,
+    pub warehouse_id: Option<Uuid>,
     pub date: NaiveDate,
     pub courier_name: Option<String>,
     pub tracking_number: Option<String>,
@@ -345,13 +346,33 @@ pub struct SalesShipment {
     pub created_at: DateTime<Utc>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SalesShipmentItem {
+    pub id: Uuid,
+    pub shipment_id: Uuid,
+    pub order_item_id: Option<Uuid>,
+    pub description: String,
+    pub quantity_shipped: Decimal,
+    pub item_id: Option<Uuid>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreateSalesShipmentItemRequest {
+    pub order_item_id: Option<Uuid>,
+    pub description: String,
+    pub quantity_shipped: Decimal,
+    pub item_id: Option<Uuid>,
+}
+
 #[derive(Debug, Deserialize)]
 pub struct CreateSalesShipmentRequest {
     pub shipment_number: String,
     pub sales_order_id: Uuid,
+    pub warehouse_id: Option<Uuid>,
     pub date: NaiveDate,
     pub courier_name: Option<String>,
     pub tracking_number: Option<String>,
+    pub items: Vec<CreateSalesShipmentItemRequest>,
 }
 
 // --- Purchase Quotes, Orders & Shipments ---

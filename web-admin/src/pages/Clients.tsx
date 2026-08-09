@@ -14,6 +14,7 @@ import {
     Input,
     LoadingOverlay,
     useToast,
+    SearchInput,
 } from '../components/ui';
 
 export default function Clients() {
@@ -188,7 +189,7 @@ export default function Clients() {
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-2xl font-bold text-white">Client Management</h1>
-                    <p className="text-xs text-slate-400">Kelola daftar pelanggan & mitra bisnis</p>
+                    <p className="text-xs text-muted-foreground">Kelola daftar pelanggan & mitra bisnis</p>
                 </div>
                 <Button leftIcon={<Plus size={16} />} onClick={openCreateModal}>
                     Add Client
@@ -199,13 +200,10 @@ export default function Clients() {
                 {/* Search */}
                 <div className="mb-4">
                     <div className="relative max-w-md">
-                        <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
-                        <input
-                            type="text"
-                            placeholder="Search by name, code or company..."
+                        <SearchInput
                             value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2.5 bg-slate-950/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
+                            onChange={setSearch}
+                            placeholder="Search by name, code or company..."
                         />
                     </div>
                 </div>
@@ -232,13 +230,13 @@ export default function Clients() {
                                     <TableTd>
                                         <div>
                                             <p className="font-medium text-white">{client.name}</p>
-                                            <p className="text-xs text-slate-500">{client.company_name}</p>
+                                            <p className="text-xs text-muted-foreground">{client.company_name}</p>
                                         </div>
                                     </TableTd>
                                     <TableTd>
                                         <div>
                                             <p className="text-sm text-slate-300">{client.email || '-'}</p>
-                                            <p className="text-xs text-slate-500">{client.phone || '-'}</p>
+                                            <p className="text-xs text-muted-foreground">{client.phone || '-'}</p>
                                         </div>
                                     </TableTd>
                                     <TableTd>
@@ -248,7 +246,7 @@ export default function Clients() {
                                             title="Klik untuk mengubah status Active / Inactive"
                                             className="cursor-pointer transition-transform hover:scale-105"
                                         >
-                                            <Badge variant={client.is_active ? 'success' : 'default'} className={client.is_active ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-slate-800 text-slate-400 border-slate-700'}>
+                                            <Badge variant={client.is_active ? 'success' : 'default'} className={client.is_active ? 'bg-emerald-500/100/10 text-emerald-400 border-emerald-500/20' : 'bg-slate-800 text-muted-foreground border-slate-700'}>
                                                 {client.is_active ? 'Active' : 'Inactive'}
                                             </Badge>
                                         </button>
@@ -301,41 +299,41 @@ export default function Clients() {
 
                         <div className="grid grid-cols-2 gap-4 text-sm">
                             <div className="p-3.5 bg-slate-950/40 rounded-lg border border-slate-800/80">
-                                <p className="text-xs text-slate-500 uppercase font-semibold">Company Name</p>
+                                <p className="text-xs text-muted-foreground uppercase font-semibold">Company Name</p>
                                 <p className="text-white font-medium mt-1">{viewClient.company_name || '-'}</p>
                             </div>
                             <div className="p-3.5 bg-slate-950/40 rounded-lg border border-slate-800/80">
-                                <p className="text-xs text-slate-500 uppercase font-semibold">Contact Person</p>
+                                <p className="text-xs text-muted-foreground uppercase font-semibold">Contact Person</p>
                                 <p className="text-white font-medium mt-1">{viewClient.contact_person || '-'}</p>
                             </div>
                             <div className="p-3.5 bg-slate-950/40 rounded-lg border border-slate-800/80">
-                                <p className="text-xs text-slate-500 uppercase font-semibold">Email</p>
+                                <p className="text-xs text-muted-foreground uppercase font-semibold">Email</p>
                                 <p className="text-cyan-300 font-mono text-xs mt-1">{viewClient.email || '-'}</p>
                             </div>
                             <div className="p-3.5 bg-slate-950/40 rounded-lg border border-slate-800/80">
-                                <p className="text-xs text-slate-500 uppercase font-semibold">Phone</p>
+                                <p className="text-xs text-muted-foreground uppercase font-semibold">Phone</p>
                                 <p className="text-slate-300 font-mono text-xs mt-1">{viewClient.phone || '-'}</p>
                             </div>
                             <div className="p-3.5 bg-slate-950/40 rounded-lg border border-slate-800/80">
-                                <p className="text-xs text-slate-500 uppercase font-semibold">Tax ID / NPWP</p>
+                                <p className="text-xs text-muted-foreground uppercase font-semibold">Tax ID / NPWP</p>
                                 <p className="text-slate-300 font-mono text-xs mt-1">{viewClient.tax_id || '-'}</p>
                             </div>
                             <div className="p-3.5 bg-slate-950/40 rounded-lg border border-slate-800/80">
-                                <p className="text-xs text-slate-500 uppercase font-semibold">City</p>
+                                <p className="text-xs text-muted-foreground uppercase font-semibold">City</p>
                                 <p className="text-white font-medium mt-1">{viewClient.city || '-'}</p>
                             </div>
                         </div>
 
                         {viewClient.address && (
                             <div className="p-3.5 bg-slate-950/40 rounded-lg border border-slate-800/80">
-                                <p className="text-xs text-slate-500 uppercase font-semibold">Address</p>
+                                <p className="text-xs text-muted-foreground uppercase font-semibold">Address</p>
                                 <p className="text-slate-300 text-sm mt-1">{viewClient.address}</p>
                             </div>
                         )}
 
                         {viewClient.notes && (
                             <div className="p-3.5 bg-slate-950/40 rounded-lg border border-slate-800/80">
-                                <p className="text-xs text-slate-500 uppercase font-semibold">Notes</p>
+                                <p className="text-xs text-muted-foreground uppercase font-semibold">Notes</p>
                                 <p className="text-slate-300 text-sm mt-1">{viewClient.notes}</p>
                             </div>
                         )}

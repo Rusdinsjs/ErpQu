@@ -249,7 +249,7 @@ export function WorkflowBuilder() {
                         <Button
                             variant="outline"
                             size="sm"
-                            className="text-rose-400 border-rose-500/30 hover:bg-rose-500/10"
+                            className="text-rose-400 border-rose-500/30 hover:bg-rose-500/100/10"
                             leftIcon={<Trash2 size={14} />}
                             onClick={handleDeleteWorkflow}
                         >
@@ -417,7 +417,7 @@ export function WorkflowBuilder() {
                                             <td className="p-3 font-mono font-bold text-cyan-400">{tr.action_name}</td>
                                             <td className="p-3 font-semibold text-foreground">{tr.next_state_name}</td>
                                             <td className="p-3 font-semibold text-amber-400">
-                                                <Badge variant="outline" className="border-amber-500/30 text-amber-400 bg-amber-500/10">
+                                                <Badge variant="outline" className="border-amber-500/30 text-amber-400 bg-amber-500/100/10">
                                                     {tr.allowed_role_name}
                                                 </Badge>
                                             </td>

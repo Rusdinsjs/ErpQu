@@ -46,16 +46,17 @@ use management_system_core::shared::utils::jwt::JwtConfig;
 use management_system_finance::repositories::{AssetExpenseRepository, FinanceRepository, JournalRepository};
 use management_system_finance::{AssetExpenseService, DepreciationService, JournalService};
 use management_system_ops::{
-    FuelRepository, FuelService, LoanRepository, LoanService, MaintenanceRepository,
-    MaintenanceService, MaintenanceTeamRepository, MaintenanceTeamService,
-    MaintenanceTemplateRepository, MaintenanceTemplateService, SensorRepository, SensorService,
-    TaxRenewalRepository, TaxRenewalService, WorkOrderRepository,
+    CreateWorkOrderRequest, FuelRepository, FuelService, GeofenceService, LoanRepository,
+    LoanService, MaintenanceOperationResult, MaintenanceRepository, MaintenanceService,
+    MaintenanceTeamRepository, MaintenanceTeamService, MaintenanceTemplateRepository,
+    MaintenanceTemplateService, SensorRepository, SensorService, TaxRenewalRepository,
+    TaxRenewalService, WorkOrderRepository, QualityRepository, DeliveryTripRepository,
+    QualityService, DeliveryTripService, CreateQualityInspectionRequest, CreateDeliveryTripRequest,
 };
 use std::sync::Arc;
 
-/// Application state shared across handlers
-#[derive(Clone)]
-pub struct AppState {
+/// Service Registry containing all domain services
+pub struct ServiceRegistry {
     pub asset_service: management_system_assets::AssetService,
     pub asset_expense_service: management_system_finance::AssetExpenseService,
     pub auth_service: AuthService,
@@ -87,6 +88,9 @@ pub struct AppState {
     pub location_service: LocationService,
     pub leave_service: LeaveService,
     pub metadata_service: management_system_core::application::services::MetadataService,
+    pub stock_document_service: management_system_inventory::StockDocumentService,
+    pub quality_service: management_system_ops::QualityService,
+    pub delivery_trip_service: management_system_ops::DeliveryTripService,
     pub finance_service: management_system_finance::FinanceService,
     pub fuel_service: management_system_ops::FuelService,
     pub journal_service: management_system_finance::JournalService,
@@ -101,12 +105,26 @@ pub struct AppState {
         management_system_core::application::services::ApprovalEntityTypeService,
     pub file_storage: Arc<FileStorage>,
     pub contract_document_repo: Arc<ContractDocumentRepository>,
+}
+
+/// Application state shared across handlers
+#[derive(Clone)]
+pub struct AppState {
+    pub registry: Arc<ServiceRegistry>,
     pub pool: PgPool,
     pub ws_manager: Arc<management_system_core::infrastructure::notifications::WebSocketManager>,
     pub jwt_config: JwtConfig, // Added for middleware access
     pub allow_public_registration: bool,
     pub session_tracker: management_system_core::infrastructure::auth::SessionTracker,
     pub lockout_tracker: management_system_core::infrastructure::auth::LoginLockoutTracker,
+}
+
+impl std::ops::Deref for AppState {
+    type Target = ServiceRegistry;
+
+    fn deref(&self) -> &Self::Target {
+        &self.registry
+    }
 }
 
 impl AppState {
@@ -155,6 +173,8 @@ impl AppState {
         let tax_renewal_repo = TaxRenewalRepository::new(pool.clone());
         let leave_repo = LeaveRepository::new(pool.clone());
         let vendor_repo = VendorRepository::new(pool.clone());
+        let quality_repo = QualityRepository::new(pool.clone());
+        let delivery_trip_repo = DeliveryTripRepository::new(pool.clone());
         let metadata_repo = management_system_core::infrastructure::repositories::MetadataRepository::new(pool.clone());
 
         // Create Internal Event Bus
@@ -249,10 +269,16 @@ impl AppState {
             journal_service.clone(),
         );
 
-        let inventory_service = InventoryService::new(
+        let acc_engine = management_system_finance::AccountingPostingEngine::new(pool.clone());
+        let stock_engine = management_system_inventory::StockPostingEngine::new(pool.clone(), Some(acc_engine));
+        let stock_doc_repo = Arc::new(management_system_inventory::StockDocumentRepository::new(pool.clone()));
+        let stock_document_service = management_system_inventory::StockDocumentService::new(stock_doc_repo, stock_engine.clone());
+
+        let inventory_service = InventoryService::with_stock_engine(
             std::sync::Arc::new(inventory_repo.clone()),
             journal_service.clone(),
             notification_service.clone(),
+            stock_engine,
         );
 
         let work_order_service = management_system_ops::WorkOrderService::new(
@@ -304,6 +330,8 @@ impl AppState {
         let user_service = UserService::new(user_repo, rbac_repo);
         let fuel_repo = FuelRepository::new(pool.clone());
         let fuel_service = FuelService::new(fuel_repo.clone(), event_bus.clone());
+        let quality_service = QualityService::new(Arc::new(quality_repo));
+        let delivery_trip_service = DeliveryTripService::new(Arc::new(delivery_trip_repo));
 
         let report_service = ReportService::new(
             asset_repo.clone(),
@@ -352,9 +380,9 @@ impl AppState {
         // Contract
         approval_service.register_callback(Box::new(contract_service.clone()));
 
-        Self {
+        let registry = Arc::new(ServiceRegistry {
             asset_service,
-            asset_expense_service, // Added
+            asset_expense_service,
             audit_service,
             auth_service,
             category_service,
@@ -365,6 +393,9 @@ impl AppState {
             conversion_service,
             lifecycle_service,
             inventory_service,
+            stock_document_service,
+            quality_service,
+            delivery_trip_service,
             loan_service,
             maintenance_service,
             maintenance_template_service,
@@ -395,9 +426,13 @@ impl AppState {
             metadata_service,
             file_storage,
             contract_document_repo,
+            tax_renewal_service,
+        });
+
+        Self {
+            registry,
             pool,
             ws_manager,
-            tax_renewal_service,
             jwt_config: jwt_config.clone(),
             allow_public_registration: std::env::var("ALLOW_PUBLIC_REGISTRATION")
                 .map(|v| v.eq_ignore_ascii_case("true") || v == "1")

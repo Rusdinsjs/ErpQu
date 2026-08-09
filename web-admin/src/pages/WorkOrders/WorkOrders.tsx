@@ -125,7 +125,7 @@ export default function WorkOrders() {
                 </Card>
 
                 <Card className="relative overflow-hidden group p-6">
-                    <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/10 rounded-full -mr-4 -mt-4 transition-transform group-hover:scale-110" />
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/100/10 rounded-full -mr-4 -mt-4 transition-transform group-hover:scale-110" />
                     <div className="flex justify-between items-start relative z-10">
                         <div>
                             <p className="text-muted-foreground text-sm font-medium">In Progress</p>
@@ -133,7 +133,7 @@ export default function WorkOrders() {
                                 {records.filter(r => r.status === 'in_progress').length}
                             </h3>
                         </div>
-                        <div className="p-3 bg-amber-500/20 rounded-xl">
+                        <div className="p-3 bg-amber-500/100/20 rounded-xl">
                             <Clock className="text-amber-400" size={24} />
                         </div>
                     </div>
@@ -227,10 +227,10 @@ export default function WorkOrders() {
                         /* Kanban Board View for Active & Planned */
                         <div className="flex gap-6 h-full items-start">
                             {[
-                                { title: 'Pending Approval', status: 'pending', color: 'slate', icon: AlertTriangle, borderClass: 'border-slate-500/10', bgHeader: 'bg-slate-500/5', borderHeader: 'border-slate-500/20', bgIcon: 'bg-slate-500/20', textIcon: 'text-slate-500', bgCount: 'bg-slate-500/20', textCount: 'text-slate-500', hoverBorder: 'hover:border-slate-500/50', ribbon: 'bg-slate-500/30 group-hover:bg-slate-500', hoverIconBg: 'hover:bg-slate-500' },
+                                { title: 'Pending Approval', status: 'pending', color: 'slate', icon: AlertTriangle, borderClass: 'border-slate-500/10', bgHeader: 'bg-muted/300/5', borderHeader: 'border-slate-500/20', bgIcon: 'bg-muted/300/20', textIcon: 'text-muted-foreground', bgCount: 'bg-muted/300/20', textCount: 'text-muted-foreground', hoverBorder: 'hover:border-slate-500/50', ribbon: 'bg-muted/300/30 group-hover:bg-muted/300', hoverIconBg: 'hover:bg-muted/300' },
                                 { title: 'Assigned / Ready', status: 'approved', color: 'blue', icon: Clock, borderClass: 'border-blue-500/10', bgHeader: 'bg-blue-500/5', borderHeader: 'border-blue-500/20', bgIcon: 'bg-blue-500/20', textIcon: 'text-blue-500', bgCount: 'bg-blue-500/20', textCount: 'text-blue-500', hoverBorder: 'hover:border-blue-500/50', ribbon: 'bg-blue-500/30 group-hover:bg-blue-500', hoverIconBg: 'hover:bg-blue-500' },
-                                { title: 'In Progress', status: 'in_progress', color: 'amber', icon: Wrench, borderClass: 'border-amber-500/10', bgHeader: 'bg-amber-500/5', borderHeader: 'border-amber-500/20', bgIcon: 'bg-amber-500/20', textIcon: 'text-amber-500', bgCount: 'bg-amber-500/20', textCount: 'text-amber-500', hoverBorder: 'hover:border-amber-500/50', ribbon: 'bg-amber-500/30 group-hover:bg-amber-500', hoverIconBg: 'hover:bg-amber-500' },
-                                { title: 'Review / Done', status: ['completed', 'verified', 'finalized'], color: 'emerald', icon: CheckCircle, borderClass: 'border-emerald-500/10', bgHeader: 'bg-emerald-500/5', borderHeader: 'border-emerald-500/20', bgIcon: 'bg-emerald-500/20', textIcon: 'text-emerald-500', bgCount: 'bg-emerald-500/20', textCount: 'text-emerald-500', hoverBorder: 'hover:border-emerald-500/50', ribbon: 'bg-emerald-500/30 group-hover:bg-emerald-500', hoverIconBg: 'hover:bg-emerald-500' }
+                                { title: 'In Progress', status: 'in_progress', color: 'amber', icon: Wrench, borderClass: 'border-amber-500/10', bgHeader: 'bg-amber-500/100/5', borderHeader: 'border-amber-500/20', bgIcon: 'bg-amber-500/100/20', textIcon: 'text-amber-500', bgCount: 'bg-amber-500/100/20', textCount: 'text-amber-500', hoverBorder: 'hover:border-amber-500/50', ribbon: 'bg-amber-500/100/30 group-hover:bg-amber-500/100', hoverIconBg: 'hover:bg-amber-500/100' },
+                                { title: 'Review / Done', status: ['completed', 'verified', 'finalized'], color: 'emerald', icon: CheckCircle, borderClass: 'border-emerald-500/10', bgHeader: 'bg-emerald-500/100/5', borderHeader: 'border-emerald-500/20', bgIcon: 'bg-emerald-500/100/20', textIcon: 'text-emerald-500', bgCount: 'bg-emerald-500/100/20', textCount: 'text-emerald-500', hoverBorder: 'hover:border-emerald-500/50', ribbon: 'bg-emerald-500/100/30 group-hover:bg-emerald-500/100', hoverIconBg: 'hover:bg-emerald-500/100' }
                             ].map((col) => {
                                 const colRecords = records.filter(r => 
                                     Array.isArray(col.status) ? col.status.includes(r.status) : r.status === col.status

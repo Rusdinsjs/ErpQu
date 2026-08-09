@@ -144,6 +144,101 @@ export const inventoryApi = {
         });
         return response.data;
     },
+
+    listWarehouses: async () => {
+        const response = await api.get('/inventory/warehouses');
+        return response.data.data;
+    },
+    createWarehouse: async (data: any) => {
+        const response = await api.post('/inventory/warehouses', data);
+        return response.data.data;
+    },
+    deleteWarehouse: async (id: string) => {
+        const response = await api.delete(`/inventory/warehouses/${id}`);
+        return response.data.data;
+    },
+
+    // Stock Entries
+    listStockEntries: async (companyId: string) => {
+        const response = await api.get(`/inventory/stock-entries/company/${companyId}`);
+        return response.data.data;
+    },
+    getStockEntry: async (id: string) => {
+        const response = await api.get(`/inventory/stock-entries/${id}`);
+        return response.data.data;
+    },
+    createStockEntry: async (data: any) => {
+        const response = await api.post('/inventory/stock-entries', data);
+        return response.data.data;
+    },
+    submitStockEntry: async (id: string) => {
+        const response = await api.post(`/inventory/stock-entries/${id}/submit`);
+        return response.data.data;
+    },
+
+    // Material Requests
+    listMaterialRequests: async (companyId: string) => {
+        const response = await api.get(`/inventory/material-requests/company/${companyId}`);
+        return response.data.data;
+    },
+    getMaterialRequest: async (id: string) => {
+        const response = await api.get(`/inventory/material-requests/${id}`);
+        return response.data.data;
+    },
+    createMaterialRequest: async (data: any) => {
+        const response = await api.post('/inventory/material-requests', data);
+        return response.data.data;
+    },
+    approveMaterialRequest: async (id: string) => {
+        const response = await api.post(`/inventory/material-requests/${id}/approve`);
+        return response.data.data;
+    },
+
+    // Product Bundles
+    createProductBundle: async (data: any) => {
+        const response = await api.post('/inventory/product-bundles', data);
+        return response.data.data;
+    },
+    getProductBundle: async (parentItemId: string) => {
+        const response = await api.get(`/inventory/product-bundles/parent/${parentItemId}`);
+        return response.data.data;
+    },
+
+    // Item Alternatives
+    addItemAlternative: async (data: any) => {
+        const response = await api.post('/inventory/item-alternatives', data);
+        return response.data.data;
+    },
+    getItemAlternatives: async (itemId: string) => {
+        const response = await api.get(`/inventory/item-alternatives/item/${itemId}`);
+        return response.data.data;
+    },
+
+    // Warehouse Bins & Location Ledger
+    createWarehouseBin: async (data: any) => {
+        const response = await api.post('/inventory/warehouses/bins', data);
+        return response.data.data;
+    },
+    getWarehouseBin: async (id: string) => {
+        const response = await api.get(`/inventory/warehouses/bins/${id}`);
+        return response.data.data;
+    },
+    listWarehouseBins: async (warehouseId: string) => {
+        const response = await api.get(`/inventory/warehouses/${warehouseId}/bins`);
+        return response.data.data;
+    },
+    deleteWarehouseBin: async (id: string) => {
+        const response = await api.delete(`/inventory/warehouses/bins/${id}`);
+        return response.data.data;
+    },
+    listBinBalances: async (warehouseBinId: string) => {
+        const response = await api.get(`/inventory/warehouses/bins/${warehouseBinId}/balances`);
+        return response.data.data;
+    },
+    listBinBalancesByItem: async (itemId: string) => {
+        const response = await api.get(`/inventory/items/${itemId}/bin-balances`);
+        return response.data.data;
+    },
 };
 
 export interface InventoryDocument {
@@ -184,4 +279,62 @@ export interface InventoryAdjustmentItem {
     item_id: string;
     quantity: number;
     unit_price?: number;
+}
+
+export interface StockEntry {
+    id: string;
+    company_id: string;
+    posting_date: string;
+    posting_time: string;
+    stock_entry_type: 'MATERIAL_RECEIPT' | 'MATERIAL_ISSUE' | 'MATERIAL_TRANSFER' | 'REPACK';
+    voucher_no: string;
+    purpose: string | null;
+    source_warehouse_id: string | null;
+    target_warehouse_id: string | null;
+    status: 'DRAFT' | 'SUBMITTED' | 'CANCELLED';
+    remarks: string | null;
+    created_at: string;
+    created_by: string | null;
+    updated_at: string;
+    updated_by: string | null;
+}
+
+export interface StockEntryItem {
+    id: string;
+    stock_entry_id: string;
+    item_id: string;
+    source_warehouse_id: string | null;
+    target_warehouse_id: string | null;
+    qty: number;
+    basic_rate: number;
+    amount: number;
+    batch_no: string | null;
+    serial_no: string | null;
+    created_at: string;
+}
+
+export interface MaterialRequest {
+    id: string;
+    company_id: string;
+    transaction_date: string;
+    material_request_type: 'PURCHASE' | 'MATERIAL_TRANSFER' | 'MATERIAL_ISSUE';
+    voucher_no: string;
+    required_by_date: string | null;
+    status: 'DRAFT' | 'PENDING_APPROVAL' | 'APPROVED' | 'REJECTED' | 'PARTIALLY_ORDERED' | 'ORDERED' | 'PARTIALLY_RECEIVED' | 'RECEIVED' | 'CANCELLED';
+    remarks: string | null;
+    created_at: string;
+    created_by: string | null;
+    updated_at: string;
+    updated_by: string | null;
+}
+
+export interface MaterialRequestItem {
+    id: string;
+    material_request_id: string;
+    item_id: string;
+    warehouse_id: string | null;
+    qty: number;
+    ordered_qty: number;
+    received_qty: number;
+    created_at: string;
 }

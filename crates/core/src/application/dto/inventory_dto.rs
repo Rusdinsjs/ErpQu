@@ -60,3 +60,13 @@ pub struct InventoryAdjustmentItem {
     pub quantity: Decimal, // The adjustment amount (can be positive or negative)
     pub unit_price: Option<Decimal>,
 }
+
+#[derive(Debug, Deserialize)]
+pub struct CreateWarehouseRequest {
+    pub company_id: Uuid,
+    pub parent_id: Option<Uuid>,
+    pub code: String,
+    pub name: String,
+    pub warehouse_type: String,
+    pub is_group: bool,
+}

@@ -126,8 +126,8 @@ SET value = '{
             "iconBg": "bg-gradient-to-br from-orange-500 to-red-400",
             "defaultRoute": "/inventory-items",
             "minLevel": 3,
-            "features": ["Inventory Control", "Inventory Categories", "Stock Opname"],
-            "menuIds": ["inventory-items", "inventory-categories", "stock-opname"],
+            "features": ["Inventory Control", "Inventory Categories", "Stock Opname", "Stock Entry", "Material Request"],
+            "menuIds": ["inventory-items", "inventory-categories", "stock-opname", "stock-entry", "material-request"],
             "order": 9,
             "enabled": true
         },

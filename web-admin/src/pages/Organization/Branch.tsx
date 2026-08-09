@@ -293,11 +293,11 @@ export default function Branch() {
                                 <div className="space-y-4">
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
-                                            <label className="block text-xs font-semibold text-slate-700 mb-1">Kode Cabang *</label>
+                                            <label className="block text-xs font-semibold text-foreground mb-1">Kode Cabang *</label>
                                             <input required value={form.code} onChange={e => f('code', e.target.value)} placeholder="BRANCH-001" className="w-full px-3 py-2 border border-border rounded-lg text-sm bg-background" />
                                         </div>
                                         <div>
-                                            <label className="block text-xs font-semibold text-slate-700 mb-1">Status</label>
+                                            <label className="block text-xs font-semibold text-foreground mb-1">Status</label>
                                             <select value={form.status} onChange={e => f('status', e.target.value)} className="w-full px-3 py-2 border border-border rounded-lg text-sm bg-background">
                                                 <option value="ACTIVE">Aktif</option>
                                                 <option value="INACTIVE">Tidak Aktif</option>
@@ -306,17 +306,17 @@ export default function Branch() {
                                     </div>
 
                                     <div>
-                                        <label className="block text-xs font-semibold text-slate-700 mb-1">Nama Cabang *</label>
+                                        <label className="block text-xs font-semibold text-foreground mb-1">Nama Cabang *</label>
                                         <input required value={form.name} onChange={e => f('name', e.target.value)} placeholder="PT. Contoh — Cabang Surabaya" className="w-full px-3 py-2 border border-border rounded-lg text-sm bg-background" />
                                     </div>
 
                                     <div>
-                                        <label className="block text-xs font-semibold text-slate-700 mb-1">Nama Legal (Sesuai Akta)</label>
+                                        <label className="block text-xs font-semibold text-foreground mb-1">Nama Legal (Sesuai Akta)</label>
                                         <input value={form.legal_name} onChange={e => f('legal_name', e.target.value)} placeholder="PT. Contoh Jaya Abadi — Cabang Surabaya" className="w-full px-3 py-2 border border-border rounded-lg text-sm bg-background" />
                                     </div>
 
                                     <div>
-                                        <label className="block text-xs font-semibold text-slate-700 mb-1">Perusahaan Induk</label>
+                                        <label className="block text-xs font-semibold text-foreground mb-1">Perusahaan Induk</label>
                                         <select value={form.parent_company_id} onChange={e => f('parent_company_id', e.target.value)} className="w-full px-3 py-2 border border-border rounded-lg text-sm bg-background">
                                             <option value="">— Pilih Perusahaan Induk —</option>
                                             {companyOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
@@ -324,28 +324,28 @@ export default function Branch() {
                                     </div>
 
                                     <div>
-                                        <label className="block text-xs font-semibold text-slate-700 mb-1">Alamat</label>
+                                        <label className="block text-xs font-semibold text-foreground mb-1">Alamat</label>
                                         <textarea value={form.address} onChange={e => f('address', e.target.value)} rows={3} placeholder="Jl. Contoh No. 1, Surabaya" className="w-full px-3 py-2 border border-border rounded-lg text-sm bg-background resize-none" />
                                     </div>
 
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
-                                            <label className="block text-xs font-semibold text-slate-700 mb-1">Negara</label>
+                                            <label className="block text-xs font-semibold text-foreground mb-1">Negara</label>
                                             <input value={form.country} onChange={e => f('country', e.target.value)} placeholder="Indonesia" className="w-full px-3 py-2 border border-border rounded-lg text-sm bg-background" />
                                         </div>
                                         <div>
-                                            <label className="block text-xs font-semibold text-slate-700 mb-1">Telepon</label>
+                                            <label className="block text-xs font-semibold text-foreground mb-1">Telepon</label>
                                             <input value={form.phone} onChange={e => f('phone', e.target.value)} placeholder="+62 31 5678900" className="w-full px-3 py-2 border border-border rounded-lg text-sm bg-background" />
                                         </div>
                                     </div>
 
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
-                                            <label className="block text-xs font-semibold text-slate-700 mb-1">Email</label>
+                                            <label className="block text-xs font-semibold text-foreground mb-1">Email</label>
                                             <input type="email" value={form.email} onChange={e => f('email', e.target.value)} placeholder="surabaya@perusahaan.co.id" className="w-full px-3 py-2 border border-border rounded-lg text-sm bg-background" />
                                         </div>
                                         <div>
-                                            <label className="block text-xs font-semibold text-slate-700 mb-1">Website</label>
+                                            <label className="block text-xs font-semibold text-foreground mb-1">Website</label>
                                             <input value={form.website} onChange={e => f('website', e.target.value)} placeholder="https://..." className="w-full px-3 py-2 border border-border rounded-lg text-sm bg-background" />
                                         </div>
                                     </div>
@@ -357,16 +357,16 @@ export default function Branch() {
                                 <div className="space-y-4">
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
-                                            <label className="block text-xs font-semibold text-slate-700 mb-1">NPWP</label>
+                                            <label className="block text-xs font-semibold text-foreground mb-1">NPWP</label>
                                             <input value={form.tax_id} onChange={e => f('tax_id', e.target.value)} placeholder="00.000.000.0-000.000" className="w-full px-3 py-2 border border-border rounded-lg text-sm bg-background" />
                                         </div>
                                         <div>
-                                            <label className="block text-xs font-semibold text-slate-700 mb-1">No. Registrasi / NIB</label>
+                                            <label className="block text-xs font-semibold text-foreground mb-1">No. Registrasi / NIB</label>
                                             <input value={form.registration_no} onChange={e => f('registration_no', e.target.value)} placeholder="1234567890123" className="w-full px-3 py-2 border border-border rounded-lg text-sm bg-background" />
                                         </div>
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-semibold text-slate-700 mb-1">Tanggal Pendirian</label>
+                                        <label className="block text-xs font-semibold text-foreground mb-1">Tanggal Pendirian</label>
                                         <input type="date" value={form.incorporation_date} onChange={e => f('incorporation_date', e.target.value)} className="w-full px-3 py-2 border border-border rounded-lg text-sm bg-background" />
                                     </div>
                                 </div>
@@ -375,26 +375,26 @@ export default function Branch() {
                             {/* Tab: Akta */}
                             {activeTab === 'akta' && (
                                 <div className="space-y-4">
-                                    <div className="flex items-center gap-2 text-slate-900 font-bold text-sm border-b border-slate-200 pb-2">
+                                    <div className="flex items-center gap-2 text-foreground font-bold text-sm border-b border-border pb-2">
                                         <FileText className="w-4 h-4 text-blue-600" />
                                         Akta Pendirian Cabang
                                     </div>
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
-                                            <label className="block text-xs font-semibold text-slate-700 mb-1">No. Akta Pendirian</label>
+                                            <label className="block text-xs font-semibold text-foreground mb-1">No. Akta Pendirian</label>
                                             <input value={form.establishment_deed_no} onChange={e => f('establishment_deed_no', e.target.value)} placeholder="No. 01" className="w-full px-3 py-2 border border-border rounded-lg text-sm bg-background" />
                                         </div>
                                         <div>
-                                            <label className="block text-xs font-semibold text-slate-700 mb-1">Tanggal Akta</label>
+                                            <label className="block text-xs font-semibold text-foreground mb-1">Tanggal Akta</label>
                                             <input type="date" value={form.establishment_deed_date} onChange={e => f('establishment_deed_date', e.target.value)} className="w-full px-3 py-2 border border-border rounded-lg text-sm bg-background" />
                                         </div>
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-semibold text-slate-700 mb-1">Nama Notaris</label>
+                                        <label className="block text-xs font-semibold text-foreground mb-1">Nama Notaris</label>
                                         <input value={form.establishment_notary_name} onChange={e => f('establishment_notary_name', e.target.value)} placeholder="Contoh: Hendra Wijaya, S.H., M.Kn." className="w-full px-3 py-2 border border-border rounded-lg text-sm bg-background" />
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-semibold text-slate-700 mb-1">No. SK Pengesahan Kemenkumham</label>
+                                        <label className="block text-xs font-semibold text-foreground mb-1">No. SK Pengesahan Kemenkumham</label>
                                         <input value={form.establishment_approval_no} onChange={e => f('establishment_approval_no', e.target.value)} placeholder="AHU-0012345.AH.01.01.Tahun 2010" className="w-full px-3 py-2 border border-border rounded-lg text-sm bg-background" />
                                     </div>
                                 </div>

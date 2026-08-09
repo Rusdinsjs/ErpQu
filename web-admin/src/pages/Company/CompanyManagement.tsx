@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Card } from '../../components/ui/Card';
 import { 
     Building2, Plus, Search, Phone, Mail, 
     ChevronRight, ChevronDown, Edit, Trash2, 
@@ -261,8 +262,8 @@ export const CompanyManagement: React.FC = () => {
                             <Building2 className="w-6 h-6" />
                         </div>
                         <div>
-                            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Company Management</h1>
-                            <p className="text-sm text-slate-500">
+                            <h1 className="text-2xl font-bold text-foreground tracking-tight">Company Management</h1>
+                            <p className="text-sm text-muted-foreground">
                                 ERPNext & Frappe Framework Multi-Company Setup, Akta Legalitas & Hierarki Organisasi
                             </p>
                         </div>
@@ -272,7 +273,7 @@ export const CompanyManagement: React.FC = () => {
                 <div className="flex items-center gap-3">
                     <button
                         onClick={() => loadData()}
-                        className="p-2.5 text-slate-600 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors shadow-sm"
+                        className="p-2.5 text-muted-foreground bg-card border border-border rounded-xl hover:bg-muted/30 transition-colors shadow-sm"
                         title="Refresh Data"
                     >
                         <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
@@ -290,69 +291,69 @@ export const CompanyManagement: React.FC = () => {
 
             {/* Stats Dashboard Widgets */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                <Card className="flex items-center justify-between shadow-sm" padding="md">
                     <div>
-                        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Entitas</p>
-                        <h3 className="text-2xl font-bold text-slate-900 mt-1">{totalCompanies}</h3>
-                        <p className="text-xs text-slate-500 mt-0.5">Perusahaan Terdaftar</p>
+                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Total Entitas</p>
+                        <h3 className="text-2xl font-bold text-foreground mt-1">{totalCompanies}</h3>
+                        <p className="text-xs text-muted-foreground mt-0.5">Perusahaan Terdaftar</p>
                     </div>
-                    <div className="p-3 bg-indigo-50 rounded-xl text-indigo-600">
+                    <div className="p-3 bg-indigo-500/10 rounded-xl text-indigo-400">
                         <Building2 className="w-6 h-6" />
                     </div>
-                </div>
+                </Card>
 
-                <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                <Card className="flex items-center justify-between shadow-sm" padding="md">
                     <div>
-                        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Holding Company</p>
-                        <h3 className="text-2xl font-bold text-slate-900 mt-1">{groupCompanies}</h3>
-                        <p className="text-xs text-purple-600 font-medium mt-0.5">Grup Induk (Parent)</p>
+                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Holding Company</p>
+                        <h3 className="text-2xl font-bold text-foreground mt-1">{groupCompanies}</h3>
+                        <p className="text-xs text-purple-400 font-medium mt-0.5">Grup Induk (Parent)</p>
                     </div>
-                    <div className="p-3 bg-purple-50 rounded-xl text-purple-600">
+                    <div className="p-3 bg-purple-500/10 rounded-xl text-purple-400">
                         <GitFork className="w-6 h-6" />
                     </div>
-                </div>
+                </Card>
 
-                <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                <Card className="flex items-center justify-between shadow-sm" padding="md">
                     <div>
-                        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Anak Perusahaan</p>
-                        <h3 className="text-2xl font-bold text-slate-900 mt-1">{operatingCompanies}</h3>
-                        <p className="text-xs text-emerald-600 font-medium mt-0.5">Entitas Operasional</p>
+                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Anak Perusahaan</p>
+                        <h3 className="text-2xl font-bold text-foreground mt-1">{operatingCompanies}</h3>
+                        <p className="text-xs text-emerald-400 font-medium mt-0.5">Entitas Operasional</p>
                     </div>
-                    <div className="p-3 bg-emerald-50 rounded-xl text-emerald-600">
+                    <div className="p-3 bg-emerald-500/10 rounded-xl text-emerald-400">
                         <Layers className="w-6 h-6" />
                     </div>
-                </div>
+                </Card>
 
-                <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                <Card className="flex items-center justify-between shadow-sm" padding="md">
                     <div>
-                        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Legalitas Perusahaan</p>
-                        <h3 className="text-2xl font-bold text-slate-900 mt-1">Akta Resmik</h3>
-                        <p className="text-xs text-amber-600 font-medium mt-0.5">Pendirian & Perubahan</p>
+                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Legalitas Perusahaan</p>
+                        <h3 className="text-2xl font-bold text-foreground mt-1">Akta Resmik</h3>
+                        <p className="text-xs text-amber-400 font-medium mt-0.5">Pendirian & Perubahan</p>
                     </div>
-                    <div className="p-3 bg-amber-50 rounded-xl text-amber-600">
+                    <div className="p-3 bg-amber-500/10 rounded-xl text-amber-400">
                         <ScrollText className="w-6 h-6" />
                     </div>
-                </div>
+                </Card>
             </div>
 
             {/* Filter & View Switcher Bar */}
-            <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="bg-card p-4 rounded-2xl border border-border shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div className="flex items-center gap-3 w-full sm:w-auto">
                     <div className="relative flex-1 sm:w-80">
-                        <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                        <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
                         <input
                             type="text"
                             placeholder="Cari nama, kode, atau NPWP..."
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
+                            className="w-full pl-10 pr-4 py-2 bg-muted/30 border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all"
                         />
                     </div>
 
                     <select
                         value={statusFilter}
                         onChange={(e) => setStatusFilter(e.target.value)}
-                        className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                        className="px-3 py-2 bg-muted/30 border border-border rounded-xl text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
                     >
                         <option value="ALL">Semua Status</option>
                         <option value="ACTIVE">Aktif</option>
@@ -360,13 +361,13 @@ export const CompanyManagement: React.FC = () => {
                     </select>
                 </div>
 
-                <div className="flex items-center bg-slate-100 p-1 rounded-xl w-full sm:w-auto">
+                <div className="flex items-center bg-muted p-1 rounded-xl w-full sm:w-auto">
                     <button
                         onClick={() => setViewMode('grid')}
                         className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                             viewMode === 'grid' 
-                                ? 'bg-white text-indigo-600 shadow-sm' 
-                                : 'text-slate-600 hover:text-slate-900'
+                                ? 'bg-card text-indigo-400 shadow-sm' 
+                                : 'text-muted-foreground hover:text-foreground'
                         }`}
                     >
                         <Layers className="w-3.5 h-3.5" />
@@ -376,8 +377,8 @@ export const CompanyManagement: React.FC = () => {
                         onClick={() => setViewMode('tree')}
                         className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                             viewMode === 'tree' 
-                                ? 'bg-white text-indigo-600 shadow-sm' 
-                                : 'text-slate-600 hover:text-slate-900'
+                                ? 'bg-card text-indigo-400 shadow-sm' 
+                                : 'text-muted-foreground hover:text-foreground'
                         }`}
                     >
                         <GitFork className="w-3.5 h-3.5" />
@@ -388,16 +389,16 @@ export const CompanyManagement: React.FC = () => {
 
             {/* Content Views */}
             {loading ? (
-                <div className="bg-white p-12 rounded-2xl border border-slate-200 text-center">
-                    <RefreshCw className="w-8 h-8 animate-spin mx-auto text-indigo-600 mb-3" />
-                    <p className="text-sm font-medium text-slate-600">Memuat data perusahaan & akta legalitas...</p>
+                <div className="bg-card p-12 rounded-2xl border border-border text-center">
+                    <RefreshCw className="w-8 h-8 animate-spin mx-auto text-indigo-400 mb-3" />
+                    <p className="text-sm font-medium text-muted-foreground">Memuat data perusahaan & akta legalitas...</p>
                 </div>
             ) : viewMode === 'grid' ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                     {companies.map((comp) => (
                         <div 
                             key={comp.id}
-                            className="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all p-5 flex flex-col justify-between relative overflow-hidden group"
+                            className="bg-card rounded-2xl border border-border shadow-sm hover:shadow-md transition-all p-5 flex flex-col justify-between relative overflow-hidden group"
                         >
                             {/* Decorative Accent Header Bar */}
                             <div className={`absolute top-0 left-0 right-0 h-1.5 ${comp.is_group ? 'bg-gradient-to-r from-purple-500 to-indigo-600' : 'bg-gradient-to-r from-indigo-500 to-cyan-500'}`} />
@@ -409,61 +410,61 @@ export const CompanyManagement: React.FC = () => {
                                             <img
                                                 src={getImageUrl(comp.logo_url)}
                                                 alt={comp.name}
-                                                className="w-11 h-11 rounded-xl object-contain bg-slate-50 border border-slate-200 p-1 shrink-0"
+                                                className="w-11 h-11 rounded-xl object-contain bg-muted/30 border border-border p-1 shrink-0"
                                             />
                                         ) : (
                                             <div className={`w-11 h-11 rounded-xl flex items-center justify-center font-bold text-sm tracking-wider shrink-0 ${
                                                 comp.is_group 
-                                                    ? 'bg-purple-100 text-purple-700 border border-purple-200' 
-                                                    : 'bg-indigo-100 text-indigo-700 border border-indigo-200'
+                                                    ? 'bg-purple-500/100/15 text-purple-400 border border-purple-500/20' 
+                                                    : 'bg-indigo-500/100/15 text-indigo-400 border border-indigo-500/20'
                                             }`}>
                                                 {comp.code}
                                             </div>
                                         )}
                                         <div>
-                                            <h4 className="font-bold text-slate-900 line-clamp-1">{comp.name}</h4>
-                                            <p className="text-xs text-slate-500">{comp.legal_name || comp.code}</p>
+                                            <h4 className="font-bold text-foreground line-clamp-1">{comp.name}</h4>
+                                            <p className="text-xs text-muted-foreground">{comp.legal_name || comp.code}</p>
                                         </div>
                                     </div>
 
                                     <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ${
                                         comp.status === 'ACTIVE' 
-                                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' 
-                                            : 'bg-slate-100 text-slate-600 border border-slate-200'
+                                            ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
+                                            : 'bg-muted text-muted-foreground border border-border'
                                     }`}>
-                                        <span className={`w-1.5 h-1.5 rounded-full ${comp.status === 'ACTIVE' ? 'bg-emerald-500' : 'bg-slate-400'}`} />
+                                        <span className={`w-1.5 h-1.5 rounded-full ${comp.status === 'ACTIVE' ? 'bg-emerald-500/100' : 'bg-slate-400'}`} />
                                         {comp.status}
                                     </span>
                                 </div>
 
                                 {comp.is_group && (
-                                    <div className="mb-3 inline-flex items-center gap-1.5 px-2.5 py-1 bg-purple-50 text-purple-700 rounded-lg text-xs font-semibold border border-purple-200">
+                                    <div className="mb-3 inline-flex items-center gap-1.5 px-2.5 py-1 bg-purple-500/10 text-purple-400 rounded-lg text-xs font-semibold border border-purple-500/20">
                                         <GitFork className="w-3.5 h-3.5" />
                                         Grup Induk (Holding)
                                     </div>
                                 )}
 
                                 {comp.parent_company_name && (
-                                    <div className="mb-3 text-xs text-slate-500 flex items-center gap-1.5 bg-slate-50 p-2 rounded-lg border border-slate-100">
-                                        <span className="font-medium text-slate-700">Induk:</span>
-                                        <span className="text-slate-900 font-semibold">{comp.parent_company_name}</span>
+                                    <div className="mb-3 text-xs text-muted-foreground flex items-center gap-1.5 bg-muted/30 p-2 rounded-lg border border-border/60">
+                                        <span className="font-medium text-foreground">Induk:</span>
+                                        <span className="text-foreground font-semibold">{comp.parent_company_name}</span>
                                     </div>
                                 )}
 
-                                <div className="space-y-2 text-xs text-slate-600 my-3 pt-2 border-t border-slate-100">
+                                <div className="space-y-2 text-xs text-muted-foreground my-3 pt-2 border-t border-border/60">
                                     {comp.establishment_deed_no && (
-                                        <div className="p-2.5 bg-amber-50/60 border border-amber-200/60 rounded-xl space-y-1">
-                                            <div className="flex items-center gap-1.5 font-bold text-amber-900">
-                                                <ScrollText className="w-3.5 h-3.5 text-amber-600" />
+                                        <div className="p-2.5 bg-amber-500/100/10 border border-amber-500/20 rounded-xl space-y-1">
+                                            <div className="flex items-center gap-1.5 font-bold text-amber-400">
+                                                <ScrollText className="w-3.5 h-3.5 text-amber-400" />
                                                 <span>Akta Pendirian: {comp.establishment_deed_no}</span>
                                             </div>
                                             {comp.establishment_notary_name && (
-                                                <p className="text-[11px] text-amber-800">
+                                                <p className="text-[11px] text-amber-300">
                                                     Notaris: {comp.establishment_notary_name}
                                                 </p>
                                             )}
                                             {comp.establishment_approval_no && (
-                                                <p className="text-[10px] text-amber-700 truncate">
+                                                <p className="text-[10px] text-amber-500 truncate">
                                                     SK Kemenkumham: {comp.establishment_approval_no}
                                                 </p>
                                             )}
@@ -472,29 +473,29 @@ export const CompanyManagement: React.FC = () => {
 
                                     {comp.tax_id && (
                                         <div className="flex items-center justify-between pt-1">
-                                            <span className="text-slate-400">NPWP / Tax ID:</span>
-                                            <span className="font-medium text-slate-800">{comp.tax_id}</span>
+                                            <span className="text-muted-foreground">NPWP / Tax ID:</span>
+                                            <span className="font-medium text-foreground">{comp.tax_id}</span>
                                         </div>
                                     )}
                                     {comp.domain && (
                                         <div className="flex items-center justify-between">
-                                            <span className="text-slate-400">Sektor / Industri:</span>
-                                            <span className="font-medium text-slate-800">{comp.domain}</span>
+                                            <span className="text-muted-foreground">Sektor / Industri:</span>
+                                            <span className="font-medium text-foreground">{comp.domain}</span>
                                         </div>
                                     )}
                                     <div className="flex items-center justify-between">
-                                        <span className="text-slate-400">Mata Uang:</span>
-                                        <span className="font-semibold text-indigo-600">{comp.base_currency}</span>
+                                        <span className="text-muted-foreground">Mata Uang:</span>
+                                        <span className="font-semibold text-indigo-400">{comp.base_currency}</span>
                                     </div>
                                     {comp.email && (
-                                        <div className="flex items-center gap-2 text-slate-600 pt-1">
-                                            <Mail className="w-3.5 h-3.5 text-slate-400" />
+                                        <div className="flex items-center gap-2 text-muted-foreground pt-1">
+                                            <Mail className="w-3.5 h-3.5 text-muted-foreground" />
                                             <span className="truncate">{comp.email}</span>
                                         </div>
                                     )}
                                     {comp.phone && (
-                                        <div className="flex items-center gap-2 text-slate-600">
-                                            <Phone className="w-3.5 h-3.5 text-slate-400" />
+                                        <div className="flex items-center gap-2 text-muted-foreground">
+                                            <Phone className="w-3.5 h-3.5 text-muted-foreground" />
                                             <span>{comp.phone}</span>
                                         </div>
                                     )}
@@ -502,17 +503,17 @@ export const CompanyManagement: React.FC = () => {
                             </div>
 
                             {/* Actions */}
-                            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+                            <div className="flex items-center justify-end gap-2 pt-3 border-t border-border/60">
                                 <button
                                     onClick={() => handleOpenEditModal(comp)}
-                                    className="p-2 text-slate-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                                    className="p-2 text-muted-foreground hover:text-indigo-400 hover:bg-indigo-500/100/100/10 rounded-lg transition-colors"
                                     title="Edit Perusahaan & Akta"
                                 >
                                     <Edit className="w-4 h-4" />
                                 </button>
                                 <button
                                     onClick={() => handleDelete(comp.id, comp.name)}
-                                    className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                                    className="p-2 text-muted-foreground hover:text-rose-600 hover:bg-rose-500/100/10 rounded-lg transition-colors"
                                     title="Hapus Perusahaan"
                                 >
                                     <Trash2 className="w-4 h-4" />
@@ -523,13 +524,13 @@ export const CompanyManagement: React.FC = () => {
                 </div>
             ) : (
                 /* Frappe Hierarchy Tree View */
-                <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6">
+                <div className="bg-card p-6 rounded-2xl border border-border shadow-sm space-y-6">
                     <div>
-                        <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                            <GitFork className="w-5 h-5 text-indigo-600" />
+                        <h3 className="text-base font-bold text-foreground flex items-center gap-2">
+                            <GitFork className="w-5 h-5 text-indigo-400" />
                             Struktur Pohon Perusahaan (Frappe Tree Structure)
                         </h3>
-                        <p className="text-xs text-slate-500 mt-1">
+                        <p className="text-xs text-muted-foreground mt-1">
                             Visualisasi hierarki entitas dari Holding Company hingga ke Anak Perusahaan Operasional.
                         </p>
                     </div>
@@ -545,7 +546,7 @@ export const CompanyManagement: React.FC = () => {
             {/* Modal Dialog Form - Frappe Company DocType */}
             {isModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
-                    <div className="bg-white w-full max-w-3xl rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
+                    <div className="bg-card w-full max-w-3xl rounded-2xl shadow-2xl border border-border overflow-hidden flex flex-col max-h-[90vh]">
                         {/* Modal Header */}
                         <div className="px-6 py-4 bg-gradient-to-r from-slate-900 to-indigo-950 text-white flex items-center justify-between">
                             <div className="flex items-center gap-3">
@@ -554,25 +555,25 @@ export const CompanyManagement: React.FC = () => {
                                     <h3 className="font-bold text-base">
                                         {editingCompany ? 'Edit Perusahaan & Legalitas Akta' : 'Tambah Perusahaan Baru'}
                                     </h3>
-                                    <p className="text-xs text-slate-400">Kelola Profil, Akta Pendirian, & Multiple Akta Perubahan</p>
+                                    <p className="text-xs text-muted-foreground">Kelola Profil, Akta Pendirian, & Multiple Akta Perubahan</p>
                                 </div>
                             </div>
                             <button
                                 onClick={() => setIsModalOpen(false)}
-                                className="p-1.5 text-slate-400 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                                className="p-1.5 text-muted-foreground hover:text-white hover:bg-card/10 rounded-lg transition-colors"
                             >
                                 <X className="w-5 h-5" />
                             </button>
                         </div>
 
                         {/* Modal Tabs */}
-                        <div className="flex border-b border-slate-200 bg-slate-50 px-6 pt-3 gap-2 overflow-x-auto">
+                        <div className="flex border-b border-border bg-muted/30 px-6 pt-3 gap-2 overflow-x-auto">
                             <button
                                 onClick={() => setActiveTab('general')}
                                 className={`pb-3 px-3 text-xs font-bold border-b-2 whitespace-nowrap transition-all ${
                                     activeTab === 'general'
-                                        ? 'border-indigo-600 text-indigo-600'
-                                        : 'border-transparent text-slate-500 hover:text-slate-900'
+                                        ? 'border-indigo-600 text-indigo-400'
+                                        : 'border-transparent text-muted-foreground hover:text-foreground'
                                 }`}
                             >
                                 🏢 Profil Utama
@@ -581,8 +582,8 @@ export const CompanyManagement: React.FC = () => {
                                 onClick={() => setActiveTab('legal')}
                                 className={`pb-3 px-3 text-xs font-bold border-b-2 whitespace-nowrap transition-all ${
                                     activeTab === 'legal'
-                                        ? 'border-indigo-600 text-indigo-600'
-                                        : 'border-transparent text-slate-500 hover:text-slate-900'
+                                        ? 'border-indigo-600 text-indigo-400'
+                                        : 'border-transparent text-muted-foreground hover:text-foreground'
                                 }`}
                             >
                                 📜 Akta & Legalitas
@@ -591,8 +592,8 @@ export const CompanyManagement: React.FC = () => {
                                 onClick={() => setActiveTab('contact')}
                                 className={`pb-3 px-3 text-xs font-bold border-b-2 whitespace-nowrap transition-all ${
                                     activeTab === 'contact'
-                                        ? 'border-indigo-600 text-indigo-600'
-                                        : 'border-transparent text-slate-500 hover:text-slate-900'
+                                        ? 'border-indigo-600 text-indigo-400'
+                                        : 'border-transparent text-muted-foreground hover:text-foreground'
                                 }`}
                             >
                                 📍 Alamat & Kontak
@@ -601,8 +602,8 @@ export const CompanyManagement: React.FC = () => {
                                 onClick={() => setActiveTab('finance')}
                                 className={`pb-3 px-3 text-xs font-bold border-b-2 whitespace-nowrap transition-all ${
                                     activeTab === 'finance'
-                                        ? 'border-indigo-600 text-indigo-600'
-                                        : 'border-transparent text-slate-500 hover:text-slate-900'
+                                        ? 'border-indigo-600 text-indigo-400'
+                                        : 'border-transparent text-muted-foreground hover:text-foreground'
                                 }`}
                             >
                                 💳 Keuangan
@@ -614,15 +615,15 @@ export const CompanyManagement: React.FC = () => {
                             {activeTab === 'general' && (
                                 <div className="space-y-4">
                                     {/* Logo Perusahaan */}
-                                    <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-200 space-y-2">
-                                        <label className="block text-xs font-semibold text-slate-700">Logo Perusahaan</label>
+                                    <div className="bg-muted/30 p-3.5 rounded-2xl border border-border space-y-2">
+                                        <label className="block text-xs font-semibold text-foreground">Logo Perusahaan</label>
                                         <div className="flex items-center gap-4">
                                             {formData.logo_url ? (
                                                 <div className="relative group shrink-0">
                                                     <img
                                                         src={getImageUrl(formData.logo_url)}
                                                         alt="Logo Preview"
-                                                        className="w-16 h-16 rounded-xl object-contain border border-slate-300 bg-white p-1 shadow-sm"
+                                                        className="w-16 h-16 rounded-xl object-contain border border-border bg-card p-1 shadow-sm"
                                                     />
                                                     <button
                                                         type="button"
@@ -634,7 +635,7 @@ export const CompanyManagement: React.FC = () => {
                                                     </button>
                                                 </div>
                                             ) : (
-                                                <div className="w-16 h-16 rounded-xl border-2 border-dashed border-slate-300 flex flex-col items-center justify-center text-slate-400 bg-white shrink-0">
+                                                <div className="w-16 h-16 rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center text-muted-foreground bg-card shrink-0">
                                                     <Building2 className="w-6 h-6" />
                                                     <span className="text-[9px] mt-0.5">No Logo</span>
                                                 </div>
@@ -661,14 +662,14 @@ export const CompanyManagement: React.FC = () => {
                                                             }
                                                         }
                                                     }}
-                                                    className="block w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer"
+                                                    className="block w-full text-xs text-muted-foreground file:mr-3 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-indigo-500/10 file:text-indigo-400 hover:file:bg-indigo-500/100/15 cursor-pointer"
                                                 />
                                                 <input
                                                     type="text"
                                                     placeholder="Atau masukkan URL logo (https://...)"
                                                     value={formData.logo_url || ''}
                                                     onChange={(e) => setFormData({ ...formData, logo_url: e.target.value })}
-                                                    className="w-full px-3 py-1.5 text-xs border border-slate-300 rounded-xl bg-white focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                                                    className="w-full px-3 py-1.5 text-xs border border-border rounded-xl bg-card focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                                                 />
                                             </div>
                                         </div>
@@ -676,7 +677,7 @@ export const CompanyManagement: React.FC = () => {
 
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
-                                            <label className="block text-xs font-semibold text-slate-700 mb-1">
+                                            <label className="block text-xs font-semibold text-foreground mb-1">
                                                 Kode Singkatan (Abbreviation) <span className="text-rose-500">*</span>
                                             </label>
                                             <input
@@ -685,12 +686,12 @@ export const CompanyManagement: React.FC = () => {
                                                 placeholder="Contoh: SJS-RENT"
                                                 value={formData.code}
                                                 onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-                                                className="w-full px-3.5 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                                                className="w-full px-3.5 py-2 border border-border rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                                             />
                                         </div>
 
                                         <div>
-                                            <label className="block text-xs font-semibold text-slate-700 mb-1">
+                                            <label className="block text-xs font-semibold text-foreground mb-1">
                                                 Nama Perusahaan <span className="text-rose-500">*</span>
                                             </label>
                                             <input
@@ -699,42 +700,42 @@ export const CompanyManagement: React.FC = () => {
                                                 placeholder="Contoh: PT Sanjaya Heavy Fleet"
                                                 value={formData.name}
                                                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                                className="w-full px-3.5 py-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
+                                                className="w-full px-3.5 py-2 border border-border rounded-xl focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                                             />
                                         </div>
                                     </div>
 
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
-                                            <label className="block text-xs font-semibold text-slate-700 mb-1">Nama Legal (Legal Entity)</label>
+                                            <label className="block text-xs font-semibold text-foreground mb-1">Nama Legal (Legal Entity)</label>
                                             <input
                                                 type="text"
                                                 placeholder="Contoh: PT Sanjaya Fleet Services Tbk"
                                                 value={formData.legal_name}
                                                 onChange={(e) => setFormData({ ...formData, legal_name: e.target.value })}
-                                                className="w-full px-3.5 py-2 border border-slate-300 rounded-xl"
+                                                className="w-full px-3.5 py-2 border border-border rounded-xl"
                                             />
                                         </div>
 
                                         <div>
-                                            <label className="block text-xs font-semibold text-slate-700 mb-1">NPWP / Tax ID</label>
+                                            <label className="block text-xs font-semibold text-foreground mb-1">NPWP / Tax ID</label>
                                             <input
                                                 type="text"
                                                 placeholder="01.234.567.8-012.000"
                                                 value={formData.tax_id}
                                                 onChange={(e) => setFormData({ ...formData, tax_id: e.target.value })}
-                                                className="w-full px-3.5 py-2 border border-slate-300 rounded-xl"
+                                                className="w-full px-3.5 py-2 border border-border rounded-xl"
                                             />
                                         </div>
                                     </div>
 
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
-                                            <label className="block text-xs font-semibold text-slate-700 mb-1">Perusahaan Induk (Parent Company)</label>
+                                            <label className="block text-xs font-semibold text-foreground mb-1">Perusahaan Induk (Parent Company)</label>
                                             <select
                                                 value={formData.parent_company_id || ''}
                                                 onChange={(e) => setFormData({ ...formData, parent_company_id: e.target.value })}
-                                                className="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-slate-700"
+                                                className="w-full px-3.5 py-2 border border-border rounded-xl text-foreground"
                                             >
                                                 <option value="">-- Tanpa Induk (Top Level Holding) --</option>
                                                 {companies
@@ -747,24 +748,24 @@ export const CompanyManagement: React.FC = () => {
                                         </div>
 
                                         <div>
-                                            <label className="block text-xs font-semibold text-slate-700 mb-1">Sektor / Industri Domain</label>
+                                            <label className="block text-xs font-semibold text-foreground mb-1">Sektor / Industri Domain</label>
                                             <input
                                                 type="text"
                                                 placeholder="Contoh: Heavy Equipment & Fleet"
                                                 value={formData.domain}
                                                 onChange={(e) => setFormData({ ...formData, domain: e.target.value })}
-                                                className="w-full px-3.5 py-2 border border-slate-300 rounded-xl"
+                                                className="w-full px-3.5 py-2 border border-border rounded-xl"
                                             />
                                         </div>
                                     </div>
 
-                                    <div className="flex items-center gap-3 p-3 bg-purple-50 border border-purple-200 rounded-xl">
+                                    <div className="flex items-center gap-3 p-3 bg-purple-500/10 border border-purple-500/20 rounded-xl">
                                         <input
                                             type="checkbox"
                                             id="is_group"
                                             checked={formData.is_group}
                                             onChange={(e) => setFormData({ ...formData, is_group: e.target.checked })}
-                                            className="w-4 h-4 text-purple-600 rounded focus:ring-purple-500"
+                                            className="w-4 h-4 text-purple-400 rounded focus:ring-purple-500"
                                         />
                                         <label htmlFor="is_group" className="text-xs font-semibold text-purple-900 cursor-pointer">
                                             Jadikan sebagai Group Holding (Memiliki Anak Perusahaan)
@@ -777,53 +778,53 @@ export const CompanyManagement: React.FC = () => {
                             {activeTab === 'legal' && (
                                 <div className="space-y-6">
                                     {/* Bagian 1: Akta Pendirian Perusahaan */}
-                                    <div className="p-4 bg-amber-50/50 border border-amber-200 rounded-xl space-y-3">
-                                        <div className="flex items-center gap-2 text-amber-900 font-bold border-b border-amber-200/80 pb-2">
-                                            <ScrollText className="w-4 h-4 text-amber-600" />
+                                    <div className="p-4 bg-amber-500/10/50 border border-amber-200 rounded-xl space-y-3">
+                                        <div className="flex items-center gap-2 text-amber-400 font-bold border-b border-amber-200/80 pb-2">
+                                            <ScrollText className="w-4 h-4 text-amber-400" />
                                             <span>Akta Pendirian Perusahaan (Deed of Establishment)</span>
                                         </div>
 
                                         <div className="grid grid-cols-2 gap-3">
                                             <div>
-                                                <label className="block text-xs font-semibold text-slate-700 mb-1">No. Akta Pendirian</label>
+                                                <label className="block text-xs font-semibold text-foreground mb-1">No. Akta Pendirian</label>
                                                 <input
                                                     type="text"
                                                     placeholder="Contoh: No. 12"
                                                     value={formData.establishment_deed_no || ''}
                                                     onChange={(e) => setFormData({ ...formData, establishment_deed_no: e.target.value })}
-                                                    className="w-full px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs"
+                                                    className="w-full px-3 py-1.5 bg-card border border-border rounded-lg text-xs"
                                                 />
                                             </div>
                                             <div>
-                                                <label className="block text-xs font-semibold text-slate-700 mb-1">Tanggal Akta Pendirian</label>
+                                                <label className="block text-xs font-semibold text-foreground mb-1">Tanggal Akta Pendirian</label>
                                                 <input
                                                     type="date"
                                                     value={formData.establishment_deed_date || ''}
                                                     onChange={(e) => setFormData({ ...formData, establishment_deed_date: e.target.value })}
-                                                    className="w-full px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs"
+                                                    className="w-full px-3 py-1.5 bg-card border border-border rounded-lg text-xs"
                                                 />
                                             </div>
                                         </div>
 
                                         <div className="grid grid-cols-2 gap-3">
                                             <div>
-                                                <label className="block text-xs font-semibold text-slate-700 mb-1">Nama Notaris</label>
+                                                <label className="block text-xs font-semibold text-foreground mb-1">Nama Notaris</label>
                                                 <input
                                                     type="text"
                                                     placeholder="Contoh: Hendra Wijaya, S.H., M.Kn."
                                                     value={formData.establishment_notary_name || ''}
                                                     onChange={(e) => setFormData({ ...formData, establishment_notary_name: e.target.value })}
-                                                    className="w-full px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs"
+                                                    className="w-full px-3 py-1.5 bg-card border border-border rounded-lg text-xs"
                                                 />
                                             </div>
                                             <div>
-                                                <label className="block text-xs font-semibold text-slate-700 mb-1">No. SK Pengesahan Kemenkumham</label>
+                                                <label className="block text-xs font-semibold text-foreground mb-1">No. SK Pengesahan Kemenkumham</label>
                                                 <input
                                                     type="text"
                                                     placeholder="AHU-0012345.AH.01.01.Tahun 2010"
                                                     value={formData.establishment_approval_no || ''}
                                                     onChange={(e) => setFormData({ ...formData, establishment_approval_no: e.target.value })}
-                                                    className="w-full px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-xs"
+                                                    className="w-full px-3 py-1.5 bg-card border border-border rounded-lg text-xs"
                                                 />
                                             </div>
                                         </div>
@@ -831,18 +832,18 @@ export const CompanyManagement: React.FC = () => {
 
                                     {/* Bagian 2: Akta Perubahan Perusahaan (Multiple) */}
                                     <div className="space-y-3 pt-2">
-                                        <div className="flex items-center justify-between border-b border-slate-200 pb-2">
-                                            <div className="flex items-center gap-2 text-slate-900 font-bold">
-                                                <FileText className="w-4 h-4 text-indigo-600" />
+                                        <div className="flex items-center justify-between border-b border-border pb-2">
+                                            <div className="flex items-center gap-2 text-foreground font-bold">
+                                                <FileText className="w-4 h-4 text-indigo-400" />
                                                 <span>Akta Perubahan Perusahaan (Deeds of Amendment)</span>
-                                                <span className="px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded-full text-[10px]">
+                                                <span className="px-2 py-0.5 bg-indigo-500/100/15 text-indigo-400 rounded-full text-[10px]">
                                                     {formData.amendment_deeds?.length || 0} Akta
                                                 </span>
                                             </div>
                                             <button
                                                 type="button"
                                                 onClick={handleAddAmendmentDeed}
-                                                className="flex items-center gap-1 px-3 py-1 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-lg font-semibold text-xs transition-colors"
+                                                className="flex items-center gap-1 px-3 py-1 bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/100/100/15 rounded-lg font-semibold text-xs transition-colors"
                                             >
                                                 <Plus className="w-3.5 h-3.5" />
                                                 Tambah Akta Perubahan
@@ -850,13 +851,13 @@ export const CompanyManagement: React.FC = () => {
                                         </div>
 
                                         {(!formData.amendment_deeds || formData.amendment_deeds.length === 0) ? (
-                                            <div className="text-center py-6 bg-slate-50 border border-dashed border-slate-200 rounded-xl text-xs text-slate-500">
+                                            <div className="text-center py-6 bg-muted/30 border border-dashed border-border rounded-xl text-xs text-muted-foreground">
                                                 Belum ada Akta Perubahan. Klik "Tambah Akta Perubahan" untuk menambahkan akta baru.
                                             </div>
                                         ) : (
                                             <div className="space-y-3 max-h-60 overflow-y-auto pr-1">
                                                 {formData.amendment_deeds.map((deed, index) => (
-                                                    <div key={index} className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-2 relative group">
+                                                    <div key={index} className="p-3.5 bg-muted/30 border border-border rounded-xl space-y-2 relative group">
                                                         <div className="flex items-center justify-between">
                                                             <span className="font-bold text-xs text-indigo-900">
                                                                 Akta Perubahan #{index + 1}
@@ -864,7 +865,7 @@ export const CompanyManagement: React.FC = () => {
                                                             <button
                                                                 type="button"
                                                                 onClick={() => handleRemoveAmendmentDeed(index)}
-                                                                className="text-slate-400 hover:text-rose-600 p-1 rounded transition-colors"
+                                                                className="text-muted-foreground hover:text-rose-600 p-1 rounded transition-colors"
                                                                 title="Hapus Akta Perubahan Ini"
                                                             >
                                                                 <Trash2 className="w-3.5 h-3.5" />
@@ -873,57 +874,57 @@ export const CompanyManagement: React.FC = () => {
 
                                                         <div className="grid grid-cols-2 gap-2">
                                                             <div>
-                                                                <label className="block text-[11px] font-medium text-slate-600 mb-0.5">No. Akta Perubahan</label>
+                                                                <label className="block text-[11px] font-medium text-muted-foreground mb-0.5">No. Akta Perubahan</label>
                                                                 <input
                                                                     type="text"
                                                                     placeholder="No. 45"
                                                                     value={deed.deed_no}
                                                                     onChange={(e) => handleUpdateAmendmentDeed(index, 'deed_no', e.target.value)}
-                                                                    className="w-full px-2.5 py-1 bg-white border border-slate-300 rounded text-xs"
+                                                                    className="w-full px-2.5 py-1 bg-card border border-border rounded text-xs"
                                                                 />
                                                             </div>
                                                             <div>
-                                                                <label className="block text-[11px] font-medium text-slate-600 mb-0.5">Tanggal Akta</label>
+                                                                <label className="block text-[11px] font-medium text-muted-foreground mb-0.5">Tanggal Akta</label>
                                                                 <input
                                                                     type="date"
                                                                     value={deed.deed_date || ''}
                                                                     onChange={(e) => handleUpdateAmendmentDeed(index, 'deed_date', e.target.value)}
-                                                                    className="w-full px-2.5 py-1 bg-white border border-slate-300 rounded text-xs"
+                                                                    className="w-full px-2.5 py-1 bg-card border border-border rounded text-xs"
                                                                 />
                                                             </div>
                                                         </div>
 
                                                         <div className="grid grid-cols-2 gap-2">
                                                             <div>
-                                                                <label className="block text-[11px] font-medium text-slate-600 mb-0.5">Nama Notaris</label>
+                                                                <label className="block text-[11px] font-medium text-muted-foreground mb-0.5">Nama Notaris</label>
                                                                 <input
                                                                     type="text"
                                                                     placeholder="Hendra Wijaya, S.H."
                                                                     value={deed.notary_name || ''}
                                                                     onChange={(e) => handleUpdateAmendmentDeed(index, 'notary_name', e.target.value)}
-                                                                    className="w-full px-2.5 py-1 bg-white border border-slate-300 rounded text-xs"
+                                                                    className="w-full px-2.5 py-1 bg-card border border-border rounded text-xs"
                                                                 />
                                                             </div>
                                                             <div>
-                                                                <label className="block text-[11px] font-medium text-slate-600 mb-0.5">No. Pengesahan Kemenkumham</label>
+                                                                <label className="block text-[11px] font-medium text-muted-foreground mb-0.5">No. Pengesahan Kemenkumham</label>
                                                                 <input
                                                                     type="text"
                                                                     placeholder="AHU-0098765..."
                                                                     value={deed.approval_no || ''}
                                                                     onChange={(e) => handleUpdateAmendmentDeed(index, 'approval_no', e.target.value)}
-                                                                    className="w-full px-2.5 py-1 bg-white border border-slate-300 rounded text-xs"
+                                                                    className="w-full px-2.5 py-1 bg-card border border-border rounded text-xs"
                                                                 />
                                                             </div>
                                                         </div>
 
                                                         <div>
-                                                            <label className="block text-[11px] font-medium text-slate-600 mb-0.5">Perubahan / Keterangan</label>
+                                                            <label className="block text-[11px] font-medium text-muted-foreground mb-0.5">Perubahan / Keterangan</label>
                                                             <input
                                                                 type="text"
                                                                 placeholder="Perubahan susunan direksi, modal disetor, KBLI..."
                                                                 value={deed.description || ''}
                                                                 onChange={(e) => handleUpdateAmendmentDeed(index, 'description', e.target.value)}
-                                                                className="w-full px-2.5 py-1 bg-white border border-slate-300 rounded text-xs"
+                                                                className="w-full px-2.5 py-1 bg-card border border-border rounded text-xs"
                                                             />
                                                         </div>
                                                     </div>
@@ -937,59 +938,59 @@ export const CompanyManagement: React.FC = () => {
                             {activeTab === 'contact' && (
                                 <div className="space-y-4">
                                     <div>
-                                        <label className="block text-xs font-semibold text-slate-700 mb-1">Alamat Lengkap</label>
+                                        <label className="block text-xs font-semibold text-foreground mb-1">Alamat Lengkap</label>
                                         <textarea
                                             rows={3}
                                             placeholder="Alamat kantor pusat..."
                                             value={formData.address}
                                             onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                                            className="w-full px-3.5 py-2 border border-slate-300 rounded-xl"
+                                            className="w-full px-3.5 py-2 border border-border rounded-xl"
                                         />
                                     </div>
 
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
-                                            <label className="block text-xs font-semibold text-slate-700 mb-1">Telepon</label>
+                                            <label className="block text-xs font-semibold text-foreground mb-1">Telepon</label>
                                             <input
                                                 type="text"
                                                 placeholder="+62-21-555-0100"
                                                 value={formData.phone}
                                                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                                                className="w-full px-3.5 py-2 border border-slate-300 rounded-xl"
+                                                className="w-full px-3.5 py-2 border border-border rounded-xl"
                                             />
                                         </div>
 
                                         <div>
-                                            <label className="block text-xs font-semibold text-slate-700 mb-1">Email Resmi</label>
+                                            <label className="block text-xs font-semibold text-foreground mb-1">Email Resmi</label>
                                             <input
                                                 type="email"
                                                 placeholder="info@sanjayagroup.co.id"
                                                 value={formData.email}
                                                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                                                className="w-full px-3.5 py-2 border border-slate-300 rounded-xl"
+                                                className="w-full px-3.5 py-2 border border-border rounded-xl"
                                             />
                                         </div>
                                     </div>
 
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
-                                            <label className="block text-xs font-semibold text-slate-700 mb-1">Website URL</label>
+                                            <label className="block text-xs font-semibold text-foreground mb-1">Website URL</label>
                                             <input
                                                 type="url"
                                                 placeholder="https://sanjayagroup.co.id"
                                                 value={formData.website}
                                                 onChange={(e) => setFormData({ ...formData, website: e.target.value })}
-                                                className="w-full px-3.5 py-2 border border-slate-300 rounded-xl"
+                                                className="w-full px-3.5 py-2 border border-border rounded-xl"
                                             />
                                         </div>
 
                                         <div>
-                                            <label className="block text-xs font-semibold text-slate-700 mb-1">Negara Domisili</label>
+                                            <label className="block text-xs font-semibold text-foreground mb-1">Negara Domisili</label>
                                             <input
                                                 type="text"
                                                 value={formData.country}
                                                 onChange={(e) => setFormData({ ...formData, country: e.target.value })}
-                                                className="w-full px-3.5 py-2 border border-slate-300 rounded-xl bg-slate-50"
+                                                className="w-full px-3.5 py-2 border border-border rounded-xl bg-muted/30"
                                             />
                                         </div>
                                     </div>
@@ -1000,11 +1001,11 @@ export const CompanyManagement: React.FC = () => {
                                 <div className="space-y-4">
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
-                                            <label className="block text-xs font-semibold text-slate-700 mb-1">Mata Uang Utama (Base Currency)</label>
+                                            <label className="block text-xs font-semibold text-foreground mb-1">Mata Uang Utama (Base Currency)</label>
                                             <select
                                                 value={formData.base_currency}
                                                 onChange={(e) => setFormData({ ...formData, base_currency: e.target.value })}
-                                                className="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-slate-700"
+                                                className="w-full px-3.5 py-2 border border-border rounded-xl text-foreground"
                                             >
                                                 <option value="IDR">IDR (Rupiah Indonesia)</option>
                                                 <option value="USD">USD (US Dollar)</option>
@@ -1014,11 +1015,11 @@ export const CompanyManagement: React.FC = () => {
                                         </div>
 
                                         <div>
-                                            <label className="block text-xs font-semibold text-slate-700 mb-1">Bulan Mulai Tahun Buku</label>
+                                            <label className="block text-xs font-semibold text-foreground mb-1">Bulan Mulai Tahun Buku</label>
                                             <select
                                                 value={formData.fiscal_year_start_month}
                                                 onChange={(e) => setFormData({ ...formData, fiscal_year_start_month: parseInt(e.target.value) })}
-                                                className="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-slate-700"
+                                                className="w-full px-3.5 py-2 border border-border rounded-xl text-foreground"
                                             >
                                                 <option value={1}>Januari (Default)</option>
                                                 <option value={4}>April</option>
@@ -1029,11 +1030,11 @@ export const CompanyManagement: React.FC = () => {
                                     </div>
 
                                     <div>
-                                        <label className="block text-xs font-semibold text-slate-700 mb-1">Status Operasional</label>
+                                        <label className="block text-xs font-semibold text-foreground mb-1">Status Operasional</label>
                                         <select
                                             value={formData.status}
                                             onChange={(e) => setFormData({ ...formData, status: e.target.value as 'ACTIVE' | 'INACTIVE' })}
-                                            className="w-full px-3.5 py-2 border border-slate-300 rounded-xl text-slate-700"
+                                            className="w-full px-3.5 py-2 border border-border rounded-xl text-foreground"
                                         >
                                             <option value="ACTIVE">ACTIVE (Aktif Beroperasi)</option>
                                             <option value="INACTIVE">INACTIVE (Nonaktif / Ditutup)</option>
@@ -1043,11 +1044,11 @@ export const CompanyManagement: React.FC = () => {
                             )}
 
                             {/* Modal Footer Buttons */}
-                            <div className="pt-4 border-t border-slate-200 flex items-center justify-end gap-3">
+                            <div className="pt-4 border-t border-border flex items-center justify-end gap-3">
                                 <button
                                     type="button"
                                     onClick={() => setIsModalOpen(false)}
-                                    className="px-4 py-2 text-slate-600 hover:bg-slate-100 rounded-xl font-medium text-xs transition-colors"
+                                    className="px-4 py-2 text-muted-foreground hover:bg-muted rounded-xl font-medium text-xs transition-colors"
                                 >
                                     Batal
                                 </button>
@@ -1071,33 +1072,33 @@ const TreeNodeCard: React.FC<{ node: CompanyTreeNode; onEdit?: (comp: Company) =
     const [isOpen, setIsOpen] = useState(true);
 
     return (
-        <div className="border border-slate-200 rounded-xl p-4 bg-slate-50/50 space-y-3">
+        <div className="border border-border rounded-xl p-4 bg-muted/10 space-y-3">
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                     {node.children.length > 0 && (
                         <button 
                             onClick={() => setIsOpen(!isOpen)} 
-                            className="p-1 hover:bg-slate-200 rounded text-slate-600"
+                            className="p-1 hover:bg-muted rounded text-muted-foreground"
                         >
                             {isOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                         </button>
                     )}
                     
                     <div className={`px-2.5 py-1 rounded-lg text-xs font-bold ${
-                        node.is_group ? 'bg-purple-100 text-purple-700' : 'bg-indigo-100 text-indigo-700'
+                        node.is_group ? 'bg-purple-500/100/15 text-purple-400' : 'bg-indigo-500/100/15 text-indigo-400'
                     }`}>
                         {node.code}
                     </div>
 
                     <div>
-                        <h4 className="text-sm font-bold text-slate-900">{node.name}</h4>
-                        {node.tax_id && <p className="text-xs text-slate-500">NPWP: {node.tax_id}</p>}
+                        <h4 className="text-sm font-bold text-foreground">{node.name}</h4>
+                        {node.tax_id && <p className="text-xs text-muted-foreground">NPWP: {node.tax_id}</p>}
                     </div>
                 </div>
 
                 <div className="flex items-center gap-2">
                     <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                        node.status === 'ACTIVE' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-200 text-slate-600'
+                        node.status === 'ACTIVE' ? 'bg-emerald-500/100/15 text-emerald-400' : 'bg-muted text-muted-foreground'
                     }`}>
                         {node.status}
                     </span>
@@ -1105,7 +1106,7 @@ const TreeNodeCard: React.FC<{ node: CompanyTreeNode; onEdit?: (comp: Company) =
             </div>
 
             {isOpen && node.children.length > 0 && (
-                <div className="pl-6 border-l-2 border-indigo-200 space-y-3 mt-3">
+                <div className="pl-6 border-l-2 border-indigo-500/20 space-y-3 mt-3">
                     {node.children.map((child) => (
                         <TreeNodeCard key={child.id} node={child} onEdit={onEdit} />
                     ))}

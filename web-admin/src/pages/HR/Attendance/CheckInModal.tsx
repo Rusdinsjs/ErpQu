@@ -79,7 +79,7 @@ export const CheckInModal = ({ isOpen, onClose, onConfirm, type, isLoading }: Ch
         >
             <div className="space-y-4">
                 {/* Location Status */}
-                <div className={`p-4 rounded-lg flex items-center justify-between ${location ? 'bg-green-50 text-green-700' : 'bg-gray-50 text-gray-500'
+                <div className={`p-4 rounded-lg flex items-center justify-between ${location ? 'bg-green-50 text-green-700' : 'bg-muted/30 text-muted-foreground'
                     }`}>
                     <div className="flex items-center gap-2">
                         <MapPin className="h-5 w-5" />
@@ -95,7 +95,7 @@ export const CheckInModal = ({ isOpen, onClose, onConfirm, type, isLoading }: Ch
                 </div>
 
                 {/* Photo Placeholder */}
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 flex flex-col items-center justify-center text-gray-400 bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer">
+                <div className="border-2 border-dashed border-border rounded-lg p-6 flex flex-col items-center justify-center text-muted-foreground bg-muted/30 hover:bg-muted transition-colors cursor-pointer">
                     <Camera className="h-8 w-8 mb-2" />
                     <span className="text-xs">Take Photo (Simulated)</span>
                 </div>

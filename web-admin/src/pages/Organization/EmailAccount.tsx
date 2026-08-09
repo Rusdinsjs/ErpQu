@@ -191,7 +191,7 @@ export default function EmailAccount() {
                                     </TableTd>
                                     <TableTd>
                                         {a.connected === true ? (
-                                            <span className="flex items-center gap-1 text-xs text-emerald-600"><CheckCircle className="w-3.5 h-3.5" /> Terhubung</span>
+                                            <span className="flex items-center gap-1 text-xs text-emerald-400"><CheckCircle className="w-3.5 h-3.5" /> Terhubung</span>
                                         ) : a.connected === false ? (
                                             <span className="flex items-center gap-1 text-xs text-red-500"><XCircle className="w-3.5 h-3.5" /> Gagal</span>
                                         ) : (
@@ -238,7 +238,7 @@ export default function EmailAccount() {
                         <form onSubmit={e => { e.preventDefault(); saveMutation.mutate(form); }} className="flex-1 overflow-y-auto p-6 space-y-5">
                             {/* Service Type */}
                             <div>
-                                <label className="block text-xs font-semibold text-slate-700 mb-2">Jenis Layanan</label>
+                                <label className="block text-xs font-semibold text-foreground mb-2">Jenis Layanan</label>
                                 <div className="flex gap-2">
                                     {['gmail', 'outlook', 'custom'].map(t => (
                                         <button key={t} type="button" onClick={() => applyPreset(t)}
@@ -251,39 +251,39 @@ export default function EmailAccount() {
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-xs font-semibold text-slate-700 mb-1">Nama Akun *</label>
+                                    <label className="block text-xs font-semibold text-foreground mb-1">Nama Akun *</label>
                                     <input required value={form.name} onChange={e => f('name', e.target.value)} placeholder="Email Notifikasi" className="w-full px-3 py-2 border border-border rounded-lg text-sm bg-background" />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-semibold text-slate-700 mb-1">Nama Pengirim</label>
+                                    <label className="block text-xs font-semibold text-foreground mb-1">Nama Pengirim</label>
                                     <input value={form.default_sender_name} onChange={e => f('default_sender_name', e.target.value)} placeholder="ERP System" className="w-full px-3 py-2 border border-border rounded-lg text-sm bg-background" />
                                 </div>
                             </div>
 
                             <div>
-                                <label className="block text-xs font-semibold text-slate-700 mb-1">Alamat Email *</label>
+                                <label className="block text-xs font-semibold text-foreground mb-1">Alamat Email *</label>
                                 <input required type="email" value={form.email_address} onChange={e => f('email_address', e.target.value)} placeholder="noreply@perusahaan.co.id" className="w-full px-3 py-2 border border-border rounded-lg text-sm bg-background" />
                             </div>
 
                             {/* SMTP */}
                             <div className="border border-border rounded-xl p-4 space-y-3">
-                                <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wide">SMTP (Keluar)</h4>
+                                <h4 className="text-xs font-bold text-foreground uppercase tracking-wide">SMTP (Keluar)</h4>
                                 <div className="grid grid-cols-3 gap-3">
                                     <div className="col-span-2">
-                                        <label className="block text-[11px] text-slate-600 mb-1">Host</label>
+                                        <label className="block text-[11px] text-muted-foreground mb-1">Host</label>
                                         <input value={form.smtp_host} onChange={e => f('smtp_host', e.target.value)} placeholder="smtp.gmail.com" className="w-full px-2.5 py-1.5 border border-border rounded text-xs bg-background" />
                                     </div>
                                     <div>
-                                        <label className="block text-[11px] text-slate-600 mb-1">Port</label>
+                                        <label className="block text-[11px] text-muted-foreground mb-1">Port</label>
                                         <input type="number" value={form.smtp_port} onChange={e => f('smtp_port', Number(e.target.value))} className="w-full px-2.5 py-1.5 border border-border rounded text-xs bg-background" />
                                     </div>
                                 </div>
                                 <div>
-                                    <label className="block text-[11px] text-slate-600 mb-1">Username</label>
+                                    <label className="block text-[11px] text-muted-foreground mb-1">Username</label>
                                     <input value={form.smtp_username} onChange={e => f('smtp_username', e.target.value)} placeholder="user@gmail.com" className="w-full px-2.5 py-1.5 border border-border rounded text-xs bg-background" />
                                 </div>
                                 <div className="relative">
-                                    <label className="block text-[11px] text-slate-600 mb-1">Password / App Password</label>
+                                    <label className="block text-[11px] text-muted-foreground mb-1">Password / App Password</label>
                                     <input type={showSmtpPwd ? 'text' : 'password'} value={form.smtp_password} onChange={e => f('smtp_password', e.target.value)} placeholder={editing ? '(tidak diubah)' : 'App password...'} className="w-full px-2.5 py-1.5 pr-9 border border-border rounded text-xs bg-background" />
                                     <button type="button" onClick={() => setShowSmtpPwd(p => !p)} className="absolute right-2 top-[22px] text-muted-foreground">
                                         {showSmtpPwd ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
@@ -297,19 +297,19 @@ export default function EmailAccount() {
 
                             {/* IMAP */}
                             <div className="border border-border rounded-xl p-4 space-y-3">
-                                <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wide">IMAP (Masuk)</h4>
+                                <h4 className="text-xs font-bold text-foreground uppercase tracking-wide">IMAP (Masuk)</h4>
                                 <div className="grid grid-cols-3 gap-3">
                                     <div className="col-span-2">
-                                        <label className="block text-[11px] text-slate-600 mb-1">Host</label>
+                                        <label className="block text-[11px] text-muted-foreground mb-1">Host</label>
                                         <input value={form.imap_host} onChange={e => f('imap_host', e.target.value)} placeholder="imap.gmail.com" className="w-full px-2.5 py-1.5 border border-border rounded text-xs bg-background" />
                                     </div>
                                     <div>
-                                        <label className="block text-[11px] text-slate-600 mb-1">Port</label>
+                                        <label className="block text-[11px] text-muted-foreground mb-1">Port</label>
                                         <input type="number" value={form.imap_port} onChange={e => f('imap_port', Number(e.target.value))} className="w-full px-2.5 py-1.5 border border-border rounded text-xs bg-background" />
                                     </div>
                                 </div>
                                 <div className="relative">
-                                    <label className="block text-[11px] text-slate-600 mb-1">Password</label>
+                                    <label className="block text-[11px] text-muted-foreground mb-1">Password</label>
                                     <input type={showImapPwd ? 'text' : 'password'} value={form.imap_password} onChange={e => f('imap_password', e.target.value)} placeholder={editing ? '(tidak diubah)' : 'Password...'} className="w-full px-2.5 py-1.5 pr-9 border border-border rounded text-xs bg-background" />
                                     <button type="button" onClick={() => setShowImapPwd(p => !p)} className="absolute right-2 top-[22px] text-muted-foreground">
                                         {showImapPwd ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}

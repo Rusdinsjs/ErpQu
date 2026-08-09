@@ -167,7 +167,7 @@ export default function Departments() {
                     key={node.id}
                     label={
                         <span className="flex items-center justify-between w-full">
-                            <span>{node.name} <span className="text-slate-500 text-xs">({node.code})</span></span>
+                            <span>{node.name} <span className="text-muted-foreground text-xs">({node.code})</span></span>
                         </span>
                     }
                     hasChildren={hasChildren}
@@ -224,7 +224,7 @@ export default function Departments() {
                                     {renderTree(treeData)}
                                 </div>
                             ) : !isLoading && (
-                                <p className="text-slate-500 text-center py-8">No departments found. Create one to get started.</p>
+                                <p className="text-muted-foreground text-center py-8">No departments found. Create one to get started.</p>
                             )}
                         </div>
                     </Card>

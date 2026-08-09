@@ -37,6 +37,19 @@ export default function InventoryDetail({ itemId }: { itemId?: string }) {
         enabled: !!id,
     });
 
+    // Fetch bin balances
+    const { data: binBalances = [], isLoading: balancesLoading } = useQuery({
+        queryKey: ['item-bin-balances', id],
+        queryFn: () => inventoryApi.listBinBalancesByItem(id!),
+        enabled: !!id,
+    });
+
+    // Fetch warehouses
+    const { data: warehouses = [] } = useQuery({
+        queryKey: ['warehouses'],
+        queryFn: () => inventoryApi.listWarehouses(),
+    });
+
     if (isLoading) return <LoadingOverlay visible={true} />;
 
     if (error || !item) {
@@ -92,6 +105,7 @@ export default function InventoryDetail({ itemId }: { itemId?: string }) {
             <Tabs defaultValue="details" className="w-full">
                 <TabsList className="mb-4">
                     <TabsTrigger value="details">General Info</TabsTrigger>
+                    <TabsTrigger value="bins">Bin Locations</TabsTrigger>
                     <TabsTrigger value="visuals">Visuals (4-Sided)</TabsTrigger>
                     <TabsTrigger value="history">Stock History</TabsTrigger>
                 </TabsList>
@@ -197,6 +211,48 @@ export default function InventoryDetail({ itemId }: { itemId?: string }) {
                                             </td>
                                         </tr>
                                     ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </Card>
+                </TabsContent>
+
+                <TabsContent value="bins">
+                    <Card padding="none">
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left">
+                                <thead className="bg-muted/50 border-b border-border">
+                                    <tr>
+                                        <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">Warehouse</th>
+                                        <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">Bin Code</th>
+                                        <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-muted-foreground text-right">Actual Quantity</th>
+                                        <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">Last Updated</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-border">
+                                    {balancesLoading ? (
+                                        <tr><td colSpan={4} className="p-8 text-center text-muted-foreground">Loading...</td></tr>
+                                    ) : binBalances.length === 0 ? (
+                                        <tr><td colSpan={4} className="p-8 text-center text-muted-foreground">This item is not located in any specific bin.</td></tr>
+                                    ) : binBalances.map((bal: any) => {
+                                        const wh = warehouses.find((w: any) => w.id === bal.warehouse_id);
+                                        return (
+                                            <tr key={bal.id} className="hover:bg-muted/30 transition-colors">
+                                                <td className="px-6 py-4 text-sm font-semibold text-foreground">
+                                                    {wh ? wh.name : 'Unknown Warehouse'}
+                                                </td>
+                                                <td className="px-6 py-4 text-sm font-mono text-cyan-400">
+                                                    {bal.bin_code || 'No Bin'}
+                                                </td>
+                                                <td className="px-6 py-4 text-sm font-bold text-right text-foreground">
+                                                    {parseFloat(bal.actual_qty).toLocaleString()} units
+                                                </td>
+                                                <td className="px-6 py-4 text-sm text-muted-foreground">
+                                                    {format(new Date(bal.updated_at), 'dd MMM yyyy HH:mm')}
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
                                 </tbody>
                             </table>
                         </div>

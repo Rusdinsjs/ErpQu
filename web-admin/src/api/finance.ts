@@ -149,11 +149,11 @@ export const financeApi = {
     // Sales Shipments
     listSalesShipments: async (): Promise<any> => {
         const response = await api.get('/finance/sales/shipments');
-        return response.data;
+        return response.data.data;
     },
     createSalesShipment: async (data: any): Promise<any> => {
         const response = await api.post('/finance/sales/shipments', data);
-        return response.data;
+        return response.data.data;
     },
 
     // Purchase Quotes
@@ -179,11 +179,31 @@ export const financeApi = {
     // Purchase Shipments
     listPurchaseShipments: async (): Promise<any> => {
         const response = await api.get('/finance/purchase/shipments');
-        return response.data;
+        return response.data.data;
     },
     createPurchaseShipment: async (data: any): Promise<any> => {
         const response = await api.post('/finance/purchase/shipments', data);
-        return response.data;
+        return response.data.data;
+    },
+
+    // Purchase Receipts (GRN)
+    listPurchaseReceipts: async (companyId: string): Promise<any[]> => {
+        const response = await api.get(`/finance/purchase/receipts/company/${companyId}`);
+        return response.data.data;
+    },
+    createPurchaseReceipt: async (data: any): Promise<any> => {
+        const response = await api.post('/finance/purchase/receipts', data);
+        return response.data.data;
+    },
+    submitPurchaseReceipt: async (id: string): Promise<any> => {
+        const response = await api.post(`/finance/purchase/receipts/${id}/submit`);
+        return response.data.data;
+    },
+
+    // Sales Shipments Submit
+    submitSalesShipment: async (id: string): Promise<any> => {
+        const response = await api.post(`/finance/sales/shipments/${id}/submit`);
+        return response.data.data;
     },
 
     createCashBankTransaction: async (data: CreateCashBankTransactionRequest): Promise<any> => {

@@ -117,11 +117,11 @@ const ContractAnalytics: React.FC = () => {
                         onClick={() => navigate('/contracts')}
                         className="p-2 hover:bg-gray-800/50 rounded-xl transition-colors"
                     >
-                        <ArrowLeft size={24} className="text-gray-400" />
+                        <ArrowLeft size={24} className="text-muted-foreground" />
                     </button>
                     <div>
                         <h1 className="text-3xl font-bold text-white tracking-tight">Contract Analytics</h1>
-                        <p className="text-gray-400 mt-1">Comprehensive insights and performance metrics</p>
+                        <p className="text-muted-foreground mt-1">Comprehensive insights and performance metrics</p>
                     </div>
                 </div>
             </div>
@@ -131,7 +131,7 @@ const ContractAnalytics: React.FC = () => {
                 {/* Total Value */}
                 <div className="bg-gray-800/40 border border-white/5 rounded-2xl p-6 backdrop-blur-sm">
                     <div className="flex items-center justify-between mb-4">
-                        <span className="text-sm font-medium text-gray-400">Total Contract Value</span>
+                        <span className="text-sm font-medium text-muted-foreground">Total Contract Value</span>
                         <div className="p-2 bg-blue-500/10 rounded-xl">
                             <DollarSign size={20} className="text-blue-400" />
                         </div>
@@ -148,13 +148,13 @@ const ContractAnalytics: React.FC = () => {
                 {/* Total Contracts */}
                 <div className="bg-gray-800/40 border border-white/5 rounded-2xl p-6 backdrop-blur-sm">
                     <div className="flex items-center justify-between mb-4">
-                        <span className="text-sm font-medium text-gray-400">Total Contracts</span>
+                        <span className="text-sm font-medium text-muted-foreground">Total Contracts</span>
                         <div className="p-2 bg-green-500/10 rounded-xl">
                             <FileText size={20} className="text-green-400" />
                         </div>
                     </div>
                     <h3 className="text-3xl font-bold text-white mb-2">{analytics.totalContracts}</h3>
-                    <div className="text-sm text-gray-400">
+                    <div className="text-sm text-muted-foreground">
                         {analytics.activeContracts} active contracts
                     </div>
                 </div>
@@ -162,21 +162,21 @@ const ContractAnalytics: React.FC = () => {
                 {/* Average Revenue */}
                 <div className="bg-gray-800/40 border border-white/5 rounded-2xl p-6 backdrop-blur-sm">
                     <div className="flex items-center justify-between mb-4">
-                        <span className="text-sm font-medium text-gray-400">Avg Revenue/Contract</span>
-                        <div className="p-2 bg-purple-500/10 rounded-xl">
+                        <span className="text-sm font-medium text-muted-foreground">Avg Revenue/Contract</span>
+                        <div className="p-2 bg-purple-500/100/10 rounded-xl">
                             <TrendingUp size={20} className="text-purple-400" />
                         </div>
                     </div>
                     <h3 className="text-3xl font-bold text-white mb-2">
                         Rp {(analytics.avgRevenue / 1000000).toFixed(1)}M
                     </h3>
-                    <div className="text-sm text-gray-400">Per contract average</div>
+                    <div className="text-sm text-muted-foreground">Per contract average</div>
                 </div>
 
                 {/* Expiring Soon */}
                 <div className="bg-gray-800/40 border border-white/5 rounded-2xl p-6 backdrop-blur-sm">
                     <div className="flex items-center justify-between mb-4">
-                        <span className="text-sm font-medium text-gray-400">Expiring (30 days)</span>
+                        <span className="text-sm font-medium text-muted-foreground">Expiring (30 days)</span>
                         <div className="p-2 bg-yellow-500/10 rounded-xl">
                             <AlertCircle size={20} className="text-yellow-400" />
                         </div>

@@ -225,7 +225,7 @@ export default function Dashboard() {
     return (
         <div className="p-8 space-y-8 relative">
             <div className="absolute top-0 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-[120px] pointer-events-none" />
-            <div className="absolute top-1/3 left-0 w-80 h-80 bg-emerald-500/10 rounded-full blur-[100px] pointer-events-none" />
+            <div className="absolute top-1/3 left-0 w-80 h-80 bg-emerald-500/100/10 rounded-full blur-[100px] pointer-events-none" />
 
             <div className="flex justify-between items-end relative z-10">
                 <div>
@@ -369,7 +369,7 @@ export default function Dashboard() {
                         <div className="space-y-5">
                             {showFinancials && (
                                 <div className="flex items-center gap-4 group">
-                                    <div className="p-2.5 bg-indigo-500/10 rounded-xl group-hover:scale-110 transition-transform">
+                                    <div className="p-2.5 bg-indigo-500/100/10 rounded-xl group-hover:scale-110 transition-transform">
                                         <ClipboardCheck size={20} className="text-indigo-400" />
                                     </div>
                                     <span className="flex-1 text-sm font-bold text-muted-foreground group-hover:text-foreground transition-colors">Pending Approvals</span>
@@ -377,18 +377,18 @@ export default function Dashboard() {
                                 </div>
                             )}
                             <div className="flex items-center gap-4 group">
-                                <div className="p-2.5 bg-purple-500/10 rounded-xl group-hover:scale-110 transition-transform">
+                                <div className="p-2.5 bg-purple-500/100/10 rounded-xl group-hover:scale-110 transition-transform">
                                     <ClipboardCheck size={20} className="text-purple-400" />
                                 </div>
                                 <span className="flex-1 text-sm font-bold text-muted-foreground group-hover:text-foreground transition-colors">Pending Loans</span>
                                 <span className="font-black text-xl text-foreground font-mono bg-muted/50 px-3 py-1 rounded-lg">{stats?.loans?.pending_approval || 0}</span>
                             </div>
                             <div className="flex items-center gap-4 group">
-                                <div className="p-2.5 bg-amber-500/10 rounded-xl group-hover:scale-110 transition-transform">
+                                <div className="p-2.5 bg-amber-500/100/10 rounded-xl group-hover:scale-110 transition-transform">
                                     <Clock size={20} className="text-amber-400" />
                                 </div>
                                 <span className="flex-1 text-sm font-bold text-muted-foreground group-hover:text-amber-500 transition-colors">Overdue Loans</span>
-                                <span className="font-black text-xl text-amber-500 font-mono bg-amber-500/10 px-3 py-1 rounded-lg border border-amber-500/20">{stats?.loans?.overdue || 0}</span>
+                                <span className="font-black text-xl text-amber-500 font-mono bg-amber-500/100/10 px-3 py-1 rounded-lg border border-amber-500/20">{stats?.loans?.overdue || 0}</span>
                             </div>
                             <div className="flex items-center gap-4 group">
                                 <div className="p-2.5 bg-rose-500/10 rounded-xl group-hover:scale-110 transition-transform">

@@ -120,7 +120,7 @@ export default function LeaveDashboard() {
             <div className="flex justify-between items-center">
                 <div>
                     <h1 className="text-2xl font-bold text-white">Cuti & Izin</h1>
-                    <p className="text-slate-400">Manage leave requests and approvals</p>
+                    <p className="text-muted-foreground">Manage leave requests and approvals</p>
                 </div>
                 <Button onClick={() => setIsRequestModalOpen(true)}>
                     <Plus size={16} className="mr-2" />
@@ -156,7 +156,7 @@ export default function LeaveDashboard() {
                                     <TableBody>
                                         {myLeaves?.length === 0 ? (
                                             <TableRow>
-                                                <TableTd colSpan={7} className="text-center py-8 text-slate-500">
+                                                <TableTd colSpan={7} className="text-center py-8 text-muted-foreground">
                                                     No leave requests found
                                                 </TableTd>
                                             </TableRow>
@@ -200,7 +200,7 @@ export default function LeaveDashboard() {
                                     <TableBody>
                                         {pendingLeaves?.length === 0 ? (
                                             <TableRow>
-                                                <TableTd colSpan={5} className="text-center py-8 text-slate-500">
+                                                <TableTd colSpan={5} className="text-center py-8 text-muted-foreground">
                                                     No pending approvals
                                                 </TableTd>
                                             </TableRow>
@@ -214,7 +214,7 @@ export default function LeaveDashboard() {
                                                     <TableTd>
                                                         <div className="flex flex-col text-xs">
                                                             <span>{dayjs(leave.start_date).format('DD MMM')} - {dayjs(leave.end_date).format('DD MMM YYYY')}</span>
-                                                            <span className="text-slate-500">({leave.days_count} Days)</span>
+                                                            <span className="text-muted-foreground">({leave.days_count} Days)</span>
                                                         </div>
                                                     </TableTd>
                                                     <TableTd>{leave.reason || '-'}</TableTd>
@@ -285,7 +285,7 @@ export default function LeaveDashboard() {
 
                     <div className="space-y-1.5">
                         <label className="text-sm font-medium text-slate-300">Total Hari</label>
-                        <div className="p-2 border border-slate-800 rounded-md bg-slate-900 text-slate-400">
+                        <div className="p-2 border border-slate-800 rounded-md bg-slate-900 text-muted-foreground">
                             {calculateDays(formData.start_date, formData.end_date)} Hari
                         </div>
                     </div>

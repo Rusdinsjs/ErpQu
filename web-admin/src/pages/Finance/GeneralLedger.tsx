@@ -84,7 +84,7 @@ export default function GeneralLedger() {
 
             {selectedAccountId ? (
                 <div className="bg-card/40 backdrop-blur-xl border border-border rounded-3xl overflow-hidden shadow-2xl relative">
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/5 rounded-full blur-[60px] pointer-events-none" />
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/100/5 rounded-full blur-[60px] pointer-events-none" />
                     
                     <div className="overflow-x-auto relative z-10">
                         <Table className="border-none rounded-none shadow-none">
@@ -156,7 +156,7 @@ export default function GeneralLedger() {
                 </div>
             ) : (
                 <div className="bg-card/20 backdrop-blur-sm border-2 border-dashed border-border rounded-3xl p-24 flex flex-col items-center justify-center text-center shadow-inner group">
-                    <div className="w-24 h-24 bg-muted/50 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500 group-hover:bg-amber-500/10">
+                    <div className="w-24 h-24 bg-muted/50 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500 group-hover:bg-amber-500/100/10">
                         <ArrowLeftRight className="text-muted-foreground group-hover:text-amber-500 transition-colors" size={40} />
                     </div>
                     <h3 className="text-xl font-bold text-foreground mb-2 uppercase tracking-widest">Select an Account</h3>

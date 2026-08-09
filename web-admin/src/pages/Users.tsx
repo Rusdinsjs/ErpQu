@@ -287,7 +287,7 @@ export default function Users() {
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-2xl font-bold text-white">User Operations</h1>
-                    <p className="text-xs text-slate-400 mt-1">Manage system user accounts and their linked employee profiles.</p>
+                    <p className="text-xs text-muted-foreground mt-1">Manage system user accounts and their linked employee profiles.</p>
                 </div>
             </div>
 
@@ -327,7 +327,7 @@ export default function Users() {
                         />
                     </div>
                     <div className="flex items-center pb-2">
-                        <span className="text-sm text-slate-400 font-medium">
+                        <span className="text-sm text-muted-foreground font-medium">
                             Showing {filteredUsers.length} of {users.length} users
                         </span>
                     </div>
@@ -375,7 +375,7 @@ export default function Users() {
                                          })()}
                                     </TableTd>
                                     <TableTd>
-                                        <span className="text-sm text-slate-400">
+                                        <span className="text-sm text-muted-foreground">
                                             {getAccessScope(user.role_code)}
                                         </span>
                                         <div className="mt-1 flex flex-wrap gap-1">
@@ -391,26 +391,26 @@ export default function Users() {
                                          <Badge variant={user.is_active ? 'success' : 'danger'}>
                                              {user.is_active ? 'Allowed' : 'Denied'}
                                          </Badge>
-                                         <p className="text-xs text-slate-400 mt-1">
+                                         <p className="text-xs text-muted-foreground mt-1">
                                              {user.last_login_at ? new Date(user.last_login_at).toLocaleString('id-ID') : 'Belum pernah login'}
                                          </p>
                                      </TableTd>
                                     <TableTd>
                                         {user.employee_name ? (
                                             <div className="flex items-center gap-2">
-                                                <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 shrink-0">
+                                                <div className="p-1.5 rounded-lg bg-emerald-500/100/10 text-emerald-400 shrink-0">
                                                     <UserCheck size={16} />
                                                 </div>
                                                 <div>
                                                     <p className="text-sm font-semibold text-white">{user.employee_name}</p>
                                                     {user.employee_nik && (
-                                                        <p className="text-xs text-slate-400 font-mono">NIK: {user.employee_nik}</p>
+                                                        <p className="text-xs text-muted-foreground font-mono">NIK: {user.employee_nik}</p>
                                                     )}
                                                 </div>
                                             </div>
                                         ) : (
                                             <div className="flex items-center gap-2">
-                                                <span className="text-xs text-slate-500 italic">Not Linked</span>
+                                                <span className="text-xs text-muted-foreground italic">Not Linked</span>
                                                 <button
                                                     onClick={() => openEditModal(user)}
                                                     className="text-xs text-cyan-400 hover:text-cyan-300 hover:underline font-medium flex items-center gap-1 ml-1"
@@ -547,7 +547,7 @@ export default function Users() {
                             )}
                             <div className="flex-1 min-w-0">
                                 <h3 className="text-lg font-bold text-white truncate">{selectedUser.name}</h3>
-                                <p className="text-sm text-slate-400 truncate">{selectedUser.email}</p>
+                                <p className="text-sm text-muted-foreground truncate">{selectedUser.email}</p>
                                 <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                                     <Badge variant={getRoleBadge(selectedUser.role_level)}>
                                         {getRoleLabel(selectedUser)}
@@ -562,39 +562,39 @@ export default function Users() {
                         {/* Details Grid */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                             <div className="p-3.5 rounded-lg bg-slate-950/40 border border-slate-800/80">
-                                <span className="text-xs text-slate-400 font-medium uppercase tracking-wider block mb-1">Role & Access Level</span>
+                                <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider block mb-1">Role & Access Level</span>
                                 <p className="text-sm font-semibold text-white">{getAccessScope(selectedUser.role_code)}</p>
                             </div>
 
                             <div className="p-3.5 rounded-lg bg-slate-950/40 border border-slate-800/80">
-                                <span className="text-xs text-slate-400 font-medium uppercase tracking-wider block mb-1">Department Scope</span>
+                                <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider block mb-1">Department Scope</span>
                                 {selectedUser.department ? (
                                     <Badge variant="info">Dept: {selectedUser.department}</Badge>
                                 ) : (
-                                    <span className="text-sm text-slate-400 italic">All Departments (Unrestricted)</span>
+                                    <span className="text-sm text-muted-foreground italic">All Departments (Unrestricted)</span>
                                 )}
                             </div>
 
                             <div className="p-3.5 rounded-lg bg-slate-950/40 border border-slate-800/80">
-                                <span className="text-xs text-slate-400 font-medium uppercase tracking-wider block mb-1">Asset Group Scope</span>
+                                <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider block mb-1">Asset Group Scope</span>
                                 {selectedUser.allowed_asset_group ? (
                                     <Badge variant="warning">Asset: {selectedUser.allowed_asset_group}</Badge>
                                 ) : (
-                                    <span className="text-sm text-slate-400 italic">Full Access (Unrestricted)</span>
+                                    <span className="text-sm text-muted-foreground italic">Full Access (Unrestricted)</span>
                                 )}
                             </div>
 
                             <div className="p-3.5 rounded-lg bg-slate-950/40 border border-slate-800/80">
-                                <span className="text-xs text-slate-400 font-medium uppercase tracking-wider block mb-1">Linked Employee Profile</span>
+                                <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider block mb-1">Linked Employee Profile</span>
                                 {selectedUser.employee_name ? (
                                     <div>
                                         <p className="text-sm font-semibold text-emerald-400">{selectedUser.employee_name}</p>
                                         {selectedUser.employee_nik && (
-                                            <p className="text-xs text-slate-400 font-mono mt-0.5">NIK: {selectedUser.employee_nik}</p>
+                                            <p className="text-xs text-muted-foreground font-mono mt-0.5">NIK: {selectedUser.employee_nik}</p>
                                         )}
                                     </div>
                                 ) : (
-                                    <span className="text-sm text-slate-500 italic">No Employee Linked</span>
+                                    <span className="text-sm text-muted-foreground italic">No Employee Linked</span>
                                 )}
                             </div>
                         </div>

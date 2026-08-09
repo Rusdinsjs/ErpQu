@@ -398,5 +398,14 @@ mod tests {
 
         // 2. Tenant B context accessing Tenant A resource -> BLOCKED
         assert!(ctx_tenant_b.enforce_boundary(company_a1.tenant_id).is_err());
+
+        // 3. Cross-company access checks
+        let company_a2_id = Uuid::new_v4();
+        // Accessing resource within same company -> ALLOWED
+        assert!(ctx_tenant_a.enforce_company_boundary(Some(company_a1.id)).is_ok());
+        // Accessing resource in different company -> BLOCKED
+        assert!(ctx_tenant_a.enforce_company_boundary(Some(company_a2_id)).is_err());
+        // Accessing global/shared tenant resource (company_id is None) -> ALLOWED
+        assert!(ctx_tenant_a.enforce_company_boundary(None).is_ok());
     }
 }

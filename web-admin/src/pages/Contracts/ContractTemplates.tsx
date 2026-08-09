@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { contractTemplateApi } from '../../api/contractTemplate';
 import type { ContractTemplate, CreateContractTemplateRequest, UpdateContractTemplateRequest } from '../../types/contractTemplate';
 import { Plus, Edit2, Trash2, Eye, X, Save } from 'lucide-react';
+import { Card, Modal, Button, Input, Textarea } from '../../components/ui';
 
 export default function ContractTemplates() {
     const [templates, setTemplates] = useState<ContractTemplate[]>([]);
@@ -126,20 +127,20 @@ export default function ContractTemplates() {
                     <h1 className="text-3xl font-bold text-foreground">Contract Templates</h1>
                     <p className="text-muted-foreground mt-1">Manage reusable contract templates</p>
                 </div>
-                <button
+                <Button
                     onClick={handleCreate}
-                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    leftIcon={<Plus size={16} />}
                 >
-                    <Plus /> Create Template
-                </button>
+                    Create Template
+                </Button>
             </div>
 
             {/* Templates Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {templates.map((template) => (
-                    <div
+                    <Card
                         key={template.id}
-                        className="bg-card rounded-lg shadow-md p-6 border border-border hover:shadow-lg transition-shadow"
+                        className="hover:shadow-lg transition-shadow"
                     >
                         <div className="flex justify-between items-start mb-4">
                             <div className="flex-1">
@@ -164,34 +165,37 @@ export default function ContractTemplates() {
                             </div>
                         </div>
 
-                        <div className="flex gap-2">
-                            <button
+                        <div className="flex gap-2 mt-6">
+                            <Button
+                                variant="secondary"
                                 onClick={() => handlePreview(template)}
-                                className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-muted text-foreground rounded hover:bg-muted/80 transition-colors border border-border"
+                                className="flex-1"
                             >
-                                <Eye size={16} /> Preview
-                            </button>
-                            <button
+                                <Eye size={16} className="mr-2" /> Preview
+                            </Button>
+                            <Button
+                                variant="outline"
                                 onClick={() => handleEdit(template)}
-                                className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-blue-600/10 text-blue-400 rounded hover:bg-blue-600/20 transition-colors border border-blue-600/20"
+                                className="flex-1 text-blue-500 hover:text-blue-600 hover:bg-blue-500/10"
                             >
-                                <Edit2 size={16} /> Edit
-                            </button>
-                            <button
+                                <Edit2 size={16} className="mr-2" /> Edit
+                            </Button>
+                            <Button
+                                variant="danger"
                                 onClick={() => handleDelete(template.id)}
-                                className="px-3 py-2 bg-red-600/10 text-red-500 rounded hover:bg-red-600/20 transition-colors border border-red-600/20"
                             >
                                 <Trash2 size={16} />
-                            </button>
+                            </Button>
                         </div>
 
-                        <button
+                        <Button
+                            variant="outline"
                             onClick={() => handleToggleActive(template)}
-                            className="w-full mt-3 px-3 py-2 text-sm border border-border rounded text-muted-foreground hover:bg-muted transition-colors"
+                            className="w-full mt-3 text-sm text-muted-foreground hover:text-foreground"
                         >
                             {template.is_active ? 'Deactivate' : 'Activate'}
-                        </button>
-                    </div>
+                        </Button>
+                    </Card>
                 ))}
             </div>
 
@@ -203,158 +207,106 @@ export default function ContractTemplates() {
             )}
 
             {/* Create/Edit Modal */}
-            {showModal && (
-                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="bg-card rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto border border-border">
-                        <div className="sticky top-0 bg-card border-b border-border px-6 py-4 flex justify-between items-center z-10">
-                            <h2 className="text-2xl font-bold text-foreground">
-                                {editingTemplate ? 'Edit Template' : 'Create Template'}
-                            </h2>
-                            <button
-                                onClick={() => setShowModal(false)}
-                                className="text-muted-foreground hover:text-foreground transition-colors"
-                            >
-                                <X size={24} />
-                            </button>
-                        </div>
-
-                        <form onSubmit={handleSubmit} className="p-6 space-y-6">
-                            <div>
-                                <label className="block text-sm font-medium text-muted-foreground mb-2">
-                                    Template Name *
-                                </label>
-                                <input
-                                    type="text"
-                                    required
-                                    value={formData.name}
-                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                    className="w-full px-4 py-2 bg-background border border-border rounded-lg text-foreground focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                                    placeholder="e.g., Standard Rental Agreement"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-muted-foreground mb-2">
-                                    Description
-                                </label>
-                                <input
-                                    type="text"
-                                    value={formData.description}
-                                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                    className="w-full px-4 py-2 bg-background border border-border rounded-lg text-foreground focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                                    placeholder="Brief description of this template"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-muted-foreground mb-2">
-                                    Header Content
-                                </label>
-                                <textarea
-                                    value={formData.header_content}
-                                    onChange={(e) => setFormData({ ...formData, header_content: e.target.value })}
-                                    rows={3}
-                                    className="w-full px-4 py-2 bg-background border border-border rounded-lg text-foreground focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-sm transition-all"
-                                    placeholder="Header content (optional)"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-muted-foreground mb-2">
-                                    Body Content *
-                                </label>
-                                <textarea
-                                    required
-                                    value={formData.body_content}
-                                    onChange={(e) => setFormData({ ...formData, body_content: e.target.value })}
-                                    rows={12}
-                                    className="w-full px-4 py-2 bg-background border border-border rounded-lg text-foreground focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-sm transition-all"
-                                    placeholder="Main contract content..."
-                                />
-                                <p className="text-xs text-muted-foreground/60 mt-1">
-                                    Tip: Use variables like {'{{client_name}}'}, {'{{contract_date}}'}, {'{{amount}}'} for dynamic content
-                                </p>
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-muted-foreground mb-2">
-                                    Footer Content
-                                </label>
-                                <textarea
-                                    value={formData.footer_content}
-                                    onChange={(e) => setFormData({ ...formData, footer_content: e.target.value })}
-                                    rows={3}
-                                    className="w-full px-4 py-2 bg-background border border-border rounded-lg text-foreground focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-sm transition-all"
-                                    placeholder="Footer content (optional)"
-                                />
-                            </div>
-
-                            <div className="flex gap-3 pt-4 border-t border-border">
-                                <button
-                                    type="button"
-                                    onClick={() => setShowModal(false)}
-                                    className="flex-1 px-4 py-2 border border-border text-muted-foreground rounded-lg hover:bg-muted transition-colors"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    type="submit"
-                                    className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                                >
-                                    <Save /> {editingTemplate ? 'Update' : 'Create'} Template
-                                </button>
-                            </div>
-                        </form>
+            <Modal
+                isOpen={showModal}
+                onClose={() => setShowModal(false)}
+                title={editingTemplate ? 'Edit Template' : 'Create Template'}
+                size="xl"
+            >
+                <form onSubmit={handleSubmit} className="space-y-6">
+                    <Input
+                        label="Template Name *"
+                        required
+                        value={formData.name}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        placeholder="e.g., Standard Rental Agreement"
+                    />
+                    <Input
+                        label="Description"
+                        value={formData.description}
+                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                        placeholder="Brief description of this template"
+                    />
+                    <Textarea
+                        label="Header Content"
+                        value={formData.header_content}
+                        onChange={(e) => setFormData({ ...formData, header_content: e.target.value })}
+                        rows={3}
+                        placeholder="Header content (optional)"
+                        className="font-mono text-sm"
+                    />
+                    <div>
+                        <Textarea
+                            label="Body Content *"
+                            required
+                            value={formData.body_content}
+                            onChange={(e) => setFormData({ ...formData, body_content: e.target.value })}
+                            rows={12}
+                            placeholder="Main contract content..."
+                            className="font-mono text-sm"
+                        />
+                        <p className="text-xs text-muted-foreground/60 mt-1">
+                            Tip: Use variables like {'{{client_name}}'}, {'{{contract_date}}'}, {'{{amount}}'} for dynamic content
+                        </p>
                     </div>
-                </div>
-            )}
+                    <Textarea
+                        label="Footer Content"
+                        value={formData.footer_content}
+                        onChange={(e) => setFormData({ ...formData, footer_content: e.target.value })}
+                        rows={3}
+                        placeholder="Footer content (optional)"
+                        className="font-mono text-sm"
+                    />
+                    <div className="flex justify-end gap-3 pt-4 border-t border-border">
+                        <Button type="button" variant="outline" onClick={() => setShowModal(false)}>
+                            Cancel
+                        </Button>
+                        <Button type="submit">
+                            <Save size={16} className="mr-2" /> {editingTemplate ? 'Update' : 'Create'} Template
+                        </Button>
+                    </div>
+                </form>
+            </Modal>
 
             {/* Preview Modal */}
-            {showPreview && previewTemplate && (
-                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-                    <div className="bg-card rounded-xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto border border-border">
-                        <div className="sticky top-0 bg-card border-b border-border px-6 py-4 flex justify-between items-center z-10">
-                            <h2 className="text-2xl font-bold text-foreground">Template Preview</h2>
-                            <button
-                                onClick={() => setShowPreview(false)}
-                                className="text-muted-foreground hover:text-foreground transition-colors"
-                            >
-                                <X size={24} />
-                            </button>
+            <Modal
+                isOpen={showPreview}
+                onClose={() => setShowPreview(false)}
+                title="Template Preview"
+                size="xl"
+            >
+                {previewTemplate && (
+                    <div className="space-y-6">
+                        <div className="mb-4">
+                            <h3 className="text-xl font-semibold text-foreground">{previewTemplate.name}</h3>
+                            {previewTemplate.description && (
+                                <p className="text-muted-foreground mt-1">{previewTemplate.description}</p>
+                            )}
                         </div>
 
-                        <div className="p-6">
-                            <div className="mb-4">
-                                <h3 className="text-xl font-semibold text-foreground">{previewTemplate.name}</h3>
-                                {previewTemplate.description && (
-                                    <p className="text-muted-foreground mt-1">{previewTemplate.description}</p>
-                                )}
-                            </div>
-
-                            <div className="bg-background rounded-lg p-6 space-y-6 border border-border">
-                                {previewTemplate.header_content && (
-                                    <div className="border-b border-border pb-4">
-                                        <h4 className="text-sm font-medium text-muted-foreground mb-2">Header</h4>
-                                        <div className="whitespace-pre-wrap text-sm text-foreground">{previewTemplate.header_content}</div>
-                                    </div>
-                                )}
-
-                                <div>
-                                    <h4 className="text-sm font-medium text-muted-foreground mb-2">Body</h4>
-                                    <div className="whitespace-pre-wrap text-sm text-foreground">{previewTemplate.body_content}</div>
+                        <div className="bg-background rounded-lg p-6 space-y-6 border border-border">
+                            {previewTemplate.header_content && (
+                                <div className="border-b border-border pb-4">
+                                    <h4 className="text-sm font-medium text-muted-foreground mb-2">Header</h4>
+                                    <div className="whitespace-pre-wrap text-sm text-foreground">{previewTemplate.header_content}</div>
                                 </div>
+                            )}
 
-                                {previewTemplate.footer_content && (
-                                    <div className="border-t border-border pt-4">
-                                        <h4 className="text-sm font-medium text-muted-foreground mb-2">Footer</h4>
-                                        <div className="whitespace-pre-wrap text-sm text-foreground">{previewTemplate.footer_content}</div>
-                                    </div>
-                                )}
+                            <div>
+                                <h4 className="text-sm font-medium text-muted-foreground mb-2">Body</h4>
+                                <div className="whitespace-pre-wrap text-sm text-foreground">{previewTemplate.body_content}</div>
                             </div>
+
+                            {previewTemplate.footer_content && (
+                                <div className="border-t border-border pt-4">
+                                    <h4 className="text-sm font-medium text-muted-foreground mb-2">Footer</h4>
+                                    <div className="whitespace-pre-wrap text-sm text-foreground">{previewTemplate.footer_content}</div>
+                                </div>
+                            )}
                         </div>
                     </div>
-                </div>
-            )}
+                )}
+            </Modal>
         </div>
     );
 }

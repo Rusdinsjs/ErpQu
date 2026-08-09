@@ -282,7 +282,7 @@ export default function Categories() {
                     label={
                         <div className="flex flex-col gap-0.5 w-full">
                             <span className="flex items-center justify-between">
-                                <span>{node.name} <span className="text-slate-500 text-xs">({node.code})</span></span>
+                                <span>{node.name} <span className="text-muted-foreground text-xs">({node.code})</span></span>
                             </span>
                             {linkedAccount && (
                                 <div className="flex items-center gap-1 text-[10px] text-cyan-400">
@@ -344,7 +344,7 @@ export default function Categories() {
                                     {renderTree(treeData)}
                                 </div>
                             ) : !isLoading && (
-                                <p className="text-slate-500 text-center py-8">No categories found</p>
+                                <p className="text-muted-foreground text-center py-8">No categories found</p>
                             )}
                         </div>
                     </Card>
@@ -418,7 +418,7 @@ export default function Categories() {
                                 <TabsContent value="accounting" className="mt-6 space-y-4">
                                     <div className="bg-slate-900/50 p-4 rounded-lg border border-slate-800 mb-4">
                                         <h3 className="text-sm font-medium text-white mb-1">Financial Accounting</h3>
-                                        <p className="text-xs text-slate-400">
+                                        <p className="text-xs text-muted-foreground">
                                             Map this asset category to the Chart of Accounts for automated journaling.
                                         </p>
                                     </div>
@@ -522,7 +522,7 @@ export default function Categories() {
                                 <TabsContent value="attributes" className="mt-6 space-y-4">
                                     <div className="bg-slate-900/50 p-4 rounded-lg border border-slate-800 mb-4">
                                         <h3 className="text-sm font-medium text-white mb-1">Custom Attribute Template</h3>
-                                        <p className="text-xs text-slate-400">
+                                        <p className="text-xs text-muted-foreground">
                                             Define the specific attributes that assets in this category should track.
                                             For example, for Laptops: "RAM", "Processor", "Storage".
                                         </p>
@@ -541,7 +541,7 @@ export default function Categories() {
                                             <div className="grid grid-cols-2 gap-3 p-4 border border-slate-800 rounded-lg">
                                                 {formData.attributes.map((attr, idx) => (
                                                     <div key={idx} className="opacity-75">
-                                                        <label className="text-xs text-slate-500 block mb-1">{attr}</label>
+                                                        <label className="text-xs text-muted-foreground block mb-1">{attr}</label>
                                                         <div className="h-8 bg-slate-800 rounded w-full"></div>
                                                     </div>
                                                 ))}

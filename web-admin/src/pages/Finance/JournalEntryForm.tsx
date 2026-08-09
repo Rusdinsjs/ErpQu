@@ -139,7 +139,7 @@ export default function JournalEntryForm() {
 
             <form onSubmit={handleSubmit} className="space-y-8 relative">
                 <div className="absolute top-1/4 right-0 w-96 h-96 bg-blue-500/5 rounded-full blur-[100px] pointer-events-none" />
-                <div className="absolute bottom-0 left-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-[80px] pointer-events-none" />
+                <div className="absolute bottom-0 left-0 w-64 h-64 bg-emerald-500/100/5 rounded-full blur-[80px] pointer-events-none" />
 
                 {/* Header Section */}
                 <div className="bg-card/40 backdrop-blur-xl border border-border rounded-3xl p-8 shadow-xl relative z-10">
@@ -271,7 +271,7 @@ export default function JournalEntryForm() {
                     </div>
 
                     {/* Totals Footer */}
-                    <div className={`px-8 py-6 border-t border-border transition-colors ${isBalanced ? 'bg-emerald-500/5' : 'bg-destructive/10'}`}>
+                    <div className={`px-8 py-6 border-t border-border transition-colors ${isBalanced ? 'bg-emerald-500/100/5' : 'bg-destructive/10'}`}>
                         <div className="flex justify-end gap-16 max-w-2xl ml-auto mr-12">
                             <div className="text-right">
                                 <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest mb-1">Total Debit</p>

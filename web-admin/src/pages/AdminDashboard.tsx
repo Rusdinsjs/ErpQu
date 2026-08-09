@@ -81,6 +81,12 @@ const InventoryItemsView = lazy(() => import('./Inventory/InventoryItems'));
 const InventoryDetailView = lazy(() => import('./Inventory/InventoryDetail'));
 const InventoryCategoriesView = lazy(() => import('./Inventory/InventoryCategories'));
 const StockOpnameView = lazy(() => import('./Inventory/StockOpname'));
+const StockEntryView = lazy(() => import('./Inventory/StockEntry'));
+const MaterialRequestView = lazy(() => import('./Inventory/MaterialRequest'));
+const WarehousesView = lazy(() => import('./Inventory/Warehouses'));
+const PurchaseReceiptsView = lazy(() => import('./Inventory/PurchaseReceipts'));
+const QualityInspectionsView = lazy(() => import('./Operations/QualityInspections'));
+const DeliveryTripsView = lazy(() => import('./Operations/DeliveryTrips'));
 const TaxRenewalsView = lazy(() => import('./TaxRenewals/TaxRenewals'));
 
 const ExpensesView = lazy(() => import('./Finance/Expenses'));
@@ -97,7 +103,13 @@ type TabId =
     | 'categories'
     | 'inventory-categories' // New
     | 'inventory-items'      // New
+    | 'warehouses'           // New
     | 'stock-opname'         // New
+    | 'stock-entry'          // New
+    | 'material-request'     // New
+    | 'purchase-receipt'     // New
+    | 'quality-inspection'
+    | 'delivery-trip'
     | 'locations'
     | 'work-orders'
     | 'rentals'
@@ -204,7 +216,13 @@ const ALL_NAV_ITEMS: Record<string, NavItem> = {
 
     'inventory-items': { id: 'inventory-items', icon: Package, label: 'Items', minLevel: 4 },
     'inventory-categories': { id: 'inventory-categories', icon: FolderTree, label: 'Inventory Categories', minLevel: 4 },
+    'warehouses': { id: 'warehouses', icon: Database, label: 'Warehouses', minLevel: 3 },
     'stock-opname': { id: 'stock-opname', icon: Scan, label: 'Stock Opname', minLevel: 3 },
+    'stock-entry': { id: 'stock-entry', icon: ClipboardCheck, label: 'Stock Entry', minLevel: 3 },
+    'material-request': { id: 'material-request', icon: FileText, label: 'Material Request', minLevel: 3 },
+    'purchase-receipt': { id: 'purchase-receipt', icon: ClipboardCheck, label: 'Purchase Receipt', minLevel: 3 },
+    'quality-inspection': { id: 'quality-inspection', icon: Scan, label: 'Quality Inspection', minLevel: 3 },
+    'delivery-trip': { id: 'delivery-trip', icon: Truck, label: 'Delivery Trip', minLevel: 3 },
     'conversions': { id: 'conversions', icon: ArrowLeftRight, label: 'Conversions', minLevel: 3 },
 
     'purchase-bills': { id: 'purchase-bills', icon: FileText, label: 'Vendor Bills', minLevel: 3 },
@@ -337,6 +355,12 @@ export default function AdminDashboard() {
                         if (m.id === 'supply-chain') {
                             const ids = (m.menuIds || []).filter((id: string) => id !== 'conversions' && id !== 'purchase-bills');
                             if (!ids.includes('inventory-categories')) ids.push('inventory-categories');
+                            if (!ids.includes('warehouses')) ids.push('warehouses');
+                            if (!ids.includes('stock-entry')) ids.push('stock-entry');
+                            if (!ids.includes('material-request')) ids.push('material-request');
+                            if (!ids.includes('purchase-receipt')) ids.push('purchase-receipt');
+                            if (!ids.includes('quality-inspection')) ids.push('quality-inspection');
+                            if (!ids.includes('delivery-trip')) ids.push('delivery-trip');
                             return { ...m, menuIds: ids };
                         }
                         if (m.id === 'hr') {
@@ -612,7 +636,7 @@ export default function AdminDashboard() {
                 label: 'Inventory',
                 icon: Package,
                 minLevel: 4,
-                children: getGroupItems(supplyChainIds, ['inventory-items', 'inventory-categories', 'stock-opname'], ['inventory-items', 'inventory-categories', 'stock-opname'])
+                children: getGroupItems(supplyChainIds, ['inventory-items', 'inventory-categories', 'warehouses', 'stock-opname', 'stock-entry', 'material-request', 'purchase-receipt', 'quality-inspection', 'delivery-trip'], ['inventory-items', 'inventory-categories', 'warehouses', 'stock-opname', 'stock-entry', 'material-request', 'purchase-receipt', 'quality-inspection', 'delivery-trip'])
             },
             {
                 id: 'maintenance_group',
@@ -633,7 +657,7 @@ export default function AdminDashboard() {
                 label: 'Procurement',
                 icon: ShoppingCart,
                 minLevel: 3,
-                children: getGroupItems(procurementIds, ['purchase-bills'], ['purchase-bills'])
+                children: getGroupItems(procurementIds, ['purchase-bills', 'purchase-receipt'], ['purchase-bills', 'purchase-receipt'])
             },
             {
                 id: 'commercial_group',
@@ -926,10 +950,16 @@ export default function AdminDashboard() {
             case 'assets': return <AssetsView />;
             case 'categories': return <CategoriesView />;
             case 'inventory-categories': return <InventoryCategoriesView />;
+            case 'warehouses': return <WarehousesView />;
             case 'inventory-items':
                 if (selectedInventoryId) return <InventoryDetailView itemId={selectedInventoryId} />;
                 return <InventoryItemsView />;
             case 'stock-opname': return <StockOpnameView />;
+            case 'stock-entry': return <StockEntryView />;
+            case 'material-request': return <MaterialRequestView />;
+            case 'purchase-receipt': return <PurchaseReceiptsView />;
+            case 'quality-inspection': return <QualityInspectionsView />;
+            case 'delivery-trip': return <DeliveryTripsView />;
             case 'locations': return <LocationsView />;
             case 'work-orders': return <WorkOrdersView />;
             case 'conversions': return <ConversionsView />;
@@ -1045,7 +1075,7 @@ export default function AdminDashboard() {
                     {/* Mobile Close Button */}
                     <button
                         onClick={() => setSidebarOpen(false)}
-                        className="p-2 hover:bg-gray-800 rounded-lg text-gray-400 hover:text-white lg:hidden transition-colors"
+                        className="p-2 hover:bg-gray-800 rounded-lg text-muted-foreground hover:text-white lg:hidden transition-colors"
                     >
                         <X size={20} />
                     </button>
@@ -1107,8 +1137,8 @@ export default function AdminDashboard() {
                 {/* Global Ambient Background for Glassmorphism Context */}
                 <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
                     <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-blue-500/5 dark:bg-blue-500/10 blur-[100px]" />
-                    <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-emerald-500/5 dark:bg-emerald-500/10 blur-[100px]" />
-                    <div className="absolute top-[40%] right-[20%] w-[30%] h-[30%] rounded-full bg-purple-500/5 dark:bg-purple-500/10 blur-[120px]" />
+                    <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-emerald-500/100/5 dark:bg-emerald-500/100/10 blur-[100px]" />
+                    <div className="absolute top-[40%] right-[20%] w-[30%] h-[30%] rounded-full bg-purple-500/100/5 dark:bg-purple-500/100/10 blur-[120px]" />
                 </div>
 
                 {/* Header */}

@@ -36,9 +36,9 @@ function AssetPickerModal({ isOpen, onClose, onSelect }: { isOpen: boolean; onCl
                 />
                 <div className="max-h-60 overflow-y-auto border border-slate-700 rounded-md">
                     {isLoading ? (
-                        <div className="p-4 text-center text-slate-500">Loading assets...</div>
+                        <div className="p-4 text-center text-muted-foreground">Loading assets...</div>
                     ) : assets.length === 0 ? (
-                        <div className="p-4 text-center text-slate-500">No assets found</div>
+                        <div className="p-4 text-center text-muted-foreground">No assets found</div>
                     ) : (
                         <div className="divide-y divide-slate-800">
                             {assets.map((asset: Asset) => (
@@ -49,7 +49,7 @@ function AssetPickerModal({ isOpen, onClose, onSelect }: { isOpen: boolean; onCl
                                 >
                                     <div>
                                         <p className="font-medium text-slate-200">{asset.name}</p>
-                                        <p className="text-xs text-slate-500">{asset.asset_code}</p>
+                                        <p className="text-xs text-muted-foreground">{asset.asset_code}</p>
                                     </div>
                                     <Button size="sm" variant="ghost" className="opacity-0 group-hover:opacity-100">
                                         Select
@@ -156,7 +156,7 @@ export default function Conversions() {
                         <RefreshCw className="text-purple-400" />
                         Asset Conversions
                     </h1>
-                    <p className="text-slate-400">Manage asset conversion requests</p>
+                    <p className="text-muted-foreground">Manage asset conversion requests</p>
                 </div>
                 <Button variant="primary" onClick={handleCreateClick}>
                     <Plus className="mr-2 h-4 w-4" />
@@ -167,7 +167,7 @@ export default function Conversions() {
             <Card className="p-4">
                 <div className="flex flex-col sm:flex-row gap-4 mb-6">
                     <div className="relative flex-1">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
                         <Input
                             placeholder="Search by title or request number..."
                             className="pl-10 bg-slate-900/50 border-slate-800"
@@ -210,7 +210,7 @@ export default function Conversions() {
                                 </TableRow>
                             ) : filteredConversions.length === 0 ? (
                                 <TableRow>
-                                    <TableTd colSpan={7} className="text-center py-8 text-slate-500">
+                                    <TableTd colSpan={7} className="text-center py-8 text-muted-foreground">
                                         No conversions found.
                                     </TableTd>
                                 </TableRow>
@@ -220,7 +220,7 @@ export default function Conversions() {
                                         <TableTd className="font-mono text-xs">{conv.request_number || '-'}</TableTd>
                                         <TableTd>
                                             <div className="font-medium text-slate-200">{conv.title}</div>
-                                            <div className="text-xs text-slate-500">{new Date(conv.request_date).toLocaleDateString()}</div>
+                                            <div className="text-xs text-muted-foreground">{new Date(conv.request_date).toLocaleDateString()}</div>
                                         </TableTd>
                                         <TableTd className="font-mono text-xs">
                                             <span title={conv.asset_id}>

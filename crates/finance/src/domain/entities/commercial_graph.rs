@@ -63,3 +63,25 @@ pub struct AllocatePaymentRequest {
     pub invoice_id: Uuid,
     pub allocated_amount: Decimal,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CreatePurchaseReceiptItemRequest {
+    pub item_id: Uuid,
+    pub qty_received: Decimal,
+    pub unit_cost: Decimal,
+    pub po_line_id: Option<Uuid>,
+    pub batch_no: Option<String>,
+    pub serial_no: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CreatePurchaseReceiptRequest {
+    pub company_id: Uuid,
+    pub receipt_number: String,
+    pub purchase_order_id: Option<Uuid>,
+    pub vendor_id: Uuid,
+    pub warehouse_id: Uuid,
+    pub posting_date: chrono::NaiveDate,
+    pub notes: Option<String>,
+    pub items: Vec<CreatePurchaseReceiptItemRequest>,
+}

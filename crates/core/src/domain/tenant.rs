@@ -69,6 +69,21 @@ impl TenantContext {
         }
         Ok(())
     }
+
+    /// Enforce cross-company boundary isolation check
+    pub fn enforce_company_boundary(&self, target_company_id: Option<Uuid>) -> DomainResult<()> {
+        if self.is_super_tenant {
+            return Ok(());
+        }
+        if let Some(active_company_id) = self.company_id {
+            if let Some(target_id) = target_company_id {
+                if active_company_id != target_id {
+                    return Err(DomainError::unauthorized("cross_company_access_denied"));
+                }
+            }
+        }
+        Ok(())
+    }
 }
 
 /// Query Scoping Rule for tenant isolation and soft-delete filtering (QTEN-002)

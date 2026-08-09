@@ -118,13 +118,13 @@ export const FuelList: React.FC<FuelListProps> = ({ scope, refreshTrigger, onAct
                     <TableBody>
                         {loading ? (
                             <TableRow>
-                                <TableTd colSpan={8} className="text-center py-8 text-slate-400">
+                                <TableTd colSpan={8} className="text-center py-8 text-muted-foreground">
                                     Loading...
                                 </TableTd>
                             </TableRow>
                         ) : logs.length === 0 ? (
                             <TableRow>
-                                <TableTd colSpan={8} className="text-center py-8 text-slate-400">
+                                <TableTd colSpan={8} className="text-center py-8 text-muted-foreground">
                                     No records found
                                 </TableTd>
                             </TableRow>
@@ -140,11 +140,11 @@ export const FuelList: React.FC<FuelListProps> = ({ scope, refreshTrigger, onAct
                                             <span className="text-sm font-medium">{log.asset_name || 'Unknown Asset'}</span>
                                         </div>
                                     </TableTd>
-                                    <TableTd className="text-sm text-slate-400">{log.requester_name}</TableTd>
+                                    <TableTd className="text-sm text-muted-foreground">{log.requester_name}</TableTd>
                                     <TableTd>
                                         <div className="font-medium">
                                             {Number(log.requested_value).toLocaleString('id-ID')}
-                                            <span className="text-xs text-slate-500 ml-1">
+                                            <span className="text-xs text-muted-foreground ml-1">
                                                 {log.request_type === 'volume' ? 'L' : 'IDR'}
                                             </span>
                                         </div>

@@ -831,18 +831,32 @@ impl FinanceService {
         &self,
         req: CreateSalesShipmentRequest,
     ) -> DomainResult<SalesShipment> {
+        let shipment_id = Uuid::new_v4();
         let shipment = SalesShipment {
-            id: Uuid::new_v4(),
+            id: shipment_id,
             shipment_number: req.shipment_number,
             sales_order_id: req.sales_order_id,
             client_id: None,
+            warehouse_id: req.warehouse_id,
             date: req.date,
             courier_name: req.courier_name,
             tracking_number: req.tracking_number,
             status: "pending".to_string(),
             created_at: Utc::now(),
         };
-        self.repo.create_sales_shipment(&shipment).await
+
+        let items: Vec<SalesShipmentItem> = req.items.into_iter().map(|item| {
+            SalesShipmentItem {
+                id: Uuid::new_v4(),
+                shipment_id,
+                order_item_id: item.order_item_id,
+                description: item.description,
+                quantity_shipped: item.quantity_shipped,
+                item_id: item.item_id,
+            }
+        }).collect();
+
+        self.repo.create_sales_shipment(&shipment, &items).await
     }
 
     pub async fn list_purchase_quotes(&self) -> DomainResult<Vec<PurchaseQuote>> {
@@ -918,5 +932,51 @@ impl FinanceService {
             created_at: Utc::now(),
         };
         self.repo.create_purchase_shipment(&shipment).await
+    }
+
+    pub async fn list_purchase_receipts(&self, company_id: Uuid) -> DomainResult<Vec<PurchaseReceipt>> {
+        self.repo.list_purchase_receipts(company_id).await
+    }
+
+    pub async fn get_purchase_receipt(&self, id: Uuid) -> DomainResult<Option<PurchaseReceipt>> {
+        self.repo.get_purchase_receipt(id).await
+    }
+
+    pub async fn create_purchase_receipt(
+        &self,
+        req: CreatePurchaseReceiptRequest,
+        created_by: Option<Uuid>,
+    ) -> DomainResult<PurchaseReceipt> {
+        let receipt_id = Uuid::new_v4();
+        let receipt = PurchaseReceipt {
+            id: receipt_id,
+            company_id: req.company_id,
+            receipt_number: req.receipt_number,
+            purchase_order_id: req.purchase_order_id,
+            vendor_id: req.vendor_id,
+            warehouse_id: req.warehouse_id,
+            posting_date: req.posting_date,
+            status: "draft".to_string(),
+            notes: req.notes,
+            created_at: chrono::Utc::now(),
+            created_by,
+        };
+
+        let items: Vec<PurchaseReceiptItem> = req.items.into_iter().map(|item| {
+            let total_amount = item.qty_received * item.unit_cost;
+            PurchaseReceiptItem {
+                id: Uuid::new_v4(),
+                receipt_id,
+                item_id: item.item_id,
+                qty_received: item.qty_received,
+                unit_cost: item.unit_cost,
+                total_amount,
+                po_line_id: item.po_line_id,
+                batch_no: item.batch_no,
+                serial_no: item.serial_no,
+            }
+        }).collect();
+
+        self.repo.create_purchase_receipt(&receipt, &items).await
     }
 }

@@ -90,7 +90,7 @@ const LoanRentalReportsTab: React.FC = () => {
                     <h2 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
                         <Truck className="text-purple-500" /> Loan & Rental Analytics
                     </h2>
-                    <p className="text-slate-400 text-sm mt-1">Asset circulation and utilization storage.</p>
+                    <p className="text-muted-foreground text-sm mt-1">Asset circulation and utilization storage.</p>
                 </div>
 
                 <div className="flex gap-4 items-center">
@@ -135,21 +135,21 @@ const LoanRentalReportsTab: React.FC = () => {
                 <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 flex items-center gap-4 shadow-lg hover:border-slate-700 transition-colors">
                     <div className="p-3 bg-blue-500/10 rounded-lg text-blue-400"><ArrowRightLeft size={24} /></div>
                     <div>
-                        <p className="text-slate-500 text-xs uppercase font-bold tracking-wider">Active Loans</p>
+                        <p className="text-muted-foreground text-xs uppercase font-bold tracking-wider">Active Loans</p>
                         <h4 className="text-2xl font-bold text-white">{activeLoans}</h4>
                     </div>
                 </div>
                 <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 flex items-center gap-4 shadow-lg hover:border-slate-700 transition-colors">
                     <div className="p-3 bg-rose-500/10 rounded-lg text-rose-400"><Clock size={24} /></div>
                     <div>
-                        <p className="text-slate-500 text-xs uppercase font-bold tracking-wider">Overdue Items</p>
+                        <p className="text-muted-foreground text-xs uppercase font-bold tracking-wider">Overdue Items</p>
                         <h4 className="text-2xl font-bold text-white">{overdueLoans}</h4>
                     </div>
                 </div>
                 <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 flex items-center gap-4 shadow-lg hover:border-slate-700 transition-colors">
-                    <div className="p-3 bg-purple-500/10 rounded-lg text-purple-400"><Package size={24} /></div>
+                    <div className="p-3 bg-purple-500/100/10 rounded-lg text-purple-400"><Package size={24} /></div>
                     <div>
-                        <p className="text-slate-500 text-xs uppercase font-bold tracking-wider">Total Transactions</p>
+                        <p className="text-muted-foreground text-xs uppercase font-bold tracking-wider">Total Transactions</p>
                         <h4 className="text-2xl font-bold text-white">{totalLoans}</h4>
                     </div>
                 </div>
@@ -159,7 +159,7 @@ const LoanRentalReportsTab: React.FC = () => {
                 <Card className="shadow-2xl shadow-black/40 border-slate-800/60 bg-slate-900/80 backdrop-blur-md">
                     <div className="mb-6 pb-4 border-b border-slate-800">
                         <h3 className="text-lg font-bold text-white">Loan Status Distribution</h3>
-                        <p className="text-slate-400 text-xs">Overview of all loan statuses</p>
+                        <p className="text-muted-foreground text-xs">Overview of all loan statuses</p>
                     </div>
                     <div className="h-[350px] w-full flex justify-center">
                         <ResponsiveContainer width="100%" height="100%">
@@ -195,7 +195,7 @@ const LoanRentalReportsTab: React.FC = () => {
                 <Card className="shadow-2xl shadow-black/40 border-slate-800/60 bg-slate-900/80 backdrop-blur-md">
                     <div className="mb-6 pb-4 border-b border-slate-800">
                         <h3 className="text-lg font-bold text-white">Top Borrowed Assets</h3>
-                        <p className="text-slate-400 text-xs">Most frequently requested items</p>
+                        <p className="text-muted-foreground text-xs">Most frequently requested items</p>
                     </div>
                     <div className="h-[350px] w-full">
                         <ResponsiveContainer width="100%" height="100%">

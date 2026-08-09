@@ -143,6 +143,9 @@ export default function Launchpad() {
                         if (m.id === 'supply-chain') {
                             const ids = (m.menuIds || []).filter((id: string) => id !== 'conversions' && id !== 'purchase-bills');
                             if (!ids.includes('inventory-categories')) ids.push('inventory-categories');
+                            if (!ids.includes('warehouses')) ids.push('warehouses');
+                            if (!ids.includes('stock-entry')) ids.push('stock-entry');
+                            if (!ids.includes('material-request')) ids.push('material-request');
                             return { ...m, menuIds: ids };
                         }
                         if (m.id === 'hr') {
@@ -239,8 +242,8 @@ export default function Launchpad() {
             {/* Animated Background Elements */}
             <div className="absolute inset-0 overflow-hidden pointer-events-none">
                 <div className="absolute -top-40 -right-40 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse" />
-                <div className="absolute top-1/2 -left-40 w-80 h-80 bg-purple-500/10 rounded-full blur-3xl animate-pulse delay-1000" />
-                <div className="absolute -bottom-40 right-1/3 w-72 h-72 bg-emerald-500/10 rounded-full blur-3xl animate-pulse delay-500" />
+                <div className="absolute top-1/2 -left-40 w-80 h-80 bg-purple-500/100/10 rounded-full blur-3xl animate-pulse delay-1000" />
+                <div className="absolute -bottom-40 right-1/3 w-72 h-72 bg-emerald-500/100/10 rounded-full blur-3xl animate-pulse delay-500" />
 
                 {/* Grid Pattern Overlay */}
                 <div

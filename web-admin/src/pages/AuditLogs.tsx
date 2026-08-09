@@ -13,7 +13,7 @@ import {
 
 // Helper for highlighting JSON diffs
 const JsonDiffViewer = ({ data }: { data: any }) => {
-    if (!data) return <span className="text-gray-500 italic">No changes recorded</span>;
+    if (!data) return <span className="text-muted-foreground italic">No changes recorded</span>;
     return (
         <pre className="text-xs bg-black/40 p-2 rounded border border-white/5 overflow-x-auto max-h-32 text-gray-300">
             {JSON.stringify(data, null, 2)}
@@ -43,7 +43,7 @@ export default function AuditLogs() {
             case 'CREATE': return 'bg-green-500/20 text-green-400 border-green-500/30';
             case 'UPDATE': return 'bg-blue-500/20 text-blue-400 border-blue-500/30';
             case 'DELETE': return 'bg-red-500/20 text-red-400 border-red-500/30';
-            default: return 'bg-gray-500/20 text-gray-400 border-gray-500/30';
+            default: return 'bg-muted/300/20 text-muted-foreground border-gray-500/30';
         }
     };
 
@@ -65,7 +65,7 @@ export default function AuditLogs() {
                     <div className="w-64">
                         <label className="text-xs text-muted-foreground mb-1 block">Entity Type</label>
                         <div className="relative">
-                            <Database size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+                            <Database size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                             <input
                                 type="text"
                                 placeholder="e.g. assets, users..."

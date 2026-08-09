@@ -70,7 +70,7 @@ export const FuelCompletionModal: React.FC<FuelCompletionModalProps> = ({ isOpen
                 {/* Coupon Info Header */}
                 <div className="bg-slate-950/50 border border-slate-800 rounded-2xl p-5 flex flex-col sm:flex-row items-center gap-4 sm:gap-8">
                     <div className="flex-1">
-                        <div className="flex items-center gap-2 text-slate-500 text-xs uppercase tracking-widest mb-1">
+                        <div className="flex items-center gap-2 text-muted-foreground text-xs uppercase tracking-widest mb-1">
                             <Hash size={12} />
                             Coupon Code
                         </div>
@@ -80,13 +80,13 @@ export const FuelCompletionModal: React.FC<FuelCompletionModalProps> = ({ isOpen
                     </div>
                     <div className="h-10 w-px bg-slate-800 hidden sm:block" />
                     <div className="flex-1">
-                        <div className="flex items-center gap-2 text-slate-500 text-xs uppercase tracking-widest mb-1">
+                        <div className="flex items-center gap-2 text-muted-foreground text-xs uppercase tracking-widest mb-1">
                             <Fuel size={12} />
                             Requested Amount
                         </div>
                         <div className="text-xl font-bold text-white">
                             {Number(log.requested_value).toLocaleString()}
-                            <span className="text-slate-500 text-sm ml-1 font-normal">
+                            <span className="text-muted-foreground text-sm ml-1 font-normal">
                                 {log.request_type === 'volume' ? 'Liters' : 'IDR'}
                             </span>
                         </div>
@@ -148,11 +148,11 @@ export const FuelCompletionModal: React.FC<FuelCompletionModalProps> = ({ isOpen
                                 </div>
                             ) : (
                                 <>
-                                    <div className="w-14 h-14 bg-slate-900 rounded-2xl flex items-center justify-center text-slate-400 mb-4 group-hover:text-blue-400 group-hover:scale-110 transition-all">
+                                    <div className="w-14 h-14 bg-slate-900 rounded-2xl flex items-center justify-center text-muted-foreground mb-4 group-hover:text-blue-400 group-hover:scale-110 transition-all">
                                         <Camera size={28} />
                                     </div>
                                     <p className="text-slate-300 font-medium">Capture or Upload Receipt</p>
-                                    <p className="text-slate-500 text-sm mt-1">PNG, JPG up to 5MB</p>
+                                    <p className="text-muted-foreground text-sm mt-1">PNG, JPG up to 5MB</p>
                                 </>
                             )}
                         </div>

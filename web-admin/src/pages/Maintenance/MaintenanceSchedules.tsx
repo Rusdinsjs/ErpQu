@@ -136,20 +136,20 @@ const MaintenanceSchedules: React.FC = () => {
                 </Card>
 
                 <Card className="relative overflow-hidden group p-6 border-border bg-card/60 backdrop-blur-xl shadow-lg">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full -mr-8 -mt-8 transition-transform duration-700 group-hover:scale-150 group-hover:bg-emerald-500/20" />
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/100/10 rounded-full -mr-8 -mt-8 transition-transform duration-700 group-hover:scale-150 group-hover:bg-emerald-500/100/20" />
                     <div className="flex justify-between items-start relative z-10">
                         <div>
                             <p className="text-muted-foreground text-[10px] font-black uppercase tracking-widest">Active</p>
                             <h3 className="text-4xl font-black text-foreground mt-2 font-mono group-hover:text-emerald-500 transition-colors">{activeSchedules}</h3>
                         </div>
-                        <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl group-hover:bg-emerald-500 group-hover:text-white transition-colors duration-300">
+                        <div className="p-4 bg-emerald-500/100/10 border border-emerald-500/20 rounded-2xl group-hover:bg-emerald-500/100 group-hover:text-white transition-colors duration-300">
                             <CheckCircle className="text-emerald-500 group-hover:text-white" size={24} />
                         </div>
                     </div>
                 </Card>
 
                 <Card className="relative overflow-hidden group p-6 border-border bg-card/60 backdrop-blur-xl shadow-lg">
-                    <div className={`absolute top-0 right-0 w-32 h-32 rounded-full -mr-8 -mt-8 transition-transform duration-700 group-hover:scale-150 ${dueSoon > 0 ? 'bg-amber-500/10 group-hover:bg-amber-500/20' : 'bg-muted/10 group-hover:bg-muted/20'}`} />
+                    <div className={`absolute top-0 right-0 w-32 h-32 rounded-full -mr-8 -mt-8 transition-transform duration-700 group-hover:scale-150 ${dueSoon > 0 ? 'bg-amber-500/100/10 group-hover:bg-amber-500/100/20' : 'bg-muted/10 group-hover:bg-muted/20'}`} />
                     <div className="flex justify-between items-start relative z-10">
                         <div>
                             <p className="text-muted-foreground text-[10px] font-black uppercase tracking-widest">Due Soon (7 Days)</p>
@@ -157,7 +157,7 @@ const MaintenanceSchedules: React.FC = () => {
                                 {dueSoon}
                             </h3>
                         </div>
-                        <div className={`p-4 border rounded-2xl transition-colors duration-300 ${dueSoon > 0 ? 'bg-amber-500/10 border-amber-500/20 group-hover:bg-amber-500 group-hover:text-white' : 'bg-muted/10 border-muted/20 group-hover:bg-muted group-hover:text-foreground'}`}>
+                        <div className={`p-4 border rounded-2xl transition-colors duration-300 ${dueSoon > 0 ? 'bg-amber-500/100/10 border-amber-500/20 group-hover:bg-amber-500/100 group-hover:text-white' : 'bg-muted/10 border-muted/20 group-hover:bg-muted group-hover:text-foreground'}`}>
                             <Clock className={dueSoon > 0 ? 'text-amber-500 group-hover:text-white' : 'text-muted-foreground group-hover:text-foreground'} size={24} />
                         </div>
                     </div>
@@ -223,7 +223,7 @@ const MaintenanceSchedules: React.FC = () => {
                                                     title="Run Now"
                                                     onClick={() => handleRunSchedule(schedule.id, schedule.title)}
                                                     disabled={runMutation.isPending}
-                                                    className="w-8 h-8 bg-emerald-500/10 hover:bg-emerald-500 text-emerald-500 hover:text-white"
+                                                    className="w-8 h-8 bg-emerald-500/100/10 hover:bg-emerald-500/100 text-emerald-500 hover:text-white"
                                                 >
                                                     <Play size={14} />
                                                 </ActionIcon>

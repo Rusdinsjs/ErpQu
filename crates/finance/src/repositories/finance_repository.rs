@@ -311,6 +311,7 @@ struct SalesShipmentRow {
     shipment_number: String,
     sales_order_id: Uuid,
     client_id: Option<Uuid>,
+    warehouse_id: Option<Uuid>,
     date: chrono::NaiveDate,
     courier_name: Option<String>,
     tracking_number: Option<String>,
@@ -325,11 +326,97 @@ impl From<SalesShipmentRow> for SalesShipment {
             shipment_number: r.shipment_number,
             sales_order_id: r.sales_order_id,
             client_id: r.client_id,
+            warehouse_id: r.warehouse_id,
             date: r.date,
             courier_name: r.courier_name,
             tracking_number: r.tracking_number,
             status: r.status,
             created_at: r.created_at,
+        }
+    }
+}
+
+#[derive(Debug, sqlx::FromRow)]
+struct SalesShipmentItemRow {
+    pub id: Uuid,
+    pub shipment_id: Uuid,
+    pub order_item_id: Option<Uuid>,
+    pub description: String,
+    pub quantity_shipped: Decimal,
+    pub item_id: Option<Uuid>,
+}
+
+impl From<SalesShipmentItemRow> for SalesShipmentItem {
+    fn from(r: SalesShipmentItemRow) -> Self {
+        Self {
+            id: r.id,
+            shipment_id: r.shipment_id,
+            order_item_id: r.order_item_id,
+            description: r.description,
+            quantity_shipped: r.quantity_shipped,
+            item_id: r.item_id,
+        }
+    }
+}
+
+#[derive(Debug, sqlx::FromRow)]
+struct PurchaseReceiptRow {
+    pub id: Uuid,
+    pub company_id: Uuid,
+    pub receipt_number: String,
+    pub purchase_order_id: Option<Uuid>,
+    pub vendor_id: Uuid,
+    pub warehouse_id: Uuid,
+    pub posting_date: chrono::NaiveDate,
+    pub status: String,
+    pub notes: Option<String>,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+    pub created_by: Option<Uuid>,
+}
+
+impl From<PurchaseReceiptRow> for crate::domain::entities::commercial_graph::PurchaseReceipt {
+    fn from(r: PurchaseReceiptRow) -> Self {
+        Self {
+            id: r.id,
+            company_id: r.company_id,
+            receipt_number: r.receipt_number,
+            purchase_order_id: r.purchase_order_id,
+            vendor_id: r.vendor_id,
+            warehouse_id: r.warehouse_id,
+            posting_date: r.posting_date,
+            status: r.status,
+            notes: r.notes,
+            created_at: r.created_at,
+            created_by: r.created_by,
+        }
+    }
+}
+
+#[derive(Debug, sqlx::FromRow)]
+struct PurchaseReceiptItemRow {
+    pub id: Uuid,
+    pub receipt_id: Uuid,
+    pub item_id: Uuid,
+    pub qty_received: Decimal,
+    pub unit_cost: Decimal,
+    pub total_amount: Decimal,
+    pub po_line_id: Option<Uuid>,
+    pub batch_no: Option<String>,
+    pub serial_no: Option<String>,
+}
+
+impl From<PurchaseReceiptItemRow> for crate::domain::entities::commercial_graph::PurchaseReceiptItem {
+    fn from(r: PurchaseReceiptItemRow) -> Self {
+        Self {
+            id: r.id,
+            receipt_id: r.receipt_id,
+            item_id: r.item_id,
+            qty_received: r.qty_received,
+            unit_cost: r.unit_cost,
+            total_amount: r.total_amount,
+            po_line_id: r.po_line_id,
+            batch_no: r.batch_no,
+            serial_no: r.serial_no,
         }
     }
 }
@@ -1120,7 +1207,7 @@ impl FinanceRepository {
     pub async fn list_sales_shipments(&self) -> DomainResult<Vec<SalesShipment>> {
         let rows = sqlx::query_as::<_, SalesShipmentRow>(
             r#"
-            SELECT id, shipment_number, sales_order_id, client_id, date, courier_name, tracking_number, status, created_at
+            SELECT id, shipment_number, sales_order_id, client_id, warehouse_id, date, courier_name, tracking_number, status, created_at
             FROM sales_shipments
             ORDER BY created_at DESC
             "#,
@@ -1132,31 +1219,98 @@ impl FinanceRepository {
         Ok(rows.into_iter().map(Into::into).collect())
     }
 
+    pub async fn get_sales_shipment(&self, id: Uuid) -> DomainResult<Option<SalesShipment>> {
+        let row = sqlx::query_as::<_, SalesShipmentRow>(
+            r#"
+            SELECT id, shipment_number, sales_order_id, client_id, warehouse_id, date, courier_name, tracking_number, status, created_at
+            FROM sales_shipments
+            WHERE id = $1
+            "#,
+        )
+        .bind(id)
+        .fetch_optional(&self.pool)
+        .await
+        .map_err(|e| DomainError::Database(e.to_string()))?;
+
+        Ok(row.map(Into::into))
+    }
+
     pub async fn create_sales_shipment(
         &self,
         shipment: &SalesShipment,
+        items: &[SalesShipmentItem],
     ) -> DomainResult<SalesShipment> {
+        let mut tx = self.pool.begin().await.map_err(|e| DomainError::Database(e.to_string()))?;
+
         let row = sqlx::query_as::<_, SalesShipmentRow>(
             r#"
-            INSERT INTO sales_shipments (id, shipment_number, sales_order_id, client_id, date, courier_name, tracking_number, status, created_at)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-            RETURNING id, shipment_number, sales_order_id, client_id, date, courier_name, tracking_number, status, created_at
+            INSERT INTO sales_shipments (id, shipment_number, sales_order_id, client_id, warehouse_id, date, courier_name, tracking_number, status, created_at)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+            RETURNING id, shipment_number, sales_order_id, client_id, warehouse_id, date, courier_name, tracking_number, status, created_at
             "#,
         )
         .bind(shipment.id)
         .bind(&shipment.shipment_number)
         .bind(shipment.sales_order_id)
         .bind(shipment.client_id)
+        .bind(shipment.warehouse_id)
         .bind(shipment.date)
         .bind(&shipment.courier_name)
         .bind(&shipment.tracking_number)
         .bind(&shipment.status)
         .bind(shipment.created_at)
-        .fetch_one(&self.pool)
+        .fetch_one(&mut *tx)
         .await
         .map_err(|e| DomainError::Database(e.to_string()))?;
 
+        for item in items {
+            sqlx::query(
+                r#"
+                INSERT INTO sales_shipment_items (id, shipment_id, order_item_id, description, quantity_shipped, item_id)
+                VALUES ($1, $2, $3, $4, $5, $6)
+                "#,
+            )
+            .bind(item.id)
+            .bind(item.shipment_id)
+            .bind(item.order_item_id)
+            .bind(&item.description)
+            .bind(item.quantity_shipped)
+            .bind(item.item_id)
+            .execute(&mut *tx)
+            .await
+            .map_err(|e| DomainError::Database(e.to_string()))?;
+        }
+
+        tx.commit().await.map_err(|e| DomainError::Database(e.to_string()))?;
+
         Ok(row.into())
+    }
+
+    pub async fn update_sales_shipment_status(&self, id: Uuid, status: &str) -> DomainResult<()> {
+        sqlx::query(
+            "UPDATE sales_shipments SET status = $2, updated_at = NOW() WHERE id = $1"
+        )
+        .bind(id)
+        .bind(status)
+        .execute(&self.pool)
+        .await
+        .map_err(|e| DomainError::Database(e.to_string()))?;
+        Ok(())
+    }
+
+    pub async fn get_sales_shipment_items(&self, shipment_id: Uuid) -> DomainResult<Vec<SalesShipmentItem>> {
+        let rows = sqlx::query_as::<_, SalesShipmentItemRow>(
+            r#"
+            SELECT id, shipment_id, order_item_id, description, quantity_shipped, item_id
+            FROM sales_shipment_items
+            WHERE shipment_id = $1
+            "#,
+        )
+        .bind(shipment_id)
+        .fetch_all(&self.pool)
+        .await
+        .map_err(|e| DomainError::Database(e.to_string()))?;
+        Ok(rows.into_iter().map(Into::into).collect())
     }
 
     pub async fn list_purchase_quotes(&self) -> DomainResult<Vec<PurchaseQuote>> {
@@ -1289,5 +1443,117 @@ impl FinanceRepository {
         .map_err(|e| DomainError::Database(e.to_string()))?;
 
         Ok(row.into())
+    }
+
+    pub async fn list_purchase_receipts(&self, company_id: Uuid) -> DomainResult<Vec<crate::domain::entities::commercial_graph::PurchaseReceipt>> {
+        let rows = sqlx::query_as::<_, PurchaseReceiptRow>(
+            r#"
+            SELECT id, company_id, receipt_number, purchase_order_id, vendor_id, warehouse_id, posting_date, status, notes, created_at, created_by
+            FROM purchase_receipts
+            WHERE company_id = $1
+            ORDER BY created_at DESC
+            "#,
+        )
+        .bind(company_id)
+        .fetch_all(&self.pool)
+        .await
+        .map_err(|e| DomainError::Database(e.to_string()))?;
+        Ok(rows.into_iter().map(Into::into).collect())
+    }
+
+    pub async fn get_purchase_receipt(&self, id: Uuid) -> DomainResult<Option<crate::domain::entities::commercial_graph::PurchaseReceipt>> {
+        let row = sqlx::query_as::<_, PurchaseReceiptRow>(
+            r#"
+            SELECT id, company_id, receipt_number, purchase_order_id, vendor_id, warehouse_id, posting_date, status, notes, created_at, created_by
+            FROM purchase_receipts
+            WHERE id = $1
+            "#,
+        )
+        .bind(id)
+        .fetch_optional(&self.pool)
+        .await
+        .map_err(|e| DomainError::Database(e.to_string()))?;
+        Ok(row.map(Into::into))
+    }
+
+    pub async fn create_purchase_receipt(
+        &self,
+        receipt: &crate::domain::entities::commercial_graph::PurchaseReceipt,
+        items: &[crate::domain::entities::commercial_graph::PurchaseReceiptItem],
+    ) -> DomainResult<crate::domain::entities::commercial_graph::PurchaseReceipt> {
+        let mut tx = self.pool.begin().await.map_err(|e| DomainError::Database(e.to_string()))?;
+
+        sqlx::query(
+            r#"
+            INSERT INTO purchase_receipts (id, company_id, receipt_number, purchase_order_id, vendor_id, warehouse_id, posting_date, status, notes, created_at, created_by)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+            "#,
+        )
+        .bind(receipt.id)
+        .bind(receipt.company_id)
+        .bind(&receipt.receipt_number)
+        .bind(receipt.purchase_order_id)
+        .bind(receipt.vendor_id)
+        .bind(receipt.warehouse_id)
+        .bind(receipt.posting_date)
+        .bind(&receipt.status)
+        .bind(&receipt.notes)
+        .bind(receipt.created_at)
+        .bind(receipt.created_by)
+        .execute(&mut *tx)
+        .await
+        .map_err(|e| DomainError::Database(e.to_string()))?;
+
+        for item in items {
+            sqlx::query(
+                r#"
+                INSERT INTO purchase_receipt_items (id, receipt_id, item_id, qty_received, unit_cost, total_amount, po_line_id, batch_no, serial_no)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+                "#,
+            )
+            .bind(item.id)
+            .bind(item.receipt_id)
+            .bind(item.item_id)
+            .bind(item.qty_received)
+            .bind(item.unit_cost)
+            .bind(item.total_amount)
+            .bind(item.po_line_id)
+            .bind(&item.batch_no)
+            .bind(&item.serial_no)
+            .execute(&mut *tx)
+            .await
+            .map_err(|e| DomainError::Database(e.to_string()))?;
+        }
+
+        tx.commit().await.map_err(|e| DomainError::Database(e.to_string()))?;
+
+        Ok(receipt.clone())
+    }
+
+    pub async fn update_purchase_receipt_status(&self, id: Uuid, status: &str) -> DomainResult<()> {
+        sqlx::query(
+            "UPDATE purchase_receipts SET status = $2 WHERE id = $1"
+        )
+        .bind(id)
+        .bind(status)
+        .execute(&self.pool)
+        .await
+        .map_err(|e| DomainError::Database(e.to_string()))?;
+        Ok(())
+    }
+
+    pub async fn get_purchase_receipt_items(&self, receipt_id: Uuid) -> DomainResult<Vec<crate::domain::entities::commercial_graph::PurchaseReceiptItem>> {
+        let rows = sqlx::query_as::<_, PurchaseReceiptItemRow>(
+            r#"
+            SELECT id, receipt_id, item_id, qty_received, unit_cost, total_amount, po_line_id, batch_no, serial_no
+            FROM purchase_receipt_items
+            WHERE receipt_id = $1
+            "#,
+        )
+        .bind(receipt_id)
+        .fetch_all(&self.pool)
+        .await
+        .map_err(|e| DomainError::Database(e.to_string()))?;
+        Ok(rows.into_iter().map(Into::into).collect())
     }
 }

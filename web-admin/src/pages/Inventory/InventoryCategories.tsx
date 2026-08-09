@@ -188,19 +188,19 @@ export default function InventoryCategories() {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-white tracking-tight">Kategori Inventori</h1>
-                    <p className="text-slate-400 mt-1">Kelola pengelompokan barang dan pemetaan akun akuntansi.</p>
+                    <p className="text-muted-foreground mt-1">Kelola pengelompokan barang dan pemetaan akun akuntansi.</p>
                 </div>
                 <div className="flex items-center gap-3">
                     <div className="flex bg-slate-800 p-1 rounded-xl border border-slate-700 mr-2">
                         <button
                             onClick={() => setViewMode('grid')}
-                            className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-cyan-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
+                            className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-cyan-600 text-white shadow-lg' : 'text-muted-foreground hover:text-white'}`}
                         >
                             <LayoutGrid size={18} />
                         </button>
                         <button
                             onClick={() => setViewMode('list')}
-                            className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-cyan-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'}`}
+                            className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-cyan-600 text-white shadow-lg' : 'text-muted-foreground hover:text-white'}`}
                         >
                             <List size={18} />
                         </button>
@@ -224,8 +224,8 @@ export default function InventoryCategories() {
             </div>
 
             {/* Alert / Warning about Mapping */}
-            <div className="bg-amber-500/10 border border-amber-500/20 p-4 rounded-2xl flex gap-4">
-                <div className="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center text-amber-500 shrink-0">
+            <div className="bg-amber-500/100/10 border border-amber-500/20 p-4 rounded-2xl flex gap-4">
+                <div className="w-10 h-10 rounded-xl bg-amber-500/100/20 flex items-center justify-center text-amber-500 shrink-0">
                     <AlertCircle size={20} />
                 </div>
                 <div>
@@ -241,7 +241,7 @@ export default function InventoryCategories() {
             {/* Filters & Search */}
             <div className="bg-slate-900/50 border border-slate-800 p-4 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="relative w-full max-w-lg">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
                     <input
                         type="text"
                         placeholder="Cari kategori..."
@@ -250,18 +250,18 @@ export default function InventoryCategories() {
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
                 </div>
-                <div className="text-sm text-slate-400 font-medium">
+                <div className="text-sm text-muted-foreground font-medium">
                     Menampilkan <span className="text-white">{paginatedCategories.length}</span> dari <span className="text-white">{filteredCategories.length}</span> kategori
                 </div>
             </div>
 
             {/* Categories Content */}
             {filteredCategories.length === 0 ? (
-                <div className="py-20 text-center text-slate-500 bg-slate-900/30 rounded-3xl border border-slate-800/50 border-dashed">
+                <div className="py-20 text-center text-muted-foreground bg-slate-900/30 rounded-3xl border border-slate-800/50 border-dashed">
                     <div className="mb-4 flex justify-center">
-                        <FolderTree size={48} className="text-slate-700" />
+                        <FolderTree size={48} className="text-foreground" />
                     </div>
-                    <p className="text-lg font-medium text-slate-400">Tidak ada kategori ditemukan</p>
+                    <p className="text-lg font-medium text-muted-foreground">Tidak ada kategori ditemukan</p>
                     <p className="text-sm mt-1">Coba kata kunci lain atau buat kategori baru.</p>
                 </div>
             ) : viewMode === 'grid' ? (
@@ -280,46 +280,46 @@ export default function InventoryCategories() {
                                         </div>
                                         <div>
                                             <h3 className="text-lg font-bold text-white group-hover:text-cyan-400 transition-colors tracking-tight">{cat.name}</h3>
-                                            <div className="text-xs text-slate-500 font-mono mt-0.5 tracking-wider uppercase">{cat.code}</div>
+                                            <div className="text-xs text-muted-foreground font-mono mt-0.5 tracking-wider uppercase">{cat.code}</div>
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                         <button
                                             onClick={() => handleOpenEdit(cat)}
-                                            className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-white transition-colors"
+                                            className="p-2 hover:bg-slate-800 rounded-lg text-muted-foreground hover:text-white transition-colors"
                                         >
                                             <Edit2 size={16} />
                                         </button>
                                         <button
                                             onClick={() => handleDelete(cat.id)}
-                                            className="p-2 hover:bg-slate-800 rounded-lg text-slate-400 hover:text-red-400 transition-colors"
+                                            className="p-2 hover:bg-slate-800 rounded-lg text-muted-foreground hover:text-red-400 transition-colors"
                                         >
                                             <Trash2 size={16} />
                                         </button>
                                     </div>
                                 </div>
 
-                                <p className="text-sm text-slate-400 line-clamp-2 mb-6 min-h-[40px] leading-relaxed">
+                                <p className="text-sm text-muted-foreground line-clamp-2 mb-6 min-h-[40px] leading-relaxed">
                                     {cat.description || 'No description provided.'}
                                 </p>
 
                                 <div className="space-y-3 pt-4 border-t border-slate-800/50">
                                     <div className="flex items-center justify-between group/acct">
-                                        <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
-                                            <Briefcase size={14} className="text-slate-600" />
+                                        <div className="flex items-center gap-2 text-xs text-muted-foreground font-medium">
+                                            <Briefcase size={14} className="text-muted-foreground" />
                                             <span>Akun Kredit (Persediaan)</span>
                                         </div>
-                                        <div className={`flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-lg border ${cat.inventory_account_id ? 'text-cyan-400 bg-cyan-400/5 border-cyan-400/10' : 'text-slate-500 bg-slate-800 border-slate-700'}`}>
+                                        <div className={`flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-lg border ${cat.inventory_account_id ? 'text-cyan-400 bg-cyan-400/5 border-cyan-400/10' : 'text-muted-foreground bg-slate-800 border-slate-700'}`}>
                                             <Link2 size={12} />
                                             <span>{getAccountName(cat.inventory_account_id)}</span>
                                         </div>
                                     </div>
                                     <div className="flex items-center justify-between group/acct">
-                                        <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
-                                            <Activity size={14} className="text-slate-600" />
+                                        <div className="flex items-center gap-2 text-xs text-muted-foreground font-medium">
+                                            <Activity size={14} className="text-muted-foreground" />
                                             <span>Akun Debit OPEX (Biaya)</span>
                                         </div>
-                                        <div className={`flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-lg border ${cat.expense_account_id ? 'text-rose-400 bg-rose-400/5 border-rose-400/10' : 'text-slate-500 bg-slate-800 border-slate-700'}`}>
+                                        <div className={`flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-lg border ${cat.expense_account_id ? 'text-rose-400 bg-rose-400/5 border-rose-400/10' : 'text-muted-foreground bg-slate-800 border-slate-700'}`}>
                                             <Link2 size={12} />
                                             <span>{getAccountName(cat.expense_account_id)}</span>
                                         </div>
@@ -333,7 +333,7 @@ export default function InventoryCategories() {
                 /* LIST VIEW (TABLE) */
                 <div className="bg-slate-900/50 border border-slate-800 rounded-2xl overflow-hidden shadow-sm">
                     <table className="w-full text-left text-sm">
-                        <thead className="bg-slate-950 text-slate-400 font-medium border-b border-slate-800">
+                        <thead className="bg-slate-950 text-muted-foreground font-medium border-b border-slate-800">
                             <tr>
                                 <th className="px-6 py-4">Kategori</th>
                                 <th className="px-6 py-4">Deskripsi</th>
@@ -352,33 +352,33 @@ export default function InventoryCategories() {
                                             </div>
                                             <div>
                                                 <div className="font-bold text-white text-sm">{cat.name}</div>
-                                                <div className="text-xs text-slate-500 font-mono mt-0.5">{cat.code}</div>
+                                                <div className="text-xs text-muted-foreground font-mono mt-0.5">{cat.code}</div>
                                             </div>
                                         </div>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <div className="max-w-[200px] truncate text-slate-400" title={cat.description || ''}>
+                                        <div className="max-w-[200px] truncate text-muted-foreground" title={cat.description || ''}>
                                             {cat.description || '-'}
                                         </div>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <div className={`text-xs px-2.5 py-1.5 rounded-lg border inline-flex items-center gap-1.5 ${cat.inventory_account_id ? 'border-cyan-500/10 bg-cyan-500/5 text-cyan-400' : 'border-slate-700 bg-slate-800 text-slate-500'}`}>
+                                        <div className={`text-xs px-2.5 py-1.5 rounded-lg border inline-flex items-center gap-1.5 ${cat.inventory_account_id ? 'border-cyan-500/10 bg-cyan-500/5 text-cyan-400' : 'border-slate-700 bg-slate-800 text-muted-foreground'}`}>
                                             {cat.inventory_account_id && <Link2 size={10} />}
                                             {getAccountName(cat.inventory_account_id).split(' - ')[0]}
                                         </div>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <div className={`text-xs px-2.5 py-1.5 rounded-lg border inline-flex items-center gap-1.5 ${cat.expense_account_id ? 'border-rose-500/10 bg-rose-500/5 text-rose-400' : 'border-slate-700 bg-slate-800 text-slate-500'}`}>
+                                        <div className={`text-xs px-2.5 py-1.5 rounded-lg border inline-flex items-center gap-1.5 ${cat.expense_account_id ? 'border-rose-500/10 bg-rose-500/5 text-rose-400' : 'border-slate-700 bg-slate-800 text-muted-foreground'}`}>
                                             {cat.expense_account_id && <Link2 size={10} />}
                                             {getAccountName(cat.expense_account_id).split(' - ')[0]}
                                         </div>
                                     </td>
                                     <td className="px-6 py-4 text-right">
                                         <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <button onClick={() => handleOpenEdit(cat)} className="p-2 hover:bg-slate-700 rounded-lg text-slate-400 hover:text-white transition-colors">
+                                            <button onClick={() => handleOpenEdit(cat)} className="p-2 hover:bg-slate-700 rounded-lg text-muted-foreground hover:text-white transition-colors">
                                                 <Edit2 size={14} />
                                             </button>
-                                            <button onClick={() => handleDelete(cat.id)} className="p-2 hover:bg-slate-700 rounded-lg text-slate-400 hover:text-red-400 transition-colors">
+                                            <button onClick={() => handleDelete(cat.id)} className="p-2 hover:bg-slate-700 rounded-lg text-muted-foreground hover:text-red-400 transition-colors">
                                                 <Trash2 size={14} />
                                             </button>
                                         </div>
@@ -393,14 +393,14 @@ export default function InventoryCategories() {
             {/* Pagination Controls */}
             {filteredCategories.length > 0 && (
                 <div className="flex items-center justify-between border-t border-slate-800 pt-6">
-                    <div className="text-sm text-slate-400">
+                    <div className="text-sm text-muted-foreground">
                         Page <span className="text-white font-medium">{currentPage}</span> of <span className="text-white font-medium">{Math.max(1, totalPages)}</span>
                     </div>
                     <div className="flex items-center gap-2">
                         <button
                             onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                             disabled={currentPage === 1}
-                            className="p-2.5 rounded-xl border border-slate-800 hover:bg-slate-800 text-slate-400 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                            className="p-2.5 rounded-xl border border-slate-800 hover:bg-slate-800 text-muted-foreground hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                         >
                             <ChevronLeft size={16} />
                         </button>
@@ -417,7 +417,7 @@ export default function InventoryCategories() {
                                         onClick={() => setCurrentPage(p)}
                                         className={`w-10 h-10 rounded-xl text-sm font-semibold transition-all ${currentPage === p
                                             ? 'bg-cyan-600 text-white shadow-lg shadow-cyan-600/25 scale-105'
-                                            : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+                                            : 'text-muted-foreground hover:bg-slate-800 hover:text-white'
                                             }`}
                                     >
                                         {p}
@@ -429,7 +429,7 @@ export default function InventoryCategories() {
                         <button
                             onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                             disabled={currentPage === totalPages}
-                            className="p-2.5 rounded-xl border border-slate-800 hover:bg-slate-800 text-slate-400 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                            className="p-2.5 rounded-xl border border-slate-800 hover:bg-slate-800 text-muted-foreground hover:text-white disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                         >
                             <ChevronRight size={16} />
                         </button>
@@ -445,7 +445,7 @@ export default function InventoryCategories() {
                             <h2 className="text-xl font-bold text-white">
                                 {editingCategory ? 'Edit Kategori' : 'Tambah Kategori'}
                             </h2>
-                            <button onClick={() => setModalOpen(false)} className="text-gray-400 hover:text-white transition-colors">
+                            <button onClick={() => setModalOpen(false)} className="text-muted-foreground hover:text-white transition-colors">
                                 <X size={24} />
                             </button>
                         </div>
@@ -471,7 +471,7 @@ export default function InventoryCategories() {
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-400 mb-1.5">Deskripsi</label>
+                                    <label className="block text-sm font-medium text-muted-foreground mb-1.5">Deskripsi</label>
                                     <textarea
                                         className="w-full bg-black/20 border border-white/5 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-blue-500/50 min-h-[80px]"
                                         placeholder="Deskripsi singkat kategori..."
@@ -486,7 +486,7 @@ export default function InventoryCategories() {
                                     </h3>
 
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-400 mb-1.5">
+                                        <label className="block text-sm font-medium text-muted-foreground mb-1.5">
                                             Akun Kredit (Persediaan)
                                         </label>
                                         <select
@@ -501,11 +501,11 @@ export default function InventoryCategories() {
                                                 </option>
                                             ))}
                                         </select>
-                                        <p className="text-xs text-gray-500 mt-1">Akun Kredit saat barang keluar.</p>
+                                        <p className="text-xs text-muted-foreground mt-1">Akun Kredit saat barang keluar.</p>
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-400 mb-1.5">
+                                        <label className="block text-sm font-medium text-muted-foreground mb-1.5">
                                             Akun Debit OPEX (Biaya)
                                         </label>
                                         <select
@@ -520,7 +520,7 @@ export default function InventoryCategories() {
                                                 </option>
                                             ))}
                                         </select>
-                                        <p className="text-xs text-gray-500 mt-1">Akun Debit saat barang dipakai untuk OPEX.</p>
+                                        <p className="text-xs text-muted-foreground mt-1">Akun Debit saat barang dipakai untuk OPEX.</p>
                                     </div>
                                 </div>
                             </div>
@@ -553,16 +553,16 @@ export default function InventoryCategories() {
                                     <Layers className="text-cyan-400" />
                                     Struktur Mapping COA
                                 </h2>
-                                <p className="text-slate-400 text-sm mt-1">Audit pemetaan akun Kredit dan Debit untuk setiap kategori.</p>
+                                <p className="text-muted-foreground text-sm mt-1">Audit pemetaan akun Kredit dan Debit untuk setiap kategori.</p>
                             </div>
-                            <button onClick={() => setShowCoaStructure(false)} className="text-slate-400 hover:text-white transition-colors bg-slate-800 p-2 rounded-lg hover:bg-slate-700">
+                            <button onClick={() => setShowCoaStructure(false)} className="text-muted-foreground hover:text-white transition-colors bg-slate-800 p-2 rounded-lg hover:bg-slate-700">
                                 <X size={20} />
                             </button>
                         </div>
 
                         <div className="p-0 overflow-auto flex-1">
                             <table className="w-full text-left text-sm">
-                                <thead className="bg-slate-950 text-slate-400 font-medium sticky top-0 z-10">
+                                <thead className="bg-slate-950 text-muted-foreground font-medium sticky top-0 z-10">
                                     <tr>
                                         <th className="px-6 py-4 border-b border-slate-800">Kategori</th>
                                         <th className="px-6 py-4 border-b border-slate-800">
@@ -585,7 +585,7 @@ export default function InventoryCategories() {
                                             <tr key={cat.id} className="hover:bg-slate-800/20 transition-colors">
                                                 <td className="px-6 py-4">
                                                     <div className="font-medium text-white">{cat.name}</div>
-                                                    <div className="text-xs text-slate-500 font-mono">{cat.code}</div>
+                                                    <div className="text-xs text-muted-foreground font-mono">{cat.code}</div>
                                                 </td>
                                                 <td className="px-6 py-4">
                                                     <div className={`px-3 py-1.5 rounded-lg inline-flex items-center gap-2 border ${cat.inventory_account_id ? 'bg-cyan-900/20 border-cyan-500/20 text-cyan-300' : 'bg-red-900/20 border-red-500/20 text-red-300'}`}>
@@ -605,7 +605,7 @@ export default function InventoryCategories() {
                                                             <Link2 size={12} />
                                                         </span>
                                                     ) : (
-                                                        <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-amber-500/20 text-amber-400 animate-pulse">
+                                                        <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-amber-500/100/20 text-amber-400 animate-pulse">
                                                             <AlertCircle size={12} />
                                                         </span>
                                                     )}

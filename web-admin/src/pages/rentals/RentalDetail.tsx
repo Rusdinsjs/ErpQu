@@ -229,7 +229,7 @@ export default function RentalDetail({ rentalId: propRentalId }: RentalDetailPro
                                 variant="primary"
                                 leftIcon={<Check size={18} />}
                                 onClick={() => setApproveOpened(true)}
-                                className="rounded-xl shadow-lg shadow-emerald-500/20 bg-emerald-600 hover:bg-emerald-500 text-white"
+                                className="rounded-xl shadow-lg shadow-emerald-500/20 bg-emerald-600 hover:bg-emerald-500/100 text-white"
                             >
                                 Approve Rental
                             </Button>
@@ -281,7 +281,7 @@ export default function RentalDetail({ rentalId: propRentalId }: RentalDetailPro
                     <Card className="overflow-hidden border-border rounded-2xl bg-card/60 backdrop-blur-xl p-0">
                         <div className="px-6 py-4 border-b border-border flex items-center justify-between bg-card/90">
                             <div className="flex items-center gap-3">
-                                <div className="p-2 rounded-lg bg-emerald-500/10">
+                                <div className="p-2 rounded-lg bg-emerald-500/100/10">
                                     <Tags size={20} className="text-emerald-500" />
                                 </div>
                                 <h3 className="text-lg font-bold text-foreground">Rented Assets</h3>
@@ -350,7 +350,7 @@ export default function RentalDetail({ rentalId: propRentalId }: RentalDetailPro
 
                 <div className="lg:col-span-1">
                     <Card className="p-6 h-full relative overflow-hidden border-border rounded-2xl bg-card/60 backdrop-blur-xl">
-                        <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-emerald-500/5 rounded-full blur-[60px] pointer-events-none" />
+                        <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-emerald-500/100/5 rounded-full blur-[60px] pointer-events-none" />
 
                         <h3 className="text-lg font-bold text-foreground mb-6 flex items-center gap-2 font-display uppercase tracking-widest text-[13px] opacity-70">
                             Billing Summary
@@ -448,10 +448,10 @@ export default function RentalDetail({ rentalId: propRentalId }: RentalDetailPro
                 size="xl"
             >
                 <div className="relative space-y-6">
-                    <div className="absolute -top-10 -right-10 w-32 h-32 bg-emerald-500/10 rounded-full blur-[50px] pointer-events-none" />
+                    <div className="absolute -top-10 -right-10 w-32 h-32 bg-emerald-500/100/10 rounded-full blur-[50px] pointer-events-none" />
 
-                    <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400">
+                    <div className="p-4 bg-emerald-500/100/10 border border-emerald-500/20 rounded-2xl flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-full bg-emerald-500/100/20 flex items-center justify-center text-emerald-400">
                             <Check size={24} />
                         </div>
                         <div>
@@ -472,7 +472,7 @@ export default function RentalDetail({ rentalId: propRentalId }: RentalDetailPro
                         <Button variant="ghost" onClick={() => setApproveOpened(false)} className="rounded-xl">Cancel</Button>
                         <Button
                             variant="primary"
-                            className="bg-emerald-600 hover:bg-emerald-500 rounded-xl px-8 shadow-lg shadow-emerald-500/20 text-white"
+                            className="bg-emerald-600 hover:bg-emerald-500/100 rounded-xl px-8 shadow-lg shadow-emerald-500/20 text-white"
                             onClick={() => approveMutation.mutate()}
                             loading={approveMutation.isPending}
                         >

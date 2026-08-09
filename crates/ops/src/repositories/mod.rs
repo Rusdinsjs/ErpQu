@@ -6,6 +6,7 @@ pub mod maintenance_team_repository;
 pub mod maintenance_template_repository;
 pub mod tax_renewal_repository;
 pub mod work_order_repository;
+pub mod quality_repository;
 
 pub use fuel_repository::{FuelAnalyticsData, FuelRepository};
 pub use lifecycle_repository::LifecycleRepository;
@@ -16,3 +17,6 @@ pub use maintenance_template_repository::MaintenanceTemplateRepository;
 pub use management_system_telemetry::SensorRepository;
 pub use tax_renewal_repository::TaxRenewalRepository;
 pub use work_order_repository::{WorkOrderAnalyticsData, WorkOrderRepository};
+pub use quality_repository::QualityRepository;
+pub mod delivery_trip_repository;
+pub use delivery_trip_repository::DeliveryTripRepository;

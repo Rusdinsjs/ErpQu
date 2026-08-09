@@ -1,1 +1,6 @@
-error: migration 20260808000001 was previously applied but has been modified
+Applied 20260808000001/migrate separate logical schemas (46.96437ms)
+Applied 20260808140000/migrate create company app frappe (8.387991ms)
+Applied 20260808150000/migrate add company deeds (8.206687ms)
+Applied 20260808190000/migrate create maintenance teams (8.800446ms)
+Applied 20260808200000/migrate fix company id assets (12.740254ms)
+Applied 20260808210000/migrate 1to1 module launchpads (7.460071ms)

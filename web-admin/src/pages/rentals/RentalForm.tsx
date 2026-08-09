@@ -276,7 +276,7 @@ export default function RentalForm() {
                         {items.length > 0 ? (
                             <div className="overflow-x-auto border border-gray-700/50 rounded-lg">
                                 <table className="w-full text-left text-sm text-gray-300">
-                                    <thead className="bg-gray-800 text-xs uppercase font-semibold text-gray-400">
+                                    <thead className="bg-gray-800 text-xs uppercase font-semibold text-muted-foreground">
                                         <tr>
                                             <th className="px-4 py-3">Asset</th>
                                             <th className="px-4 py-3">Rate</th>
@@ -290,7 +290,7 @@ export default function RentalForm() {
                                                 <td className="px-4 py-3 font-medium text-white">{item.asset_name}</td>
                                                 <td className="px-4 py-3">{item.rate_name}</td>
                                                 <td className="px-4 py-3 font-mono">
-                                                    Rp {item.rate_amount.toLocaleString()} <span className="text-xs text-slate-500">/{item.rate_basis}</span>
+                                                    Rp {item.rate_amount.toLocaleString()} <span className="text-xs text-muted-foreground">/{item.rate_basis}</span>
                                                 </td>
                                                 <td className="px-4 py-3 text-right">
                                                     <button
@@ -307,7 +307,7 @@ export default function RentalForm() {
                                 </table>
                             </div>
                         ) : (
-                            <div className="text-center py-8 text-slate-500 italic border border-dashed border-slate-700 rounded-lg">
+                            <div className="text-center py-8 text-muted-foreground italic border border-dashed border-slate-700 rounded-lg">
                                 No assets added yet. Use the form above to add an asset.
                             </div>
                         )}

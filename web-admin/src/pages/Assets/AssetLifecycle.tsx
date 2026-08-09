@@ -297,7 +297,7 @@ export default function AssetLifecycle({ assetId: propAssetId }: AssetLifecycleP
             <div className="space-y-6">
                 <div className="flex flex-col gap-2">
                     <h1 className="text-2xl font-bold text-white">Asset Lifecycle Audit</h1>
-                    <p className="text-slate-400">Select an asset to view its lifecycle history and perform audits.</p>
+                    <p className="text-muted-foreground">Select an asset to view its lifecycle history and perform audits.</p>
                 </div>
 
                 <Card className="p-6 space-y-6">
@@ -324,7 +324,7 @@ export default function AssetLifecycle({ assetId: propAssetId }: AssetLifecycleP
                             <TableBody>
                                 {searching ? (
                                     <TableRow>
-                                        <TableTd colSpan={5} className="text-center py-8 text-slate-500">Searching...</TableTd>
+                                        <TableTd colSpan={5} className="text-center py-8 text-muted-foreground">Searching...</TableTd>
                                     </TableRow>
                                 ) : searchResults?.data?.length ? (
                                     searchResults.data.map((asset: any) => (
@@ -348,7 +348,7 @@ export default function AssetLifecycle({ assetId: propAssetId }: AssetLifecycleP
                                     ))
                                 ) : (
                                     <TableRow>
-                                        <TableTd colSpan={5} className="text-center py-8 text-slate-500">
+                                        <TableTd colSpan={5} className="text-center py-8 text-muted-foreground">
                                             {debouncedQuery ? 'No assets found.' : 'Start typing to search for an asset.'}
                                         </TableTd>
                                     </TableRow>
@@ -382,7 +382,7 @@ export default function AssetLifecycle({ assetId: propAssetId }: AssetLifecycleP
                         <h1 className="text-2xl font-bold text-white">
                             {assetData?.name || (assetData as any)?.asset?.name || `Asset ${assetId || ''}`}
                             {(assetData?.asset_code || (assetData as any)?.asset?.asset_code) && (
-                                <span className="text-slate-400 ml-2 font-normal">
+                                <span className="text-muted-foreground ml-2 font-normal">
                                     ({assetData?.asset_code || (assetData as any)?.asset?.asset_code})
                                 </span>
                             )}
@@ -443,7 +443,7 @@ export default function AssetLifecycle({ assetId: propAssetId }: AssetLifecycleP
                                         {assetData && (
                                             <div className="p-4 rounded-lg bg-slate-800/50 border border-slate-700">
                                                 <div className="flex justify-between items-start mb-1">
-                                                    <p className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Responsible Person (PJ)</p>
+                                                    <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Responsible Person (PJ)</p>
                                                     <Badge size="sm" className="bg-slate-700 text-slate-300 border-slate-600">
                                                         {currentState === 'deployed' ? 'Dept. Responsibility' :
                                                             currentState.includes('loan') || assetData.assigned_to_name ? 'Individual' :
@@ -465,7 +465,7 @@ export default function AssetLifecycle({ assetId: propAssetId }: AssetLifecycleP
                                                         <Badge size="sm" className="bg-blue-500/20 text-blue-400 border-blue-500/30">Manager PJ</Badge>
                                                     )}
                                                 </div>
-                                                <p className="text-[10px] text-slate-500 mt-2 italic">
+                                                <p className="text-[10px] text-muted-foreground mt-2 italic">
                                                     * PJ ini bertanggung jawab atas kondisi dan keberadaan aset pada tahap ini.
                                                 </p>
                                             </div>
@@ -514,7 +514,7 @@ export default function AssetLifecycle({ assetId: propAssetId }: AssetLifecycleP
                                             })}
                                         </div>
                                     ) : (
-                                        <p className="text-slate-400 text-sm flex items-center gap-2 p-4 bg-slate-900 rounded-lg">
+                                        <p className="text-muted-foreground text-sm flex items-center gap-2 p-4 bg-slate-900 rounded-lg">
                                             <Info size={16} />
                                             No transitions available from current state.
                                         </p>
@@ -533,7 +533,7 @@ export default function AssetLifecycle({ assetId: propAssetId }: AssetLifecycleP
                                     {history && history.length > 0 ? (
                                         <LifecycleTimeline history={history} />
                                     ) : !loadingHistory && (
-                                        <p className="text-slate-500 text-center py-8">No history records yet.</p>
+                                        <p className="text-muted-foreground text-center py-8">No history records yet.</p>
                                     )}
                                 </div>
                             </div>
@@ -549,7 +549,7 @@ export default function AssetLifecycle({ assetId: propAssetId }: AssetLifecycleP
                                                 flex items-center gap-2 p-2 rounded-lg border text-xs
                                                 ${state.value === currentState
                                                     ? 'border-cyan-500/50 bg-cyan-500/10 text-cyan-400'
-                                                    : 'border-slate-800 bg-slate-950 text-slate-400'
+                                                    : 'border-slate-800 bg-slate-950 text-muted-foreground'
                                                 }
                                             `}
                                         >
@@ -571,7 +571,7 @@ export default function AssetLifecycle({ assetId: propAssetId }: AssetLifecycleP
                         <Badge variant={getBadgeVariant(currentState)}>
                             {getStateLabel(currentState)}
                         </Badge>
-                        <ArrowRight size={20} className="text-slate-500" />
+                        <ArrowRight size={20} className="text-muted-foreground" />
                         <Badge variant={selectedState ? getBadgeVariant(selectedState) : 'default'}>
                             {selectedState ? getStateLabel(selectedState) : ''}
                         </Badge>

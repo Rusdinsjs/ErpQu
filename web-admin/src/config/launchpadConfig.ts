@@ -11,8 +11,8 @@ export type MenuId =
     | 'fuel' | 'loans' | 'tax-renewals'
     | 'rentals' | 'contracts' | 'contract-templates' | 'clients'
     | 'sales-invoices'
-    | 'inventory-items' | 'inventory-categories' | 'stock-opname'
-    | 'purchase-bills'
+    | 'inventory-items' | 'inventory-categories' | 'stock-opname' | 'stock-entry' | 'material-request' | 'quality-inspection' | 'delivery-trip' | 'warehouses'
+    | 'purchase-bills' | 'purchase-receipt'
     | 'finance' | 'cash-bank' | 'expenses' | 'journal-entries' | 'financial-reports'
     | 'employees' | 'departments' | 'attendance' | 'leaves'
     | 'approvals'
@@ -66,8 +66,14 @@ export const MENU_LABELS: Record<MenuId, string> = {
     'sales-invoices': 'Sales Invoices',
     'inventory-items': 'Inventory Items',
     'inventory-categories': 'Inventory Categories',
+    'warehouses': 'Warehouses & Bins',
     'stock-opname': 'Stock Opname',
+    'stock-entry': 'Stock Entry',
+    'material-request': 'Material Request',
+    'quality-inspection': 'Quality Inspection',
+    'delivery-trip': 'Delivery Trips',
     'purchase-bills': 'Vendor Bills',
+    'purchase-receipt': 'Purchase Receipts (GRN)',
     'finance': 'Chart of Accounts',
     'cash-bank': 'Cash & Bank',
     'expenses': 'Expenses (Opex/Capex)',
@@ -114,8 +120,14 @@ export const MENU_TO_RESOURCE: Record<MenuId, string> = {
     'sales-invoices': 'sales_invoice',
     'inventory-items': 'inventory',
     'inventory-categories': 'inventory_category',
+    'warehouses': 'inventory',
     'stock-opname': 'stock_opname',
+    'stock-entry': 'inventory',
+    'material-request': 'inventory',
+    'quality-inspection': 'quality_inspection',
+    'delivery-trip': 'delivery_trip',
     'purchase-bills': 'purchase_bill',
+    'purchase-receipt': 'purchase_bill',
     'finance': 'finance',
     'cash-bank': 'cash_bank',
     'expenses': 'expense',
@@ -221,7 +233,7 @@ export const DEFAULT_LAUNCHPAD_CONFIG: LaunchpadConfig = {
             defaultRoute: '/purchase-bills',
             minLevel: 4,
             features: ['Vendor Bills', 'Purchase Orders', 'Supplier Procurement'],
-            menuIds: ['purchase-bills'],
+            menuIds: ['purchase-bills', 'purchase-receipt'],
             order: 6,
             enabled: true,
         },
@@ -262,8 +274,8 @@ export const DEFAULT_LAUNCHPAD_CONFIG: LaunchpadConfig = {
             iconBg: 'bg-gradient-to-br from-orange-500 to-red-400',
             defaultRoute: '/inventory-items',
             minLevel: 3,
-            features: ['Inventory Control', 'Inventory Categories', 'Stock Opname'],
-            menuIds: ['inventory-items', 'inventory-categories', 'stock-opname'],
+            features: ['Inventory Control', 'Inventory Categories', 'Stock Opname', 'Stock Entry', 'Material Request', 'Warehouse Bins'],
+            menuIds: ['inventory-items', 'inventory-categories', 'warehouses', 'stock-opname', 'stock-entry', 'material-request', 'purchase-receipt', 'quality-inspection', 'delivery-trip'],
             order: 9,
             enabled: true,
         },

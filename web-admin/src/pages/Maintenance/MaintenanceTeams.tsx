@@ -160,12 +160,12 @@ export default function MaintenanceTeams() {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-900/60 p-6 rounded-2xl border border-slate-800 backdrop-blur-xl shadow-xl">
                 <div>
                     <div className="flex items-center gap-3">
-                        <div className="p-3 bg-emerald-500/10 text-emerald-400 rounded-xl border border-emerald-500/20">
+                        <div className="p-3 bg-emerald-500/100/10 text-emerald-400 rounded-xl border border-emerald-500/20">
                             <Users size={24} />
                         </div>
                         <div>
                             <h1 className="text-2xl font-bold text-white tracking-tight">Tim Pemeliharaan (Maintenance Teams)</h1>
-                            <p className="text-slate-400 text-sm mt-0.5">
+                            <p className="text-muted-foreground text-sm mt-0.5">
                                 Kelola struktur tim teknisi, spesialis mekanik, dan penanggung jawab maintenance sesuai standar ERPNext.
                             </p>
                         </div>
@@ -187,37 +187,37 @@ export default function MaintenanceTeams() {
                         <Wrench size={22} />
                     </div>
                     <div>
-                        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Tim</p>
+                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Total Tim</p>
                         <p className="text-2xl font-bold text-white mt-1">{totalTeams}</p>
                     </div>
                 </div>
 
                 <div className="bg-slate-900/60 p-5 rounded-2xl border border-slate-800 flex items-center gap-4">
-                    <div className="p-3 bg-emerald-500/10 text-emerald-400 rounded-xl">
+                    <div className="p-3 bg-emerald-500/100/10 text-emerald-400 rounded-xl">
                         <UserCheck size={22} />
                     </div>
                     <div>
-                        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Tim Aktif</p>
+                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Tim Aktif</p>
                         <p className="text-2xl font-bold text-emerald-400 mt-1">{activeTeams}</p>
                     </div>
                 </div>
 
                 <div className="bg-slate-900/60 p-5 rounded-2xl border border-slate-800 flex items-center gap-4">
-                    <div className="p-3 bg-purple-500/10 text-purple-400 rounded-xl">
+                    <div className="p-3 bg-purple-500/100/10 text-purple-400 rounded-xl">
                         <Users size={22} />
                     </div>
                     <div>
-                        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Teknisi</p>
+                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Total Teknisi</p>
                         <p className="text-2xl font-bold text-purple-300 mt-1">{totalTechnicians}</p>
                     </div>
                 </div>
 
                 <div className="bg-slate-900/60 p-5 rounded-2xl border border-slate-800 flex items-center gap-4">
-                    <div className="p-3 bg-amber-500/10 text-amber-400 rounded-xl">
+                    <div className="p-3 bg-amber-500/100/10 text-amber-400 rounded-xl">
                         <Shield size={22} />
                     </div>
                     <div>
-                        <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Team Leaders</p>
+                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Team Leaders</p>
                         <p className="text-2xl font-bold text-amber-300 mt-1">{totalManagers}</p>
                     </div>
                 </div>
@@ -226,13 +226,13 @@ export default function MaintenanceTeams() {
             {/* Filter and Search Bar */}
             <div className="bg-slate-900/60 p-4 rounded-2xl border border-slate-800 flex flex-col md:flex-row items-center justify-between gap-4">
                 <div className="relative w-full md:w-96">
-                    <Search size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500" />
+                    <Search size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
                     <input
                         type="text"
                         placeholder="Cari kode, nama tim, atau manajer..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2 text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-emerald-500 transition-colors"
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-4 py-2 text-sm text-white placeholder:text-muted-foreground focus:outline-none focus:border-emerald-500 transition-colors"
                     />
                 </div>
 
@@ -249,7 +249,7 @@ export default function MaintenanceTeams() {
 
                     <button
                         onClick={() => refetch()}
-                        className="p-2.5 bg-slate-950 hover:bg-slate-800 text-slate-400 hover:text-white rounded-xl border border-slate-800 transition-colors"
+                        className="p-2.5 bg-slate-950 hover:bg-slate-800 text-muted-foreground hover:text-white rounded-xl border border-slate-800 transition-colors"
                         title="Refresh"
                     >
                         <RefreshCw size={16} />
@@ -259,7 +259,7 @@ export default function MaintenanceTeams() {
 
             {/* Teams List */}
             {isLoading ? (
-                <div className="text-center py-16 bg-slate-900/40 rounded-2xl border border-slate-800 text-slate-400">
+                <div className="text-center py-16 bg-slate-900/40 rounded-2xl border border-slate-800 text-muted-foreground">
                     Memuat data tim pemeliharaan...
                 </div>
             ) : isError ? (
@@ -267,7 +267,7 @@ export default function MaintenanceTeams() {
                     Gagal memuat data tim pemeliharaan. Silakan coba lagi.
                 </div>
             ) : teams.length === 0 ? (
-                <div className="text-center py-16 bg-slate-900/40 rounded-2xl border border-slate-800 text-slate-500">
+                <div className="text-center py-16 bg-slate-900/40 rounded-2xl border border-slate-800 text-muted-foreground">
                     Belum ada tim pemeliharaan ditemukan. Klik "Tambah Tim Baru" untuk membuat.
                 </div>
             ) : (
@@ -288,15 +288,15 @@ export default function MaintenanceTeams() {
                                         </div>
                                         <div>
                                             <div className="flex items-center gap-3 flex-wrap">
-                                                <span className="px-2.5 py-1 bg-emerald-500/10 text-emerald-400 text-xs font-mono font-semibold rounded-md border border-emerald-500/20">
+                                                <span className="px-2.5 py-1 bg-emerald-500/100/10 text-emerald-400 text-xs font-mono font-semibold rounded-md border border-emerald-500/20">
                                                     {team.team_code}
                                                 </span>
                                                 <h3 className="text-lg font-bold text-white tracking-tight">{team.team_name}</h3>
                                                 <span
                                                     className={`px-2.5 py-0.5 text-xs font-semibold rounded-full border ${
                                                         team.status === 'ACTIVE'
-                                                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
-                                                            : 'bg-slate-800 text-slate-400 border-slate-700'
+                                                            ? 'bg-emerald-500/100/10 text-emerald-400 border-emerald-500/30'
+                                                            : 'bg-slate-800 text-muted-foreground border-slate-700'
                                                     }`}
                                                 >
                                                     {team.status}
@@ -304,10 +304,10 @@ export default function MaintenanceTeams() {
                                             </div>
 
                                             {team.description && (
-                                                <p className="text-slate-400 text-sm mt-1.5 line-clamp-2">{team.description}</p>
+                                                <p className="text-muted-foreground text-sm mt-1.5 line-clamp-2">{team.description}</p>
                                             )}
 
-                                            <div className="flex items-center gap-6 mt-3 text-xs text-slate-400 flex-wrap">
+                                            <div className="flex items-center gap-6 mt-3 text-xs text-muted-foreground flex-wrap">
                                                 <div className="flex items-center gap-1.5">
                                                     <Shield size={14} className="text-amber-400" />
                                                     <span>Leader: <strong className="text-slate-200">{team.manager_name || 'Belum Ditentukan'}</strong></span>
@@ -343,7 +343,7 @@ export default function MaintenanceTeams() {
                                                     deleteMutation.mutate(team.id);
                                                 }
                                             }}
-                                            className="p-2 bg-slate-950 hover:bg-red-500/10 text-slate-400 hover:text-red-400 rounded-lg border border-slate-800 transition-colors"
+                                            className="p-2 bg-slate-950 hover:bg-red-500/10 text-muted-foreground hover:text-red-400 rounded-lg border border-slate-800 transition-colors"
                                             title="Hapus Tim"
                                         >
                                             <Trash2 size={16} />
@@ -354,13 +354,13 @@ export default function MaintenanceTeams() {
                                 {/* Expanded Member List */}
                                 {isExpanded && (
                                     <div className="bg-slate-950/70 p-5 border-t border-slate-800/80">
-                                        <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-2">
+                                        <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-2">
                                             <Users size={14} className="text-emerald-400" />
                                             Daftar Anggota Tim ({memberList.length})
                                         </h4>
 
                                         {memberList.length === 0 ? (
-                                            <p className="text-xs text-slate-500 italic">Belum ada anggota yang didaftarkan pada tim ini.</p>
+                                            <p className="text-xs text-muted-foreground italic">Belum ada anggota yang didaftarkan pada tim ini.</p>
                                         ) : (
                                             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                                                 {memberList.map((m) => (
@@ -369,7 +369,7 @@ export default function MaintenanceTeams() {
                                                         className="p-3 bg-slate-900/90 rounded-xl border border-slate-800 flex items-center justify-between gap-2"
                                                     >
                                                         <div className="flex items-center gap-2.5 overflow-hidden">
-                                                            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center font-bold text-xs shrink-0">
+                                                            <div className="w-8 h-8 rounded-lg bg-emerald-500/100/10 text-emerald-400 flex items-center justify-center font-bold text-xs shrink-0">
                                                                 {m.member_name.charAt(0).toUpperCase()}
                                                             </div>
                                                             <div className="truncate">
@@ -395,14 +395,14 @@ export default function MaintenanceTeams() {
                     <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl my-8">
                         <div className="p-5 border-b border-slate-800 flex items-center justify-between bg-slate-900/80">
                             <div className="flex items-center gap-3">
-                                <div className="p-2 bg-emerald-500/10 text-emerald-400 rounded-lg">
+                                <div className="p-2 bg-emerald-500/100/10 text-emerald-400 rounded-lg">
                                     <Briefcase size={20} />
                                 </div>
                                 <h2 className="text-lg font-bold text-white">
                                     {editingTeam ? 'Edit Tim Pemeliharaan' : 'Tambah Tim Pemeliharaan Baru'}
                                 </h2>
                             </div>
-                            <button onClick={closeModal} className="text-slate-400 hover:text-white">
+                            <button onClick={closeModal} className="text-muted-foreground hover:text-white">
                                 <X size={20} />
                             </button>
                         </div>
@@ -416,7 +416,7 @@ export default function MaintenanceTeams() {
                         >
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">
+                                    <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
                                         Kode Tim *
                                     </label>
                                     <input
@@ -430,7 +430,7 @@ export default function MaintenanceTeams() {
                                 </div>
 
                                 <div>
-                                    <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">
+                                    <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
                                         Nama Tim *
                                     </label>
                                     <input
@@ -445,7 +445,7 @@ export default function MaintenanceTeams() {
                             </div>
 
                             <div>
-                                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">
+                                <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
                                     Nama Manajer / Team Leader
                                 </label>
                                 <select
@@ -468,7 +468,7 @@ export default function MaintenanceTeams() {
                             </div>
 
                             <div>
-                                <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">
+                                <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
                                     Deskripsi / Catatan Tim
                                 </label>
                                 <textarea
@@ -539,7 +539,7 @@ export default function MaintenanceTeams() {
                                             <button
                                                 type="button"
                                                 onClick={() => handleRemoveMemberRow(idx)}
-                                                className="p-2 text-slate-500 hover:text-red-400 rounded-lg hover:bg-slate-800"
+                                                className="p-2 text-muted-foreground hover:text-red-400 rounded-lg hover:bg-slate-800"
                                             >
                                                 <Trash2 size={16} />
                                             </button>

@@ -166,7 +166,7 @@ export default function Locations() {
                 {/* Search */}
                 <div className="mb-4">
                     <div className="relative max-w-md">
-                        <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+                        <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                         <input
                             type="text"
                             placeholder="Search by name or code..."
@@ -197,7 +197,7 @@ export default function Locations() {
                                     <TableTd>
                                         <div>
                                             <p className="font-medium text-white">{location.name}</p>
-                                            <p className="text-xs text-slate-500">{location.code}</p>
+                                            <p className="text-xs text-muted-foreground">{location.code}</p>
                                         </div>
                                     </TableTd>
                                     <TableTd>

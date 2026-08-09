@@ -37,7 +37,7 @@ export default function FuelDashboard() {
                         <Fuel className="text-blue-500" />
                         Fuel Management
                     </h1>
-                    <p className="text-slate-400 mt-1">
+                    <p className="text-muted-foreground mt-1">
                         Manage requests, approvals, and fuel usage logs
                     </p>
                 </div>
@@ -53,7 +53,7 @@ export default function FuelDashboard() {
                 <Card className="p-4 border-l-4 border-l-blue-500">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-slate-400 text-sm">Pending Requests</p>
+                            <p className="text-muted-foreground text-sm">Pending Requests</p>
                             <h3 className="text-2xl font-bold text-white mt-1">{stats.requested}</h3>
                         </div>
                         <div className="p-3 bg-blue-500/10 rounded-lg">
@@ -64,7 +64,7 @@ export default function FuelDashboard() {
                 <Card className="p-4 border-l-4 border-l-green-500">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-slate-400 text-sm">Approved (Coupons)</p>
+                            <p className="text-muted-foreground text-sm">Approved (Coupons)</p>
                             <h3 className="text-2xl font-bold text-white mt-1">{stats.approved}</h3>
                         </div>
                         <div className="p-3 bg-green-500/10 rounded-lg">
@@ -75,11 +75,11 @@ export default function FuelDashboard() {
                 <Card className="p-4 border-l-4 border-l-slate-500">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-slate-400 text-sm">Completed Logs</p>
+                            <p className="text-muted-foreground text-sm">Completed Logs</p>
                             <h3 className="text-2xl font-bold text-white mt-1">{stats.completed}</h3>
                         </div>
-                        <div className="p-3 bg-slate-500/10 rounded-lg">
-                            <History className="text-slate-500" size={24} />
+                        <div className="p-3 bg-muted/300/10 rounded-lg">
+                            <History className="text-muted-foreground" size={24} />
                         </div>
                     </div>
                 </Card>

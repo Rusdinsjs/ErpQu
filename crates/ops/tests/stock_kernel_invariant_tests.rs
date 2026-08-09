@@ -97,3 +97,55 @@ fn test_qstk_003_bin_rebuild_from_ledger_deltas() {
 
     assert_eq!(final_qty, dec!(100.00));
 }
+
+#[test]
+fn test_stock_entry_types_and_status() {
+    use uuid::Uuid;
+    use chrono::{NaiveDate, NaiveTime};
+
+    let entry = management_system_inventory::StockEntry {
+        id: Uuid::new_v4(),
+        company_id: Uuid::new_v4(),
+        posting_date: NaiveDate::from_ymd_opt(2026, 8, 9).unwrap(),
+        posting_time: NaiveTime::from_hms_opt(12, 0, 0).unwrap(),
+        stock_entry_type: "MATERIAL_TRANSFER".to_string(),
+        voucher_no: "STE-2026-0001".to_string(),
+        purpose: Some("Transfer to main warehouse".to_string()),
+        source_warehouse_id: Some(Uuid::new_v4()),
+        target_warehouse_id: Some(Uuid::new_v4()),
+        status: "DRAFT".to_string(),
+        remarks: None,
+        created_at: chrono::Utc::now(),
+        created_by: None,
+        updated_at: chrono::Utc::now(),
+        updated_by: None,
+    };
+
+    assert_eq!(entry.stock_entry_type, "MATERIAL_TRANSFER");
+    assert_eq!(entry.status, "DRAFT");
+}
+
+#[test]
+fn test_material_request_structure() {
+    use uuid::Uuid;
+    use chrono::NaiveDate;
+
+    let req = management_system_inventory::MaterialRequest {
+        id: Uuid::new_v4(),
+        company_id: Uuid::new_v4(),
+        transaction_date: NaiveDate::from_ymd_opt(2026, 8, 9).unwrap(),
+        material_request_type: "PURCHASE".to_string(),
+        voucher_no: "MREQ-2026-0001".to_string(),
+        required_by_date: Some(NaiveDate::from_ymd_opt(2026, 8, 15).unwrap()),
+        status: "DRAFT".to_string(),
+        remarks: Some("Urgent project needs".to_string()),
+        created_at: chrono::Utc::now(),
+        created_by: None,
+        updated_at: chrono::Utc::now(),
+        updated_by: None,
+    };
+
+    assert_eq!(req.material_request_type, "PURCHASE");
+    assert_eq!(req.status, "DRAFT");
+}
+

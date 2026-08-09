@@ -72,7 +72,7 @@ const ReportCenter: React.FC = () => {
                             flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all
                             ${activeTab === tab.id
                                 ? 'bg-indigo-600 text-white shadow-lg'
-                                : 'text-slate-400 hover:text-white hover:bg-slate-700'}
+                                : 'text-muted-foreground hover:text-white hover:bg-slate-700'}
                         `}
                     >
                         <tab.icon size={16} />

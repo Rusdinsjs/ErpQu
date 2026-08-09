@@ -28,7 +28,7 @@ import { APPROVAL_ENTITY_TYPES } from '../config/approvalEntities';
 
 // Resource type config built dynamically from our single source of truth
 const resourceTypeConfig = APPROVAL_ENTITY_TYPES.reduce((acc, entity) => {
-    acc[entity.value] = { label: entity.label, iconColor: entity.color || 'text-slate-400' };
+    acc[entity.value] = { label: entity.label, iconColor: entity.color || 'text-muted-foreground' };
     return acc;
 }, {} as Record<string, { label: string; iconColor: string }>);
 
@@ -61,7 +61,7 @@ function RequestDetails({ request, showDetails = false }: { request: ApprovalReq
             <div className="space-y-3">
                 <div className="space-y-1">
                     <p className="text-sm font-medium text-white">{data?.asset_name || 'Unknown Asset'}</p>
-                    <div className="flex items-center gap-1 text-xs text-slate-500">
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
                         <Fuel size={12} />
                         <span>{data?.request_type === 'amount' ? `IDR ${Number(data.requested_value).toLocaleString()}` : `${data.requested_value} Liters`}</span>
                     </div>
@@ -69,17 +69,17 @@ function RequestDetails({ request, showDetails = false }: { request: ApprovalReq
                     {/* Odometer Stats */}
                     <div className="grid grid-cols-2 gap-x-4 gap-y-2 mt-2 p-2 bg-slate-800/50 rounded-lg text-xs">
                         <div>
-                            <p className="text-slate-500">Current Odo</p>
+                            <p className="text-muted-foreground">Current Odo</p>
                             <p className="text-white font-mono">{Number(data?.odometer_reading).toLocaleString()} km</p>
                         </div>
                         <div>
-                            <p className="text-slate-500">Prev. Odo</p>
+                            <p className="text-muted-foreground">Prev. Odo</p>
                             <p className="text-white font-mono">
                                 {data?.previous_odometer ? `${Number(data.previous_odometer).toLocaleString()} km` : '-'}
                             </p>
                         </div>
                         <div>
-                            <p className="text-slate-500">Diff</p>
+                            <p className="text-muted-foreground">Diff</p>
                             <p className="text-emerald-400 font-mono">
                                 {data?.previous_odometer
                                     ? `+${(Number(data.odometer_reading) - Number(data.previous_odometer)).toLocaleString()} km`
@@ -87,7 +87,7 @@ function RequestDetails({ request, showDetails = false }: { request: ApprovalReq
                             </p>
                         </div>
                         <div>
-                            <p className="text-slate-500">Prev. Usage</p>
+                            <p className="text-muted-foreground">Prev. Usage</p>
                             <p className="text-white font-mono">
                                 {data?.previous_fuel_volume ? `${Number(data.previous_fuel_volume).toLocaleString()} L` : '-'}
                             </p>
@@ -97,7 +97,7 @@ function RequestDetails({ request, showDetails = false }: { request: ApprovalReq
 
                 {showDetails && data?.odometer_image_url && (
                     <div className="mt-2">
-                        <p className="text-xs text-slate-400 mb-1">Odometer Photo:</p>
+                        <p className="text-xs text-muted-foreground mb-1">Odometer Photo:</p>
                         <div className="relative rounded-lg overflow-hidden border border-slate-700 bg-slate-900 w-full max-w-sm">
                             <img
                                 src={getFullImageUrl(data.odometer_image_url)}
@@ -118,11 +118,11 @@ function RequestDetails({ request, showDetails = false }: { request: ApprovalReq
         return (
             <div className="space-y-1">
                 <p className="text-sm font-medium text-white">{data?.title || 'Conversion Request'}</p>
-                <div className="flex items-center gap-1 text-xs text-slate-500">
+                <div className="flex items-center gap-1 text-xs text-muted-foreground">
                     <ArrowLeftRight size={12} />
                     <span>Cost: Rp {Number(data?.conversion_cost || 0).toLocaleString()}</span>
                 </div>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-muted-foreground">
                     {data?.reason ? `Reason: ${data.reason}` : 'No reason provided'}
                 </p>
             </div>
@@ -137,13 +137,13 @@ function RequestDetails({ request, showDetails = false }: { request: ApprovalReq
                     <Badge variant={stateBadgeVariant[data?.from_state] || 'default'}>
                         {data?.from_state?.replace(/_/g, ' ') || 'Unknown'}
                     </Badge>
-                    <ArrowRight size={14} className="text-slate-500" />
+                    <ArrowRight size={14} className="text-muted-foreground" />
                     <Badge variant={stateBadgeVariant[data?.to_state] || 'default'}>
                         {data?.to_state?.replace(/_/g, ' ') || 'Unknown'}
                     </Badge>
                 </div>
                 {data?.reason && (
-                    <p className="text-xs text-slate-500">Reason: {data.reason}</p>
+                    <p className="text-xs text-muted-foreground">Reason: {data.reason}</p>
                 )}
             </div>
         );
@@ -159,7 +159,7 @@ function RequestDetails({ request, showDetails = false }: { request: ApprovalReq
                     </Badge>
                 )}
                 {data?.estimated_cost && (
-                    <p className="text-xs text-slate-500">Est: Rp {Number(data.estimated_cost).toLocaleString()}</p>
+                    <p className="text-xs text-muted-foreground">Est: Rp {Number(data.estimated_cost).toLocaleString()}</p>
                 )}
             </div>
         );
@@ -174,12 +174,12 @@ function RequestDetails({ request, showDetails = false }: { request: ApprovalReq
         return (
             <div className="space-y-1">
                 <p className="text-sm font-medium text-white">{assetName}</p>
-                <div className="flex items-center gap-2 text-xs text-slate-500">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <Calendar size={12} />
                     <span>{loanDate} - {returnDate}</span>
                 </div>
                 {purpose && (
-                    <div className="flex items-center gap-1 text-xs text-slate-500">
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
                         <Info size={12} />
                         <span className="truncate max-w-[250px]">{purpose}</span>
                     </div>
@@ -192,11 +192,11 @@ function RequestDetails({ request, showDetails = false }: { request: ApprovalReq
         return (
             <div className="space-y-1">
                 <p className="text-sm font-medium text-white">{data?.client_name || 'Unknown Client'}</p>
-                <div className="flex items-center gap-1 text-xs text-slate-500">
+                <div className="flex items-center gap-1 text-xs text-muted-foreground">
                     <Truck size={12} />
                     <span>{data?.asset_name || 'Unknown Asset'}</span>
                 </div>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-muted-foreground">
                     {data?.start_date} - {data?.expected_end_date || 'N/A'}
                 </p>
             </div>
@@ -207,11 +207,11 @@ function RequestDetails({ request, showDetails = false }: { request: ApprovalReq
         return (
             <div className="space-y-1">
                 <p className="text-sm font-medium text-white">{data?.rental_number || 'Unknown Rental'}</p>
-                <div className="flex items-center gap-1 text-xs text-slate-500">
+                <div className="flex items-center gap-1 text-xs text-muted-foreground">
                     <Calendar size={12} />
                     <span>Date: {data?.work_date}</span>
                 </div>
-                <p className="text-xs text-slate-500">Hours: {data?.operating_hours} hrs</p>
+                <p className="text-xs text-muted-foreground">Hours: {data?.operating_hours} hrs</p>
             </div>
         );
     }
@@ -220,7 +220,7 @@ function RequestDetails({ request, showDetails = false }: { request: ApprovalReq
         return (
             <div className="space-y-1">
                 <p className="text-sm font-medium text-white">{data?.name || data?.asset_name || 'Asset'}</p>
-                <div className="flex items-center gap-1 text-xs text-slate-500">
+                <div className="flex items-center gap-1 text-xs text-muted-foreground">
                     <ClipboardList size={12} />
                     <span>SN: {data?.serial_number || 'N/A'}</span>
                 </div>
@@ -233,7 +233,7 @@ function RequestDetails({ request, showDetails = false }: { request: ApprovalReq
         return (
             <div className="space-y-1">
                 <p className="text-sm font-medium text-white">{data?.asset_name || data?.asset_id || 'Unknown Asset'}</p>
-                <div className="flex items-center gap-1 text-xs text-slate-500">
+                <div className="flex items-center gap-1 text-xs text-muted-foreground">
                     <FileText size={12} />
                     <span>{data?.document_type}</span>
                 </div>
@@ -244,7 +244,7 @@ function RequestDetails({ request, showDetails = false }: { request: ApprovalReq
                 )}
                 {showDetails && data?.invoice_attachment && (
                     <div className="mt-3">
-                        <p className="text-xs text-slate-400 mb-1">Invoice / Receipt:</p>
+                        <p className="text-xs text-muted-foreground mb-1">Invoice / Receipt:</p>
                         <div className="relative rounded-lg overflow-hidden border border-slate-700 bg-slate-900 w-full max-w-sm">
                             {data.invoice_attachment.toLowerCase().endsWith('.pdf') ? (
                                 <a
@@ -303,7 +303,7 @@ function StatCard({ title, value, icon: Icon, iconColor }: { title: string; valu
         'text-violet-400': 'bg-violet-500/10 shadow-violet-500/20',
         'text-blue-400': 'bg-blue-500/10 shadow-blue-500/20',
         'text-orange-400': 'bg-orange-500/10 shadow-orange-500/20',
-        'text-purple-400': 'bg-purple-500/10 shadow-purple-500/20',
+        'text-purple-400': 'bg-purple-500/100/10 shadow-purple-500/20',
         'text-teal-400': 'bg-teal-500/10 shadow-teal-500/20',
         'text-green-400': 'bg-green-500/10 shadow-green-500/20',
         'text-pink-400': 'bg-pink-500/10 shadow-pink-500/20',
@@ -311,7 +311,7 @@ function StatCard({ title, value, icon: Icon, iconColor }: { title: string; valu
         'text-rose-400': 'bg-rose-500/10 shadow-rose-500/20',
     };
 
-    const bgGlow = glowColorMap[iconColor] || 'bg-slate-500/10 shadow-slate-500/20';
+    const bgGlow = glowColorMap[iconColor] || 'bg-muted/300/10 shadow-slate-500/20';
 
     return (
         <div className="bg-card/40 backdrop-blur-xl border border-border p-6 rounded-3xl relative overflow-hidden group hover:border-primary/50 transition-all shadow-xl">
@@ -606,7 +606,7 @@ export default function ApprovalCenter() {
             onClick={() => setActiveTab(value)}
             className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all ${activeTab === value
                 ? 'bg-cyan-500/20 text-cyan-400'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                : 'text-muted-foreground hover:text-white hover:bg-slate-800'
                 }`}
         >
             <Icon size={16} />
@@ -641,7 +641,7 @@ export default function ApprovalCenter() {
 
     return (
         <div className="space-y-8 p-8 relative">
-            <div className="absolute top-0 left-1/4 w-96 h-96 bg-indigo-500/10 rounded-full blur-[120px] pointer-events-none" />
+            <div className="absolute top-0 left-1/4 w-96 h-96 bg-indigo-500/100/10 rounded-full blur-[120px] pointer-events-none" />
 
             <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 relative z-10">
                 <div>
@@ -707,7 +707,7 @@ export default function ApprovalCenter() {
                     <LoadingOverlay visible={isLoading} />
 
                     {filteredData.length === 0 && !isLoading ? (
-                        <div className="flex flex-col items-center justify-center py-24 text-slate-400 text-center">
+                        <div className="flex flex-col items-center justify-center py-24 text-muted-foreground text-center">
                             <div className="w-24 h-24 bg-muted/50 rounded-full flex items-center justify-center mb-6 border-2 border-dashed border-border">
                                 <Info size={40} className="opacity-50" />
                             </div>
@@ -731,12 +731,12 @@ export default function ApprovalCenter() {
                                 </TableHead>
                                 <TableBody>
                                     {filteredData.map((req) => {
-                                        const config = resourceTypeConfig[req.resource_type] || { label: req.resource_type, iconColor: 'text-slate-400' };
+                                        const config = resourceTypeConfig[req.resource_type] || { label: req.resource_type, iconColor: 'text-muted-foreground' };
                                         return (
                                             <TableRow key={req.id} onClick={() => openRequest(req)} className="cursor-pointer hover:bg-muted/40 transition-colors group">
                                                 <TableTd>
                                                     <div className="flex items-center gap-2 text-sm font-medium">
-                                                        <Calendar size={14} className="text-slate-500" />
+                                                        <Calendar size={14} className="text-muted-foreground" />
                                                         {new Date(req.created_at).toLocaleDateString()}
                                                     </div>
                                                 </TableTd>
@@ -910,36 +910,36 @@ export default function ApprovalCenter() {
                         {/* Header Info */}
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <p className="text-xs text-slate-400">Request ID</p>
+                                <p className="text-xs text-muted-foreground">Request ID</p>
                                 <p className="text-sm font-mono text-white">{selectedRequest.id}</p>
                             </div>
                             <div>
-                                <p className="text-xs text-slate-400">Created At</p>
+                                <p className="text-xs text-muted-foreground">Created At</p>
                                 <p className="text-sm text-white">{new Date(selectedRequest.created_at).toLocaleString()}</p>
                             </div>
                             <div>
-                                <p className="text-xs text-slate-400">Resource Type</p>
+                                <p className="text-xs text-muted-foreground">Resource Type</p>
                                 <Badge>{resourceTypeConfig[selectedRequest.resource_type]?.label || selectedRequest.resource_type}</Badge>
                             </div>
                             <div>
-                                <p className="text-xs text-slate-400">Status</p>
+                                <p className="text-xs text-muted-foreground">Status</p>
                                 <Badge variant={getStatusBadge(selectedRequest.status)}>{selectedRequest.status}</Badge>
                             </div>
                             <div>
-                                <p className="text-xs text-slate-400">Approval Level</p>
+                                <p className="text-xs text-muted-foreground">Approval Level</p>
                                 <Badge variant={selectedRequest.current_approval_level === 1 ? 'info' : 'success'}>
                                     Level {selectedRequest.current_approval_level}
                                 </Badge>
                             </div>
                             <div>
-                                <p className="text-xs text-slate-400">Requester</p>
+                                <p className="text-xs text-muted-foreground">Requester</p>
                                 <p className="text-sm text-white">{selectedRequest.requester_name || selectedRequest.requested_by}</p>
                             </div>
                         </div>
 
                         {/* Request Content */}
                         <div className="border-t border-slate-800 pt-4">
-                            <p className="text-xs text-slate-400 mb-2">Request Content</p>
+                            <p className="text-xs text-muted-foreground mb-2">Request Content</p>
                             <Card padding="sm" className="bg-slate-900/50 border-slate-800">
                                 <RequestDetails request={selectedRequest} showDetails={true} />
                             </Card>
@@ -948,16 +948,16 @@ export default function ApprovalCenter() {
                         {/* Approval History / Notes */}
                         {(selectedRequest.notes_l1 || selectedRequest.notes_l2) && (
                             <div className="border-t border-slate-800 pt-4 space-y-2">
-                                <p className="text-xs text-slate-400">Previous Notes</p>
+                                <p className="text-xs text-muted-foreground">Previous Notes</p>
                                 {selectedRequest.notes_l1 && (
                                     <div className="p-3 bg-slate-900/50 rounded-lg border border-slate-800">
-                                        <p className="text-xs text-slate-400">L1 Approver:</p>
+                                        <p className="text-xs text-muted-foreground">L1 Approver:</p>
                                         <p className="text-sm text-white">{selectedRequest.notes_l1}</p>
                                     </div>
                                 )}
                                 {selectedRequest.notes_l2 && (
                                     <div className="p-3 bg-slate-900/50 rounded-lg border border-slate-800">
-                                        <p className="text-xs text-slate-400">L2 Approver:</p>
+                                        <p className="text-xs text-muted-foreground">L2 Approver:</p>
                                         <p className="text-sm text-white">{selectedRequest.notes_l2}</p>
                                     </div>
                                 )}

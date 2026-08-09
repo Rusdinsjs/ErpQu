@@ -64,7 +64,11 @@ impl CostCenterRepository for PgCostCenterRepository {
             .await
         };
 
-        query.map_err(|e| DomainError::Database(e.to_string()))
+        let cc_opt = query.map_err(|e| DomainError::Database(e.to_string()))?;
+        if let Some(ref cc) = cc_opt {
+            ctx.enforce_company_boundary(cc.company_id)?;
+        }
+        Ok(cc_opt)
     }
 
     async fn find_by_tenant_id(&self, ctx: &TenantContext) -> DomainResult<Vec<CostCenter>> {
@@ -80,6 +84,20 @@ impl CostCenterRepository for PgCostCenterRepository {
             )
             .fetch_all(&self.pool)
             .await
+        } else if let Some(comp_id) = ctx.company_id {
+            sqlx::query_as::<_, CostCenter>(
+                r#"
+                SELECT id, tenant_id, company_id, code, name, parent_id,
+                       manager_id, status, created_at, updated_at, deleted_at
+                FROM cost_centers
+                WHERE tenant_id = $1 AND (company_id = $2 OR company_id IS NULL) AND deleted_at IS NULL
+                ORDER BY code ASC
+                "#
+            )
+            .bind(ctx.tenant_id)
+            .bind(comp_id)
+            .fetch_all(&self.pool)
+            .await
         } else {
             sqlx::query_as::<_, CostCenter>(
                 r#"
@@ -88,7 +106,7 @@ impl CostCenterRepository for PgCostCenterRepository {
                 FROM cost_centers
                 WHERE tenant_id = $1 AND deleted_at IS NULL
                 ORDER BY code ASC
-                "#,
+                "#
             )
             .bind(ctx.tenant_id)
             .fetch_all(&self.pool)
@@ -104,6 +122,7 @@ impl CostCenterRepository for PgCostCenterRepository {
         ctx: &TenantContext,
     ) -> DomainResult<CostCenter> {
         ctx.enforce_boundary(cost_center.tenant_id)?;
+        ctx.enforce_company_boundary(cost_center.company_id)?;
 
         let created = sqlx::query_as::<_, CostCenter>(
             r#"
@@ -140,6 +159,7 @@ impl CostCenterRepository for PgCostCenterRepository {
         ctx: &TenantContext,
     ) -> DomainResult<CostCenter> {
         ctx.enforce_boundary(cost_center.tenant_id)?;
+        ctx.enforce_company_boundary(cost_center.company_id)?;
 
         let updated = sqlx::query_as::<_, CostCenter>(
             r#"

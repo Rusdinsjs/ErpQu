@@ -55,6 +55,8 @@ pub mod user_handler;
 pub mod work_order_handler;
 pub mod workflow_handler;
 
+pub mod stock_document_handler;
+
 // Standard re-exports for main_router.rs
 pub use asset_handler::*;
 pub use auth_handler::*;
@@ -73,3 +75,7 @@ pub use report_handler::*;
 pub use sensor_handler::*;
 pub use user_handler::*;
 pub use work_order_handler::*;
+pub use stock_document_handler::*;
+pub mod ops_quality_trip_handler;
+pub use ops_quality_trip_handler::*;
+

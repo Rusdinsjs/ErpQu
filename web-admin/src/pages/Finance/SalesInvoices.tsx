@@ -210,8 +210,8 @@ export default function SalesInvoices() {
 
     const stats = [
         { label: 'Total Piutang', value: formatCurrencyIDR(totalReceivable), icon: TrendingUp, color: 'text-cyan-400', bg: 'bg-cyan-500/10' },
-        { label: 'Belum Dibayar', value: unpaidCount.toString() + ' Invoice', icon: Clock, color: 'text-amber-400', bg: 'bg-amber-500/10' },
-        { label: 'Lunas (Total)', value: formatCurrencyIDR(paidTotalAmount), icon: CheckCircle2, color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
+        { label: 'Belum Dibayar', value: unpaidCount.toString() + ' Invoice', icon: Clock, color: 'text-amber-400', bg: 'bg-amber-500/100/10' },
+        { label: 'Lunas (Total)', value: formatCurrencyIDR(paidTotalAmount), icon: CheckCircle2, color: 'text-emerald-400', bg: 'bg-emerald-500/100/10' },
     ];
 
     return (
@@ -219,7 +219,7 @@ export default function SalesInvoices() {
             <div className="flex justify-between items-center">
                 <div>
                     <h1 className="text-2xl font-bold text-white">Faktur Penjualan (Invoice)</h1>
-                    <p className="text-slate-400">Kelola tagihan dan pembayaran pelanggan</p>
+                    <p className="text-muted-foreground">Kelola tagihan dan pembayaran pelanggan</p>
                 </div>
                 <div className="flex gap-3">
                     <Button variant="outline" className="gap-2 border-slate-700 text-slate-300">
@@ -245,7 +245,7 @@ export default function SalesInvoices() {
                                 <stat.icon className={stat.color} size={24} />
                             </div>
                             <div>
-                                <p className="text-sm text-slate-500">{stat.label}</p>
+                                <p className="text-sm text-muted-foreground">{stat.label}</p>
                                 <p className="text-lg font-bold text-white">{stat.value}</p>
                             </div>
                         </div>
@@ -257,7 +257,7 @@ export default function SalesInvoices() {
                 <div className="p-4 border-b border-slate-800 flex flex-wrap gap-4 items-center justify-between">
                     <div className="flex gap-2 items-center flex-1 min-w-[300px]">
                         <div className="relative flex-1">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
                             <input
                                 placeholder="Cari invoice, pelanggan..."
                                 className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-10 pr-4 py-2 text-sm text-slate-300 focus:outline-none focus:border-cyan-500/50 transition-all"
@@ -265,7 +265,7 @@ export default function SalesInvoices() {
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
                         </div>
-                        <Button variant="outline" className="gap-2 border-slate-800 text-slate-400">
+                        <Button variant="outline" className="gap-2 border-slate-800 text-muted-foreground">
                             <Filter size={16} />
                             Filter
                         </Button>
@@ -273,8 +273,8 @@ export default function SalesInvoices() {
                 </div>
 
                 <div className="overflow-x-auto">
-                    <table className="w-full text-left text-sm text-slate-400">
-                        <thead className="bg-slate-950/50 text-slate-500 uppercase text-xs font-semibold">
+                    <table className="w-full text-left text-sm text-muted-foreground">
+                        <thead className="bg-slate-950/50 text-muted-foreground uppercase text-xs font-semibold">
                             <tr>
                                 <th className="px-6 py-4">Nomor</th>
                                 <th className="px-6 py-4">Pelanggan</th>
@@ -310,10 +310,10 @@ export default function SalesInvoices() {
                                                     variant={states.payment === 'paid' ? 'success' : states.payment === 'partially_paid' ? 'info' : 'warning'}
                                                     className={
                                                         states.payment === 'paid'
-                                                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                                                            ? 'bg-emerald-500/100/10 text-emerald-400 border-emerald-500/20'
                                                             : states.payment === 'partially_paid'
                                                                 ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20'
-                                                                : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                                                                : 'bg-amber-500/100/10 text-amber-400 border-amber-500/20'
                                                     }
                                                 >
                                                     {states.payment === 'paid' ? 'Lunas' : states.payment === 'partially_paid' ? 'Sebagian' : 'Belum Dibayar'}
@@ -322,7 +322,7 @@ export default function SalesInvoices() {
                                             <td className="px-6 py-4 text-center">
                                                 <Badge
                                                     variant={states.journal === 'posted' ? 'success' : 'outline'}
-                                                    className={states.journal === 'posted' ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20' : 'bg-slate-800 text-slate-400'}
+                                                    className={states.journal === 'posted' ? 'bg-indigo-500/100/10 text-indigo-400 border-indigo-500/20' : 'bg-slate-800 text-muted-foreground'}
                                                 >
                                                     {states.journal === 'posted' ? 'Terposting' : states.journal === 'draft' ? 'Draf' : 'Belum Ada'}
                                                 </Badge>
@@ -334,7 +334,7 @@ export default function SalesInvoices() {
                                                         e.stopPropagation();
                                                         setActiveMenuId(activeMenuId === inv.id ? null : inv.id);
                                                     }}
-                                                    className="p-2 hover:bg-slate-800 rounded-lg transition-colors text-slate-400 hover:text-white cursor-pointer"
+                                                    className="p-2 hover:bg-slate-800 rounded-lg transition-colors text-muted-foreground hover:text-white cursor-pointer"
                                                     title="Opsi Invoice"
                                                 >
                                                     <MoreVertical size={16} />
@@ -375,7 +375,7 @@ export default function SalesInvoices() {
                                                                     handleDelete(inv);
                                                                     setActiveMenuId(null);
                                                                 }}
-                                                                className="w-full px-4 py-2.5 text-xs text-rose-400 hover:bg-rose-500/10 flex items-center gap-2.5 transition-colors cursor-pointer"
+                                                                className="w-full px-4 py-2.5 text-xs text-rose-400 hover:bg-rose-500/100/10 flex items-center gap-2.5 transition-colors cursor-pointer"
                                                             >
                                                                 <Trash2 size={14} className="text-rose-400" />
                                                                 Hapus Invoice
@@ -389,7 +389,7 @@ export default function SalesInvoices() {
                                 })
                             ) : (
                                 <tr>
-                                    <td colSpan={8} className="px-6 py-12 text-center text-slate-500 italic">
+                                    <td colSpan={8} className="px-6 py-12 text-center text-muted-foreground italic">
                                         Belum ada invoice di periode ini
                                     </td>
                                 </tr>
@@ -408,40 +408,40 @@ export default function SalesInvoices() {
                                 <FileText className="text-cyan-400" size={24} />
                                 <div>
                                     <h2 className="text-xl font-bold text-white font-mono">{viewInvoice.invoice_number}</h2>
-                                    <p className="text-xs text-slate-400">Faktur Penjualan Detail</p>
+                                    <p className="text-xs text-muted-foreground">Faktur Penjualan Detail</p>
                                 </div>
                             </div>
-                            <button onClick={() => setViewInvoice(null)} className="text-slate-500 hover:text-white transition-colors">
+                            <button onClick={() => setViewInvoice(null)} className="text-muted-foreground hover:text-white transition-colors">
                                 <X size={24} />
                             </button>
                         </div>
                         <div className="p-6 space-y-4">
                             <div className="grid grid-cols-2 gap-4 bg-slate-950/50 p-4 rounded-xl border border-slate-800">
                                 <div>
-                                    <p className="text-xs text-slate-500 uppercase">Pelanggan</p>
+                                    <p className="text-xs text-muted-foreground uppercase">Pelanggan</p>
                                     <p className="text-sm font-semibold text-white">
                                         {clients.find((c) => c.id === viewInvoice.client_id)?.name || viewInvoice.client_id}
                                     </p>
                                 </div>
                                 <div>
-                                    <p className="text-xs text-slate-500 uppercase">Status Pembayaran</p>
+                                    <p className="text-xs text-muted-foreground uppercase">Status Pembayaran</p>
                                     <Badge variant={deriveInvoiceStates(viewInvoice).payment === 'paid' ? 'success' : 'warning'} className="mt-1">
                                         {deriveInvoiceStates(viewInvoice).payment === 'paid' ? 'Lunas' : 'Belum Lunas'}
                                     </Badge>
                                 </div>
                                 <div>
-                                    <p className="text-xs text-slate-500 uppercase">Tanggal Faktur</p>
+                                    <p className="text-xs text-muted-foreground uppercase">Tanggal Faktur</p>
                                     <p className="text-sm font-mono text-slate-300">{new Date(viewInvoice.date).toLocaleDateString('id-ID')}</p>
                                 </div>
                                 <div>
-                                    <p className="text-xs text-slate-500 uppercase">Jatuh Tempo</p>
+                                    <p className="text-xs text-muted-foreground uppercase">Jatuh Tempo</p>
                                     <p className="text-sm font-mono text-slate-300">{viewInvoice.due_date ? new Date(viewInvoice.due_date).toLocaleDateString('id-ID') : '-'}</p>
                                 </div>
                             </div>
 
                             {viewInvoice.subject && (
                                 <div>
-                                    <p className="text-xs text-slate-500 uppercase mb-1">Subjek / Keterangan</p>
+                                    <p className="text-xs text-muted-foreground uppercase mb-1">Subjek / Keterangan</p>
                                     <p className="text-sm text-slate-300 bg-slate-950 p-3 rounded-lg border border-slate-800">{viewInvoice.subject}</p>
                                 </div>
                             )}
@@ -449,10 +449,10 @@ export default function SalesInvoices() {
                             {/* Line items view (QARC-011) */}
                             {viewInvoice.items && viewInvoice.items.length > 0 && (
                                 <div className="space-y-2">
-                                    <p className="text-xs text-slate-500 uppercase font-semibold">Rincian Line Items</p>
+                                    <p className="text-xs text-muted-foreground uppercase font-semibold">Rincian Line Items</p>
                                     <div className="border border-slate-800 rounded-xl overflow-hidden">
                                         <table className="w-full text-xs text-left text-slate-300">
-                                            <thead className="bg-slate-950 text-slate-500 uppercase">
+                                            <thead className="bg-slate-950 text-muted-foreground uppercase">
                                                 <tr>
                                                     <th className="p-2.5">Deskripsi</th>
                                                     <th className="p-2.5 text-center">Qty</th>
@@ -481,7 +481,7 @@ export default function SalesInvoices() {
                                     <p className="text-2xl font-bold text-white font-mono mt-0.5">{formatCurrencyIDR(viewInvoice.total_amount)}</p>
                                 </div>
                                 <div className="text-right">
-                                    <p className="text-xs text-slate-400 uppercase">Sudah Dibayar</p>
+                                    <p className="text-xs text-muted-foreground uppercase">Sudah Dibayar</p>
                                     <p className="text-sm font-mono text-emerald-400 font-bold">{formatCurrencyIDR(viewInvoice.amount_paid || '0.0000')}</p>
                                 </div>
                             </div>
@@ -506,14 +506,14 @@ export default function SalesInvoices() {
                     <Card className="w-full max-w-2xl bg-slate-900 border-slate-800 shadow-2xl max-h-[90vh] overflow-y-auto">
                         <div className="p-6 border-b border-slate-800 flex justify-between items-center">
                             <h2 className="text-xl font-bold text-white">Edit Invoice #{editInvoice.invoice_number}</h2>
-                            <button onClick={() => setEditInvoice(null)} className="text-slate-500 hover:text-white transition-colors">
+                            <button onClick={() => setEditInvoice(null)} className="text-muted-foreground hover:text-white transition-colors">
                                 <X size={24} />
                             </button>
                         </div>
                         <form onSubmit={handleUpdate} className="p-6 space-y-4">
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium text-slate-400">Nomor Invoice</label>
+                                    <label className="text-sm font-medium text-muted-foreground">Nomor Invoice</label>
                                     <input
                                         name="invoice_number"
                                         required
@@ -522,7 +522,7 @@ export default function SalesInvoices() {
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium text-slate-400">Pelanggan</label>
+                                    <label className="text-sm font-medium text-muted-foreground">Pelanggan</label>
                                     <select
                                         name="client_id"
                                         required
@@ -539,7 +539,7 @@ export default function SalesInvoices() {
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium text-slate-400">Tanggal</label>
+                                    <label className="text-sm font-medium text-muted-foreground">Tanggal</label>
                                     <input
                                         name="date"
                                         type="date"
@@ -549,7 +549,7 @@ export default function SalesInvoices() {
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium text-slate-400">Jatuh Tempo</label>
+                                    <label className="text-sm font-medium text-muted-foreground">Jatuh Tempo</label>
                                     <input
                                         name="due_date"
                                         type="date"
@@ -561,7 +561,7 @@ export default function SalesInvoices() {
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-sm font-medium text-slate-400">Subjek/Keterangan</label>
+                                <label className="text-sm font-medium text-muted-foreground">Subjek/Keterangan</label>
                                 <input
                                     name="subject"
                                     defaultValue={editInvoice.subject || ''}
@@ -574,7 +574,7 @@ export default function SalesInvoices() {
                             {/* Multiple Line Items Editor (QARC-011) */}
                             <div className="p-4 bg-slate-950/50 rounded-xl border border-slate-800 space-y-3">
                                 <div className="flex justify-between items-center">
-                                    <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">Item Penjualan</h3>
+                                    <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Item Penjualan</h3>
                                     <button
                                         type="button"
                                         onClick={() => setEditItems([...editItems, { description: '', quantity: '1.0000', unit_price: '0.0000' }])}
@@ -632,7 +632,7 @@ export default function SalesInvoices() {
                                                 <button
                                                     type="button"
                                                     onClick={() => setEditItems(editItems.filter((_, i) => i !== idx))}
-                                                    className="text-slate-500 hover:text-rose-400 p-1 cursor-pointer"
+                                                    className="text-muted-foreground hover:text-rose-400 p-1 cursor-pointer"
                                                 >
                                                     <Trash size={14} />
                                                 </button>
@@ -642,7 +642,7 @@ export default function SalesInvoices() {
                                 ))}
 
                                 <div className="text-right pt-2 border-t border-slate-800">
-                                    <span className="text-xs text-slate-500 uppercase mr-2">Estimasi Total:</span>
+                                    <span className="text-xs text-muted-foreground uppercase mr-2">Estimasi Total:</span>
                                     <span className="text-sm font-bold text-white font-mono">{formatCurrencyIDR(calculateInvoiceTotalString(editItems))}</span>
                                 </div>
                             </div>
@@ -652,7 +652,7 @@ export default function SalesInvoices() {
                                     type="button"
                                     variant="outline"
                                     onClick={() => setEditInvoice(null)}
-                                    className="flex-1 border-slate-800 text-slate-400"
+                                    className="flex-1 border-slate-800 text-muted-foreground"
                                 >
                                     Batal
                                 </Button>
@@ -675,14 +675,14 @@ export default function SalesInvoices() {
                     <Card className="w-full max-w-2xl bg-slate-900 border-slate-800 shadow-2xl max-h-[90vh] overflow-y-auto">
                         <div className="p-6 border-b border-slate-800 flex justify-between items-center">
                             <h2 className="text-xl font-bold text-white">Buat Invoice Baru</h2>
-                            <button onClick={() => setIsModalOpen(false)} className="text-slate-500 hover:text-white transition-colors">
+                            <button onClick={() => setIsModalOpen(false)} className="text-muted-foreground hover:text-white transition-colors">
                                 <X size={24} />
                             </button>
                         </div>
                         <form onSubmit={handleCreate} className="p-6 space-y-4">
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium text-slate-400">Nomor Invoice</label>
+                                    <label className="text-sm font-medium text-muted-foreground">Nomor Invoice</label>
                                     <input
                                         name="invoice_number"
                                         required
@@ -692,7 +692,7 @@ export default function SalesInvoices() {
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium text-slate-400">Pelanggan</label>
+                                    <label className="text-sm font-medium text-muted-foreground">Pelanggan</label>
                                     <select
                                         name="client_id"
                                         required
@@ -708,7 +708,7 @@ export default function SalesInvoices() {
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium text-slate-400">Tanggal</label>
+                                    <label className="text-sm font-medium text-muted-foreground">Tanggal</label>
                                     <input
                                         name="date"
                                         type="date"
@@ -718,7 +718,7 @@ export default function SalesInvoices() {
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium text-slate-400">Jatuh Tempo</label>
+                                    <label className="text-sm font-medium text-muted-foreground">Jatuh Tempo</label>
                                     <input
                                         name="due_date"
                                         type="date"
@@ -730,7 +730,7 @@ export default function SalesInvoices() {
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-sm font-medium text-slate-400">Subjek/Keterangan</label>
+                                <label className="text-sm font-medium text-muted-foreground">Subjek/Keterangan</label>
                                 <input
                                     name="subject"
                                     placeholder="Deskripsi singkat invoice..."
@@ -742,7 +742,7 @@ export default function SalesInvoices() {
                             {/* Multiple Line Items Creator (QARC-011) */}
                             <div className="p-4 bg-slate-950/50 rounded-xl border border-slate-800 space-y-3">
                                 <div className="flex justify-between items-center">
-                                    <h3 className="text-sm font-semibold text-slate-400 uppercase tracking-wider">Item Penjualan</h3>
+                                    <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Item Penjualan</h3>
                                     <button
                                         type="button"
                                         onClick={() => setCreateItems([...createItems, { description: '', quantity: '1.0000', unit_price: '0.0000' }])}
@@ -800,7 +800,7 @@ export default function SalesInvoices() {
                                                 <button
                                                     type="button"
                                                     onClick={() => setCreateItems(createItems.filter((_, i) => i !== idx))}
-                                                    className="text-slate-500 hover:text-rose-400 p-1 cursor-pointer"
+                                                    className="text-muted-foreground hover:text-rose-400 p-1 cursor-pointer"
                                                 >
                                                     <Trash size={14} />
                                                 </button>
@@ -810,7 +810,7 @@ export default function SalesInvoices() {
                                 ))}
 
                                 <div className="text-right pt-2 border-t border-slate-800">
-                                    <span className="text-xs text-slate-500 uppercase mr-2">Estimasi Total:</span>
+                                    <span className="text-xs text-muted-foreground uppercase mr-2">Estimasi Total:</span>
                                     <span className="text-sm font-bold text-white font-mono">{formatCurrencyIDR(calculateInvoiceTotalString(createItems))}</span>
                                 </div>
                             </div>
@@ -820,7 +820,7 @@ export default function SalesInvoices() {
                                     type="button"
                                     variant="outline"
                                     onClick={() => setIsModalOpen(false)}
-                                    className="flex-1 border-slate-800 text-slate-400"
+                                    className="flex-1 border-slate-800 text-muted-foreground"
                                 >
                                     Batal
                                 </Button>

@@ -404,7 +404,7 @@ const ApprovalWorkflowSettings: React.FC = () => {
                                         </p>
                                     )}
                                 </div>
-                                <span className={`px-2.5 py-0.5 text-xs font-medium rounded-full whitespace-nowrap ${workflow.is_active ? 'bg-emerald-500/15 text-emerald-500 border border-emerald-500/20' : 'bg-muted text-muted-foreground'}`}>
+                                <span className={`px-2.5 py-0.5 text-xs font-medium rounded-full whitespace-nowrap ${workflow.is_active ? 'bg-emerald-500/100/15 text-emerald-500 border border-emerald-500/20' : 'bg-muted text-muted-foreground'}`}>
                                     {workflow.is_active ? 'Active' : 'Inactive'}
                                 </span>
                             </div>
@@ -612,7 +612,7 @@ const ApprovalWorkflowSettings: React.FC = () => {
                                                         <span className="font-semibold text-sm text-foreground">{ent.label}</span>
                                                         <code className="text-[11px] bg-muted px-1.5 py-0.5 rounded text-muted-foreground">{ent.value}</code>
                                                         {ent.is_system ? (
-                                                            <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-500 border border-amber-500/20">
+                                                            <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/100/15 text-amber-500 border border-amber-500/20">
                                                                 <Sparkles size={10} /> System
                                                             </span>
                                                         ) : (

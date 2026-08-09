@@ -18,6 +18,7 @@ import {
     Checkbox,
     LoadingOverlay,
     useToast,
+    SearchInput,
 } from '../components/ui';
 
 interface Asset {
@@ -225,7 +226,7 @@ export default function Loans() {
             onClick={() => setActiveTab(value)}
             className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${activeTab === value
                 ? danger ? 'bg-red-500/20 text-red-400' : 'bg-cyan-500/20 text-cyan-400'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                : 'text-muted-foreground hover:text-white hover:bg-slate-800'
                 }`}
         >
             {children}
@@ -243,7 +244,7 @@ export default function Loans() {
             <div className="flex items-start justify-between">
                 <div>
                     <h1 className="text-2xl font-bold text-white">Manajemen Peminjaman (Internal Loan)</h1>
-                    <p className="text-sm text-slate-400">Kelola peminjaman aset kantor oleh karyawan</p>
+                    <p className="text-sm text-muted-foreground">Kelola peminjaman aset kantor oleh karyawan</p>
                 </div>
                 <Button leftIcon={<Plus size={16} />} onClick={() => setCreateModalOpen(true)}>
                     Request Pinjaman Baru
@@ -254,28 +255,28 @@ export default function Loans() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <Card padding="md">
                     <div className="flex items-center justify-between">
-                        <span className="text-xs font-semibold text-slate-400 uppercase">Total Loans</span>
-                        <Briefcase size={20} className="text-slate-500" />
+                        <span className="text-xs font-semibold text-muted-foreground uppercase">Total Loans</span>
+                        <Briefcase size={20} className="text-muted-foreground" />
                     </div>
                     <p className="text-2xl font-bold text-white mt-2">{stats.total}</p>
                 </Card>
                 <Card padding="md">
                     <div className="flex items-center justify-between">
-                        <span className="text-xs font-semibold text-slate-400 uppercase">Pending Approval</span>
+                        <span className="text-xs font-semibold text-muted-foreground uppercase">Pending Approval</span>
                         <Clock size={20} className="text-amber-500" />
                     </div>
                     <p className="text-2xl font-bold text-amber-400 mt-2">{stats.pending}</p>
                 </Card>
                 <Card padding="md">
                     <div className="flex items-center justify-between">
-                        <span className="text-xs font-semibold text-slate-400 uppercase">Active / In-Use</span>
+                        <span className="text-xs font-semibold text-muted-foreground uppercase">Active / In-Use</span>
                         <Hand size={20} className="text-blue-500" />
                     </div>
                     <p className="text-2xl font-bold text-blue-400 mt-2">{stats.active}</p>
                 </Card>
                 <Card padding="md">
                     <div className="flex items-center justify-between">
-                        <span className="text-xs font-semibold text-slate-400 uppercase">Overdue</span>
+                        <span className="text-xs font-semibold text-muted-foreground uppercase">Overdue</span>
                         <AlertTriangle size={20} className="text-red-500" />
                     </div>
                     <p className="text-2xl font-bold text-red-400 mt-2">{stats.overdue}</p>
@@ -295,13 +296,10 @@ export default function Loans() {
                             <TabButton value="overdue" count={stats.overdue} danger>Terlambat</TabButton>
                         </div>
                         <div className="relative w-64">
-                            <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
-                            <input
-                                type="text"
-                                placeholder="Cari aset atau peminjam..."
+                            <SearchInput
                                 value={search}
-                                onChange={(e) => setSearch(e.target.value)}
-                                className="w-full pl-9 pr-4 py-2 bg-slate-950/50 border border-slate-700 rounded-xl text-sm text-white placeholder-slate-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
+                                onChange={setSearch}
+                                placeholder="Cari aset atau peminjam..."
                             />
                         </div>
                     </div>
@@ -325,9 +323,9 @@ export default function Loans() {
                                         <div>
                                             <p className="font-medium text-white">{loan.asset_name || getAssetName(loan.asset_id)}</p>
                                             <div className="flex items-center gap-2 mt-0.5">
-                                                <span className="text-xs text-slate-500">{loan.employee_name || loan.borrower_name || 'Anonymous'}</span>
+                                                <span className="text-xs text-muted-foreground">{loan.employee_name || loan.borrower_name || 'Anonymous'}</span>
                                                 {loan.employee_id && (
-                                                    <span className="text-[10px] px-1.5 py-0.5 bg-slate-800 text-slate-400 rounded-md border border-slate-700">
+                                                    <span className="text-[10px] px-1.5 py-0.5 bg-slate-800 text-muted-foreground rounded-md border border-slate-700">
                                                         {employees.find(e => e.id === loan.employee_id)?.nik || 'NIK...'}
                                                     </span>
                                                 )}
@@ -341,7 +339,7 @@ export default function Loans() {
                                         </span>
                                     </TableTd>
                                     <TableTd>
-                                        <span className={loan.actual_return_date ? 'text-emerald-400' : 'text-slate-500'}>
+                                        <span className={loan.actual_return_date ? 'text-emerald-400' : 'text-muted-foreground'}>
                                             {loan.actual_return_date || '-'}
                                         </span>
                                     </TableTd>
@@ -453,7 +451,7 @@ export default function Loans() {
                         />
                     ) : (
                         <>
-                            <p className="text-sm text-slate-400">
+                            <p className="text-sm text-muted-foreground">
                                 Silakan periksa kondisi fisik aset sebelum melakukan konfirmasi.
                             </p>
                             <Textarea
@@ -476,7 +474,7 @@ export default function Loans() {
                                 <div className="space-y-3">
                                     <div className="flex items-center justify-between">
                                         <label className="text-sm font-medium text-slate-300">Foto Kondisi Aset</label>
-                                        <span className="text-xs text-slate-500">{imageFiles.length} foto dipilih</span>
+                                        <span className="text-xs text-muted-foreground">{imageFiles.length} foto dipilih</span>
                                     </div>
 
                                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -499,7 +497,7 @@ export default function Loans() {
                                                 className="absolute inset-0 opacity-0 cursor-pointer z-10"
                                                 onChange={handleFileChange}
                                             />
-                                            <div className="w-full h-full border-2 border-dashed border-slate-700 hover:border-blue-500/50 hover:bg-slate-800 rounded-lg flex flex-col items-center justify-center text-slate-500 transition-all">
+                                            <div className="w-full h-full border-2 border-dashed border-slate-700 hover:border-blue-500/50 hover:bg-slate-800 rounded-lg flex flex-col items-center justify-center text-muted-foreground transition-all">
                                                 <Camera size={20} />
                                                 <span className="text-[10px] mt-1">Tambah</span>
                                             </div>
@@ -526,11 +524,11 @@ export default function Loans() {
                     <div className="space-y-4">
                         <div className="grid grid-cols-2 gap-4 p-4 bg-slate-900/50 rounded-lg">
                             <div>
-                                <p className="text-xs text-slate-400 font-semibold uppercase">Aset</p>
+                                <p className="text-xs text-muted-foreground font-semibold uppercase">Aset</p>
                                 <p className="font-medium text-white">{getAssetName(selectedLoan.asset_id)}</p>
                             </div>
                             <div>
-                                <p className="text-xs text-slate-400 font-semibold uppercase">Peminjam</p>
+                                <p className="text-xs text-muted-foreground font-semibold uppercase">Peminjam</p>
                                 <div className="flex items-center gap-2">
                                     <p className="font-medium text-white">{selectedLoan.employee_name || selectedLoan.borrower_name || 'Anonymous'}</p>
                                     {selectedLoan.employee_id && (
@@ -544,13 +542,13 @@ export default function Loans() {
 
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <p className="text-xs text-slate-400 font-semibold uppercase">Status</p>
+                                <p className="text-xs text-muted-foreground font-semibold uppercase">Status</p>
                                 <Badge variant={statusBadgeVariant[selectedLoan.status] || 'default'} className="mt-1">
                                     {selectedLoan.status.replace('_', ' ').toUpperCase()}
                                 </Badge>
                             </div>
                             <div>
-                                <p className="text-xs text-slate-400 font-semibold uppercase">No. Referensi</p>
+                                <p className="text-xs text-muted-foreground font-semibold uppercase">No. Referensi</p>
                                 <p className="text-sm text-white">{selectedLoan.loan_number || 'N/A'}</p>
                             </div>
                         </div>
@@ -559,23 +557,23 @@ export default function Loans() {
 
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <p className="text-xs text-slate-400 font-semibold uppercase">Tanggal Pinjam</p>
+                                <p className="text-xs text-muted-foreground font-semibold uppercase">Tanggal Pinjam</p>
                                 <p className="text-sm text-white">{selectedLoan.loan_date}</p>
                             </div>
                             <div>
-                                <p className="text-xs text-slate-400 font-semibold uppercase">Estimasi Kembali</p>
+                                <p className="text-xs text-muted-foreground font-semibold uppercase">Estimasi Kembali</p>
                                 <p className="text-sm text-white">{selectedLoan.expected_return_date}</p>
                             </div>
                         </div>
 
                         {selectedLoan.condition_before && (
                             <div>
-                                <p className="text-xs text-slate-400 font-semibold uppercase">Kondisi Saat Keluar</p>
+                                <p className="text-xs text-muted-foreground font-semibold uppercase">Kondisi Saat Keluar</p>
                                 <div className="mt-1 p-3 bg-slate-900/50 rounded-lg space-y-3">
                                     <p className="text-sm text-slate-300">{selectedLoan.condition_before}</p>
                                     {selectedLoan.check_out_photos && selectedLoan.check_out_photos.length > 0 && (
                                         <div className="pt-2">
-                                            <p className="text-[10px] text-slate-500 uppercase font-semibold mb-2">Foto Handover</p>
+                                            <p className="text-[10px] text-muted-foreground uppercase font-semibold mb-2">Foto Handover</p>
                                             <div className="grid grid-cols-3 gap-2">
                                                 {selectedLoan.check_out_photos.map((photo, i) => (
                                                     <img
@@ -595,12 +593,12 @@ export default function Loans() {
 
                         {selectedLoan.condition_after && (
                             <div>
-                                <p className="text-xs text-slate-400 font-semibold uppercase">Kondisi Saat Kembali</p>
+                                <p className="text-xs text-muted-foreground font-semibold uppercase">Kondisi Saat Kembali</p>
                                 <div className="mt-1 p-3 bg-slate-900/50 rounded-lg space-y-3">
                                     <p className="text-sm text-slate-300">{selectedLoan.condition_after}</p>
                                     {selectedLoan.return_photos && selectedLoan.return_photos.length > 0 && (
                                         <div className="pt-2">
-                                            <p className="text-[10px] text-slate-500 uppercase font-semibold mb-2">Foto Pengembalian</p>
+                                            <p className="text-[10px] text-muted-foreground uppercase font-semibold mb-2">Foto Pengembalian</p>
                                             <div className="grid grid-cols-3 gap-2">
                                                 {selectedLoan.return_photos.map((photo, i) => (
                                                     <img

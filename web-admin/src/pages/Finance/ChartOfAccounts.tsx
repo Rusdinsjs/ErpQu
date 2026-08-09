@@ -183,9 +183,9 @@ function AccountRow({
 
 function AccountTypeBadge({ type }: { type: AccountType }) {
     const styles = {
-        asset: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-        liability: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
-        equity: 'bg-purple-500/10 text-purple-400 border-purple-500/20',
+        asset: 'bg-emerald-500/100/10 text-emerald-400 border-emerald-500/20',
+        liability: 'bg-amber-500/100/10 text-amber-400 border-amber-500/20',
+        equity: 'bg-purple-500/100/10 text-purple-400 border-purple-500/20',
         revenue: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
         expense: 'bg-rose-500/10 text-rose-400 border-rose-500/20',
     };

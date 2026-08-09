@@ -27,19 +27,19 @@ export const FuelReceiptModal: React.FC<FuelReceiptModalProps> = ({ isOpen, onCl
                 {/* Transaction Summary */}
                 <div className="bg-slate-950/50 border border-slate-800 rounded-2xl p-5 grid grid-cols-2 gap-4">
                     <div className="space-y-1">
-                        <div className="flex items-center gap-2 text-slate-500 text-[10px] uppercase tracking-widest">
+                        <div className="flex items-center gap-2 text-muted-foreground text-[10px] uppercase tracking-widest">
                             <Hash size={12} /> Tracking #
                         </div>
                         <p className="font-mono text-white text-sm">{log.tracking_number}</p>
                     </div>
                     <div className="space-y-1 text-right">
-                        <div className="flex items-center justify-end gap-2 text-slate-500 text-[10px] uppercase tracking-widest">
+                        <div className="flex items-center justify-end gap-2 text-muted-foreground text-[10px] uppercase tracking-widest">
                             <Calendar size={12} /> Date
                         </div>
                         <p className="text-white text-sm">{new Date(log.created_at).toLocaleDateString()}</p>
                     </div>
                     <div className="space-y-1">
-                        <div className="flex items-center gap-2 text-slate-500 text-[10px] uppercase tracking-widest">
+                        <div className="flex items-center gap-2 text-muted-foreground text-[10px] uppercase tracking-widest">
                             <CircleDollarSign size={12} /> Actual Filled
                         </div>
                         <p className="text-green-400 font-bold">
@@ -47,7 +47,7 @@ export const FuelReceiptModal: React.FC<FuelReceiptModalProps> = ({ isOpen, onCl
                         </p>
                     </div>
                     <div className="space-y-1 text-right">
-                        <div className="flex items-center justify-end gap-2 text-slate-500 text-[10px] uppercase tracking-widest">
+                        <div className="flex items-center justify-end gap-2 text-muted-foreground text-[10px] uppercase tracking-widest">
                             <Fuel size={12} /> Actual Volume
                         </div>
                         <p className="text-blue-400 font-bold">

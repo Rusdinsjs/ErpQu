@@ -62,7 +62,7 @@ export default function PurchaseShipments() {
             <div className="flex justify-between items-center">
                 <div>
                     <h1 className="text-2xl font-bold text-white">Pengiriman Pembelian</h1>
-                    <p className="text-slate-400">Kelola penerimaan barang dari vendor</p>
+                    <p className="text-muted-foreground">Kelola penerimaan barang dari vendor</p>
                 </div>
                 <div className="flex gap-3">
                     <Button variant="outline" className="gap-2 border-slate-700 text-slate-300">
@@ -71,7 +71,7 @@ export default function PurchaseShipments() {
                     </Button>
                     <Button
                         onClick={() => setIsModalOpen(true)}
-                        className="gap-2 bg-emerald-600 hover:bg-emerald-500"
+                        className="gap-2 bg-emerald-600 hover:bg-emerald-500/100"
                     >
                         <Plus size={18} />
                         Catat Penerimaan
@@ -83,7 +83,7 @@ export default function PurchaseShipments() {
                 <div className="p-4 border-b border-slate-800 flex flex-wrap gap-4 items-center justify-between">
                     <div className="flex gap-2 items-center flex-1 min-w-[300px]">
                         <div className="relative flex-1">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={16} />
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
                             <input
                                 placeholder="Cari pengiriman..."
                                 className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-10 pr-4 py-2 text-sm text-slate-300 focus:outline-none focus:border-emerald-500/50 transition-all"
@@ -91,7 +91,7 @@ export default function PurchaseShipments() {
                                 onChange={(e) => setSearchTerm(e.target.value)}
                             />
                         </div>
-                        <Button variant="outline" className="gap-2 border-slate-800 text-slate-400">
+                        <Button variant="outline" className="gap-2 border-slate-800 text-muted-foreground">
                             <Filter size={16} />
                             Filter
                         </Button>
@@ -99,8 +99,8 @@ export default function PurchaseShipments() {
                 </div>
 
                 <div className="overflow-x-auto">
-                    <table className="w-full text-left text-sm text-slate-400">
-                        <thead className="bg-slate-950/50 text-slate-500 uppercase text-xs font-semibold">
+                    <table className="w-full text-left text-sm text-muted-foreground">
+                        <thead className="bg-slate-950/50 text-muted-foreground uppercase text-xs font-semibold">
                             <tr>
                                 <th className="px-6 py-4">No. Penerimaan</th>
                                 <th className="px-6 py-4">Referensi PO</th>
@@ -130,7 +130,7 @@ export default function PurchaseShipments() {
                                         <td className="px-6 py-4 text-white">{shipment.courier_name || '-'}</td>
                                         <td className="px-6 py-4 font-mono text-xs">{shipment.tracking_number || '-'}</td>
                                         <td className="px-6 py-4 text-center">
-                                            <Badge variant="success" className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 capitalize">
+                                            <Badge variant="success" className="bg-emerald-500/100/10 text-emerald-400 border-emerald-500/20 capitalize">
                                                 {shipment.status}
                                             </Badge>
                                         </td>
@@ -143,7 +143,7 @@ export default function PurchaseShipments() {
                                 ))
                             ) : (
                                 <tr>
-                                    <td colSpan={7} className="px-6 py-12 text-center text-slate-500 italic">
+                                    <td colSpan={7} className="px-6 py-12 text-center text-muted-foreground italic">
                                         Belum ada data pengiriman
                                     </td>
                                 </tr>
@@ -159,13 +159,13 @@ export default function PurchaseShipments() {
                     <Card className="w-full max-w-xl bg-slate-900 border-slate-800 shadow-2xl">
                         <div className="p-6 border-b border-slate-800 flex justify-between items-center">
                             <h2 className="text-xl font-bold text-white">Catat Penerimaan Barang</h2>
-                            <button onClick={() => setIsModalOpen(false)} className="text-slate-500 hover:text-white transition-colors">
+                            <button onClick={() => setIsModalOpen(false)} className="text-muted-foreground hover:text-white transition-colors">
                                 <X size={24} />
                             </button>
                         </div>
                         <form onSubmit={handleCreate} className="p-6 space-y-4">
                             <div className="space-y-2">
-                                <label className="text-sm font-medium text-slate-400">Nomor Penerimaan</label>
+                                <label className="text-sm font-medium text-muted-foreground">Nomor Penerimaan</label>
                                 <input
                                     name="shipment_number"
                                     required
@@ -176,7 +176,7 @@ export default function PurchaseShipments() {
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-sm font-medium text-slate-400">Referensi PO (Opsional)</label>
+                                <label className="text-sm font-medium text-muted-foreground">Referensi PO (Opsional)</label>
                                 <select
                                     name="purchase_order_id"
                                     className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:border-emerald-500 outline-none transition-all"
@@ -189,7 +189,7 @@ export default function PurchaseShipments() {
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-sm font-medium text-slate-400">Tanggal Terima</label>
+                                <label className="text-sm font-medium text-muted-foreground">Tanggal Terima</label>
                                 <input
                                     name="date"
                                     type="date"
@@ -201,7 +201,7 @@ export default function PurchaseShipments() {
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium text-slate-400">Kurir / Ekspedisi</label>
+                                    <label className="text-sm font-medium text-muted-foreground">Kurir / Ekspedisi</label>
                                     <input
                                         name="courier_name"
                                         placeholder="JNE, Sicepat, dll"
@@ -209,7 +209,7 @@ export default function PurchaseShipments() {
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium text-slate-400">Nomor Resi</label>
+                                    <label className="text-sm font-medium text-muted-foreground">Nomor Resi</label>
                                     <input
                                         name="tracking_number"
                                         placeholder="No. Resi"
@@ -223,14 +223,14 @@ export default function PurchaseShipments() {
                                     type="button"
                                     variant="outline"
                                     onClick={() => setIsModalOpen(false)}
-                                    className="flex-1 border-slate-800 text-slate-400"
+                                    className="flex-1 border-slate-800 text-muted-foreground"
                                 >
                                     Batal
                                 </Button>
                                 <Button
                                     type="submit"
                                     disabled={createMutation.isPending}
-                                    className="flex-1 bg-emerald-600 hover:bg-emerald-500"
+                                    className="flex-1 bg-emerald-600 hover:bg-emerald-500/100"
                                 >
                                     {createMutation.isPending ? 'Menyimpan...' : 'Simpan'}
                                 </Button>

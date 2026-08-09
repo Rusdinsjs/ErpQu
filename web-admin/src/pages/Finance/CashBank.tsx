@@ -140,7 +140,7 @@ export default function CashBank() {
                     <Button
                         variant="outline"
                         onClick={() => setIsReceiveModalOpen(true)}
-                        className="gap-2 border-emerald-500/20 bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20"
+                        className="gap-2 border-emerald-500/20 bg-emerald-500/100/10 text-emerald-500 hover:bg-emerald-500/100/20"
                     >
                         <ArrowDownLeft size={16} />
                         Terima Dana
@@ -197,7 +197,7 @@ export default function CashBank() {
                                     <Button
                                         variant="ghost"
                                         size="sm"
-                                        className="w-full text-xs gap-1 bg-emerald-500/5 hover:bg-emerald-500/10 text-emerald-500"
+                                        className="w-full text-xs gap-1 bg-emerald-500/100/5 hover:bg-emerald-500/100/10 text-emerald-500"
                                         onClick={() => {
                                             setSelectedAccount(account);
                                             setIsReceiveModalOpen(true);
@@ -263,7 +263,7 @@ export default function CashBank() {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <span className={`px-2 py-1 rounded-full text-[10px] uppercase font-bold ${t.transaction_type === 'receive' ? 'bg-emerald-500/10 text-emerald-500' :
+                                            <span className={`px-2 py-1 rounded-full text-[10px] uppercase font-bold ${t.transaction_type === 'receive' ? 'bg-emerald-500/100/10 text-emerald-500' :
                                                 t.transaction_type === 'send' ? 'bg-destructive/10 text-destructive' :
                                                     'bg-primary/10 text-primary'
                                                 }`}>
@@ -514,7 +514,7 @@ export default function CashBank() {
                                 <Button
                                     type="submit"
                                     disabled={createTransactionMutation.isPending}
-                                    className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white"
+                                    className="flex-1 bg-emerald-600 hover:bg-emerald-500/100 text-white"
                                 >
                                     {createTransactionMutation.isPending ? 'Memproses...' : 'Terima Dana'}
                                 </Button>

@@ -136,7 +136,7 @@ export default function PurchaseOrders() {
                                     <tr key={order.id} className="hover:bg-muted/50 transition-colors cursor-pointer group">
                                         <td className="px-6 py-4 font-medium text-primary">{order.order_number}</td>
                                         <td className="px-6 py-4">
-                                            <Badge variant="outline" className={order.budget_type === 'CAPEX' ? 'bg-purple-500/10 text-purple-500 border-purple-500/20' : 'bg-blue-500/10 text-blue-500 border-blue-500/20'}>
+                                            <Badge variant="outline" className={order.budget_type === 'CAPEX' ? 'bg-purple-500/100/10 text-purple-500 border-purple-500/20' : 'bg-blue-500/10 text-blue-500 border-blue-500/20'}>
                                                 {order.budget_type || 'OPEX'}
                                             </Badge>
                                         </td>

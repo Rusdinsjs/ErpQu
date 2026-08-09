@@ -88,7 +88,7 @@ const WorkOrderReportsTab: React.FC = () => {
                     <h2 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
                         <Wrench className="text-cyan-500" /> Work Order Analytics
                     </h2>
-                    <p className="text-slate-400 text-sm mt-1">Maintenance performance and cost analysis.</p>
+                    <p className="text-muted-foreground text-sm mt-1">Maintenance performance and cost analysis.</p>
                 </div>
 
                 <div className="flex gap-4 items-center">
@@ -131,30 +131,30 @@ const WorkOrderReportsTab: React.FC = () => {
             {/* Summary Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 flex items-center gap-4 shadow-lg hover:border-slate-700 transition-colors">
-                    <div className="p-3 bg-emerald-500/10 rounded-lg text-emerald-400"><CheckCircle2 size={24} /></div>
+                    <div className="p-3 bg-emerald-500/100/10 rounded-lg text-emerald-400"><CheckCircle2 size={24} /></div>
                     <div>
-                        <p className="text-slate-500 text-xs uppercase font-bold tracking-wider">Completed</p>
+                        <p className="text-muted-foreground text-xs uppercase font-bold tracking-wider">Completed</p>
                         <h4 className="text-2xl font-bold text-white">{completedCount}</h4>
                     </div>
                 </div>
                 <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 flex items-center gap-4 shadow-lg hover:border-slate-700 transition-colors">
                     <div className="p-3 bg-blue-500/10 rounded-lg text-blue-400"><Clock size={24} /></div>
                     <div>
-                        <p className="text-slate-500 text-xs uppercase font-bold tracking-wider">In Progress</p>
+                        <p className="text-muted-foreground text-xs uppercase font-bold tracking-wider">In Progress</p>
                         <h4 className="text-2xl font-bold text-white">{inProgressCount}</h4>
                     </div>
                 </div>
                 <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 flex items-center gap-4 shadow-lg hover:border-slate-700 transition-colors">
-                    <div className="p-3 bg-amber-500/10 rounded-lg text-amber-400"><AlertTriangle size={24} /></div>
+                    <div className="p-3 bg-amber-500/100/10 rounded-lg text-amber-400"><AlertTriangle size={24} /></div>
                     <div>
-                        <p className="text-slate-500 text-xs uppercase font-bold tracking-wider">Pending</p>
+                        <p className="text-muted-foreground text-xs uppercase font-bold tracking-wider">Pending</p>
                         <h4 className="text-2xl font-bold text-white">{pendingCount}</h4>
                     </div>
                 </div>
                 <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 flex items-center gap-4 shadow-lg hover:border-slate-700 transition-colors">
                     <div className="p-3 bg-rose-500/10 rounded-lg text-rose-400"><XCircle size={24} /></div>
                     <div>
-                        <p className="text-slate-500 text-xs uppercase font-bold tracking-wider">Total Orders</p>
+                        <p className="text-muted-foreground text-xs uppercase font-bold tracking-wider">Total Orders</p>
                         <h4 className="text-2xl font-bold text-white">{totalWOs}</h4>
                     </div>
                 </div>
@@ -171,7 +171,7 @@ const WorkOrderReportsTab: React.FC = () => {
                         {/* Centered Label for Donut */}
                         <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none">
                             <p className="text-3xl font-bold text-white">{totalWOs}</p>
-                            <p className="text-xs text-slate-400 uppercase tracking-widest">Total WOs</p>
+                            <p className="text-xs text-muted-foreground uppercase tracking-widest">Total WOs</p>
                         </div>
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
@@ -207,7 +207,7 @@ const WorkOrderReportsTab: React.FC = () => {
                 <Card className="shadow-2xl shadow-black/40 border-slate-800/60 bg-slate-900/80 backdrop-blur-md">
                     <div className="mb-6 pb-4 border-b border-slate-800">
                         <h3 className="text-lg font-bold text-white">Monthly Cost Trend</h3>
-                        <p className="text-slate-400 text-xs">Maintenance Spending (Last 6 Months)</p>
+                        <p className="text-muted-foreground text-xs">Maintenance Spending (Last 6 Months)</p>
                     </div>
                     <div className="h-[300px] w-full">
                         <ResponsiveContainer width="100%" height="100%">

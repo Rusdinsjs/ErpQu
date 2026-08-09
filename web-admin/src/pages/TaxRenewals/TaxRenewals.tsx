@@ -554,7 +554,7 @@ export default function TaxRenewals() {
                                                 <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium ${item.status === 'PENDING_INPUT' ? 'bg-red-500/10 text-red-400' :
                                                     item.status === 'PENDING_APPROVAL' ? 'bg-yellow-500/10 text-yellow-400' :
                                                         item.status === 'APPROVED' || item.status === 'INVOICED' ? 'bg-green-500/10 text-green-400' :
-                                                            'bg-slate-500/10 text-slate-400'
+                                                            'bg-muted/300/10 text-muted-foreground'
                                                     }`}>
                                                     {item.status.replace(/_/g, ' ')}
                                                 </span>

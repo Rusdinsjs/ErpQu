@@ -94,3 +94,27 @@ pub struct SupportTicket {
     pub asset_id: Option<Uuid>,
     pub created_at: DateTime<Utc>,
 }
+
+/// Delivery Trip Entity for Logistics / Fleet
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct DeliveryTrip {
+    pub id: Uuid,
+    pub company_id: Uuid,
+    pub trip_number: String,
+    pub driver_id: Option<Uuid>,
+    pub vehicle_id: Option<Uuid>,
+    pub status: String, // DRAFT, IN_TRANSIT, COMPLETED, CANCELLED
+    pub departure_time: Option<DateTime<Utc>>,
+    pub arrival_time: Option<DateTime<Utc>>,
+    pub created_at: DateTime<Utc>,
+}
+
+/// Delivery Trip Stop Entity (links Trip to Sales Shipment / Delivery Note)
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct DeliveryTripStop {
+    pub id: Uuid,
+    pub trip_id: Uuid,
+    pub delivery_note_id: Uuid,
+    pub stop_order: i32,
+    pub status: String, // PENDING, DELIVERED, FAILED
+}

@@ -87,7 +87,7 @@ const PremiumStatCard = ({ title, value, subtext, trend, icon: Icon, gradient }:
             <div className="flex items-center gap-2">
                 <span className={`
                     flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full 
-                    ${trend === 'up' ? 'bg-emerald-500/20 text-emerald-200' : 'bg-rose-500/20 text-rose-200'}
+                    ${trend === 'up' ? 'bg-emerald-500/100/20 text-emerald-200' : 'bg-rose-500/20 text-rose-200'}
                 `}>
                     {trend === 'up' ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
                     {subtext}
@@ -110,7 +110,7 @@ const ActivityItem = ({ item }: { item: APIRecentActivity }) => {
 
     const getColor = (action: string) => {
         const actionLower = action.toLowerCase();
-        if (actionLower.includes('create') || actionLower.includes('insert')) return 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20';
+        if (actionLower.includes('create') || actionLower.includes('insert')) return 'text-emerald-500 bg-emerald-500/100/10 border-emerald-500/20';
         if (actionLower.includes('delete')) return 'text-rose-500 bg-rose-500/10 border-rose-500/20';
         if (actionLower.includes('update')) return 'text-blue-500 bg-blue-500/10 border-blue-500/20';
         return 'text-foreground bg-muted border-border';
@@ -206,7 +206,7 @@ const OverviewTab: React.FC = () => {
             <div className="flex items-center justify-between">
                 <div>
                     <h2 className="text-2xl font-bold text-white tracking-tight">Executive Dashboard</h2>
-                    <p className="text-slate-400 text-sm mt-1">Real-time overview of your asset ecosystem.</p>
+                    <p className="text-muted-foreground text-sm mt-1">Real-time overview of your asset ecosystem.</p>
                 </div>
                 <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-800/50 rounded-lg border border-slate-700">
                     <Calendar size={14} className="text-cyan-400" />
@@ -248,7 +248,7 @@ const OverviewTab: React.FC = () => {
                     <div className="flex items-center justify-between mb-6 pb-4 border-b border-white/5">
                         <div>
                             <h3 className="text-lg font-bold text-white">Operational Costs Analysis</h3>
-                            <p className="text-slate-400 text-xs mt-1">Fuel vs Maintenance spending over time</p>
+                            <p className="text-muted-foreground text-xs mt-1">Fuel vs Maintenance spending over time</p>
                         </div>
                         <select className="bg-gray-900/50 border border-gray-700 text-gray-300 text-sm rounded-lg px-3 py-1 outline-none focus:border-blue-500">
                             <option>Last 6 Months</option>
@@ -360,12 +360,12 @@ const OverviewTab: React.FC = () => {
                                 <ActivityItem key={item.entity_id + item.created_at} item={item} />
                             ))
                         ) : (
-                            <p className="text-slate-500 text-sm p-4">No recent activity found.</p>
+                            <p className="text-muted-foreground text-sm p-4">No recent activity found.</p>
                         )}
                     </div>
 
                     <div className="mt-8 pt-6 border-t border-white/5">
-                        <h4 className="text-sm font-medium text-slate-400 mb-4">System Health</h4>
+                        <h4 className="text-sm font-medium text-muted-foreground mb-4">System Health</h4>
                         <div className="space-y-4">
                             <div>
                                 <div className="flex justify-between text-xs mb-1">
@@ -373,7 +373,7 @@ const OverviewTab: React.FC = () => {
                                     <span className="text-emerald-400 font-bold">Optimal</span>
                                 </div>
                                 <div className="h-1.5 bg-gray-700 rounded-full overflow-hidden">
-                                    <div className="h-full w-[98%] bg-emerald-500 rounded-full animate-pulse" />
+                                    <div className="h-full w-[98%] bg-emerald-500/100 rounded-full animate-pulse" />
                                 </div>
                             </div>
                             <div>
@@ -382,7 +382,7 @@ const OverviewTab: React.FC = () => {
                                     <span className="text-amber-400 font-bold">78%</span>
                                 </div>
                                 <div className="h-1.5 bg-gray-700 rounded-full overflow-hidden">
-                                    <div className="h-full w-[78%] bg-amber-500 rounded-full" />
+                                    <div className="h-full w-[78%] bg-amber-500/100 rounded-full" />
                                 </div>
                             </div>
                         </div>
@@ -394,7 +394,7 @@ const OverviewTab: React.FC = () => {
                     <div className="flex items-center justify-between mb-6 pb-4 border-b border-white/5">
                         <div>
                             <h3 className="text-lg font-bold text-white">Financial Overview (CAPEX vs OPEX)</h3>
-                            <p className="text-slate-400 text-xs mt-1">Monthly expenditure breakdown</p>
+                            <p className="text-muted-foreground text-xs mt-1">Monthly expenditure breakdown</p>
                         </div>
                     </div>
                     <div className="h-[350px] w-full">
@@ -434,7 +434,7 @@ const OverviewTab: React.FC = () => {
                                 </BarChart>
                             </ResponsiveContainer>
                         ) : (
-                            <div className="h-full flex items-center justify-center text-slate-500">
+                            <div className="h-full flex items-center justify-center text-muted-foreground">
                                 No financial data available
                             </div>
                         )}

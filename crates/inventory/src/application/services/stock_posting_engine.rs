@@ -53,8 +53,12 @@ impl StockPostingEngine {
         // QSTK-005 Deadlock Prevention & Deterministic Locking:
         // Collect distinct (warehouse_id, item_id) pairs and sort them deterministically
         let mut target_pairs = BTreeSet::new();
+        let mut target_bin_pairs = BTreeSet::new();
         for line in &instruction.lines {
             target_pairs.insert((line.warehouse_id, line.item_id));
+            if let Some(bin_id) = line.warehouse_bin_id {
+                target_bin_pairs.insert((bin_id, line.item_id));
+            }
         }
 
         // Acquire FOR UPDATE locks on all affected Bins in deterministic order
@@ -62,7 +66,7 @@ impl StockPostingEngine {
             // Ensure Bin exists or insert default 0 bin
             sqlx::query(
                 r#"
-                INSERT INTO inventory.bins (company_id, warehouse_id, item_id, actual_qty, reserved_qty, ordered_qty, stock_value)
+                INSERT INTO public.bins (company_id, warehouse_id, item_id, actual_qty, reserved_qty, ordered_qty, stock_value)
                 VALUES ($1, $2, $3, 0.0000, 0.0000, 0.0000, 0.0000)
                 ON CONFLICT (company_id, warehouse_id, item_id) DO NOTHING
                 "#,
@@ -76,10 +80,39 @@ impl StockPostingEngine {
 
             // Lock row FOR UPDATE
             let _: (Decimal, Decimal) = sqlx::query_as(
-                "SELECT actual_qty, stock_value FROM inventory.bins WHERE company_id = $1 AND warehouse_id = $2 AND item_id = $3 FOR UPDATE",
+                "SELECT actual_qty, stock_value FROM public.bins WHERE company_id = $1 AND warehouse_id = $2 AND item_id = $3 FOR UPDATE",
             )
             .bind(instruction.company_id)
             .bind(wh_id)
+            .bind(item_id)
+            .fetch_one(&mut **tx)
+            .await
+            .map_err(|e| DomainError::internal(e.to_string()))?;
+        }
+
+        // Acquire FOR UPDATE locks on all affected ItemBinBalances in deterministic order
+        for (bin_id, item_id) in &target_bin_pairs {
+            // Ensure ItemBinBalance exists or insert default 0 balance
+            sqlx::query(
+                r#"
+                INSERT INTO inventory.item_bin_balances (company_id, warehouse_bin_id, item_id, actual_qty, updated_at)
+                VALUES ($1, $2, $3, 0.000000000, NOW())
+                ON CONFLICT (company_id, warehouse_bin_id, item_id) DO NOTHING
+                "#,
+            )
+            .bind(instruction.company_id)
+            .bind(bin_id)
+            .bind(item_id)
+            .execute(&mut **tx)
+            .await
+            .map_err(|e| DomainError::internal(e.to_string()))?;
+
+            // Lock row FOR UPDATE
+            let _: (Decimal,) = sqlx::query_as(
+                "SELECT actual_qty FROM inventory.item_bin_balances WHERE company_id = $1 AND warehouse_bin_id = $2 AND item_id = $3 FOR UPDATE",
+            )
+            .bind(instruction.company_id)
+            .bind(bin_id)
             .bind(item_id)
             .fetch_one(&mut **tx)
             .await
@@ -92,7 +125,7 @@ impl StockPostingEngine {
         for line in &instruction.lines {
             // Fetch current bin state under lock
             let bin_row: (Decimal, Decimal) = sqlx::query_as(
-                "SELECT actual_qty, stock_value FROM inventory.bins WHERE company_id = $1 AND warehouse_id = $2 AND item_id = $3",
+                "SELECT actual_qty, stock_value FROM public.bins WHERE company_id = $1 AND warehouse_id = $2 AND item_id = $3",
             )
             .bind(instruction.company_id)
             .bind(line.warehouse_id)
@@ -116,6 +149,46 @@ impl StockPostingEngine {
                         line.item_id, line.warehouse_id, new_qty
                     ),
                 ));
+            }
+
+            // Update bin/rack balance if warehouse_bin_id is supplied
+            if let Some(bin_id) = line.warehouse_bin_id {
+                let bin_bal_row: (Decimal,) = sqlx::query_as(
+                    "SELECT actual_qty FROM inventory.item_bin_balances WHERE company_id = $1 AND warehouse_bin_id = $2 AND item_id = $3",
+                )
+                .bind(instruction.company_id)
+                .bind(bin_id)
+                .bind(line.item_id)
+                .fetch_one(&mut **tx)
+                .await
+                .map_err(|e| DomainError::internal(e.to_string()))?;
+
+                let new_bin_qty = bin_bal_row.0 + line.actual_qty_delta;
+                
+                if !allow_negative && new_bin_qty < Decimal::ZERO {
+                    return Err(DomainError::business_rule(
+                        "NegativeBinStockNotAllowed",
+                        &format!(
+                            "Stock posting for item {} at bin {} would result in negative quantity ({})",
+                            line.item_id, bin_id, new_bin_qty
+                        ),
+                    ));
+                }
+
+                sqlx::query(
+                    r#"
+                    UPDATE inventory.item_bin_balances
+                    SET actual_qty = $1, updated_at = NOW()
+                    WHERE company_id = $2 AND warehouse_bin_id = $3 AND item_id = $4
+                    "#,
+                )
+                .bind(new_bin_qty)
+                .bind(instruction.company_id)
+                .bind(bin_id)
+                .bind(line.item_id)
+                .execute(&mut **tx)
+                .await
+                .map_err(|e| DomainError::internal(e.to_string()))?;
             }
 
             // QSTK-007 Valuation Math (Moving Average)
@@ -161,12 +234,13 @@ impl StockPostingEngine {
                 chrono::DateTime<chrono::Utc>,
             ) = sqlx::query_as(
                 r#"
-                INSERT INTO inventory.stock_ledger_entries (
+                INSERT INTO public.stock_ledger_entries (
                     company_id, warehouse_id, item_id, posting_date,
                     actual_qty_delta, qty_after, valuation_rate, stock_value_delta, stock_value_after,
-                    voucher_type, voucher_no, voucher_id, voucher_line_id, batch_no, serial_no, created_by
+                    voucher_type, voucher_no, voucher_id, voucher_line_id, batch_no, serial_no, created_by,
+                    warehouse_bin_id
                 )
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
                 RETURNING id, posting_datetime, created_at
                 "#,
             )
@@ -186,6 +260,7 @@ impl StockPostingEngine {
             .bind(&line.batch_no)
             .bind(&line.serial_no)
             .bind(instruction.created_by)
+            .bind(line.warehouse_bin_id)
             .fetch_one(&mut **tx)
             .await
             .map_err(|e| DomainError::internal(e.to_string()))?;
@@ -193,7 +268,7 @@ impl StockPostingEngine {
             // Update Bin Projection
             sqlx::query(
                 r#"
-                UPDATE inventory.bins
+                UPDATE public.bins
                 SET actual_qty = $1, stock_value = $2, updated_at = NOW()
                 WHERE company_id = $3 AND warehouse_id = $4 AND item_id = $5
                 "#,
@@ -295,6 +370,7 @@ impl StockPostingEngine {
                 is_cancelled: false,
                 created_at: sle_row.2,
                 created_by: instruction.created_by,
+                warehouse_bin_id: line.warehouse_bin_id,
             });
         }
 
@@ -357,6 +433,7 @@ impl StockPostingEngine {
                     batch_no: None,
                     serial_no: None,
                     allow_negative_stock: Some(false),
+                    warehouse_bin_id: None,
                 },
                 StockPostingLineItem {
                     warehouse_id: dest_warehouse_id,
@@ -367,6 +444,7 @@ impl StockPostingEngine {
                     batch_no: None,
                     serial_no: None,
                     allow_negative_stock: Some(false),
+                    warehouse_bin_id: None,
                 },
             ],
             created_by,

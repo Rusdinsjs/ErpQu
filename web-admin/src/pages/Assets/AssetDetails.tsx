@@ -295,7 +295,7 @@ export default function AssetDetails({ assetId }: { assetId?: string }) {
                                                 </div>
                                                 <div className="h-3 w-full bg-muted rounded-full overflow-hidden flex">
                                                     <div
-                                                        className="bg-amber-500 transition-all duration-500"
+                                                        className="bg-amber-500/100 transition-all duration-500"
                                                         style={{ width: `${rentalIncome > 0 ? Math.min(100, (maintenanceCost / rentalIncome) * 100) : 33}%` }}
                                                         title={`Maintenance: IDR ${maintenanceCost.toLocaleString('id-ID')}`}
                                                     />
@@ -305,14 +305,14 @@ export default function AssetDetails({ assetId }: { assetId?: string }) {
                                                         title={`Fuel: IDR ${fuelCost.toLocaleString('id-ID')}`}
                                                     />
                                                     <div
-                                                        className="bg-emerald-500 flex-1 transition-all duration-500"
+                                                        className="bg-emerald-500/100 flex-1 transition-all duration-500"
                                                         title={`Net Margin: IDR ${netMargin.toLocaleString('id-ID')}`}
                                                     />
                                                 </div>
                                                 <div className="flex items-center gap-4 text-xs text-muted-foreground pt-1">
-                                                    <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block"/> Maintenance ({new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(maintenanceCost)})</span>
+                                                    <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-amber-500/100 inline-block"/> Maintenance ({new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(maintenanceCost)})</span>
                                                     <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-red-500 inline-block"/> Fuel ({new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(fuelCost)})</span>
-                                                    <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"/> Net Margin</span>
+                                                    <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500/100 inline-block"/> Net Margin</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -326,7 +326,7 @@ export default function AssetDetails({ assetId }: { assetId?: string }) {
                 <TabsContent value="qrcode">
                     <Card padding="lg">
                         <div className="flex flex-col items-center py-4 md:py-8">
-                            <div className="bg-white p-4 md:p-6 rounded-2xl mb-6 shadow-2xl shadow-cyan-500/20 max-w-[250px] w-full aspect-square flex items-center justify-center">
+                            <div className="bg-card p-4 md:p-6 rounded-2xl mb-6 shadow-2xl shadow-cyan-500/20 max-w-[250px] w-full aspect-square flex items-center justify-center">
                                 <QRCodeSVG
                                     value={asset.id}
                                     size={180}

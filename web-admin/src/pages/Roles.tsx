@@ -114,7 +114,7 @@ function RolesList() {
             <div className="flex justify-between items-center mb-6">
                 <div>
                     <h3 className="text-lg font-semibold text-white">Roles Overview</h3>
-                    <p className="text-sm text-slate-400">Manage system roles and access levels</p>
+                    <p className="text-sm text-muted-foreground">Manage system roles and access levels</p>
                 </div>
                 <Button
                     leftIcon={<Plus size={18} />}
@@ -134,11 +134,11 @@ function RolesList() {
                                     <span className="px-2 py-0.5 rounded-full bg-slate-700 text-xs text-slate-300 font-mono">
                                         Level {role.role_level}
                                     </span>
-                                    <span className="px-2 py-0.5 rounded-full bg-slate-700 text-xs text-slate-400 font-mono">
+                                    <span className="px-2 py-0.5 rounded-full bg-slate-700 text-xs text-muted-foreground font-mono">
                                         {role.code}
                                     </span>
                                 </div>
-                                <p className="text-sm text-slate-400 mt-1">{role.description || 'No description provided'}</p>
+                                <p className="text-sm text-muted-foreground mt-1">{role.description || 'No description provided'}</p>
                             </div>
                             <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                 <Button
@@ -167,7 +167,7 @@ function RolesList() {
                 ))}
 
                 {roles.length === 0 && (
-                    <div className="text-center py-12 text-slate-500 bg-slate-800/20 rounded-xl border border-dashed border-slate-700">
+                    <div className="text-center py-12 text-muted-foreground bg-slate-800/20 rounded-xl border border-dashed border-slate-700">
                         No roles found. Create one to get started.
                     </div>
                 )}
@@ -207,7 +207,7 @@ function RolesList() {
                             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, role_level: parseInt(e.target.value) })}
                             required
                         />
-                        <p className="text-xs text-slate-500 mt-1">
+                        <p className="text-xs text-muted-foreground mt-1">
                             Level 1: Super Admin (Full Access) <br />
                             Level 5: Basic User (Limited Access)
                         </p>
@@ -248,7 +248,7 @@ export default function Roles() {
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-2xl font-bold text-white">Role Management</h1>
-                    <p className="text-slate-400 text-sm mt-1">
+                    <p className="text-muted-foreground text-sm mt-1">
                         Kelola Peran (Roles) & Matriks Hak Akses Dokumen ERPQu
                     </p>
                 </div>
@@ -262,7 +262,7 @@ export default function Roles() {
                             onClick={() => setActiveTab('frappe_matrix')}
                             className={`py-4 px-2 border-b-2 font-medium text-sm transition-colors ${activeTab === 'frappe_matrix'
                                 ? 'border-cyan-500 text-cyan-400'
-                                : 'border-transparent text-slate-400 hover:text-slate-300'
+                                : 'border-transparent text-muted-foreground hover:text-slate-300'
                                 }`}
                         >
                             <div className="flex items-center gap-2">
@@ -274,7 +274,7 @@ export default function Roles() {
                             onClick={() => setActiveTab('overview')}
                             className={`py-4 px-2 border-b-2 font-medium text-sm transition-colors ${activeTab === 'overview'
                                 ? 'border-cyan-500 text-cyan-400'
-                                : 'border-transparent text-slate-400 hover:text-slate-300'
+                                : 'border-transparent text-muted-foreground hover:text-slate-300'
                                 }`}
                         >
                             <div className="flex items-center gap-2">

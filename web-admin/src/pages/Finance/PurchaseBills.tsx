@@ -85,7 +85,7 @@ export default function PurchaseBills() {
     const stats = [
         { label: 'Total Utang', value: formatCurrencyIDR(totalPayable), icon: ShoppingBag, color: 'text-rose-400', bg: 'bg-rose-500/10' },
         { label: 'Jatuh Tempo', value: formatCurrencyIDR(overdueTotal), icon: AlertCircle, color: 'text-red-400', bg: 'bg-red-500/10' },
-        { label: 'Lunas (Total)', value: formatCurrencyIDR(paidTotal), icon: CheckSquare, color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
+        { label: 'Lunas (Total)', value: formatCurrencyIDR(paidTotal), icon: CheckSquare, color: 'text-emerald-400', bg: 'bg-emerald-500/100/10' },
     ];
 
     return (
@@ -175,7 +175,7 @@ export default function PurchaseBills() {
                                         <td className="px-6 py-4 font-mono">{b.date}</td>
                                         <td className="px-6 py-4 font-mono">{b.due_date}</td>
                                         <td className="px-6 py-4">
-                                            <Badge variant="outline" className={b.budget_type === 'CAPEX' ? 'bg-purple-500/10 text-purple-500 border-purple-500/20' : 'bg-blue-500/10 text-blue-500 border-blue-500/20'}>
+                                            <Badge variant="outline" className={b.budget_type === 'CAPEX' ? 'bg-purple-500/100/10 text-purple-500 border-purple-500/20' : 'bg-blue-500/10 text-blue-500 border-blue-500/20'}>
                                                 {b.budget_type || 'OPEX'}
                                             </Badge>
                                         </td>
@@ -183,7 +183,7 @@ export default function PurchaseBills() {
                                             {formatCurrencyIDR(b.total_amount)}
                                         </td>
                                         <td className="px-6 py-4 text-center">
-                                            <Badge variant={b.status === 'paid' ? 'success' : 'danger'} className={`${b.status === 'paid' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                                            <Badge variant={b.status === 'paid' ? 'success' : 'danger'} className={`${b.status === 'paid' ? 'bg-emerald-500/100/10 text-emerald-400 border-emerald-500/20' :
                                                 'bg-red-500/10 text-red-400 border-red-500/20'
                                                 }`}>
                                                 {b.status === 'paid' ? 'Lunas' : b.status === 'draft' ? 'Draft' : 'Belum Lunas'}

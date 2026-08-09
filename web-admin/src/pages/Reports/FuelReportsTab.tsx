@@ -93,7 +93,7 @@ const FuelReportsTab: React.FC = () => {
                     <h2 className="text-2xl font-bold text-white tracking-tight flex items-center gap-2">
                         <Droplets className="text-indigo-500" /> Fuel Analytics
                     </h2>
-                    <p className="text-slate-400 text-sm mt-1">Monitor consumption patterns and efficiency.</p>
+                    <p className="text-muted-foreground text-sm mt-1">Monitor consumption patterns and efficiency.</p>
                 </div>
 
                 <div className="flex gap-4 items-center">
@@ -138,8 +138,8 @@ const FuelReportsTab: React.FC = () => {
                 <div className="relative overflow-hidden rounded-2xl p-6 bg-gradient-to-br from-indigo-900/50 to-slate-900 border border-indigo-500/20 shadow-lg">
                     <div className="absolute right-0 top-0 p-4 opacity-10"><Droplets size={80} /></div>
                     <p className="text-indigo-200/80 font-medium text-sm uppercase tracking-wide">Total Consumption</p>
-                    <h3 className="text-3xl font-bold text-white mt-1">{formatVolume(totalConsumption)} <span className="text-lg text-slate-400 font-normal">Liters</span></h3>
-                    <div className="flex items-center gap-1 mt-2 text-xs text-emerald-400 font-medium bg-emerald-500/10 w-fit px-2 py-1 rounded-full"><TrendingUp size={12} /> Last 6 Months</div>
+                    <h3 className="text-3xl font-bold text-white mt-1">{formatVolume(totalConsumption)} <span className="text-lg text-muted-foreground font-normal">Liters</span></h3>
+                    <div className="flex items-center gap-1 mt-2 text-xs text-emerald-400 font-medium bg-emerald-500/100/10 w-fit px-2 py-1 rounded-full"><TrendingUp size={12} /> Last 6 Months</div>
                 </div>
 
                 <div className="relative overflow-hidden rounded-2xl p-6 bg-gradient-to-br from-emerald-900/50 to-slate-900 border border-emerald-500/20 shadow-lg">
@@ -152,8 +152,8 @@ const FuelReportsTab: React.FC = () => {
                 <div className="relative overflow-hidden rounded-2xl p-6 bg-gradient-to-br from-cyan-900/50 to-slate-900 border border-cyan-500/20 shadow-lg">
                     <div className="absolute right-0 top-0 p-4 opacity-10"><Gauge size={80} /></div>
                     <p className="text-cyan-200/80 font-medium text-sm uppercase tracking-wide">Avg Efficiency (Est.)</p>
-                    <h3 className="text-3xl font-bold text-white mt-1">{avgEfficiency} <span className="text-lg text-slate-400 font-normal">km/L</span></h3>
-                    <div className="flex items-center gap-1 mt-2 text-xs text-slate-400 font-medium ">Based on typical usage</div>
+                    <h3 className="text-3xl font-bold text-white mt-1">{avgEfficiency} <span className="text-lg text-muted-foreground font-normal">km/L</span></h3>
+                    <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground font-medium ">Based on typical usage</div>
                 </div>
             </div>
 
@@ -163,7 +163,7 @@ const FuelReportsTab: React.FC = () => {
                     <div className="mb-6 pb-4 border-b border-slate-800 flex justify-between items-center">
                         <div>
                             <h3 className="text-lg font-bold text-white">Monthly Consumption Trend</h3>
-                            <p className="text-slate-400 text-xs">Volume vs Cost correlation</p>
+                            <p className="text-muted-foreground text-xs">Volume vs Cost correlation</p>
                         </div>
                     </div>
                     <div className="h-[300px] w-full">
@@ -203,7 +203,7 @@ const FuelReportsTab: React.FC = () => {
                 <Card className="shadow-2xl shadow-black/40 border-slate-800/60 bg-slate-900/80 backdrop-blur-md">
                     <div className="mb-6 pb-4 border-b border-slate-800">
                         <h3 className="text-lg font-bold text-white">Top Consumers by Vehicle</h3>
-                        <p className="text-slate-400 text-xs">Highest usage breakdown</p>
+                        <p className="text-muted-foreground text-xs">Highest usage breakdown</p>
                     </div>
                     <div className="h-[300px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
