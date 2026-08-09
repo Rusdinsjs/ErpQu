@@ -15,8 +15,9 @@ use management_system_core::infrastructure::bus::EventBus;
 use management_system_core::infrastructure::database::{
     CommandContext, IdempotencyDecision, IdempotencyStore, UnitOfWork,
 };
+use management_system_assets::AssetRepository;
 use management_system_core::infrastructure::repositories::{
-    AssetRepository, AuditTrailStore, OutboxStore,
+    AuditTrailStore, OutboxStore,
 };
 
 

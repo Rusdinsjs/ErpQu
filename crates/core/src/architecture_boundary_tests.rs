@@ -226,7 +226,9 @@ mod architecture_tests {
             "audit_log.rs",
             "company.rs",
             "cost_center.rs",
+            "data_import.rs",
             "department.rs",
+            "location.rs",
             "mod.rs",
             "notification.rs",
             "organization.rs",
@@ -234,6 +236,7 @@ mod architecture_tests {
             "setting.rs",
             "tier_config.rs",
             "user.rs",
+            "workflow.rs",
         ];
 
         let allowed_services = [
@@ -245,8 +248,10 @@ mod architecture_tests {
             "data_service.rs",
             "email_service.rs",
             "location_service.rs",
+            "metadata_service.rs",
             "mod.rs",
             "notification_service.rs",
+            "pdf_service.rs",
             "rbac_service.rs",
             "settings_service.rs",
             "user_service.rs",
@@ -261,6 +266,7 @@ mod architecture_tests {
             "company_repository.rs",
             "cost_center_repository.rs",
             "location_repository.rs",
+            "metadata_repository.rs",
             "mod.rs",
             "naming_series_repository.rs",
             "notification_repository.rs",

@@ -6,10 +6,10 @@ use rust_decimal::Decimal;
 use uuid::Uuid;
 
 use management_system_core::application::services::approval_service::ModuleApprovalCallback;
-use management_system_core::domain::entities::{FuelLog, FuelRequestType};
+use crate::domain::entities::{FuelLog, FuelRequestType};
 use management_system_core::domain::errors::DomainResult;
 use management_system_core::infrastructure::bus::EventBus;
-use management_system_core::infrastructure::repositories::{FuelAnalyticsData, FuelRepository};
+use crate::repositories::{FuelAnalyticsData, FuelRepository};
 
 #[derive(Debug, serde::Deserialize)]
 pub struct FuelRequest {

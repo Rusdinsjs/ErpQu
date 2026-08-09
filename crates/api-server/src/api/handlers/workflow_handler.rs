@@ -114,7 +114,7 @@ pub async fn get_workflow_detail(
     .bind(id)
     .fetch_optional(&state.pool)
     .await
-    .map_err(|e| AppError::Database(e.to_string()))?
+    .map_err(|e: sqlx::Error| AppError::Database(e.to_string()))?
     .ok_or(AppError::NotFound("Workflow not found".to_string()))?;
 
     let states = sqlx::query_as::<_, WorkflowState>(
@@ -123,7 +123,7 @@ pub async fn get_workflow_detail(
     .bind(id)
     .fetch_all(&state.pool)
     .await
-    .map_err(|e| AppError::Database(e.to_string()))?;
+    .map_err(|e: sqlx::Error| AppError::Database(e.to_string()))?;
 
     let transitions = sqlx::query_as::<_, WorkflowTransitionDetail>(
         r#"
@@ -142,7 +142,7 @@ pub async fn get_workflow_detail(
     .bind(id)
     .fetch_all(&state.pool)
     .await
-    .map_err(|e| AppError::Database(e.to_string()))?;
+    .map_err(|e: sqlx::Error| AppError::Database(e.to_string()))?;
 
     Ok(Json(WorkflowDetailResponse {
         workflow,
@@ -172,7 +172,7 @@ pub async fn create_workflow(
     .bind(doc_field)
     .fetch_one(&state.pool)
     .await
-    .map_err(|e| AppError::Database(e.to_string()))?;
+    .map_err(|e: sqlx::Error| AppError::Database(e.to_string()))?;
 
     Ok(Json(wf))
 }
@@ -201,7 +201,7 @@ pub async fn save_workflow_state(
     .bind(payload.style_variant)
     .fetch_one(&state.pool)
     .await
-    .map_err(|e| AppError::Database(e.to_string()))?;
+    .map_err(|e: sqlx::Error| AppError::Database(e.to_string()))?;
 
     Ok(Json(ws))
 }
@@ -229,7 +229,7 @@ pub async fn save_workflow_transition(
     .bind(payload.allowed_role_id)
     .fetch_one(&state.pool)
     .await
-    .map_err(|e| AppError::Database(e.to_string()))?;
+    .map_err(|e: sqlx::Error| AppError::Database(e.to_string()))?;
 
     Ok(Json(wt))
 }
@@ -243,7 +243,7 @@ pub async fn delete_workflow(
         .bind(id)
         .execute(&state.pool)
         .await
-        .map_err(|e| AppError::Database(e.to_string()))?;
+        .map_err(|e: sqlx::Error| AppError::Database(e.to_string()))?;
 
     Ok(Json(serde_json::json!({ "success": true })))
 }
@@ -273,7 +273,7 @@ pub async fn apply_workflow_action(
     .bind(&payload.action_name)
     .fetch_optional(&state.pool)
     .await
-    .map_err(|e| AppError::Database(e.to_string()))?
+    .map_err(|e: sqlx::Error| AppError::Database(e.to_string()))?
     .ok_or(AppError::BadRequest("Transisi alur kerja tidak valid atau tidak ditemukan".to_string()))?;
 
     // 2. Validate User Role Authorization (User must have the allowed_role_id or role_level <= 2)
@@ -284,7 +284,7 @@ pub async fn apply_workflow_action(
     .bind(transition.allowed_role_id)
     .fetch_one(&state.pool)
     .await
-    .map_err(|e| AppError::Database(e.to_string()))?;
+    .map_err(|e: sqlx::Error| AppError::Database(e.to_string()))?;
 
     let is_admin = claims.role_level <= 2;
     if user_role_count == 0 && !is_admin {
@@ -314,7 +314,7 @@ pub async fn apply_workflow_action(
     .bind(payload.comments)
     .fetch_one(&state.pool)
     .await
-    .map_err(|e| AppError::Database(e.to_string()))?;
+    .map_err(|e: sqlx::Error| AppError::Database(e.to_string()))?;
 
     Ok(Json(serde_json::json!({
         "success": true,

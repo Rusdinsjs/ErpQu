@@ -1,11 +1,11 @@
 use std::sync::Arc;
 use uuid::Uuid;
 
-use management_system_core::domain::entities::{
+use crate::domain::entities::{
     CategoryAttributeTemplate, CategoryTemplateWithName, CreateCategoryAttributeTemplateRequest,
 };
 use management_system_core::domain::errors::{DomainError, DomainResult};
-use management_system_core::infrastructure::repositories::CategoryTemplateRepository;
+use crate::repositories::CategoryTemplateRepository;
 
 #[derive(Clone)]
 pub struct CategoryTemplateService {

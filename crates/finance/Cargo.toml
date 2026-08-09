@@ -5,7 +5,9 @@ edition = "2021"
 
 [dependencies]
 management-system-core = { workspace = true }
+management-system-assets = { workspace = true }
 management-system-crm = { workspace = true }
+utoipa = { workspace = true }
 sqlx = { workspace = true }
 serde = { workspace = true }
 chrono = { workspace = true }
@@ -17,3 +19,6 @@ async-trait = { workspace = true }
 tokio = { workspace = true }
 serde_json = { workspace = true }
 sha2 = { workspace = true }
+
+[dev-dependencies]
+management-system-rental = { workspace = true }

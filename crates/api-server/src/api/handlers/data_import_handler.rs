@@ -552,7 +552,7 @@ pub async fn start_data_import(
     .bind(id)
     .fetch_one(&state.pool)
     .await
-    .map_err(|e| AppError::Database(e.to_string()))?;
+    .map_err(|e: sqlx::Error| AppError::Database(e.to_string()))?;
 
     Ok(Json(updated))
 }
@@ -568,14 +568,14 @@ pub async fn download_failed_rows(
     .bind(id)
     .fetch_all(&state.pool)
     .await
-    .map_err(|e| AppError::Database(e.to_string()))?;
+    .map_err(|e: sqlx::Error| AppError::Database(e.to_string()))?;
 
     let mut lines = vec!["No_Baris,Kode_Aset,Nama_Aset,Alasan_Error".to_string()];
 
     for log in failed_logs {
         let d = &log.row_data;
-        let code = d.get("kode_aset").or_else(|| d.get("asset_code")).and_then(|v| v.as_str()).unwrap_or("");
-        let name = d.get("nama_aset").or_else(|| d.get("name")).and_then(|v| v.as_str()).unwrap_or("");
+        let code = d.get("kode_aset").or_else(|| d.get("asset_code")).and_then(|v: &serde_json::Value| v.as_str()).unwrap_or("");
+        let name = d.get("nama_aset").or_else(|| d.get("name")).and_then(|v: &serde_json::Value| v.as_str()).unwrap_or("");
         let errs: Vec<String> = serde_json::from_value(log.messages.clone()).unwrap_or_default();
         let err_str = errs.join(" | ").replace(",", ";");
 

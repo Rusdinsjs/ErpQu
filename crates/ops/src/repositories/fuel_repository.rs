@@ -5,7 +5,7 @@ use rust_decimal::Decimal;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use management_system_core::domain::entities::FuelLog;
+use crate::domain::entities::FuelLog;
 
 #[derive(Clone)]
 pub struct FuelRepository {

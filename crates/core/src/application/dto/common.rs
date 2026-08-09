@@ -33,7 +33,6 @@ impl Default for PaginationParams {
 
 /// Paginated response wrapper
 #[derive(Debug, Clone, Serialize, ToSchema)]
-#[aliases(PaginatedResponseAssetSummary = PaginatedResponse<crate::domain::entities::asset::AssetSummary>)]
 pub struct PaginatedResponse<T> {
     pub data: Vec<T>,
     pub pagination: PaginationMeta,
@@ -49,26 +48,36 @@ pub struct PaginationMeta {
     pub has_prev: bool,
 }
 
+impl PaginationMeta {
+    pub fn new(total: i64, page: i64, per_page: i64) -> Self {
+        let total_pages = if per_page > 0 {
+            (total as f64 / per_page as f64).ceil() as i64
+        } else {
+            0
+        };
+        Self {
+            total,
+            page,
+            per_page,
+            total_pages,
+            has_next: page < total_pages,
+            has_prev: page > 1,
+        }
+    }
+}
+
 impl<T> PaginatedResponse<T> {
     pub fn new(data: Vec<T>, total: i64, page: i64, per_page: i64) -> Self {
-        let total_pages = (total as f64 / per_page as f64).ceil() as i64;
         Self {
             data,
-            pagination: PaginationMeta {
-                total,
-                page,
-                per_page,
-                total_pages,
-                has_next: page < total_pages,
-                has_prev: page > 1,
-            },
+            pagination: PaginationMeta::new(total, page, per_page),
         }
     }
 }
 
 /// API response wrapper
 #[derive(Debug, Clone, Serialize, ToSchema)]
-#[aliases(ApiResponseAsset = ApiResponse<crate::domain::entities::asset::Asset>, ApiResponseApprovalRequest = ApiResponse<crate::infrastructure::repositories::approval_repository::ApprovalRequest>)]
+#[aliases(ApiResponseApprovalRequest = ApiResponse<crate::infrastructure::repositories::approval_repository::ApprovalRequest>)]
 pub struct ApiResponse<T> {
     pub success: bool,
     pub message: Option<String>,

@@ -1,4 +1,4 @@
-use management_system_core::domain::entities::{MaintenanceTemplate, TemplateTask};
+use crate::domain::entities::{MaintenanceTemplate, TemplateTask};
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -87,5 +87,31 @@ impl MaintenanceTemplateRepository {
             .execute(&self.pool)
             .await?;
         Ok(result.rows_affected() > 0)
+    }
+
+    pub async fn update_task_number(&self, task_id: Uuid, task_number: i32) -> Result<(), sqlx::Error> {
+        sqlx::query("UPDATE maintenance_template_tasks SET task_number = $2 WHERE id = $1")
+            .bind(task_id)
+            .bind(task_number)
+            .execute(&self.pool)
+            .await?;
+        Ok(())
+    }
+
+    pub async fn get_versions(&self, template_id: Uuid) -> Result<Vec<MaintenanceTemplate>, sqlx::Error> {
+        sqlx::query_as::<_, MaintenanceTemplate>(
+            "SELECT * FROM maintenance_templates WHERE id = $1 ORDER BY version DESC",
+        )
+        .bind(template_id)
+        .fetch_all(&self.pool)
+        .await
+    }
+
+    pub async fn increment_usage(&self, template_id: Uuid) -> Result<(), sqlx::Error> {
+        sqlx::query("UPDATE maintenance_templates SET usage_count = COALESCE(usage_count, 0) + 1 WHERE id = $1")
+            .bind(template_id)
+            .execute(&self.pool)
+            .await?;
+        Ok(())
     }
 }

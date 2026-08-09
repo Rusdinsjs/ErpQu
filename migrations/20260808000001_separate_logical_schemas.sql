@@ -41,9 +41,6 @@ BEGIN
     IF EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'clients') AND NOT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'crm' AND table_name = 'clients') THEN
         ALTER TABLE public.clients SET SCHEMA crm;
     END IF;
-    IF EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'companies') AND NOT EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'crm' AND table_name = 'companies') THEN
-        ALTER TABLE public.companies SET SCHEMA crm;
-    END IF;
 END $$;
 
 -- 4. Move Rental Tables

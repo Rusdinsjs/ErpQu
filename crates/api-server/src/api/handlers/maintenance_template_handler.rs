@@ -5,8 +5,9 @@ use axum::{
     extract::{Path, State},
     Extension, Json,
 };
-use management_system_core::domain::entities::{
-    MaintenanceTemplate, MaintenanceTemplateWithTasks, TemplateTask, UserClaims as Claims,
+use management_system_core::domain::entities::UserClaims as Claims;
+use management_system_ops::{
+    MaintenanceTemplate, MaintenanceTemplateWithTasks, TemplateTask,
 };
 use management_system_core::shared::errors::AppError;
 use serde::Deserialize;

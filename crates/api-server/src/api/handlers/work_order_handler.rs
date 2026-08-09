@@ -12,10 +12,10 @@ use uuid::Uuid;
 
 use crate::api::server::AppState;
 use management_system_core::application::dto::{ApiResponse, PaginationParams};
-use management_system_core::domain::entities::{UserClaims as Claims, WorkOrder};
+use management_system_core::domain::entities::UserClaims as Claims;
 use management_system_core::infrastructure::notifications::NotificationMessage;
 use management_system_core::shared::errors::AppError;
-use management_system_ops::CreateWorkOrderRequest;
+use management_system_ops::{ChecklistItem, CreateWorkOrderRequest, WorkOrder, WorkOrderPart};
 use serde_json::json;
 
 /// Role level constants
@@ -369,7 +369,7 @@ pub struct AddPartRequest {
 pub async fn get_work_order_tasks(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
-) -> Result<Json<Vec<management_system_core::domain::entities::ChecklistItem>>, AppError> {
+) -> Result<Json<Vec<ChecklistItem>>, AppError> {
     let tasks = state.work_order_service.get_checklist(id).await?;
     Ok(Json(tasks))
 }
@@ -379,7 +379,7 @@ pub async fn add_work_order_task(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(payload): Json<AddTaskRequest>,
-) -> Result<Json<management_system_core::domain::entities::ChecklistItem>, AppError> {
+) -> Result<Json<ChecklistItem>, AppError> {
     check_role(&claims, ROLE_OPERATOR)?;
 
     let task = state
@@ -429,7 +429,7 @@ pub async fn update_work_order_task(
 pub async fn get_work_order_parts(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
-) -> Result<Json<Vec<management_system_core::domain::entities::WorkOrderPart>>, AppError> {
+) -> Result<Json<Vec<WorkOrderPart>>, AppError> {
     let parts = state.work_order_service.get_parts(id).await?;
     Ok(Json(parts))
 }
@@ -439,7 +439,7 @@ pub async fn add_work_order_part(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
     Json(payload): Json<AddPartRequest>,
-) -> Result<Json<management_system_core::domain::entities::WorkOrderPart>, AppError> {
+) -> Result<Json<WorkOrderPart>, AppError> {
     check_role(&claims, ROLE_OPERATOR)?;
 
     let part = state
@@ -461,7 +461,7 @@ pub async fn update_work_order_part(
     Extension(claims): Extension<Claims>,
     Path((id, part_id)): Path<(Uuid, Uuid)>,
     Json(payload): Json<AddPartRequest>,
-) -> Result<Json<management_system_core::domain::entities::WorkOrderPart>, AppError> {
+) -> Result<Json<WorkOrderPart>, AppError> {
     check_role(&claims, ROLE_OPERATOR)?;
 
     let part = state

@@ -11,10 +11,10 @@ use uuid::Uuid;
 
 use crate::api::server::AppState;
 use management_system_core::application::dto::ApiResponse;
-use management_system_core::application::services::lifecycle_service::{
-    LifecycleService, StateInfo, StateInfoWithApproval, TransitionRequestResult,
+use management_system_assets::{
+    LifecycleHistory, LifecycleService, StateInfo, StateInfoWithApproval, TransitionRequestResult,
 };
-use management_system_core::domain::entities::{LifecycleHistory, UserClaims as Claims};
+use management_system_core::domain::entities::UserClaims as Claims;
 use management_system_core::shared::errors::AppError;
 
 #[derive(Deserialize)]

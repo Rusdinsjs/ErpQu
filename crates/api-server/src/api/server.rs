@@ -7,23 +7,22 @@ use utoipa::OpenApi;
 // use crate::api::middleware::security_headers::security_headers_middleware;
 use crate::api::routes::create_router;
 use crate::application::services::scheduler_service::SchedulerService;
-use management_system_assets::{CategoryService, CategoryTemplateService};
+use crate::application::services::{AnalyticsService, ReportService};
+use management_system_assets::{
+    AssetRepository, CategoryRepository, CategoryService, CategoryTemplateRepository,
+    CategoryTemplateService, DataService, LifecycleRepository, LifecycleService,
+};
 use management_system_core::application::services::{
-    AnalyticsService, ApprovalService, AuditService, AuthService, ConversionService, LifecycleService,
-    LoanService, LocationService, MaintenanceService, MaintenanceTemplateService,
-    NotificationService, RbacService, ReportService, SensorService, SettingsService, UserService,
+    ApprovalService, AuditService, AuthService,
+    LocationService, NotificationService, RbacService, SettingsService, UserService,
 };
 use management_system_core::infrastructure::bus::EventBus;
 use management_system_core::infrastructure::cache::{CacheOperations, RedisCache, RedisConfig};
 use management_system_core::infrastructure::repositories::{
-    ApprovalRepository, AssetExpenseRepository, AssetRepository, AuditRepository,
-    CategoryRepository, CategoryTemplateRepository,
-    ConversionRepository, FuelRepository,
-    LifecycleRepository, LoanRepository, MaintenanceRepository, MaintenanceTemplateRepository,
-    NotificationRepository, RbacRepository, SensorRepository, SettingsRepository,
-    TaxRenewalRepository, UserRepository,
-    WorkOrderRepository,
+    ApprovalRepository, AuditRepository, NotificationRepository, RbacRepository, SettingsRepository,
+    UserRepository,
 };
+use management_system_inventory::{ConversionRepository, ConversionService};
 
 use management_system_hr::repositories::{EmployeeRepository, LeaveRepository};
 use management_system_hr::services::{EmployeeService, LeaveService};
@@ -44,9 +43,14 @@ use management_system_inventory::repositories::InventoryRepository;
 use management_system_inventory::InventoryService;
 use management_system_core::infrastructure::storage::FileStorage;
 use management_system_core::shared::utils::jwt::JwtConfig;
-use management_system_finance::repositories::{FinanceRepository, JournalRepository};
+use management_system_finance::repositories::{AssetExpenseRepository, FinanceRepository, JournalRepository};
 use management_system_finance::{AssetExpenseService, DepreciationService, JournalService};
-use management_system_ops::{FuelService, TaxRenewalService};
+use management_system_ops::{
+    FuelRepository, FuelService, LoanRepository, LoanService, MaintenanceRepository,
+    MaintenanceService, MaintenanceTeamRepository, MaintenanceTeamService,
+    MaintenanceTemplateRepository, MaintenanceTemplateService, SensorRepository, SensorService,
+    TaxRenewalRepository, TaxRenewalService, WorkOrderRepository,
+};
 use std::sync::Arc;
 
 /// Application state shared across handlers
@@ -183,7 +187,6 @@ impl AppState {
 
         let asset_service = management_system_assets::AssetService::new(
             asset_repo.clone(),
-            journal_repo.clone(),
             cache.clone(),
             approval_service.clone(),
             notification_service.clone(),

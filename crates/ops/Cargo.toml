@@ -20,3 +20,4 @@ async-trait = { workspace = true }
 tokio = { workspace = true }
 chrono-tz = { workspace = true }
 rust_decimal_macros = { workspace = true }
+utoipa = { workspace = true }

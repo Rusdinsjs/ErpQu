@@ -11,8 +11,7 @@ use uuid::Uuid;
 
 use crate::api::server::AppState;
 use management_system_core::application::dto::ApiResponse;
-use management_system_core::domain::entities::SensorReading;
-use management_system_core::infrastructure::repositories::{SensorAlert, SensorThreshold};
+use management_system_ops::{SensorAlert, SensorReading, SensorThreshold};
 use management_system_core::shared::errors::AppError;
 
 #[derive(Deserialize)]

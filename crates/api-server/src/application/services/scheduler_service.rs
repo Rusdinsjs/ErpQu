@@ -7,10 +7,9 @@ use tracing::{error, info};
 
 use management_system_assets::AssetService;
 use management_system_core::application::services::NotificationService;
-use management_system_core::application::services::{LoanService, MaintenanceService};
+use management_system_ops::MaintenanceService;
 use management_system_finance::DepreciationService;
-use management_system_ops::TaxRenewalService;
-use management_system_ops::WorkOrderService;
+use management_system_ops::{LoanService, TaxRenewalService, WorkOrderService};
 
 /// Scheduler service
 #[derive(Clone)]
@@ -78,7 +77,7 @@ impl SchedulerService {
                     info!("Running scheduled job: Check Maintenance Due");
                     match m_service.check_upcoming_maintenance().await {
                         Ok(records) => {
-                            let records: Vec<management_system_core::domain::entities::MaintenanceRecord> = records;
+                            let records: Vec<management_system_ops::MaintenanceRecord> = records;
                             for record in &records {
                                 info!("Auto-creating Work Order for Asset: {}", record.asset_id);
                                 let req = management_system_ops::CreateWorkOrderRequest {

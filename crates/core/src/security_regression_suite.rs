@@ -368,40 +368,27 @@ mod tests {
     // --- QTEN-009: Tenant A/B Isolation Test Suite ---
     #[test]
     fn test_qten_009_multi_tenant_company_isolation_suite() {
-        use crate::domain::entities::Company;
+        struct TestCompany {
+            id: Uuid,
+            tenant_id: Uuid,
+        }
+        impl TestCompany {
+            fn new(tenant_id: Uuid) -> Self {
+                Self {
+                    id: Uuid::new_v4(),
+                    tenant_id,
+                }
+            }
+        }
         use crate::domain::tenant::TenantContext;
 
         // Fixtures: Tenant A with Company A1 & Company A2; Tenant B with Company B1
         let tenant_a_id = Uuid::new_v4();
         let tenant_b_id = Uuid::new_v4();
 
-        let company_a1 = Company::new(
-            tenant_a_id,
-            "CMP-A1".to_string(),
-            "Company A1".to_string(),
-            None,
-            None,
-            None,
-            None,
-        );
-        let _company_a2 = Company::new(
-            tenant_a_id,
-            "CMP-A2".to_string(),
-            "Company A2".to_string(),
-            None,
-            None,
-            None,
-            None,
-        );
-        let company_b1 = Company::new(
-            tenant_b_id,
-            "CMP-B1".to_string(),
-            "Company B1".to_string(),
-            None,
-            None,
-            None,
-            None,
-        );
+        let company_a1 = TestCompany::new(tenant_a_id);
+        let _company_a2 = TestCompany::new(tenant_a_id);
+        let company_b1 = TestCompany::new(tenant_b_id);
 
         let ctx_tenant_a = TenantContext::new(tenant_a_id, Some(company_a1.id));
         let ctx_tenant_b = TenantContext::new(tenant_b_id, Some(company_b1.id));

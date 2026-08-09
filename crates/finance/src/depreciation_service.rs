@@ -2,7 +2,7 @@ use crate::domain::entities::journal::{CreateJournalEntryRequest, CreateJournalL
 use crate::JournalService;
 use chrono::{NaiveDate, Utc};
 use management_system_core::domain::errors::{DomainError, DomainResult};
-use management_system_core::infrastructure::repositories::{AssetRepository, CategoryRepository};
+use management_system_assets::{AssetRepository, CategoryRepository};
 use rust_decimal::Decimal;
 use uuid::Uuid;
 
@@ -95,7 +95,7 @@ impl DepreciationService {
 
     async fn depreciate_asset(
         &self,
-        asset: &management_system_core::domain::entities::Asset,
+        asset: &management_system_assets::Asset,
         date: NaiveDate,
     ) -> DomainResult<()> {
         // 1. Validate Eligibility

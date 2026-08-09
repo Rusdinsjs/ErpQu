@@ -1,7 +1,7 @@
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use management_system_core::domain::entities::{ChecklistItem, WorkOrder, WorkOrderPart};
+use crate::domain::entities::{ChecklistItem, WorkOrder, WorkOrderPart};
 
 #[derive(Clone)]
 pub struct WorkOrderRepository {

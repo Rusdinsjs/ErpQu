@@ -9,8 +9,9 @@ use management_system_core::application::dto::{
     CreateMaintenanceTeamRequest, CreateTeamMemberRequest, MaintenanceTeamQuery, PaginatedResponse,
     UpdateMaintenanceTeamRequest,
 };
-use management_system_core::application::services::MaintenanceTeamService;
-use management_system_core::domain::entities::{MaintenanceTeamDetail, MaintenanceTeamMember};
+use management_system_ops::{
+    MaintenanceTeamDetail, MaintenanceTeamMember, MaintenanceTeamRepository, MaintenanceTeamService,
+};
 use uuid::Uuid;
 
 use crate::api::AppState;
@@ -20,7 +21,7 @@ pub async fn list_teams(
     State(state): State<AppState>,
     Query(query): Query<MaintenanceTeamQuery>,
 ) -> Result<Json<PaginatedResponse<MaintenanceTeamDetail>>, (StatusCode, String)> {
-    let repo = management_system_core::infrastructure::repositories::MaintenanceTeamRepository::new(state.pool.clone());
+    let repo = MaintenanceTeamRepository::new(state.pool.clone());
     let service = MaintenanceTeamService::new(repo);
 
     let result = service
@@ -36,7 +37,7 @@ pub async fn get_team(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Result<Json<MaintenanceTeamDetail>, (StatusCode, String)> {
-    let repo = management_system_core::infrastructure::repositories::MaintenanceTeamRepository::new(state.pool.clone());
+    let repo = MaintenanceTeamRepository::new(state.pool.clone());
     let service = MaintenanceTeamService::new(repo);
 
     let result = service
@@ -52,7 +53,7 @@ pub async fn create_team(
     State(state): State<AppState>,
     Json(payload): Json<CreateMaintenanceTeamRequest>,
 ) -> Result<(StatusCode, Json<MaintenanceTeamDetail>), (StatusCode, String)> {
-    let repo = management_system_core::infrastructure::repositories::MaintenanceTeamRepository::new(state.pool.clone());
+    let repo = MaintenanceTeamRepository::new(state.pool.clone());
     let service = MaintenanceTeamService::new(repo);
 
     let result = service
@@ -69,7 +70,7 @@ pub async fn update_team(
     Path(id): Path<Uuid>,
     Json(payload): Json<UpdateMaintenanceTeamRequest>,
 ) -> Result<Json<MaintenanceTeamDetail>, (StatusCode, String)> {
-    let repo = management_system_core::infrastructure::repositories::MaintenanceTeamRepository::new(state.pool.clone());
+    let repo = MaintenanceTeamRepository::new(state.pool.clone());
     let service = MaintenanceTeamService::new(repo);
 
     let result = service
@@ -85,7 +86,7 @@ pub async fn delete_team(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Result<StatusCode, (StatusCode, String)> {
-    let repo = management_system_core::infrastructure::repositories::MaintenanceTeamRepository::new(state.pool.clone());
+    let repo = MaintenanceTeamRepository::new(state.pool.clone());
     let service = MaintenanceTeamService::new(repo);
 
     service
@@ -102,7 +103,7 @@ pub async fn add_team_member(
     Path(id): Path<Uuid>,
     Json(payload): Json<CreateTeamMemberRequest>,
 ) -> Result<(StatusCode, Json<MaintenanceTeamMember>), (StatusCode, String)> {
-    let repo = management_system_core::infrastructure::repositories::MaintenanceTeamRepository::new(state.pool.clone());
+    let repo = MaintenanceTeamRepository::new(state.pool.clone());
     let service = MaintenanceTeamService::new(repo);
 
     let result = service
@@ -118,7 +119,7 @@ pub async fn remove_team_member(
     State(state): State<AppState>,
     Path((_id, member_id)): Path<(Uuid, Uuid)>,
 ) -> Result<StatusCode, (StatusCode, String)> {
-    let repo = management_system_core::infrastructure::repositories::MaintenanceTeamRepository::new(state.pool.clone());
+    let repo = MaintenanceTeamRepository::new(state.pool.clone());
     let service = MaintenanceTeamService::new(repo);
 
     service

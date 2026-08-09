@@ -208,6 +208,7 @@ pub struct AssetDetail {
     pub category_name: Option<String>,
     pub location_name: Option<String>,
     pub department_name: Option<String>,
+    pub company_name: Option<String>,
     pub department_manager_name: Option<String>,
     pub assigned_to_name: Option<String>,
     pub vendor_name: Option<String>,
@@ -230,6 +231,12 @@ pub struct AssetDetail {
     pub total_maintenance_cost: Option<Decimal>,
     #[schema(value_type = Option<f64>)]
     pub total_rental_income: Option<Decimal>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow, ToSchema)]
+pub struct AssetStatusStats {
+    pub status: String,
+    pub count: i64,
 }
 
 /// Asset history entry for tracking changes

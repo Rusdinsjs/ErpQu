@@ -7,14 +7,14 @@ use rust_decimal_macros::dec;
 use sqlx::PgPool;
 use uuid::Uuid;
 
+use management_system_assets::AssetRepository;
 use management_system_core::application::services::approval_service::ApprovalService;
 use management_system_core::infrastructure::bus::EventBus;
-use management_system_core::infrastructure::repositories::{
-    approval_repository::ApprovalRepository, AssetExpenseRepository, AssetRepository,
-    RentalRepository,
-};
+use management_system_core::infrastructure::repositories::approval_repository::ApprovalRepository;
 use management_system_finance::domain::entities::*;
-use management_system_finance::repositories::{FinanceRepository, JournalRepository};
+use management_system_finance::repositories::{
+    AssetExpenseRepository, FinanceRepository, JournalRepository,
+};
 use management_system_finance::{AssetExpenseService, FinanceService, JournalService};
 
 fn service(pool: &PgPool) -> FinanceService {
@@ -33,7 +33,6 @@ fn service(pool: &PgPool) -> FinanceService {
             approval_service,
         ),
         asset_repo,
-        RentalRepository::new(pool.clone()),
         EventBus::new(16),
     )
 }

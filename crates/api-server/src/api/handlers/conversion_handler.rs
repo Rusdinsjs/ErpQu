@@ -5,9 +5,8 @@ use axum::{
     response::{IntoResponse, Response},
     Extension, Json,
 };
-use management_system_core::application::dto::{
-    ApiResponse, CreateConversionRequest, ExecuteConversionRequest,
-};
+use management_system_core::application::dto::ApiResponse;
+use management_system_inventory::{CreateConversionRequest, ExecuteConversionRequest};
 use management_system_core::domain::entities::user::UserClaims;
 use management_system_core::shared::errors::AppError;
 use uuid::Uuid;

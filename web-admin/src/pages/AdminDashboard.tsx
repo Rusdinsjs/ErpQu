@@ -19,7 +19,7 @@ import { settingsApi } from '../api/settings';
 import { useTheme } from '../contexts/ThemeContext';
 import { AIChatWidget } from '../components/AI/AIChatWidget';
 import type { MenuId, LaunchpadConfig } from '../config/launchpadConfig';
-import { MENU_TO_RESOURCE, MENU_LABELS } from '../config/launchpadConfig';
+import { MENU_TO_RESOURCE, MENU_LABELS, DEFAULT_LAUNCHPAD_CONFIG } from '../config/launchpadConfig';
 
 // Import all views
 const DashboardView = lazy(() => import('./Dashboard'));
@@ -143,6 +143,7 @@ type TabId =
     | 'purchase-bills'
     | 'maintenance-templates'
     | 'maintenance-schedules'
+    | 'maintenance-teams'
     | 'tax-renewals'
     | 'expenses'
     | 'asset-lifecycle'
@@ -303,9 +304,10 @@ export default function AdminDashboard() {
     useEffect(() => {
         if (publicSettings?.launchpad_config) {
             try {
-                const backendConfig = typeof publicSettings.launchpad_config === 'string'
-                    ? JSON.parse(publicSettings.launchpad_config)
-                    : publicSettings.launchpad_config;
+                const backendConfigStr = typeof publicSettings.launchpad_config === 'string'
+                    ? publicSettings.launchpad_config
+                    : JSON.stringify(publicSettings.launchpad_config);
+                const backendConfig = JSON.parse(backendConfigStr);
                 if (backendConfig && Array.isArray(backendConfig.modules)) {
                     if (!backendConfig.modules.some((m: any) => m.id === 'organization')) {
                         backendConfig.modules.unshift(DEFAULT_LAUNCHPAD_CONFIG.modules[0]);
@@ -314,6 +316,8 @@ export default function AdminDashboard() {
                         if (m.id === 'asset-management') {
                             const ids = m.menuIds || [];
                             if (!ids.includes('conversions')) ids.push('conversions');
+                            if (!ids.includes('categories')) ids.push('categories');
+                            if (!ids.includes('maintenance-templates')) ids.push('maintenance-templates');
                             return { ...m, menuIds: ids };
                         }
                         if (m.id === 'commercial') {
@@ -323,6 +327,30 @@ export default function AdminDashboard() {
                         }
                         if (m.id === 'supply-chain') {
                             const ids = (m.menuIds || []).filter((id: string) => id !== 'conversions' && id !== 'purchase-bills');
+                            if (!ids.includes('inventory-categories')) ids.push('inventory-categories');
+                            return { ...m, menuIds: ids };
+                        }
+                        if (m.id === 'hr') {
+                            const ids = m.menuIds || [];
+                            return { ...m, menuIds: ids.filter((id: string) => id !== 'departments') };
+                        }
+                        if (m.id === 'admin') {
+                            const ids = m.menuIds || [];
+                            return { ...m, menuIds: ids.filter((id: string) => 
+                                id !== 'approval-workflow-settings' &&
+                                id !== 'users' &&
+                                id !== 'roles' &&
+                                id !== 'inventory-categories' &&
+                                id !== 'categories' &&
+                                id !== 'maintenance-templates'
+                            ) };
+                        }
+                        if (m.id === 'organization') {
+                            const ids = m.menuIds || [];
+                            if (!ids.includes('departments')) ids.push('departments');
+                            if (!ids.includes('approval-workflow-settings')) ids.push('approval-workflow-settings');
+                            if (!ids.includes('users')) ids.push('users');
+                            if (!ids.includes('roles')) ids.push('roles');
                             return { ...m, menuIds: ids };
                         }
                         return m;
@@ -531,7 +559,7 @@ export default function AdminDashboard() {
         const getGroupItems = (moduleIds: string[], preferredOrder: string[], allowedFilter?: string[]) => {
             const result: NavItem[] = [];
             const activeIds = moduleIds.length > 0
-                ? Array.from(new Set([...moduleIds, ...preferredOrder.filter(id => !allowedFilter || allowedFilter.includes(id))]))
+                ? moduleIds
                 : preferredOrder;
 
             preferredOrder.forEach(id => {
@@ -573,7 +601,7 @@ export default function AdminDashboard() {
                 label: 'Inventory',
                 icon: Package,
                 minLevel: 4,
-                children: getGroupItems(supplyChainIds, ['inventory-items', 'stock-opname'], ['inventory-items', 'stock-opname'])
+                children: getGroupItems(supplyChainIds, ['inventory-items', 'inventory-categories', 'stock-opname'], ['inventory-items', 'inventory-categories', 'stock-opname'])
             },
             {
                 id: 'maintenance_group',
@@ -624,11 +652,11 @@ export default function AdminDashboard() {
                 minLevel: 2,
                 children: [
                     { type: 'header', label: 'Master Data' },
-                    ...getGroupItems(adminIds, ['inventory-categories', 'locations'], ['inventory-categories', 'locations']),
+                    ...getGroupItems(adminIds, ['locations'], ['locations']),
                     { type: 'header', label: 'Operational Templates' },
                     ...getGroupItems(adminIds, ['contract-templates'], ['contract-templates']),
-                    { type: 'header', label: 'Approvals & Audit' },
-                    ...getGroupItems(adminIds, ['approvals', 'audit', 'settings'], ['approvals', 'audit', 'settings']),
+                    { type: 'header', label: 'System & Security' },
+                    ...getGroupItems(adminIds.filter(id => id !== 'locations' && id !== 'contract-templates'), ['approvals', 'audit', 'settings']),
                 ]
             },
         ];

@@ -114,7 +114,7 @@ pub async fn export_dashboard_pdf(
     tracing::info!("Dashboard stats fetched successfully, generating PDF...");
 
     // 2. Generate PDF using pdf_service
-    let pdf_bytes = state
+    let pdf_bytes: Vec<u8> = state
         .pdf_service
         .generate_dashboard_summary(stats)
         .await

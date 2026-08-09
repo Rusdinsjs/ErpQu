@@ -7,7 +7,7 @@ use uuid::Uuid;
 
 use crate::api::server::AppState;
 use management_system_core::domain::entities::user::UserClaims;
-use management_system_core::domain::entities::CreateCategoryAttributeTemplateRequest;
+use management_system_assets::CreateCategoryAttributeTemplateRequest;
 use management_system_core::shared::errors::AppError;
 
 /// List all category templates

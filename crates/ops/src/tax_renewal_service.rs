@@ -1,14 +1,13 @@
 use async_trait::async_trait;
 use chrono::{NaiveDate, Utc};
+use management_system_assets::AssetRepository;
 use management_system_core::application::services::approval_service::ModuleApprovalCallback;
-use management_system_core::domain::entities::{TaxRenewal, UpdateTaxRenewalCostRequest};
-use management_system_crm::domain::entities::Vendor;
 use management_system_core::domain::errors::DomainError;
-use management_system_core::infrastructure::repositories::{
-    AssetRepository, TaxRenewalRepository,
-};
+use management_system_crm::domain::entities::Vendor;
 use management_system_crm::repositories::VendorRepository;
 use management_system_finance::{CreateBillItemRequest, CreatePurchaseBillRequest, FinanceService};
+use crate::domain::entities::{TaxRenewal, UpdateTaxRenewalCostRequest};
+use crate::repositories::TaxRenewalRepository;
 use uuid::Uuid;
 
 #[derive(Clone)]

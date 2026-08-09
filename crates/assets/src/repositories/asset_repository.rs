@@ -6,9 +6,11 @@ use sqlx::PgPool;
 use uuid::Uuid;
 
 use chrono::NaiveDate;
-use management_system_core::domain::entities::analytics::AssetStatusStats;
-use management_system_core::domain::entities::asset_details::VehicleDetails;
-use management_system_core::domain::entities::{Asset, AssetDocument, AssetHistory, AssetSummary};
+use crate::domain::entities::{
+    Asset, AssetDetail, AssetDocument, AssetHistory, AssetStatusStats, AssetSummary, BuildingDetails,
+    FurnitureDetails, HeavyEquipmentDetails, InventoryDetails, LandDetails, MachineDetails,
+    VehicleDetails,
+};
 
 /// Asset repository
 #[derive(Clone)]
@@ -52,21 +54,7 @@ impl AssetRepository {
     pub async fn find_detail_by_id(
         &self,
         id: Uuid,
-    ) -> Result<
-        Option<(
-            Asset,
-            Option<String>,
-            Option<String>,
-            Option<String>,
-            Option<String>,
-            Option<String>,
-            Option<String>,
-            Option<VehicleDetails>,
-            Option<rust_decimal::Decimal>,
-            Option<rust_decimal::Decimal>,
-        )>,
-        sqlx::Error,
-    > {
+    ) -> Result<Option<AssetDetail>, sqlx::Error> {
         use sqlx::Row;
 
         // 1. Fetch Asset Details (SAFE Joins Only)
@@ -105,7 +93,6 @@ impl AssetRepository {
 
         if let Some(r) = row {
             // 2. Fetch Aggregates (Maintenance Cost & Rental Income) in a separate query
-            //    Using raw query() instead of query_as() to avoid mapping issues with anonymous columns
             let stats_row = sqlx::query(
                 r#"
                 SELECT 
@@ -116,7 +103,7 @@ impl AssetRepository {
             .bind(id)
             .fetch_one(&self.pool)
             .await
-            .ok(); // Convert Result to Option to be safe, though fetch_one usually errors if no row
+            .ok();
 
             let (total_maintenance_cost, total_rental_income) = if let Some(s) = stats_row {
                 (
@@ -132,7 +119,7 @@ impl AssetRepository {
             // Manual mapping from Row to Asset struct
             let asset = Asset {
                 id: r.get("id"),
-                custom_data: r.try_get("custom_data").unwrap_or(serde_json::json!({})),
+                specifications: r.try_get("specifications").ok(),
                 asset_code: r.get("asset_code"),
                 name: r.get("name"),
                 category_id: r.get("category_id"),
@@ -156,7 +143,6 @@ impl AssetRepository {
                 sale_price: r.get("sale_price"),
                 sale_date: r.get("sale_date"),
                 sold_to: r.get("sold_to"),
-                specifications: r.get("specifications"),
                 description: r.get("description"),
                 acquisition_method: r.get("acquisition_method"),
                 funding_source: r.get("funding_source"),
@@ -188,21 +174,30 @@ impl AssetRepository {
             let category_name: Option<String> = r.get("category_name");
             let location_name: Option<String> = r.get("location_name");
             let department_name: Option<String> = r.get("department_name");
+            let company_name: Option<String> = r.get("company_name");
             let assigned_to_name: Option<String> = r.get("assigned_to_name");
             let vendor_name: Option<String> = r.get("vendor_name");
 
-            Ok(Some((
+            Ok(Some(AssetDetail {
                 asset,
                 category_name,
                 location_name,
                 department_name,
-                None, // department_manager_name - removed for now
+                company_name,
+                department_manager_name: None,
                 assigned_to_name,
                 vendor_name,
-                vehicle,
-                Some(total_maintenance_cost),
-                Some(total_rental_income),
-            )))
+                condition_name: None,
+                vehicle_details: vehicle,
+                land_details: None,
+                building_details: None,
+                heavy_equipment_details: None,
+                machine_details: None,
+                inventory_details: None,
+                furniture_details: None,
+                total_maintenance_cost: Some(total_maintenance_cost),
+                total_rental_income: Some(total_rental_income),
+            }))
         } else {
             Ok(None)
         }
@@ -637,6 +632,90 @@ impl AssetRepository {
         Ok(details.clone())
     }
 
+    pub async fn upsert_land_details_with_executor(
+        &self,
+        executor: &mut sqlx::PgConnection,
+        details: &LandDetails,
+    ) -> Result<LandDetails, sqlx::Error> {
+        let json = serde_json::to_value(details).map_err(|e| sqlx::Error::Protocol(e.to_string()))?;
+        sqlx::query("UPDATE assets SET land_details = $2, updated_at = NOW() WHERE id = $1")
+            .bind(details.asset_id)
+            .bind(json)
+            .execute(executor)
+            .await?;
+        Ok(details.clone())
+    }
+
+    pub async fn upsert_building_details_with_executor(
+        &self,
+        executor: &mut sqlx::PgConnection,
+        details: &BuildingDetails,
+    ) -> Result<BuildingDetails, sqlx::Error> {
+        let json = serde_json::to_value(details).map_err(|e| sqlx::Error::Protocol(e.to_string()))?;
+        sqlx::query("UPDATE assets SET building_details = $2, updated_at = NOW() WHERE id = $1")
+            .bind(details.asset_id)
+            .bind(json)
+            .execute(executor)
+            .await?;
+        Ok(details.clone())
+    }
+
+    pub async fn upsert_heavy_equipment_details_with_executor(
+        &self,
+        executor: &mut sqlx::PgConnection,
+        details: &HeavyEquipmentDetails,
+    ) -> Result<HeavyEquipmentDetails, sqlx::Error> {
+        let json = serde_json::to_value(details).map_err(|e| sqlx::Error::Protocol(e.to_string()))?;
+        sqlx::query("UPDATE assets SET heavy_equipment_details = $2, updated_at = NOW() WHERE id = $1")
+            .bind(details.asset_id)
+            .bind(json)
+            .execute(executor)
+            .await?;
+        Ok(details.clone())
+    }
+
+    pub async fn upsert_machine_details_with_executor(
+        &self,
+        executor: &mut sqlx::PgConnection,
+        details: &MachineDetails,
+    ) -> Result<MachineDetails, sqlx::Error> {
+        let json = serde_json::to_value(details).map_err(|e| sqlx::Error::Protocol(e.to_string()))?;
+        sqlx::query("UPDATE assets SET machine_details = $2, updated_at = NOW() WHERE id = $1")
+            .bind(details.asset_id)
+            .bind(json)
+            .execute(executor)
+            .await?;
+        Ok(details.clone())
+    }
+
+    pub async fn upsert_inventory_details_with_executor(
+        &self,
+        executor: &mut sqlx::PgConnection,
+        details: &InventoryDetails,
+    ) -> Result<InventoryDetails, sqlx::Error> {
+        let json = serde_json::to_value(details).map_err(|e| sqlx::Error::Protocol(e.to_string()))?;
+        sqlx::query("UPDATE assets SET inventory_details = $2, updated_at = NOW() WHERE id = $1")
+            .bind(details.asset_id)
+            .bind(json)
+            .execute(executor)
+            .await?;
+        Ok(details.clone())
+    }
+
+    pub async fn upsert_furniture_details_with_executor(
+        &self,
+        executor: &mut sqlx::PgConnection,
+        details: &FurnitureDetails,
+    ) -> Result<FurnitureDetails, sqlx::Error> {
+        let json = serde_json::to_value(details).map_err(|e| sqlx::Error::Protocol(e.to_string()))?;
+        sqlx::query("UPDATE assets SET furniture_details = $2, updated_at = NOW() WHERE id = $1")
+            .bind(details.asset_id)
+            .bind(json)
+            .execute(executor)
+            .await?;
+        Ok(details.clone())
+    }
+
     /// Get vehicle details
     pub async fn get_vehicle_details(
         &self,
@@ -867,7 +946,6 @@ impl AssetRepository {
             use sqlx::Row;
             let asset = Asset {
                 id: r.get("id"),
-                custom_data: r.try_get("custom_data").unwrap_or(serde_json::json!({})),
                 asset_code: r.get("asset_code"),
                 name: r.get("name"),
                 category_id: r.get("category_id"),

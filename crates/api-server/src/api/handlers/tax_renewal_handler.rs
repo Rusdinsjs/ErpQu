@@ -49,7 +49,7 @@ pub async fn submit_cost(
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateTaxRenewalCostRequest>,
 ) -> Result<Json<ApiResponse<TaxRenewalDto>>, DomainError> {
-    let domain_req = management_system_core::domain::entities::UpdateTaxRenewalCostRequest {
+    let domain_req = management_system_ops::UpdateTaxRenewalCostRequest {
         renewal_cost: req.renewal_cost,
         notes: req.notes,
         payment_destination: req.payment_destination,

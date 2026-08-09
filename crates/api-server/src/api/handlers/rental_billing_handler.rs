@@ -85,7 +85,7 @@ pub async fn download_invoice(
         )
             .into_response(),
         Err(e) => {
-            let error_msg: String = e.to_string();
+            let error_msg = e.to_string();
             (axum::http::StatusCode::INTERNAL_SERVER_ERROR, error_msg).into_response()
         }
     }

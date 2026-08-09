@@ -1,7 +1,6 @@
 //! Asset Service
 
 use chrono::Utc;
-use management_system_core::domain::entities::asset_details::VehicleDetails;
 use serde::Serialize;
 use uuid::Uuid;
 
@@ -9,21 +8,18 @@ use management_system_core::application::dto::{
     AssetSearchParams, BulkCreateAssetRequest, BulkUpdateAssetRequest, CreateAssetDocumentRequest,
     CreateAssetRequest, PaginatedResponse, SellAssetRequest, UpdateAssetRequest,
 };
-use management_system_core::domain::entities::{
-    Asset, AssetDocument, AssetHistory, AssetState, AssetSummary,
-};
 use management_system_core::domain::errors::{DomainError, DomainResult};
-use management_system_core::infrastructure::repositories::AssetRepository;
+use crate::domain::entities::asset_details::*;
+use crate::domain::entities::{
+    Asset, AssetDetail, AssetDocument, AssetHistory, AssetState, AssetSummary,
+};
+use crate::repositories::AssetRepository;
 
 use management_system_core::infrastructure::cache::{CacheJson, CacheKey, CacheOperations};
 use std::sync::Arc;
 
 use management_system_core::application::services::{ApprovalService, NotificationService};
 use management_system_core::infrastructure::repositories::ApprovalRequest;
-use management_system_finance::domain::entities::journal::{
-    CreateJournalEntryRequest, CreateJournalLineRequest,
-};
-use management_system_finance::repositories::JournalRepository;
 
 /// Result of an asset creation/update attempt
 #[derive(Debug, Serialize)]
@@ -40,7 +36,6 @@ pub enum AssetOperationResult {
 #[derive(Clone)]
 pub struct AssetService {
     repository: AssetRepository,
-    journal_repo: JournalRepository,
     cache: Arc<dyn CacheOperations>,
     approval_service: ApprovalService,
     notification_service: NotificationService,
@@ -50,7 +45,6 @@ pub struct AssetService {
 impl AssetService {
     pub fn new(
         repository: AssetRepository,
-        journal_repo: JournalRepository,
         cache: Arc<dyn CacheOperations>,
         approval_service: ApprovalService,
         notification_service: NotificationService,
@@ -58,7 +52,6 @@ impl AssetService {
     ) -> Self {
         Self {
             repository,
-            journal_repo,
             cache,
             approval_service,
             notification_service,
@@ -77,7 +70,7 @@ impl AssetService {
         let offset = (page - 1) * per_page;
         let assets = self
             .repository
-            .list(per_page, offset, department, asset_group)
+            .list(per_page, offset, department)
             .await
             .map_err(|e| DomainError::ExternalServiceError {
                 service: "database".to_string(),
@@ -212,7 +205,7 @@ impl AssetService {
     pub async fn get_upcoming_expiries(
         &self,
         days: i64,
-    ) -> DomainResult<Vec<management_system_core::domain::entities::asset::AssetDetail>> {
+    ) -> DomainResult<Vec<AssetDetail>> {
         let expiring_vehicles =
             self.repository
                 .find_expiring_vehicles(days)
@@ -225,7 +218,7 @@ impl AssetService {
         let mut results = Vec::new();
         for (asset, details) in expiring_vehicles {
             results.push(
-                management_system_core::domain::entities::asset::AssetDetail {
+                AssetDetail {
                     asset,
                     category_name: None, // Could fetch if needed, but for dashboard maybe not essential or can join in repo
                     location_name: None,
@@ -255,7 +248,7 @@ impl AssetService {
     pub async fn get_detail_by_id(
         &self,
         id: Uuid,
-    ) -> DomainResult<management_system_core::domain::entities::asset::AssetDetail> {
+    ) -> DomainResult<AssetDetail> {
         self.repository
             .find_detail_by_id(id)
             .await
@@ -451,7 +444,7 @@ impl AssetService {
             .map_err(|e| DomainError::ValidationError { field: "custom_data".to_string(), message: e })?;
 
         let mut asset = Asset::new(request.asset_code, request.name, request.category_id);
-        asset.custom_data = custom_data;
+        asset.specifications = Some(custom_data);
 
         // Set optional fields
         asset.location_id = request.location_id;
@@ -528,7 +521,7 @@ impl AssetService {
 
         // Handle Land Details
         if let Some(d) = request.land_details {
-            let details = management_system_core::domain::entities::asset_details::LandDetails {
+            let details = LandDetails {
                 asset_id: created_asset.id,
                 certificate_number: d.certificate_number,
                 land_area: d.land_area,
@@ -554,23 +547,22 @@ impl AssetService {
 
         // Handle Building Details
         if let Some(d) = request.building_details {
-            let details =
-                management_system_core::domain::entities::asset_details::BuildingDetails {
-                    asset_id: created_asset.id,
-                    land_asset_id: d.land_asset_id,
-                    building_area: d.building_area,
-                    floor_count: d.floor_count,
-                    build_year: d.build_year,
-                    renovation_year: d.renovation_year,
-                    construction_type: d.construction_type,
-                    building_function: d.building_function,
-                    capacity: d.capacity,
-                    imb_number: d.imb_number,
-                    slf_number: d.slf_number,
-                    slf_expiry: d.slf_expiry,
-                    created_at: Utc::now(),
-                    updated_at: Utc::now(),
-                };
+            let details = BuildingDetails {
+                asset_id: created_asset.id,
+                land_asset_id: d.land_asset_id,
+                building_area: d.building_area,
+                floor_count: d.floor_count,
+                build_year: d.build_year,
+                renovation_year: d.renovation_year,
+                construction_type: d.construction_type,
+                building_function: d.building_function,
+                capacity: d.capacity,
+                imb_number: d.imb_number,
+                slf_number: d.slf_number,
+                slf_expiry: d.slf_expiry,
+                created_at: Utc::now(),
+                updated_at: Utc::now(),
+            };
             self.repository
                 .upsert_building_details_with_executor(executor, &details)
                 .await
@@ -582,19 +574,18 @@ impl AssetService {
 
         // Handle Heavy Equipment Details
         if let Some(d) = request.heavy_equipment_details {
-            let details =
-                management_system_core::domain::entities::asset_details::HeavyEquipmentDetails {
-                    asset_id: created_asset.id,
-                    equipment_type: d.equipment_type,
-                    operating_weight: d.operating_weight,
-                    capacity: d.capacity,
-                    engine_model: d.engine_model,
-                    hour_meter: d.hour_meter,
-                    certification_number: d.certification_number,
-                    certification_expiry: d.certification_expiry,
-                    created_at: Utc::now(),
-                    updated_at: Utc::now(),
-                };
+            let details = HeavyEquipmentDetails {
+                asset_id: created_asset.id,
+                equipment_type: d.equipment_type,
+                operating_weight: d.operating_weight,
+                capacity: d.capacity,
+                engine_model: d.engine_model,
+                hour_meter: d.hour_meter,
+                certification_number: d.certification_number,
+                certification_expiry: d.certification_expiry,
+                created_at: Utc::now(),
+                updated_at: Utc::now(),
+            };
             self.repository
                 .upsert_heavy_equipment_details_with_executor(executor, &details)
                 .await
@@ -606,7 +597,7 @@ impl AssetService {
 
         // Handle Machine Details
         if let Some(d) = request.machine_details {
-            let details = management_system_core::domain::entities::asset_details::MachineDetails {
+            let details = MachineDetails {
                 asset_id: created_asset.id,
                 machine_type: d.machine_type,
                 technical_specs: d.technical_specs,
@@ -627,16 +618,15 @@ impl AssetService {
 
         // Handle Inventory Details
         if let Some(d) = request.inventory_details {
-            let details =
-                management_system_core::domain::entities::asset_details::InventoryDetails {
-                    asset_id: created_asset.id,
-                    inventory_type: d.inventory_type,
-                    warranty_expiry: d.warranty_expiry,
-                    os_license: d.os_license,
-                    mac_address: d.mac_address,
-                    created_at: Utc::now(),
-                    updated_at: Utc::now(),
-                };
+            let details = InventoryDetails {
+                asset_id: created_asset.id,
+                inventory_type: d.inventory_type,
+                warranty_expiry: d.warranty_expiry,
+                os_license: d.os_license,
+                mac_address: d.mac_address,
+                created_at: Utc::now(),
+                updated_at: Utc::now(),
+            };
             self.repository
                 .upsert_inventory_details_with_executor(executor, &details)
                 .await
@@ -648,8 +638,7 @@ impl AssetService {
 
         // Handle Furniture Details
         if let Some(d) = request.furniture_details {
-            let details =
-                management_system_core::domain::entities::asset_details::FurnitureDetails {
+            let details = FurnitureDetails {
                     asset_id: created_asset.id,
                     furniture_type: d.furniture_type,
                     material: d.material,
@@ -836,7 +825,7 @@ impl AssetService {
         if let Some(cd) = request.custom_data {
             self.metadata_service.validate_entity_data("ASSET", &cd).await
                 .map_err(|e| DomainError::ValidationError { field: "custom_data".to_string(), message: e })?;
-            asset.custom_data = cd;
+            asset.specifications = Some(cd);
         }
 
         if let Some(v) = request.version {
@@ -904,7 +893,7 @@ impl AssetService {
 
         // Handle Land Details
         if let Some(d) = request.land_details {
-            let details = management_system_core::domain::entities::asset_details::LandDetails {
+            let details = LandDetails {
                 asset_id: asset.id,
                 certificate_number: d.certificate_number,
                 land_area: d.land_area,
@@ -930,23 +919,22 @@ impl AssetService {
 
         // Handle Building Details
         if let Some(d) = request.building_details {
-            let details =
-                management_system_core::domain::entities::asset_details::BuildingDetails {
-                    asset_id: asset.id,
-                    land_asset_id: d.land_asset_id,
-                    building_area: d.building_area,
-                    floor_count: d.floor_count,
-                    build_year: d.build_year,
-                    renovation_year: d.renovation_year,
-                    construction_type: d.construction_type,
-                    building_function: d.building_function,
-                    capacity: d.capacity,
-                    imb_number: d.imb_number,
-                    slf_number: d.slf_number,
-                    slf_expiry: d.slf_expiry,
-                    created_at: asset.created_at,
-                    updated_at: Utc::now(),
-                };
+            let details = BuildingDetails {
+                asset_id: asset.id,
+                land_asset_id: d.land_asset_id,
+                building_area: d.building_area,
+                floor_count: d.floor_count,
+                build_year: d.build_year,
+                renovation_year: d.renovation_year,
+                construction_type: d.construction_type,
+                building_function: d.building_function,
+                capacity: d.capacity,
+                imb_number: d.imb_number,
+                slf_number: d.slf_number,
+                slf_expiry: d.slf_expiry,
+                created_at: asset.created_at,
+                updated_at: Utc::now(),
+            };
             self.repository
                 .upsert_building_details_with_executor(&mut tx, &details)
                 .await
@@ -958,19 +946,18 @@ impl AssetService {
 
         // Handle Heavy Equipment Details
         if let Some(d) = request.heavy_equipment_details {
-            let details =
-                management_system_core::domain::entities::asset_details::HeavyEquipmentDetails {
-                    asset_id: asset.id,
-                    equipment_type: d.equipment_type,
-                    operating_weight: d.operating_weight,
-                    capacity: d.capacity,
-                    engine_model: d.engine_model,
-                    hour_meter: d.hour_meter,
-                    certification_number: d.certification_number,
-                    certification_expiry: d.certification_expiry,
-                    created_at: asset.created_at,
-                    updated_at: Utc::now(),
-                };
+            let details = HeavyEquipmentDetails {
+                asset_id: asset.id,
+                equipment_type: d.equipment_type,
+                operating_weight: d.operating_weight,
+                capacity: d.capacity,
+                engine_model: d.engine_model,
+                hour_meter: d.hour_meter,
+                certification_number: d.certification_number,
+                certification_expiry: d.certification_expiry,
+                created_at: asset.created_at,
+                updated_at: Utc::now(),
+            };
             self.repository
                 .upsert_heavy_equipment_details_with_executor(&mut tx, &details)
                 .await
@@ -982,7 +969,7 @@ impl AssetService {
 
         // Handle Machine Details
         if let Some(d) = request.machine_details {
-            let details = management_system_core::domain::entities::asset_details::MachineDetails {
+            let details = MachineDetails {
                 asset_id: asset.id,
                 machine_type: d.machine_type,
                 technical_specs: d.technical_specs,
@@ -1003,16 +990,15 @@ impl AssetService {
 
         // Handle Inventory Details
         if let Some(d) = request.inventory_details {
-            let details =
-                management_system_core::domain::entities::asset_details::InventoryDetails {
-                    asset_id: asset.id,
-                    inventory_type: d.inventory_type,
-                    warranty_expiry: d.warranty_expiry,
-                    os_license: d.os_license,
-                    mac_address: d.mac_address,
-                    created_at: asset.created_at,
-                    updated_at: Utc::now(),
-                };
+            let details = InventoryDetails {
+                asset_id: asset.id,
+                inventory_type: d.inventory_type,
+                warranty_expiry: d.warranty_expiry,
+                os_license: d.os_license,
+                mac_address: d.mac_address,
+                created_at: asset.created_at,
+                updated_at: Utc::now(),
+            };
             self.repository
                 .upsert_inventory_details_with_executor(&mut tx, &details)
                 .await
@@ -1024,8 +1010,7 @@ impl AssetService {
 
         // Handle Furniture Details
         if let Some(d) = request.furniture_details {
-            let details =
-                management_system_core::domain::entities::asset_details::FurnitureDetails {
+            let details = FurnitureDetails {
                     asset_id: asset.id,
                     furniture_type: d.furniture_type,
                     material: d.material,
@@ -1171,83 +1156,7 @@ impl AssetService {
         let sale_price = req.sale_price;
         let gain_loss = sale_price - book_value;
 
-        // 3. Create Journal Entry (Accounting)
-        // We need Chart of Account IDs. For this MVP, we'll hardcode or lookup placeholder accounts.
-        // In a real system, these would be fetched from settings/configuration.
-        let account_cash_uuid = Uuid::new_v4(); // TODO: Fetch "Cash/Bank" Account ID
-        let account_accum_depr_uuid = Uuid::new_v4(); // TODO: Fetch "Accumulated Depreciation" Account ID
-        let account_fixed_asset_uuid = Uuid::new_v4(); // TODO: Fetch "Fixed Asset" Account ID
-        let account_gain_loss_uuid = Uuid::new_v4(); // TODO: Fetch "Gain/Loss on Disposal" Account ID
-
-        let mut journal_lines = vec![
-            // Debit: Cash/Receivable (Sale Price)
-            CreateJournalLineRequest {
-                account_id: account_cash_uuid,
-                description: Some(format!("Sale of Asset: {}", asset.name)),
-                debit: sale_price,
-                credit: rust_decimal::Decimal::ZERO,
-            },
-            // Debit: Accumulated Depreciation (Clear it out)
-            CreateJournalLineRequest {
-                account_id: account_accum_depr_uuid,
-                description: Some(format!("Clear Accum Depr: {}", asset.name)),
-                debit: accum_depr,
-                credit: rust_decimal::Decimal::ZERO,
-            },
-            // Credit: Fixed Asset (Original Cost)
-            CreateJournalLineRequest {
-                account_id: account_fixed_asset_uuid,
-                description: Some(format!("Remove Asset Cost: {}", asset.name)),
-                debit: rust_decimal::Decimal::ZERO,
-                credit: purchase_price,
-            },
-        ];
-
-        if gain_loss > rust_decimal::Decimal::ZERO {
-            // Credit: Gain
-            journal_lines.push(CreateJournalLineRequest {
-                account_id: account_gain_loss_uuid,
-                description: Some(format!("Gain on Sale: {}", asset.name)),
-                debit: rust_decimal::Decimal::ZERO,
-                credit: gain_loss,
-            });
-        } else if gain_loss < rust_decimal::Decimal::ZERO {
-            // Debit: Loss (Negative gain means loss, so we debit the positive amount)
-            journal_lines.push(CreateJournalLineRequest {
-                account_id: account_gain_loss_uuid,
-                description: Some(format!("Loss on Sale: {}", asset.name)),
-                debit: gain_loss.abs(),
-                credit: rust_decimal::Decimal::ZERO,
-            });
-        }
-
-        // Generate Transaction Number (e.g., JE-YYYYMM-XXXX)
-        // Using unwrap_or for simplicity if date parsing fails, though Utc::now() is safe
-        let je_number = self
-            .journal_repo
-            .get_next_sequence_number(chrono::Utc::now().date_naive())
-            .await?;
-
-        // Attempt creating Journal Entry.
-        // We log error instead of failing to not block operation if accounting is not fully set up.
-        let je_req = CreateJournalEntryRequest {
-            date: req.sale_date,
-            description: format!(
-                "Asset Sale: {} ({}) to {}",
-                asset.name, asset.asset_code, req.sold_to
-            ),
-            reference: Some(asset.asset_code.clone()),
-            lines: journal_lines,
-        };
-
-        // In a real scenario, we might want to ensure this succeeds.
-        // For now, we proceed as the user might not have set up all accounts yet.
-        let _ = self
-            .journal_repo
-            .create_journal_entry(je_number, &je_req, Some(user_id))
-            .await;
-
-        // 4. Update Asset
+        // 3. Update Asset State
         asset.status = AssetState::Sold.as_str().to_string();
         asset.sale_price = Some(req.sale_price);
         asset.sale_date = Some(req.sale_date);
@@ -1314,7 +1223,7 @@ impl AssetService {
         self.repository
             .get_history(id)
             .await
-            .map_err(|e| DomainError::ExternalServiceError {
+            .map_err(|e: sqlx::Error| DomainError::ExternalServiceError {
                 service: "database".to_string(),
                 message: e.to_string(),
             })
@@ -1348,7 +1257,7 @@ impl AssetService {
         self.repository
             .create_document(&document)
             .await
-            .map_err(|e| DomainError::ExternalServiceError {
+            .map_err(|e: sqlx::Error| DomainError::ExternalServiceError {
                 service: "database".to_string(),
                 message: e.to_string(),
             })
@@ -1359,7 +1268,7 @@ impl AssetService {
         self.repository
             .find_documents_by_asset_id(asset_id)
             .await
-            .map_err(|e| DomainError::ExternalServiceError {
+            .map_err(|e: sqlx::Error| DomainError::ExternalServiceError {
                 service: "database".to_string(),
                 message: e.to_string(),
             })
@@ -1377,7 +1286,7 @@ impl AssetService {
                 .repository
                 .bulk_update_status(&req.asset_ids, &status)
                 .await
-                .map_err(|e| DomainError::ExternalServiceError {
+                .map_err(|e: sqlx::Error| DomainError::ExternalServiceError {
                     service: "database".to_string(),
                     message: e.to_string(),
                 })?;
@@ -1388,7 +1297,7 @@ impl AssetService {
                 .repository
                 .bulk_update_location(&req.asset_ids, loc_id)
                 .await
-                .map_err(|e| DomainError::ExternalServiceError {
+                .map_err(|e: sqlx::Error| DomainError::ExternalServiceError {
                     service: "database".to_string(),
                     message: e.to_string(),
                 })?;
@@ -1399,7 +1308,7 @@ impl AssetService {
                 .repository
                 .bulk_update_department(&req.asset_ids, &dept_name, req.department_id)
                 .await
-                .map_err(|e| DomainError::ExternalServiceError {
+                .map_err(|e: sqlx::Error| DomainError::ExternalServiceError {
                     service: "database".to_string(),
                     message: e.to_string(),
                 })?;

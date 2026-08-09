@@ -3,7 +3,7 @@
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use management_system_core::domain::entities::Category;
+use crate::domain::entities::Category;
 
 #[derive(Clone)]
 pub struct CategoryRepository {

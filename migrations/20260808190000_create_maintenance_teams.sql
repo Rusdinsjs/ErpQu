@@ -45,7 +45,7 @@ END $$;
 -- 4. Seed default Maintenance Teams
 INSERT INTO public.maintenance_teams (id, team_code, team_name, manager_name, status, description)
 SELECT 
-    't0000000-0000-0000-0000-000000000001'::uuid,
+    'e0000000-0000-0000-0000-000000000001'::uuid,
     'MT-HEAVY-01',
     'Tim Pemeliharaan Alat Berat & Excavator',
     'Budi Santoso',
@@ -55,7 +55,7 @@ WHERE NOT EXISTS (SELECT 1 FROM public.maintenance_teams WHERE team_code = 'MT-H
 
 INSERT INTO public.maintenance_teams (id, team_code, team_name, manager_name, status, description)
 SELECT 
-    't0000000-0000-0000-0000-000000000002'::uuid,
+    'e0000000-0000-0000-0000-000000000002'::uuid,
     'MT-ELEC-01',
     'Tim Mekanikal & Elektrikal (M&E)',
     'Ahmad Hidayat',
@@ -65,7 +65,7 @@ WHERE NOT EXISTS (SELECT 1 FROM public.maintenance_teams WHERE team_code = 'MT-E
 
 INSERT INTO public.maintenance_teams (id, team_code, team_name, manager_name, status, description)
 SELECT 
-    't0000000-0000-0000-0000-000000000003'::uuid,
+    'e0000000-0000-0000-0000-000000000003'::uuid,
     'MT-FLEET-01',
     'Tim Service Truk & Armada Lube Truck',
     'Rahmat Hidayat',
@@ -75,21 +75,21 @@ WHERE NOT EXISTS (SELECT 1 FROM public.maintenance_teams WHERE team_code = 'MT-F
 
 -- Seed sample team members
 INSERT INTO public.maintenance_team_members (team_id, member_name, role_in_team, is_active)
-SELECT 't0000000-0000-0000-0000-000000000001'::uuid, 'Budi Santoso', 'Lead Specialist', true
+SELECT 'e0000000-0000-0000-0000-000000000001'::uuid, 'Budi Santoso', 'Lead Specialist', true
 WHERE NOT EXISTS (SELECT 1 FROM public.maintenance_team_members WHERE member_name = 'Budi Santoso');
 
 INSERT INTO public.maintenance_team_members (team_id, member_name, role_in_team, is_active)
-SELECT 't0000000-0000-0000-0000-000000000001'::uuid, 'Dedi Kurniawan', 'Senior Hydraulic Mechanic', true
+SELECT 'e0000000-0000-0000-0000-000000000001'::uuid, 'Dedi Kurniawan', 'Senior Hydraulic Mechanic', true
 WHERE NOT EXISTS (SELECT 1 FROM public.maintenance_team_members WHERE member_name = 'Dedi Kurniawan');
 
 INSERT INTO public.maintenance_team_members (team_id, member_name, role_in_team, is_active)
-SELECT 't0000000-0000-0000-0000-000000000002'::uuid, 'Ahmad Hidayat', 'Electrical Lead', true
+SELECT 'e0000000-0000-0000-0000-000000000002'::uuid, 'Ahmad Hidayat', 'Electrical Lead', true
 WHERE NOT EXISTS (SELECT 1 FROM public.maintenance_team_members WHERE member_name = 'Ahmad Hidayat');
 
 INSERT INTO public.maintenance_team_members (team_id, member_name, role_in_team, is_active)
-SELECT 't0000000-0000-0000-0000-000000000002'::uuid, 'Rudi Hermawan', 'Auto Electrician', true
+SELECT 'e0000000-0000-0000-0000-000000000002'::uuid, 'Rudi Hermawan', 'Auto Electrician', true
 WHERE NOT EXISTS (SELECT 1 FROM public.maintenance_team_members WHERE member_name = 'Rudi Hermawan');
 
 INSERT INTO public.maintenance_team_members (team_id, member_name, role_in_team, is_active)
-SELECT 't0000000-0000-0000-0000-000000000003'::uuid, 'Rahmat Hidayat', 'Fleet Lube Manager', true
+SELECT 'e0000000-0000-0000-0000-000000000003'::uuid, 'Rahmat Hidayat', 'Fleet Lube Manager', true
 WHERE NOT EXISTS (SELECT 1 FROM public.maintenance_team_members WHERE member_name = 'Rahmat Hidayat');

@@ -8,9 +8,9 @@ use management_system_core::application::dto::{
     CategoryClassification, CategoryResponse, CategoryTreeNode, CreateCategoryRequest,
     SubCategoryItem, UpdateCategoryRequest,
 };
-use management_system_core::domain::entities::Category;
+use crate::domain::entities::Category;
 use management_system_core::domain::errors::{DomainError, DomainResult};
-use management_system_core::infrastructure::repositories::CategoryRepository;
+use crate::repositories::CategoryRepository;
 
 /// Category service for managing asset categories
 #[derive(Clone)]

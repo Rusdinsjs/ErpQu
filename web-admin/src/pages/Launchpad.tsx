@@ -104,15 +104,59 @@ export default function Launchpad() {
     useEffect(() => {
         if (publicSettings?.launchpad_config) {
             try {
-                const backendConfig = typeof publicSettings.launchpad_config === 'string'
-                    ? JSON.parse(publicSettings.launchpad_config)
-                    : publicSettings.launchpad_config;
-
+                const backendConfigStr = typeof publicSettings.launchpad_config === 'string'
+                    ? publicSettings.launchpad_config
+                    : JSON.stringify(publicSettings.launchpad_config);
+                const backendConfig = JSON.parse(backendConfigStr);
+                
                 // Validate shape: must have modules array
                 if (backendConfig && Array.isArray(backendConfig.modules)) {
                     if (!backendConfig.modules.some((m: any) => m.id === 'organization')) {
                         backendConfig.modules.unshift(DEFAULT_LAUNCHPAD_CONFIG.modules[0]);
                     }
+                    backendConfig.modules = backendConfig.modules.map((m: any) => {
+                        if (m.id === 'asset-management') {
+                            const ids = m.menuIds || [];
+                            if (!ids.includes('conversions')) ids.push('conversions');
+                            if (!ids.includes('categories')) ids.push('categories');
+                            if (!ids.includes('maintenance-templates')) ids.push('maintenance-templates');
+                            return { ...m, menuIds: ids };
+                        }
+                        if (m.id === 'commercial') {
+                            const ids = m.menuIds || [];
+                            if (!ids.includes('purchase-bills')) ids.push('purchase-bills');
+                            return { ...m, menuIds: ids };
+                        }
+                        if (m.id === 'supply-chain') {
+                            const ids = (m.menuIds || []).filter((id: string) => id !== 'conversions' && id !== 'purchase-bills');
+                            if (!ids.includes('inventory-categories')) ids.push('inventory-categories');
+                            return { ...m, menuIds: ids };
+                        }
+                        if (m.id === 'hr') {
+                            const ids = m.menuIds || [];
+                            return { ...m, menuIds: ids.filter((id: string) => id !== 'departments') };
+                        }
+                        if (m.id === 'admin') {
+                            const ids = m.menuIds || [];
+                            return { ...m, menuIds: ids.filter((id: string) => 
+                                id !== 'approval-workflow-settings' &&
+                                id !== 'users' &&
+                                id !== 'roles' &&
+                                id !== 'inventory-categories' &&
+                                id !== 'categories' &&
+                                id !== 'maintenance-templates'
+                            ) };
+                        }
+                        if (m.id === 'organization') {
+                            const ids = m.menuIds || [];
+                            if (!ids.includes('departments')) ids.push('departments');
+                            if (!ids.includes('approval-workflow-settings')) ids.push('approval-workflow-settings');
+                            if (!ids.includes('users')) ids.push('users');
+                            if (!ids.includes('roles')) ids.push('roles');
+                            return { ...m, menuIds: ids };
+                        }
+                        return m;
+                    });
                     setLaunchpadConfig(backendConfig as LaunchpadConfig);
                 } else {
                     setLaunchpadConfig(DEFAULT_LAUNCHPAD_CONFIG);

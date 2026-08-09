@@ -6,10 +6,20 @@ pub use repositories::*;
 
 pub mod fuel_service;
 pub mod geofence_service;
+pub mod loan_service;
+pub mod maintenance_service;
+pub mod maintenance_team_service;
+pub mod maintenance_template_service;
+pub mod sensor_service;
 pub mod tax_renewal_service;
 pub mod work_order_service;
 
 pub use fuel_service::{FuelRequest, FuelService};
 pub use geofence_service::GeofenceService;
+pub use loan_service::LoanService;
+pub use maintenance_service::{MaintenanceOperationResult, MaintenanceService};
+pub use maintenance_team_service::MaintenanceTeamService;
+pub use maintenance_template_service::MaintenanceTemplateService;
+pub use sensor_service::SensorService;
 pub use tax_renewal_service::TaxRenewalService;
 pub use work_order_service::{CreateWorkOrderRequest, WorkOrderService};

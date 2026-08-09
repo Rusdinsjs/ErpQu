@@ -24,18 +24,10 @@ use utoipa::OpenApi;
             management_system_core::domain::entities::User,
 
             // Asset & Common
-            management_system_core::domain::entities::asset::Asset,
-            management_system_core::domain::entities::asset::AssetSummary,
-            management_system_core::domain::entities::asset::AssetDetail,
-            management_system_core::application::dto::asset_dto::CreateAssetRequest,
-            management_system_core::application::dto::asset_dto::UpdateAssetRequest,
-            management_system_core::application::dto::asset_dto::VehicleDetailsDto,
-            management_system_core::application::dto::asset_dto::AssetSearchParams,
+            management_system_assets::Asset,
+            management_system_assets::AssetSummary,
+            management_system_assets::AssetDetail,
             management_system_core::infrastructure::repositories::approval_repository::ApprovalRequest,
-
-            // Generic Aliases (must match #[aliases(...)] in structs)
-            management_system_core::application::dto::common::PaginatedResponseAssetSummary,
-            management_system_core::application::dto::common::ApiResponseAsset,
 
             // Dashboard Schemas
             management_system_core::application::dto::dashboard_dto::DashboardStats,

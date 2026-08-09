@@ -1,7 +1,7 @@
 use sqlx::{PgPool, Result};
 use uuid::Uuid;
 
-use management_system_core::domain::entities::{
+use crate::domain::entities::{
     CategoryAttributeTemplate, CategoryTemplateWithName, CreateCategoryAttributeTemplateRequest,
 };
 

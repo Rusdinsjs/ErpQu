@@ -18,17 +18,14 @@ use management_system_core::application::dto::{
 
 use axum::{extract::Extension, response::IntoResponse};
 use management_system_core::domain::entities::user::UserClaims;
-use management_system_core::domain::entities::{Asset, AssetSummary};
+use management_system_assets::{Asset, AssetDetail, AssetSummary};
 use management_system_core::shared::errors::AppError;
 
 #[utoipa::path(
     get,
-    path = "/api/assets/expiring",
-    params(
-        ("days" = Option<i64>, Query, description = "Days threshold (default 30)")
-    ),
+    path = "/api/v1/assets/expiring",
     responses(
-        (status = 200, description = "List expiring assets", body = Vec<management_system_core::domain::entities::asset::AssetDetail>),
+        (status = 200, description = "List expiring assets", body = Vec<AssetDetail>),
         (status = 400, description = "Bad Request")
     ),
     tag = "assets"
@@ -36,7 +33,7 @@ use management_system_core::shared::errors::AppError;
 pub async fn get_expiring_assets(
     State(state): State<AppState>,
     Query(params): Query<std::collections::HashMap<String, String>>,
-) -> Result<Json<Vec<management_system_core::domain::entities::asset::AssetDetail>>, AppError> {
+) -> Result<Json<Vec<AssetDetail>>, AppError> {
     let days = params
         .get("days")
         .and_then(|d| d.parse::<i64>().ok())
@@ -142,7 +139,7 @@ pub async fn get_asset(
     State(state): State<AppState>,
     Extension(claims): Extension<UserClaims>,
     Path(id): Path<Uuid>,
-) -> Result<Json<management_system_core::domain::entities::asset::AssetDetail>, AppError> {
+) -> Result<Json<AssetDetail>, AppError> {
     let allowed_group = match claims.role.as_str() {
         "admin_alat_berat" | "admin_heavy_eq" => Some("ALAT_BERAT"),
         "admin_kendaraan" | "admin_vehicle" => Some("KENDARAAN"),
