@@ -1,11 +1,11 @@
-//! Sensor Service
+//! Sensor Service (Telemetry)
 
 use chrono::{DateTime, Utc};
 use uuid::Uuid;
 
 use management_system_assets::AssetRepository;
 use management_system_core::application::services::NotificationService;
-use management_system_core::domain::errors::{DomainError, DomainResult};
+use management_system_core::{DomainError, DomainResult};
 
 use crate::domain::entities::{SensorAlert, SensorReading, SensorThreshold};
 use crate::repositories::SensorRepository;
@@ -32,10 +32,9 @@ impl SensorService {
 
     /// Record sensor reading
     pub async fn record_reading(&self, reading: SensorReading) -> DomainResult<()> {
-        // Check thresholds and create alerts if needed
         self.check_thresholds_and_alert(&reading).await?;
 
-        self.repository.insert_reading(&reading).await.map_err(|e| {
+        self.repository.insert_reading(&reading).await.map_err(|e: sqlx::Error| {
             DomainError::ExternalServiceError {
                 service: "database".to_string(),
                 message: e.to_string(),
@@ -52,7 +51,7 @@ impl SensorService {
         self.repository
             .get_latest_readings(asset_id, limit)
             .await
-            .map_err(|e| DomainError::ExternalServiceError {
+            .map_err(|e: sqlx::Error| DomainError::ExternalServiceError {
                 service: "database".to_string(),
                 message: e.to_string(),
             })
@@ -69,7 +68,7 @@ impl SensorService {
         self.repository
             .get_readings_in_range(asset_id, sensor_id, start, end)
             .await
-            .map_err(|e| DomainError::ExternalServiceError {
+            .map_err(|e: sqlx::Error| DomainError::ExternalServiceError {
                 service: "database".to_string(),
                 message: e.to_string(),
             })
@@ -102,7 +101,7 @@ impl SensorService {
         self.repository
             .set_threshold(&threshold)
             .await
-            .map_err(|e| DomainError::ExternalServiceError {
+            .map_err(|e: sqlx::Error| DomainError::ExternalServiceError {
                 service: "database".to_string(),
                 message: e.to_string(),
             })
@@ -117,7 +116,7 @@ impl SensorService {
         self.repository
             .get_threshold(asset_id, sensor_type)
             .await
-            .map_err(|e| DomainError::ExternalServiceError {
+            .map_err(|e: sqlx::Error| DomainError::ExternalServiceError {
                 service: "database".to_string(),
                 message: e.to_string(),
             })
@@ -131,7 +130,7 @@ impl SensorService {
         self.repository
             .list_active_alerts(asset_id)
             .await
-            .map_err(|e| DomainError::ExternalServiceError {
+            .map_err(|e: sqlx::Error| DomainError::ExternalServiceError {
                 service: "database".to_string(),
                 message: e.to_string(),
             })
@@ -142,7 +141,7 @@ impl SensorService {
         self.repository
             .acknowledge_alert(id, user_id)
             .await
-            .map_err(|e| DomainError::ExternalServiceError {
+            .map_err(|e: sqlx::Error| DomainError::ExternalServiceError {
                 service: "database".to_string(),
                 message: e.to_string(),
             })
@@ -153,15 +152,13 @@ impl SensorService {
         self.repository
             .resolve_alert(id, user_id, notes)
             .await
-            .map_err(|e| DomainError::ExternalServiceError {
+            .map_err(|e: sqlx::Error| DomainError::ExternalServiceError {
                 service: "database".to_string(),
                 message: e.to_string(),
             })
     }
 
-    /// Check thresholds and create alert if exceeded
     async fn check_thresholds_and_alert(&self, reading: &SensorReading) -> DomainResult<()> {
-        // Check temperature threshold
         if let Some(temp) = reading.temperature {
             if let Ok(Some(threshold)) = self
                 .repository
@@ -183,9 +180,6 @@ impl SensorService {
                 }
             }
         }
-
-        // Similar checks for other sensor types can be added
-
         Ok(())
     }
 
@@ -194,14 +188,12 @@ impl SensorService {
         value: f64,
         threshold: &SensorThreshold,
     ) -> (&'static str, bool) {
-        // Check critical thresholds
         if let (Some(min), Some(max)) = (threshold.min_value, threshold.max_value) {
             if value < min || value > max {
                 return ("critical", true);
             }
         }
 
-        // Check warning thresholds
         if let (Some(warn_min), Some(warn_max)) = (threshold.warning_min, threshold.warning_max) {
             if value < warn_min || value > warn_max {
                 return ("warning", true);
@@ -237,14 +229,13 @@ impl SensorService {
             created_at: Utc::now(),
         };
 
-        let created_alert = self.repository.create_alert(&alert).await.map_err(|e| {
+        let created_alert = self.repository.create_alert(&alert).await.map_err(|e: sqlx::Error| {
             DomainError::ExternalServiceError {
                 service: "database".to_string(),
                 message: e.to_string(),
             }
         })?;
 
-        // Notify Admins
         let asset = self.asset_repo.find_by_id(asset_id).await.ok().flatten();
         let asset_name = asset
             .map(|a| a.name)
@@ -253,17 +244,16 @@ impl SensorService {
         let _ = self
             .notification_service
             .notify_sensor_alert(
-                Uuid::nil(), // notify_admins will find actual IDs
+                Uuid::nil(),
                 &asset_name,
                 sensor_id,
                 value,
-                0.0, // Should be threshold value if available
+                0.0,
                 severity,
                 asset_id,
             )
             .await;
 
-        // Broadcast to admins
         let _ = self
             .notification_service
             .notify_admins(

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
     Users,
@@ -16,12 +16,13 @@ import {
     UserPlus,
     Briefcase,
 } from 'lucide-react';
-import {
-    maintenanceTeamApi,
+import { maintenanceTeamApi } from '../../api/maintenance-team';
+import type {
     MaintenanceTeam,
     CreateMaintenanceTeamPayload,
     CreateTeamMemberPayload,
 } from '../../api/maintenance-team';
+import { employeeApi } from '../../api/employee';
 
 export default function MaintenanceTeams() {
     const queryClient = useQueryClient();
@@ -36,9 +37,16 @@ export default function MaintenanceTeams() {
     // Form State
     const [teamCode, setTeamCode] = useState('');
     const [teamName, setTeamName] = useState('');
+    const [managerId, setManagerId] = useState('');
     const [managerName, setManagerName] = useState('');
     const [description, setDescription] = useState('');
     const [members, setMembers] = useState<CreateTeamMemberPayload[]>([]);
+
+    // Fetch Employees/Users for dropdown selects
+    const { data: employees = [] } = useQuery({
+        queryKey: ['employees-for-teams'],
+        queryFn: () => employeeApi.list(),
+    });
 
     // Fetch Teams
     const { data: teamsResponse, isLoading, isError, refetch } = useQuery({
@@ -58,9 +66,15 @@ export default function MaintenanceTeams() {
             const payload: CreateMaintenanceTeamPayload = {
                 team_code: teamCode,
                 team_name: teamName,
+                manager_id: managerId || undefined,
                 manager_name: managerName || undefined,
                 description: description || undefined,
-                members,
+                members: members.map(m => ({
+                    employee_id: m.employee_id || undefined,
+                    user_id: m.user_id || undefined,
+                    member_name: m.member_name,
+                    role_in_team: m.role_in_team,
+                })),
             };
 
             if (editingTeam) {
@@ -87,11 +101,12 @@ export default function MaintenanceTeams() {
         setEditingTeam(null);
         setTeamCode(`MT-${Math.floor(100 + Math.random() * 900)}`);
         setTeamName('');
+        setManagerId('');
         setManagerName('');
         setDescription('');
         setMembers([
-            { member_name: '', role_in_team: 'Team Lead' },
-            { member_name: '', role_in_team: 'Technician' },
+            { member_name: '', role_in_team: 'Team Lead', employee_id: '', user_id: '' },
+            { member_name: '', role_in_team: 'Technician', employee_id: '', user_id: '' },
         ]);
         setIsModalOpen(true);
     };
@@ -100,10 +115,13 @@ export default function MaintenanceTeams() {
         setEditingTeam(team);
         setTeamCode(String(team.team_code || ''));
         setTeamName(team.team_name);
+        setManagerId(team.manager_id || '');
         setManagerName(team.manager_name || '');
         setDescription(team.description || '');
         setMembers(
             team.members?.map((m) => ({
+                employee_id: m.employee_id || '',
+                user_id: m.user_id || '',
                 member_name: m.member_name,
                 role_in_team: m.role_in_team,
             })) || []
@@ -158,7 +176,7 @@ export default function MaintenanceTeams() {
                     className="flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-medium px-4 py-2.5 rounded-xl shadow-lg shadow-emerald-950/40 transition-all active:scale-95"
                 >
                     <Plus size={18} />
-                    <span>Tambah Tim Baru</span>
+                    <span>Tambah Tim</span>
                 </button>
             </div>
 
@@ -430,13 +448,23 @@ export default function MaintenanceTeams() {
                                 <label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">
                                     Nama Manajer / Team Leader
                                 </label>
-                                <input
-                                    type="text"
-                                    value={managerName}
-                                    onChange={(e) => setManagerName(e.target.value)}
-                                    placeholder="Contoh: Budi Santoso"
+                                <select
+                                    value={managerId || ''}
+                                    onChange={(e) => {
+                                        const selectedId = e.target.value;
+                                        setManagerId(selectedId);
+                                        const emp = employees.find((emp: any) => emp.id === selectedId);
+                                        setManagerName(emp ? emp.name : '');
+                                    }}
                                     className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-emerald-500"
-                                />
+                                >
+                                    <option value="">Pilih Manajer / Team Leader...</option>
+                                    {employees.map((emp: any) => (
+                                        <option key={emp.id} value={emp.id}>
+                                            {emp.name} ({emp.nik || emp.position || 'Karyawan'})
+                                        </option>
+                                    ))}
+                                </select>
                             </div>
 
                             <div>
@@ -472,13 +500,35 @@ export default function MaintenanceTeams() {
                                 <div className="space-y-2">
                                     {members.map((m, idx) => (
                                         <div key={idx} className="flex items-center gap-2">
-                                            <input
-                                                type="text"
-                                                placeholder="Nama Anggota (Teknisi)"
-                                                value={m.member_name}
-                                                onChange={(e) => handleMemberChange(idx, 'member_name', e.target.value)}
+                                            <select
+                                                value={m.employee_id || ''}
+                                                onChange={(e) => {
+                                                    const selectedId = e.target.value;
+                                                    const emp = employees.find((emp: any) => emp.id === selectedId);
+                                                    if (emp) {
+                                                        handleMemberChange(idx, 'employee_id', emp.id);
+                                                        handleMemberChange(idx, 'user_id', emp.user_id || '');
+                                                        handleMemberChange(idx, 'member_name', emp.name);
+                                                    } else {
+                                                        handleMemberChange(idx, 'employee_id', '');
+                                                        handleMemberChange(idx, 'user_id', '');
+                                                        handleMemberChange(idx, 'member_name', '');
+                                                    }
+                                                }}
                                                 className="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-emerald-500"
-                                            />
+                                            >
+                                                <option value="">Pilih Teknisi / Anggota...</option>
+                                                {m.member_name && !m.employee_id && (
+                                                    <option value="" disabled>
+                                                        {m.member_name} (Legacy - Tidak Terhubung)
+                                                    </option>
+                                                )}
+                                                {employees.map((emp: any) => (
+                                                    <option key={emp.id} value={emp.id}>
+                                                        {emp.name} ({emp.nik || emp.position || 'Karyawan'})
+                                                    </option>
+                                                ))}
+                                            </select>
                                             <input
                                                 type="text"
                                                 placeholder="Peran (e.g. Lead, Electrician)"

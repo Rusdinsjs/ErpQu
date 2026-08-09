@@ -374,7 +374,14 @@ export default function WorkOrderDetails({ workOrderId: propId }: WorkOrderDetai
                     {wo.asset_name && (
                         <p className="text-xl font-medium text-blue-400 mb-2">{wo.asset_name}</p>
                     )}
-                    <p className="text-gray-400">{wo.wo_type}</p>
+                    <div className="flex items-center gap-2">
+                        <p className="text-gray-400">{wo.wo_type}</p>
+                        {wo.maintenance_team_name && (
+                            <Badge variant="outline" className="border-amber-500/30 text-amber-400 bg-amber-500/10">
+                                👥 Tim: {wo.maintenance_team_name}
+                            </Badge>
+                        )}
+                    </div>
                 </div>
 
                 <div className="flex-1 max-w-xs mx-8">

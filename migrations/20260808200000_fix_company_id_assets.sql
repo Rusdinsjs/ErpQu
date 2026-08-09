@@ -86,7 +86,7 @@ SELECT
     '+62-21-555-0100', 'info@sanjayagroup.co.id',
     'https://sanjayagroup.co.id', 'Heavy Equipment & Fleet Management',
     TRUE, 'ACTIVE'
-WHERE NOT EXISTS (SELECT 1 FROM public.companies WHERE code = 'SJS-HQ');
+WHERE NOT EXISTS (SELECT 1 FROM public.companies WHERE id = 'c0000000-0000-0000-0000-000000000001' OR code = 'SJS-HQ');
 
 INSERT INTO public.companies (
     id, tenant_id, code, name, legal_name, tax_id, base_currency, country,
@@ -101,7 +101,7 @@ SELECT
     '+62-542-888-0200', 'rental@sanjayagroup.co.id',
     'https://rental.sanjayagroup.co.id', 'Heavy Equipment Rental',
     'c0000000-0000-0000-0000-000000000001'::uuid, FALSE, 'ACTIVE'
-WHERE NOT EXISTS (SELECT 1 FROM public.companies WHERE code = 'SJS-RENT');
+WHERE NOT EXISTS (SELECT 1 FROM public.companies WHERE id = 'c0000000-0000-0000-0000-000000000002' OR code = 'SJS-RENT');
 
 INSERT INTO public.companies (
     id, tenant_id, code, name, legal_name, tax_id, base_currency, country,
@@ -116,4 +116,4 @@ SELECT
     '+62-542-888-0300', 'service@sanjayagroup.co.id',
     'https://service.sanjayagroup.co.id', 'Field Maintenance & Engineering',
     'c0000000-0000-0000-0000-000000000001'::uuid, FALSE, 'ACTIVE'
-WHERE NOT EXISTS (SELECT 1 FROM public.companies WHERE code = 'SJS-OPS');
+WHERE NOT EXISTS (SELECT 1 FROM public.companies WHERE id = 'c0000000-0000-0000-0000-000000000003' OR code = 'SJS-OPS');

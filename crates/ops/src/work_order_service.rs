@@ -44,6 +44,7 @@ pub struct CreateWorkOrderRequest {
     pub conversion_notes: Option<String>,
     pub conversion_type: Option<String>,
     pub assigned_technician: Option<Uuid>,
+    pub maintenance_team_id: Option<Uuid>,
 }
 
 #[derive(Clone)]
@@ -116,8 +117,9 @@ impl WorkOrderService {
         wo.conversion_notes = request.conversion_notes;
         wo.conversion_type = request.conversion_type;
         wo.assigned_technician = request.assigned_technician;
+        wo.maintenance_team_id = request.maintenance_team_id;
 
-        if request.assigned_technician.is_some() {
+        if request.assigned_technician.is_some() || request.maintenance_team_id.is_some() {
             wo.status = "assigned".to_string();
         }
 

@@ -173,6 +173,7 @@ impl TimesheetService {
                         conversion_notes: None,
                         conversion_type: None,
                         assigned_technician: None,
+                        maintenance_team_id: None,
                     };
 
                     // Log error but don't fail timesheet creation

@@ -12,6 +12,8 @@ export interface WorkOrder {
     actual_start_date?: string;
     actual_end_date?: string;
     assigned_technician?: string;
+    maintenance_team_id?: string | null;
+    maintenance_team_name?: string | null;
     estimated_cost?: number;
     actual_cost?: number;
     parts_cost?: number;

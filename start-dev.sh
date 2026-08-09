@@ -56,12 +56,8 @@ echo -e "${GREEN}3.5. Menjalankan Database Migrations...${NC}"
 export SQLX_OFFLINE=false
 
 # Fix: Hapus entry migration yang checksumnya tidak cocok (akibat file migration yang dimodifikasi)
-docker exec mgmt-db psql -U postgres -d management_system -c "
-  DELETE FROM _sqlx_migrations WHERE version IN (
-    SELECT sm.version
-    FROM _sqlx_migrations sm
-    WHERE sm.version = 20260808000001
-  );
+docker exec -e PGPASSWORD=${POSTGRES_PASSWORD:-postgres} mgmt-db psql -U ${POSTGRES_USER:-postgres} -d ${DB_NAME:-management_system} -c "
+  DELETE FROM _sqlx_migrations WHERE version IN (20260808000001, 20260808140000, 20260808150000, 20260808190000, 20260808200000, 20260808210000);
 " > /dev/null 2>&1 || true
 
 cargo sqlx migrate run > migrate.log 2>&1 || true

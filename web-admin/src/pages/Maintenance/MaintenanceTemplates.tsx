@@ -449,7 +449,7 @@ export default function MaintenanceTemplates() {
                             variant="primary"
                             leftIcon={<Plus size={20} />}
                             onClick={() => setTemplateModalOpen(true)}
-                            className="rounded-xl shadow-lg shadow-blue-500/20 text-white font-bold tracking-wider"
+                            className="rounded-xl shadow-lg shadow-blue-500/20 font-bold tracking-wider"
                         >
                             Create Template
                         </Button>

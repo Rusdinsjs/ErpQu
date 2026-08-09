@@ -113,7 +113,7 @@ const MaintenanceSchedules: React.FC = () => {
                         variant="primary"
                         leftIcon={<Plus size={20} />}
                         onClick={() => setIsCreateModalOpen(true)}
-                        className="rounded-xl shadow-lg shadow-blue-500/20 text-white font-bold tracking-wider"
+                        className="rounded-xl shadow-lg shadow-blue-500/20 font-bold tracking-wider"
                     >
                         Create Schedule
                     </Button>

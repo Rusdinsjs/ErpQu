@@ -1,0 +1,178 @@
+-- Migration: 20260808210000_1to1_module_launchpads
+-- Description: Updates launchpad_config to provide 1-to-1 Launchpad cards for all 10 ERPQu modules
+
+UPDATE settings
+SET value = '{
+    "globalMenuIds": ["profile"],
+    "modules": [
+        {
+            "id": "organization",
+            "title": "Organization",
+            "subtitle": "Entitas & Struktur Organisasi",
+            "icon": "Building2",
+            "gradient": "from-blue-600/20 to-indigo-600/20",
+            "iconBg": "bg-gradient-to-br from-blue-600 to-indigo-600",
+            "defaultRoute": "/company",
+            "minLevel": 2,
+            "features": ["Company & Legal Entity", "Department & Branch", "Users & Access Control"],
+            "menuIds": ["company", "departments", "branch", "users", "roles", "email-account", "approval-workflow-settings"],
+            "order": 1,
+            "enabled": true
+        },
+        {
+            "id": "insights",
+            "title": "Insights & Reporting",
+            "subtitle": "Business Intelligence",
+            "icon": "BarChart3",
+            "gradient": "from-blue-500/20 to-cyan-500/20",
+            "iconBg": "bg-gradient-to-br from-blue-500 to-cyan-500",
+            "defaultRoute": "/dashboard",
+            "minLevel": 5,
+            "features": ["Dashboard Overview", "Analytics", "Reports"],
+            "menuIds": ["dashboard", "analytics", "reports"],
+            "order": 2,
+            "enabled": true
+        },
+        {
+            "id": "asset-management",
+            "title": "Asset Management",
+            "subtitle": "Asset Registry & Tracking",
+            "icon": "Box",
+            "gradient": "from-emerald-500/20 to-teal-500/20",
+            "iconBg": "bg-gradient-to-br from-emerald-500 to-teal-500",
+            "defaultRoute": "/assets",
+            "minLevel": 5,
+            "features": ["Asset Registry", "Asset Categories", "Lifecycle Tracking", "Asset Audit"],
+            "menuIds": ["assets", "categories", "asset-lifecycle", "asset-audit", "conversions"],
+            "order": 3,
+            "enabled": true
+        },
+        {
+            "id": "field-operations",
+            "title": "Field Operations",
+            "subtitle": "Maintenance & Services",
+            "icon": "Wrench",
+            "gradient": "from-amber-500/20 to-orange-500/20",
+            "iconBg": "bg-gradient-to-br from-amber-500 to-orange-500",
+            "defaultRoute": "/work-orders",
+            "minLevel": 5,
+            "features": ["Work Orders & Teams", "PM Schedules", "Maintenance SOP", "Fuel & Tax", "Internal Loans"],
+            "menuIds": ["work-orders", "maintenance-schedules", "maintenance-templates", "maintenance-teams", "fuel", "tax-renewals", "loans"],
+            "order": 4,
+            "enabled": true
+        },
+        {
+            "id": "commercial",
+            "title": "Commercial & Sales",
+            "subtitle": "Clients, Sales & Contracts",
+            "icon": "TrendingUp",
+            "gradient": "from-violet-500/20 to-purple-500/20",
+            "iconBg": "bg-gradient-to-br from-violet-500 to-purple-500",
+            "defaultRoute": "/sales-invoices",
+            "minLevel": 4,
+            "features": ["Client Management", "Sales Invoices", "Partner Directory"],
+            "menuIds": ["clients", "sales-invoices"],
+            "order": 5,
+            "enabled": true
+        },
+        {
+            "id": "procurement",
+            "title": "Procurement & Buying",
+            "subtitle": "Vendor Bills & Purchasing",
+            "icon": "ShoppingBag",
+            "gradient": "from-amber-600/20 to-yellow-600/20",
+            "iconBg": "bg-gradient-to-br from-amber-600 to-yellow-600",
+            "defaultRoute": "/purchase-bills",
+            "minLevel": 4,
+            "features": ["Vendor Bills", "Purchase Orders", "Supplier Procurement"],
+            "menuIds": ["purchase-bills"],
+            "order": 6,
+            "enabled": true
+        },
+        {
+            "id": "rental",
+            "title": "Equipment Rental",
+            "subtitle": "Heavy Fleet & Asset Rental",
+            "icon": "Truck",
+            "gradient": "from-cyan-500/20 to-blue-500/20",
+            "iconBg": "bg-gradient-to-br from-cyan-500 to-blue-500",
+            "defaultRoute": "/rentals",
+            "minLevel": 4,
+            "features": ["Rental Orders", "Rental Contracts", "Contract Templates"],
+            "menuIds": ["rentals", "contracts", "contract-templates"],
+            "order": 7,
+            "enabled": true
+        },
+        {
+            "id": "telemetry",
+            "title": "Telemetry & IoT Stream",
+            "subtitle": "Live Asset Sensors & Alerts",
+            "icon": "Activity",
+            "gradient": "from-rose-500/20 to-red-500/20",
+            "iconBg": "bg-gradient-to-br from-rose-500 to-red-500",
+            "defaultRoute": "/dashboard",
+            "minLevel": 4,
+            "features": ["IoT Sensor Stream", "Threshold Alert Engine", "Asset Health Telemetry"],
+            "menuIds": ["analytics"],
+            "order": 8,
+            "enabled": true
+        },
+        {
+            "id": "supply-chain",
+            "title": "Supply Chain & Inventory",
+            "subtitle": "Stock Ledger & Warehouse",
+            "icon": "Package",
+            "gradient": "from-orange-500/20 to-red-500/20",
+            "iconBg": "bg-gradient-to-br from-orange-500 to-red-400",
+            "defaultRoute": "/inventory-items",
+            "minLevel": 3,
+            "features": ["Inventory Control", "Inventory Categories", "Stock Opname"],
+            "menuIds": ["inventory-items", "inventory-categories", "stock-opname"],
+            "order": 9,
+            "enabled": true
+        },
+        {
+            "id": "finance",
+            "title": "Finance & Accounting",
+            "subtitle": "General Ledger & Cash Flow",
+            "icon": "Wallet",
+            "gradient": "from-green-500/20 to-emerald-500/20",
+            "iconBg": "bg-gradient-to-br from-green-500 to-emerald-500",
+            "defaultRoute": "/cash-bank",
+            "minLevel": 2,
+            "features": ["Cash & Bank", "Expenses (Opex/Capex)", "General Ledger & Reports"],
+            "menuIds": ["finance", "cash-bank", "expenses", "journal-entries", "financial-reports"],
+            "order": 10,
+            "enabled": true
+        },
+        {
+            "id": "hr",
+            "title": "Human Resources",
+            "subtitle": "People & Attendance",
+            "icon": "Users",
+            "gradient": "from-pink-500/20 to-rose-500/20",
+            "iconBg": "bg-gradient-to-br from-pink-500 to-rose-500",
+            "defaultRoute": "/employees",
+            "minLevel": 3,
+            "features": ["Employees Directory", "Attendance Records", "Leave Requests"],
+            "menuIds": ["employees", "attendance", "leaves"],
+            "order": 11,
+            "enabled": true
+        },
+        {
+            "id": "admin",
+            "title": "System Administration",
+            "subtitle": "Governance & Workflows",
+            "icon": "Settings",
+            "gradient": "from-slate-500/20 to-gray-500/20",
+            "iconBg": "bg-gradient-to-br from-slate-500 to-gray-500",
+            "defaultRoute": "/approvals",
+            "minLevel": 2,
+            "features": ["Approval Center & Workflows", "Audit Logs", "System Settings"],
+            "menuIds": ["locations", "approvals", "audit", "settings"],
+            "order": 12,
+            "enabled": true
+        }
+    ]
+}'::jsonb
+WHERE key = 'launchpad_config';

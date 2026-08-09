@@ -4,7 +4,6 @@ pub mod loan_repository;
 pub mod maintenance_repository;
 pub mod maintenance_team_repository;
 pub mod maintenance_template_repository;
-pub mod sensor_repository;
 pub mod tax_renewal_repository;
 pub mod work_order_repository;
 
@@ -14,6 +13,6 @@ pub use loan_repository::{LoanAnalyticsData, LoanRepository, LoanStatusCount, Mo
 pub use maintenance_repository::MaintenanceRepository;
 pub use maintenance_team_repository::MaintenanceTeamRepository;
 pub use maintenance_template_repository::MaintenanceTemplateRepository;
-pub use sensor_repository::SensorRepository;
+pub use management_system_telemetry::SensorRepository;
 pub use tax_renewal_repository::TaxRenewalRepository;
 pub use work_order_repository::{WorkOrderAnalyticsData, WorkOrderRepository};

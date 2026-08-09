@@ -199,9 +199,7 @@ export default function EmailAccount() {
                                         )}
                                     </TableTd>
                                     <TableTd>
-                                        <StatusBadge status={a.is_active ? 'active' : 'inactive'}>
-                                            {a.is_active ? 'Aktif' : 'Nonaktif'}
-                                        </StatusBadge>
+                                        <StatusBadge status={a.is_active ? 'approved' : 'rejected'} />
                                     </TableTd>
                                     <TableTd className="text-right">
                                         <div className="flex items-center justify-end gap-1">
@@ -213,8 +211,8 @@ export default function EmailAccount() {
                                             >
                                                 {testingId === a.id ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Test'}
                                             </button>
-                                            <ActionIcon icon={Edit} tooltip="Edit" onClick={() => openEdit(a)} />
-                                            <ActionIcon icon={Trash2} tooltip="Hapus" variant="danger" onClick={() => setDeleteModal(a)} />
+                                            <ActionIcon title="Edit" onClick={() => openEdit(a)}><Edit className="w-4 h-4" /></ActionIcon>
+                                            <ActionIcon title="Hapus" variant="danger" onClick={() => setDeleteModal(a)}><Trash2 className="w-4 h-4" /></ActionIcon>
                                         </div>
                                     </TableTd>
                                 </TableRow>
@@ -347,14 +345,14 @@ export default function EmailAccount() {
 
             {/* Delete Modal */}
             {deleteModal && (
-                <Modal open onClose={() => setDeleteModal(null)} title="Hapus Email Account">
+                <Modal isOpen={!!deleteModal} onClose={() => setDeleteModal(null)} title="Hapus Email Account">
                     <div className="space-y-4">
                         <p className="text-sm text-muted-foreground">
                             Yakin ingin menghapus akun <span className="font-semibold text-foreground">{deleteModal.name}</span> ({deleteModal.email_address})?
                         </p>
                         <div className="flex justify-end gap-3">
                             <Button variant="outline" onClick={() => setDeleteModal(null)}>Batal</Button>
-                            <Button variant="destructive" onClick={() => deleteMutation.mutate(deleteModal.id)} disabled={deleteMutation.isPending}>
+                            <Button variant="danger" onClick={() => deleteMutation.mutate(deleteModal.id)} disabled={deleteMutation.isPending}>
                                 {deleteMutation.isPending ? 'Menghapus...' : 'Ya, Hapus'}
                             </Button>
                         </div>

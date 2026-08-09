@@ -11,6 +11,8 @@ members = [
     "crates/rental",
     "crates/inventory",
     "crates/commercial",
+    "crates/procurement",
+    "crates/telemetry",
 ]
 
 [workspace.dependencies]
@@ -91,6 +93,8 @@ management-system-crm = { path = "crates/crm" }
 management-system-rental = { path = "crates/rental" }
 management-system-inventory = { path = "crates/inventory" }
 management-system-commercial = { path = "crates/commercial" }
+management-system-procurement = { path = "crates/procurement" }
+management-system-telemetry = { path = "crates/telemetry" }
 
 [profile.dev.package.argon2]
 opt-level = 3

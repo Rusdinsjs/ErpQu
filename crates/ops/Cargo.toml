@@ -9,6 +9,7 @@ management-system-finance = { workspace = true }
 management-system-assets = { workspace = true }
 management-system-inventory = { workspace = true }
 management-system-crm = { workspace = true }
+management-system-telemetry = { workspace = true }
 sqlx = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }

@@ -41,7 +41,7 @@ BEGIN
         'Heavy Equipment & Fleet Management',
         TRUE,
         'ACTIVE'
-    ) ON CONFLICT (tenant_id, code) DO UPDATE SET
+    ) ON CONFLICT (id) DO UPDATE SET
         name = EXCLUDED.name,
         legal_name = EXCLUDED.legal_name,
         is_group = TRUE;
@@ -69,7 +69,7 @@ BEGIN
         v_parent_id,
         FALSE,
         'ACTIVE'
-    ) ON CONFLICT (tenant_id, code) DO UPDATE SET
+    ) ON CONFLICT (id) DO UPDATE SET
         parent_company_id = v_parent_id;
 
     -- 3. Create Operating Subsidiary 2: Maintenance & Technical Services
@@ -93,6 +93,6 @@ BEGIN
         v_parent_id,
         FALSE,
         'ACTIVE'
-    ) ON CONFLICT (tenant_id, code) DO UPDATE SET
+    ) ON CONFLICT (id) DO UPDATE SET
         parent_company_id = v_parent_id;
 END $$;

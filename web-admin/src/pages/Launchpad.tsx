@@ -18,7 +18,9 @@ import {
     ChevronRight,
     LogOut,
     Sun,
-    Moon
+    Moon,
+    Activity,
+    Truck,
 } from 'lucide-react';
 import { getImageUrl } from '../utils/image';
 import clsx from 'clsx';
@@ -46,6 +48,8 @@ const ICON_MAP: Record<string, React.ElementType> = {
     Wrench,
     Moon,
     Sun,
+    Activity,
+    Truck,
 };
 
 function resolveIcon(iconName: string): React.ElementType {
@@ -116,15 +120,24 @@ export default function Launchpad() {
                     }
                     backendConfig.modules = backendConfig.modules.map((m: any) => {
                         if (m.id === 'asset-management') {
-                            const ids = m.menuIds || [];
+                            const ids = (m.menuIds || []).filter((id: string) => id !== 'maintenance-templates');
                             if (!ids.includes('conversions')) ids.push('conversions');
                             if (!ids.includes('categories')) ids.push('categories');
-                            if (!ids.includes('maintenance-templates')) ids.push('maintenance-templates');
                             return { ...m, menuIds: ids };
                         }
                         if (m.id === 'commercial') {
+                            const ids = (m.menuIds || []).filter((id: string) => id !== 'purchase-bills' && id !== 'contracts');
+                            return { ...m, menuIds: ids };
+                        }
+                        if (m.id === 'procurement') {
                             const ids = m.menuIds || [];
                             if (!ids.includes('purchase-bills')) ids.push('purchase-bills');
+                            return { ...m, menuIds: ids };
+                        }
+                        if (m.id === 'rental') {
+                            const ids = m.menuIds || [];
+                            if (!ids.includes('contracts')) ids.push('contracts');
+                            if (!ids.includes('contract-templates')) ids.push('contract-templates');
                             return { ...m, menuIds: ids };
                         }
                         if (m.id === 'supply-chain') {

@@ -91,6 +91,7 @@ pub struct WorkOrder {
 
     // Resources
     pub assigned_technician: Option<Uuid>,
+    pub maintenance_team_id: Option<Uuid>,
     pub vendor_id: Option<Uuid>,
     pub estimated_hours: Option<Decimal>,
     pub actual_hours: Option<Decimal>,
@@ -133,6 +134,8 @@ pub struct WorkOrder {
     // Joined fields
     #[sqlx(default)]
     pub asset_name: Option<String>,
+    #[sqlx(default)]
+    pub maintenance_team_name: Option<String>,
 
     pub labor_expense_type: Option<String>,
     pub expense_id: Option<Uuid>,
@@ -158,6 +161,8 @@ impl WorkOrder {
             actual_start_date: None,
             actual_end_date: None,
             assigned_technician: None,
+            maintenance_team_id: None,
+            maintenance_team_name: None,
             vendor_id: None,
             estimated_hours: None,
             actual_hours: None,

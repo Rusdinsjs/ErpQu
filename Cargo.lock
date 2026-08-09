@@ -113,7 +113,9 @@ dependencies = [
  "management-system-hr",
  "management-system-inventory",
  "management-system-ops",
+ "management-system-procurement",
  "management-system-rental",
+ "management-system-telemetry",
  "mime_guess",
  "rust_decimal",
  "serde",
@@ -2175,8 +2177,27 @@ dependencies = [
  "management-system-crm",
  "management-system-finance",
  "management-system-inventory",
+ "management-system-telemetry",
  "rust_decimal",
  "rust_decimal_macros",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "tokio",
+ "tracing",
+ "utoipa",
+ "uuid",
+]
+
+[[package]]
+name = "management-system-procurement"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "chrono",
+ "management-system-core",
+ "management-system-crm",
+ "rust_decimal",
  "serde",
  "serde_json",
  "sqlx",
@@ -2201,6 +2222,23 @@ dependencies = [
  "serde",
  "serde_json",
  "sqlx",
+ "tracing",
+ "utoipa",
+ "uuid",
+]
+
+[[package]]
+name = "management-system-telemetry"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "chrono",
+ "management-system-assets",
+ "management-system-core",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "tokio",
  "tracing",
  "utoipa",
  "uuid",

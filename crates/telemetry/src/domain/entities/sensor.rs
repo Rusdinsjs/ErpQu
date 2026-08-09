@@ -1,6 +1,6 @@
 //! Sensor Entity
 //!
-//! IoT sensor data for asset monitoring.
+//! IoT sensor data for asset telemetry monitoring.
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -105,7 +105,6 @@ pub struct SensorThreshold {
 }
 
 impl SensorThreshold {
-    /// Check if value exceeds threshold
     pub fn check_value(&self, value: f64) -> SensorStatus {
         if let (Some(min), Some(max)) = (self.min_value, self.max_value) {
             if value < min || value > max {

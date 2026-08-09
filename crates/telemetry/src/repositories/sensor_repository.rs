@@ -1,4 +1,4 @@
-//! Sensor Repository
+//! Sensor Repository (Telemetry)
 
 use chrono::{DateTime, Utc};
 use sqlx::PgPool;

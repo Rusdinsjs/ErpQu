@@ -16,9 +16,10 @@ impl WorkOrderRepository {
     pub async fn find_by_id(&self, id: Uuid) -> Result<Option<WorkOrder>, sqlx::Error> {
         sqlx::query_as::<_, WorkOrder>(
             r#"
-            SELECT w.*, a.name as asset_name 
+            SELECT w.*, a.name as asset_name, t.team_name as maintenance_team_name
             FROM maintenance_work_orders w
             LEFT JOIN assets a ON w.asset_id = a.id
+            LEFT JOIN maintenance_teams t ON w.maintenance_team_id = t.id
             WHERE w.id = $1
             "#,
         )
@@ -37,9 +38,10 @@ impl WorkOrderRepository {
     pub async fn list(&self, limit: i64, offset: i64) -> Result<Vec<WorkOrder>, sqlx::Error> {
         sqlx::query_as::<_, WorkOrder>(
             r#"
-            SELECT w.*, a.name as asset_name 
+            SELECT w.*, a.name as asset_name, t.team_name as maintenance_team_name
             FROM maintenance_work_orders w
             LEFT JOIN assets a ON w.asset_id = a.id
+            LEFT JOIN maintenance_teams t ON w.maintenance_team_id = t.id
             ORDER BY w.created_at DESC
             LIMIT $1 OFFSET $2
             "#,
@@ -82,9 +84,10 @@ impl WorkOrderRepository {
     pub async fn list_overdue(&self) -> Result<Vec<WorkOrder>, sqlx::Error> {
         sqlx::query_as::<_, WorkOrder>(
             r#"
-            SELECT w.*, a.name as asset_name
+            SELECT w.*, a.name as asset_name, t.team_name as maintenance_team_name
             FROM maintenance_work_orders w
             LEFT JOIN assets a ON w.asset_id = a.id
+            LEFT JOIN maintenance_teams t ON w.maintenance_team_id = t.id
             WHERE w.due_date < CURRENT_DATE AND w.status NOT IN ('completed', 'cancelled')
             ORDER BY w.priority DESC, w.due_date
             "#,
@@ -98,13 +101,13 @@ impl WorkOrderRepository {
             r#"
             INSERT INTO maintenance_work_orders (
                 id, wo_number, asset_id, wo_type, priority, status,
-                scheduled_date, due_date, assigned_technician, vendor_id,
+                scheduled_date, due_date, assigned_technician, maintenance_team_id, vendor_id,
                 estimated_hours, estimated_cost, problem_description,
                 safety_requirements, lockout_tagout_required, created_by, location_id,
                 target_category_id, target_specifications, conversion_notes, conversion_type,
                 labor_expense_type, expense_id, opex_expense_id, capex_expense_id
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26)
             RETURNING *
             "#,
         )
@@ -117,6 +120,7 @@ impl WorkOrderRepository {
         .bind(wo.scheduled_date)
         .bind(wo.due_date)
         .bind(wo.assigned_technician)
+        .bind(wo.maintenance_team_id)
         .bind(wo.vendor_id)
         .bind(wo.estimated_hours)
         .bind(wo.estimated_cost)

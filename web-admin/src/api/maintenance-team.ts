@@ -13,7 +13,7 @@ export interface MaintenanceTeamMember {
 
 export interface MaintenanceTeam {
     id: string;
-    team_code: String;
+    team_code: string;
     team_name: string;
     company_id?: string;
     company_name?: string;

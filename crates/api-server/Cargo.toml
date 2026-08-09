@@ -12,6 +12,8 @@ management-system-rental = { workspace = true }
 management-system-inventory = { workspace = true }
 management-system-assets = { workspace = true }
 management-system-ops = { workspace = true }
+management-system-procurement = { workspace = true }
+management-system-telemetry = { workspace = true }
 
 axum = { workspace = true }
 tokio = { workspace = true }

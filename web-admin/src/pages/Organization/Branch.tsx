@@ -1,7 +1,7 @@
 // Branch Management — mirrors Company structure with entity_type = 'BRANCH'
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Edit, Trash2, RefreshCw, Building2, MapPin, Phone, Mail, Globe, FileText } from 'lucide-react';
+import { Plus, Edit, Trash2, RefreshCw, Building2, MapPin, Phone, Mail, FileText } from 'lucide-react';
 import { api } from '../../api/http';
 import { fetchCompanies } from '../../api/companyApi';
 import type { Company } from '../../api/companyApi';
@@ -188,7 +188,7 @@ export default function Branch() {
 
             {/* Search */}
             <Card className="p-4">
-                <GlobalSearch value={search} onChange={setSearch} placeholder="Cari nama, kode, atau kota cabang..." />
+                <GlobalSearch onSearch={setSearch} initialValue={search} placeholder="Cari nama, kode, atau kota cabang..." />
             </Card>
 
             {/* Table */}
@@ -238,14 +238,12 @@ export default function Branch() {
                                         </div>
                                     </TableTd>
                                     <TableTd>
-                                        <StatusBadge status={b.status === 'ACTIVE' ? 'active' : 'inactive'}>
-                                            {b.status === 'ACTIVE' ? 'Aktif' : 'Tidak Aktif'}
-                                        </StatusBadge>
+                                        <StatusBadge status={b.status === 'ACTIVE' ? 'approved' : 'rejected'} />
                                     </TableTd>
                                     <TableTd className="text-right">
                                         <div className="flex items-center justify-end gap-1">
-                                            <ActionIcon icon={Edit} tooltip="Edit" onClick={() => openEdit(b)} />
-                                            <ActionIcon icon={Trash2} tooltip="Hapus" variant="danger" onClick={() => setDeleteModal(b)} />
+                                            <ActionIcon title="Edit" onClick={() => openEdit(b)}><Edit className="w-4 h-4" /></ActionIcon>
+                                            <ActionIcon title="Hapus" variant="danger" onClick={() => setDeleteModal(b)}><Trash2 className="w-4 h-4" /></ActionIcon>
                                         </div>
                                     </TableTd>
                                 </TableRow>
@@ -416,7 +414,7 @@ export default function Branch() {
 
             {/* Delete Confirm Modal */}
             {deleteModal && (
-                <Modal open onClose={() => setDeleteModal(null)} title="Hapus Cabang">
+                <Modal isOpen={!!deleteModal} onClose={() => setDeleteModal(null)} title="Hapus Cabang">
                     <div className="space-y-4">
                         <p className="text-sm text-muted-foreground">
                             Yakin ingin menghapus cabang <span className="font-semibold text-foreground">{deleteModal.name}</span>?
@@ -424,7 +422,7 @@ export default function Branch() {
                         </p>
                         <div className="flex justify-end gap-3">
                             <Button variant="outline" onClick={() => setDeleteModal(null)}>Batal</Button>
-                            <Button variant="destructive" onClick={() => deleteMutation.mutate(deleteModal.id)} disabled={deleteMutation.isPending}>
+                            <Button variant="danger" onClick={() => deleteMutation.mutate(deleteModal.id)} disabled={deleteMutation.isPending}>
                                 {deleteMutation.isPending ? 'Menghapus...' : 'Ya, Hapus'}
                             </Button>
                         </div>

@@ -102,6 +102,7 @@ impl SchedulerService {
                                     conversion_notes: None,
                                     conversion_type: None,
                                     assigned_technician: None,
+                                    maintenance_team_id: None,
                                 };
 
                                 match wo_service.create(req, None).await {

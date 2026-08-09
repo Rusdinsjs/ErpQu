@@ -3,6 +3,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { workOrderApi } from '../../api/work-order';
 import { assetApi } from '../../api/assets';
+import { maintenanceTeamApi } from '../../api/maintenance-team';
 import { api } from '../../api/http';
 import {
     Button,
@@ -43,6 +44,7 @@ export function WorkOrderForm({ maintenanceId, initialAssetId, initialType, onCl
         location_id: '',
         target_category_id: '',
         conversion_notes: '',
+        maintenance_team_id: '',
     });
 
     const [errors, setErrors] = useState<Record<string, string>>({});
@@ -69,6 +71,19 @@ export function WorkOrderForm({ maintenanceId, initialAssetId, initialType, onCl
         queryFn: async () => {
             const res = await api.get('/locations');
             return res.data.map((l: any) => ({ value: l.id, label: l.name }));
+        }
+    });
+
+    // Fetch Maintenance Teams
+    const { data: maintenanceTeamsOptions = [] } = useQuery({
+        queryKey: ['maintenance-teams-select-options'],
+        queryFn: async () => {
+            const res = await maintenanceTeamApi.list({ per_page: 100 });
+            const list = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
+            return list.map((t: any) => ({
+                value: t.id,
+                label: t.team_code ? `${t.team_code} - ${t.team_name}` : t.team_name,
+            }));
         }
     });
 
@@ -105,6 +120,7 @@ export function WorkOrderForm({ maintenanceId, initialAssetId, initialType, onCl
                 location_id: '',
                 target_category_id: (r as any).target_category_id || '',
                 conversion_notes: (r as any).conversion_notes || '',
+                maintenance_team_id: (r as any).maintenance_team_id || '',
             });
         }
     }, [workOrderData]);
@@ -119,6 +135,7 @@ export function WorkOrderForm({ maintenanceId, initialAssetId, initialType, onCl
                 scheduled_date: values.scheduled_date ? values.scheduled_date.toISOString().split('T')[0] : undefined,
                 target_category_id: values.maintenance_type_id === 'conversion' ? values.target_category_id : undefined,
                 conversion_notes: values.maintenance_type_id === 'conversion' ? values.conversion_notes : undefined,
+                maintenance_team_id: values.maintenance_team_id || undefined,
             };
 
             if (isEdit) {
@@ -234,6 +251,15 @@ export function WorkOrderForm({ maintenanceId, initialAssetId, initialType, onCl
                                 label="Scheduled Date"
                                 value={formData.scheduled_date}
                                 onChange={(date: Date | null) => updateField('scheduled_date', date)}
+                                className="bg-black/20 border-white/5"
+                            />
+
+                            <Select
+                                label="Tim Pemeliharaan (Maintenance Team)"
+                                placeholder="Pilih Tim Pemeliharaan..."
+                                value={formData.maintenance_team_id}
+                                onChange={(val: string) => updateField('maintenance_team_id', val)}
+                                options={maintenanceTeamsOptions}
                                 className="bg-black/20 border-white/5"
                             />
 

@@ -314,15 +314,24 @@ export default function AdminDashboard() {
                     }
                     backendConfig.modules = backendConfig.modules.map((m: any) => {
                         if (m.id === 'asset-management') {
-                            const ids = m.menuIds || [];
+                            const ids = (m.menuIds || []).filter((id: string) => id !== 'maintenance-templates');
                             if (!ids.includes('conversions')) ids.push('conversions');
                             if (!ids.includes('categories')) ids.push('categories');
-                            if (!ids.includes('maintenance-templates')) ids.push('maintenance-templates');
                             return { ...m, menuIds: ids };
                         }
                         if (m.id === 'commercial') {
+                            const ids = (m.menuIds || []).filter((id: string) => id !== 'purchase-bills' && id !== 'contracts');
+                            return { ...m, menuIds: ids };
+                        }
+                        if (m.id === 'procurement') {
                             const ids = m.menuIds || [];
                             if (!ids.includes('purchase-bills')) ids.push('purchase-bills');
+                            return { ...m, menuIds: ids };
+                        }
+                        if (m.id === 'rental') {
+                            const ids = m.menuIds || [];
+                            if (!ids.includes('contracts')) ids.push('contracts');
+                            if (!ids.includes('contract-templates')) ids.push('contract-templates');
                             return { ...m, menuIds: ids };
                         }
                         if (m.id === 'supply-chain') {
@@ -410,7 +419,7 @@ export default function AdminDashboard() {
             setSelectedWorkOrderId(woMatch.params.id);
             setSelectedAssetId(null);
             setSelectedInventoryId(null);
-            setOpenGroups(prev => ({ ...prev, asset_operations: true }));
+            setOpenGroups(prev => ({ ...prev, maintenance_group: true }));
             return;
         }
 
@@ -461,7 +470,7 @@ export default function AdminDashboard() {
             // Recursive finder for nested groups
             const findParentGroup = (items: NavEntry[], targetId: TabId): NavGroup | undefined => {
                 if (targetId === 'work-orders') {
-                    return items.find(i => !isNavHeader(i) && i.id === 'asset_operations') as NavGroup;
+                    return items.find(i => !isNavHeader(i) && i.id === 'maintenance_group') as NavGroup;
                 }
 
                 for (const item of items) {
@@ -488,7 +497,7 @@ export default function AdminDashboard() {
                     setOpenGroups(prev => ({ ...prev, [foundGroup.id]: true }));
                 } else if (foundTab === 'work-orders') {
                     // Explicit fallback for work-orders to ensure group opens
-                    setOpenGroups(prev => ({ ...prev, asset_operations: true }));
+                    setOpenGroups(prev => ({ ...prev, maintenance_group: true }));
                 }
 
                 // Only set active tab if it's not a UUID and seems to be a valid tab
@@ -548,6 +557,8 @@ export default function AdminDashboard() {
         const rawCommercialIds = getModuleMenuIds('commercial');
         // Exclude items assigned to field-operations from commercialIds so they move exclusively
         const commercialIds = rawCommercialIds.filter(id => !fieldOpsIds.includes(id));
+        const rentalIds = getModuleMenuIds('rental');
+        const procurementIds = getModuleMenuIds('procurement');
         const assetIds = getModuleMenuIds('asset-management');
         const supplyChainIds = getModuleMenuIds('supply-chain');
         const financeIds = getModuleMenuIds('finance');
@@ -594,7 +605,7 @@ export default function AdminDashboard() {
                 label: 'Assets',
                 icon: Box,
                 minLevel: 5,
-                children: getGroupItems(assetIds, ['assets', 'categories', 'maintenance-templates', 'asset-lifecycle', 'asset-audit'], ['assets', 'categories', 'maintenance-templates', 'asset-lifecycle', 'asset-audit'])
+                children: getGroupItems(assetIds, ['assets', 'categories', 'asset-lifecycle', 'asset-audit'], ['assets', 'categories', 'asset-lifecycle', 'asset-audit'])
             },
             {
                 id: 'inventory_group',
@@ -608,21 +619,21 @@ export default function AdminDashboard() {
                 label: 'Field Operations',
                 icon: Wrench,
                 minLevel: 5,
-                children: getGroupItems(fieldOpsIds, ['work-orders', 'maintenance-schedules', 'maintenance-teams', 'fuel', 'tax-renewals', 'loans'], ['work-orders', 'maintenance-schedules', 'maintenance-teams', 'fuel', 'tax-renewals', 'loans'])
+                children: getGroupItems(fieldOpsIds, ['work-orders', 'maintenance-schedules', 'maintenance-templates', 'maintenance-teams', 'fuel', 'tax-renewals', 'loans'], ['work-orders', 'maintenance-schedules', 'maintenance-templates', 'maintenance-teams', 'fuel', 'tax-renewals', 'loans'])
             },
             {
                 id: 'rental_module',
                 label: 'Rental & Contracts',
                 icon: Truck,
                 minLevel: 4,
-                children: getGroupItems(commercialIds, ['rentals', 'contracts'], ['rentals', 'contracts'])
+                children: getGroupItems(rentalIds, ['rentals', 'contracts', 'contract-templates'], ['rentals', 'contracts', 'contract-templates'])
             },
             {
                 id: 'procurement_group',
                 label: 'Procurement',
                 icon: ShoppingCart,
                 minLevel: 3,
-                children: getGroupItems(commercialIds, ['purchase-bills'], ['purchase-bills'])
+                children: getGroupItems(procurementIds, ['purchase-bills'], ['purchase-bills'])
             },
             {
                 id: 'commercial_group',
