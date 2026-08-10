@@ -197,7 +197,7 @@ export function MainLayout() {
                 { label: 'Buying Workspace', path: '/buying-workspace', minLevel: 4 },
                 { label: 'Material Requests', path: '/buying/material-requests', minLevel: 4 },
                 { label: 'Purchase Orders', path: '/buying/purchase-orders', minLevel: 4 },
-                { label: 'Purchase Bills (Vendor Bills)', path: '/buying/purchase-bills', minLevel: 3 },
+                { label: 'Purchase Invoice', path: '/buying/purchase-bills', minLevel: 3 },
                 { label: 'Requests for Quotation (RFQ)', path: '/buying/rfqs', minLevel: 4 },
                 { label: 'Supplier Quotations', path: '/buying/supplier-quotations', minLevel: 4 },
                 { label: 'Suppliers (Vendors)', path: '/buying/suppliers', minLevel: 4 },

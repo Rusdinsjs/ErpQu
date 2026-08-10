@@ -47,7 +47,7 @@ export default function AccountingWorkspace() {
         {
             title: 'Accounts Payable',
             links: [
-                { label: 'Purchase Invoice (Vendor Bills)', route: '/finance/bills' },
+                { label: 'Purchase Invoice', route: '/finance/bills' },
                 { label: 'Debit Note', route: '/accounting/debit-notes' },
                 { label: 'AP Aging Report', route: '/accounting/reports/ap-aging' },
             ]

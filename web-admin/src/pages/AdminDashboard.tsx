@@ -169,6 +169,7 @@ interface NavItem {
     adminOnly?: boolean;
     minLevel?: number; // 1=SuperAdmin, 2=Admin, 3=Manager, 4=Staff, 5=Viewer
     showBadge?: boolean;
+    path?: string;
 }
 
 interface NavGroup {
@@ -219,7 +220,8 @@ const ALL_NAV_ITEMS: Record<string, NavItem> = {
     'delivery-trip': { id: 'delivery-trip', icon: Truck, label: 'Delivery Trip', minLevel: 3 },
     'conversions': { id: 'conversions', icon: ArrowLeftRight, label: 'Conversions', minLevel: 3 },
 
-    'purchase-bills': { id: 'purchase-bills', icon: FileText, label: 'Vendor Bills', minLevel: 3 },
+    'purchase-bills': { id: 'purchase-bills', icon: FileText, label: 'Purchase Invoice', path: '/buying/purchase-bills', minLevel: 3 },
+    'purchase-orders': { id: 'purchase-orders', icon: ShoppingCart, label: 'Purchase Orders', path: '/buying/purchase-orders', minLevel: 4 },
 
     'work-orders': { id: 'work-orders', icon: ClipboardCheck, label: 'Work Orders', minLevel: 4 },
     'maintenance-schedules': { id: 'maintenance-schedules', icon: CalendarIcon, label: 'PM Schedules', minLevel: 3 },
@@ -1110,7 +1112,7 @@ export default function AdminDashboard() {
             <button
                 key={item.id}
                 onClick={() => {
-                    navigate(`/${item.id}`);
+                    navigate(item.path || `/${item.id}`);
                     if (window.innerWidth < 1024) {
                         setSidebarOpen(false);
                     }
