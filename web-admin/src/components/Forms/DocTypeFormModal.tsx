@@ -18,12 +18,21 @@ export function DocTypeFormModal({ isOpen, onClose, title, moduleName, onSave }:
     // Dynamic Form State
     const [formData, setFormData] = useState<Record<string, any>>({});
     const [tableRows, setTableRows] = useState<Record<string, any[]>>({});
+    const [dynamicOptions, setDynamicOptions] = useState<Record<string, string[]>>({});
+
+    // Quick Create Nested Modal State
+    const [quickCreateModal, setQuickCreateModal] = useState<{
+        isOpen: boolean;
+        targetLink: string;
+        fieldName: string;
+    }>({ isOpen: false, targetLink: '', fieldName: '' });
 
     // Reset state when modal opens
     useEffect(() => {
         if (isOpen) {
             const initialData: Record<string, any> = {};
             const initialTables: Record<string, any[]> = {};
+            const initialOpts: Record<string, string[]> = {};
 
             (schema?.fields || []).forEach(field => {
                 if (field.type === 'Table') {
@@ -35,17 +44,49 @@ export function DocTypeFormModal({ isOpen, onClose, title, moduleName, onSave }:
                     initialTables[field.name] = [{ ...defaultRow, id: 1, amount: 0 }];
                 } else {
                     initialData[field.name] = field.defaultValue ?? '';
+                    if (field.options) {
+                        initialOpts[field.name] = field.options;
+                    }
                 }
             });
 
             setFormData(initialData);
             setTableRows(initialTables);
+            setDynamicOptions(initialOpts);
         }
     }, [isOpen, title, schema]);
 
     // Handle Form Input Change
-    const handleInputChange = (fieldName: string, value: any) => {
+    const handleInputChange = (fieldName: string, value: any, targetLink?: string) => {
+        if (value === '__CREATE_NEW__' && targetLink) {
+            handleOpenQuickCreate(fieldName, targetLink);
+            return;
+        }
         setFormData(prev => ({ ...prev, [fieldName]: value }));
+    };
+
+    // Open Quick Create for linked DocType
+    const handleOpenQuickCreate = (fieldName: string, targetLink: string) => {
+        setQuickCreateModal({ isOpen: true, targetLink, fieldName });
+    };
+
+    // Handle Quick Create Save
+    const handleQuickCreateSave = (newRecord: any) => {
+        const createdName = newRecord.name || newRecord.customer_name || newRecord.supplier_name || newRecord.item_name || newRecord.profile_name || newRecord.warehouse_name || newRecord.code || `${quickCreateModal.targetLink} Baru`;
+        
+        // Add to dynamic options for this field
+        setDynamicOptions(prev => ({
+            ...prev,
+            [quickCreateModal.fieldName]: [createdName, ...(prev[quickCreateModal.fieldName] || [])]
+        }));
+
+        // Set form field value to newly created record
+        setFormData(prev => ({
+            ...prev,
+            [quickCreateModal.fieldName]: createdName
+        }));
+
+        setQuickCreateModal({ isOpen: false, targetLink: '', fieldName: '' });
     };
 
     // Handle Child Table Cell Change
@@ -114,54 +155,64 @@ export function DocTypeFormModal({ isOpen, onClose, title, moduleName, onSave }:
     };
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title={`Buat ${schema.title}`} size="xl">
-            <form onSubmit={handleFormSubmit} className="space-y-6 max-h-[80vh] overflow-y-auto pr-1">
-                {/* Header Metadata Fields (2-Column Grid matching Image 1 Left) */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {(schema?.fields || []).filter(f => f.type !== 'Table' && f.type !== 'Text').map((field) => (
-                        <div key={field.name} className="space-y-1.5">
-                            <label className="text-xs font-semibold text-foreground/80 block">
-                                {field.label} {field.required && <span className="text-red-500">*</span>}
-                            </label>
+        <>
+            <Modal isOpen={isOpen} onClose={onClose} title={`Buat ${schema.title}`} size="xl">
+                <form onSubmit={handleFormSubmit} className="space-y-6 max-h-[80vh] overflow-y-auto pr-1">
+                    {/* Header Metadata Fields (2-Column Grid matching Image 1 Left) */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {(schema?.fields || []).filter(f => f.type !== 'Table' && f.type !== 'Text').map((field) => {
+                            const fieldOptions = dynamicOptions[field.name] || field.options || [];
 
-                            {field.type === 'Select' ? (
-                                <Select
-                                    value={formData[field.name] || ''}
-                                    onChange={(e) => handleInputChange(field.name, e.target.value)}
-                                    className="w-full bg-background border border-border/80 rounded-xl px-3.5 py-2.5 text-sm text-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm"
-                                >
-                                    <option value="">-- Pilih {field.label} --</option>
-                                    {field.options?.map(opt => (
-                                        <option key={opt} value={opt}>{opt}</option>
-                                    ))}
-                                </Select>
-                            ) : field.type === 'Date' ? (
-                                <DateInput
-                                    value={formData[field.name] || ''}
-                                    onChange={(e) => handleInputChange(field.name, e.target.value)}
-                                    className="w-full bg-background border border-border/80 rounded-xl px-3.5 py-2.5 text-sm text-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm"
-                                />
-                            ) : field.type === 'Check' ? (
-                                <div className="pt-2">
-                                    <Checkbox
-                                        checked={Boolean(formData[field.name])}
-                                        onChange={(e) => handleInputChange(field.name, e.target.checked)}
-                                        label={field.label}
-                                    />
+                            return (
+                                <div key={field.name} className="space-y-1.5">
+                                    <label className="text-xs font-semibold text-foreground/80 block">
+                                        {field.label} {field.required && <span className="text-red-500">*</span>}
+                                    </label>
+
+                                    {field.type === 'Select' || field.targetLink ? (
+                                        <Select
+                                            value={formData[field.name] || ''}
+                                            onChange={(val) => handleInputChange(field.name, val, field.targetLink)}
+                                            className="w-full bg-background border border-border/80 rounded-xl px-3.5 py-2.5 text-sm text-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm"
+                                        >
+                                            <option value="">-- Pilih {field.label} --</option>
+                                            {field.targetLink && (
+                                                <option value="__CREATE_NEW__" className="font-bold text-primary">
+                                                    + Create a new {field.targetLink}
+                                                </option>
+                                            )}
+                                            {fieldOptions.map(opt => (
+                                                <option key={opt} value={opt}>{opt}</option>
+                                            ))}
+                                        </Select>
+                                    ) : field.type === 'Date' ? (
+                                        <DateInput
+                                            value={formData[field.name] || ''}
+                                            onChange={(dateVal) => handleInputChange(field.name, dateVal ? (dateVal instanceof Date ? dateVal.toISOString().split('T')[0] : dateVal) : '')}
+                                            className="w-full bg-background border border-border/80 rounded-xl px-3.5 py-2.5 text-sm text-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm"
+                                        />
+                                    ) : field.type === 'Check' ? (
+                                        <div className="pt-2">
+                                            <Checkbox
+                                                checked={Boolean(formData[field.name])}
+                                                onChange={(e) => handleInputChange(field.name, e.target.checked)}
+                                                label={field.label}
+                                            />
+                                        </div>
+                                    ) : (
+                                        <Input
+                                            type={field.type === 'Currency' || field.type === 'Float' || field.type === 'Int' ? 'number' : 'text'}
+                                            placeholder={field.label}
+                                            value={formData[field.name] ?? ''}
+                                            onChange={(e) => handleInputChange(field.name, e.target.value)}
+                                            readOnly={field.readOnly}
+                                            className="w-full bg-background border border-border/80 rounded-xl px-3.5 py-2.5 text-sm text-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm"
+                                        />
+                                    )}
                                 </div>
-                            ) : (
-                                <Input
-                                    type={field.type === 'Currency' || field.type === 'Float' || field.type === 'Int' ? 'number' : 'text'}
-                                    placeholder={field.label}
-                                    value={formData[field.name] ?? ''}
-                                    onChange={(e) => handleInputChange(field.name, e.target.value)}
-                                    readOnly={field.readOnly}
-                                    className="w-full bg-background border border-border/80 rounded-xl px-3.5 py-2.5 text-sm text-foreground focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all shadow-sm"
-                                />
-                            )}
-                        </div>
-                    ))}
-                </div>
+                            );
+                        })}
+                    </div>
 
                 {/* Child Tables (Item Lines matching Image 1 Left) */}
                 {(schema?.fields || []).filter(f => f.type === 'Table').map((tableField) => {
@@ -205,7 +256,7 @@ export function DocTypeFormModal({ isOpen, onClose, title, moduleName, onSave }:
                                                         {col.type === 'Select' ? (
                                                             <Select
                                                                 value={row[col.name] || ''}
-                                                                onChange={(e) => handleTableCellChange(tableField.name, rIdx, col.name, e.target.value)}
+                                                                onChange={(val) => handleTableCellChange(tableField.name, rIdx, col.name, val)}
                                                                 className="w-full bg-background border border-border/70 rounded-lg px-2.5 py-1.5 text-xs text-foreground focus:ring-1 focus:ring-primary/20"
                                                             >
                                                                 {col.options?.map(o => <option key={o} value={o}>{o}</option>)}
@@ -286,5 +337,17 @@ export function DocTypeFormModal({ isOpen, onClose, title, moduleName, onSave }:
                 </div>
             </form>
         </Modal>
+
+        {/* Nested Quick Create Modal for Linked DocType */}
+        {quickCreateModal.isOpen && (
+            <DocTypeFormModal
+                isOpen={quickCreateModal.isOpen}
+                onClose={() => setQuickCreateModal({ isOpen: false, targetLink: '', fieldName: '' })}
+                title={quickCreateModal.targetLink}
+                moduleName={moduleName}
+                onSave={handleQuickCreateSave}
+            />
+        )}
+    </>
     );
 }

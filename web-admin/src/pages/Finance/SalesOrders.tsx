@@ -7,6 +7,7 @@ import {
     Plus, Search, Filter, Download, MoreVertical
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { DocTypeFormModal } from '../../components/Forms/DocTypeFormModal';
 
 export default function SalesOrders() {
     const [searchTerm, setSearchTerm] = useState('');
@@ -29,7 +30,7 @@ export default function SalesOrders() {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['finance', 'sales-orders'] });
             setIsModalOpen(false);
-            toast.success('Pesanan Penjualan berhasil dibuat');
+            toast.success('Sales Order berhasil dibuat');
         },
         onError: (error: any) => {
             toast.error('Gagal membuat pesanan: ' + error.message);
@@ -157,43 +158,23 @@ export default function SalesOrders() {
                 </div>
             </Card>
 
-            {/* Modal - Simplified Create Form */}
-            {isModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
-                    <Card className="w-full max-w-2xl bg-card border-border shadow-2xl">
-                        <div className="p-6">
-                            <h2 className="text-xl font-bold text-foreground mb-4">Buat Pesanan Baru</h2>
-                            <form onSubmit={handleCreate} className="space-y-4">
-                                <div className="grid grid-cols-2 gap-4">
-                                    <input name="order_number" placeholder="Nomor SO" required className="bg-background border border-border rounded px-3 py-2 text-foreground" defaultValue={`SO/${new Date().getFullYear()}/${Math.floor(Math.random() * 1000)}`} />
-                                    <select name="client_id" className="bg-background border border-border rounded px-3 py-2 text-foreground" required>
-                                        <option value="">Pilih Klien</option>
-                                        {clients.map((c: any) => <option key={c.id} value={c.id}>{c.name}</option>)}
-                                    </select>
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <input name="date" type="date" required className="bg-background border border-border rounded px-3 py-2 text-foreground" />
-                                    <input name="delivery_date" type="date" className="bg-background border border-border rounded px-3 py-2 text-foreground" placeholder="Tgl Kirim" />
-                                </div>
-                                <input name="subject" placeholder="Subjek / Referensi" className="w-full bg-background border border-border rounded px-3 py-2 text-foreground" />
-
-                                <div className="p-4 bg-muted/50 rounded border border-border">
-                                    <div className="grid grid-cols-12 gap-2">
-                                        <div className="col-span-6"><input name="item_description" placeholder="Deskripsi Item" className="w-full bg-background border border-border rounded px-2 py-1 text-foreground placeholder:text-muted-foreground" /></div>
-                                        <div className="col-span-2"><input name="quantity" type="number" placeholder="Qty" className="w-full bg-background border border-border rounded px-2 py-1 text-foreground placeholder:text-muted-foreground" /></div>
-                                        <div className="col-span-4"><input name="unit_price" type="number" placeholder="Harga" className="w-full bg-background border border-border rounded px-2 py-1 text-foreground placeholder:text-muted-foreground" /></div>
-                                    </div>
-                                </div>
-
-                                <div className="flex gap-2 justify-end mt-4">
-                                    <Button variant="ghost" onClick={() => setIsModalOpen(false)}>Batal</Button>
-                                    <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground">Simpan</Button>
-                                </div>
-                            </form>
-                        </div>
-                    </Card>
-                </div>
-            )}
+            {/* DocType Form Modal (100% ERPNext Aligned) */}
+            <DocTypeFormModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                title="Sales Order"
+                moduleName="Selling"
+                onSave={(data) => {
+                    createMutation.mutate({
+                        order_number: data.naming_series || `SO-${Date.now()}`,
+                        client_id: data.customer_name,
+                        date: data.transaction_date,
+                        delivery_date: data.delivery_date,
+                        subject: data.terms || '',
+                        items: data.items || []
+                    });
+                }}
+            />
         </div>
     );
 }

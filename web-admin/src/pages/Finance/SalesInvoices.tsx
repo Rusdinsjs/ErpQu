@@ -28,6 +28,7 @@ import {
     Trash
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { DocTypeFormModal } from '../../components/Forms/DocTypeFormModal';
 
 export default function SalesInvoices() {
     const [searchTerm, setSearchTerm] = useState('');
@@ -669,173 +670,27 @@ export default function SalesInvoices() {
                 </div>
             )}
 
-            {/* Modal Buat Invoice */}
-            {isModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-                    <Card className="w-full max-w-2xl bg-card border-border/80 shadow-2xl rounded-2xl max-h-[90vh] overflow-y-auto">
-                        <div className="p-6 border-b border-border/60 flex justify-between items-center">
-                            <h2 className="text-xl font-bold text-foreground">Buat Invoice Baru</h2>
-                            <button onClick={() => setIsModalOpen(false)} className="text-muted-foreground hover:text-foreground transition-colors">
-                                <X size={20} />
-                            </button>
-                        </div>
-                        <form onSubmit={handleCreate} className="p-6 space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium text-muted-foreground">Nomor Invoice</label>
-                                    <input
-                                        name="invoice_number"
-                                        required
-                                        placeholder="INV/2024/001"
-                                        defaultValue={createDefaults.invoiceNumber}
-                                        className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:border-cyan-500 outline-none transition-all"
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium text-muted-foreground">Pelanggan</label>
-                                    <select
-                                        name="client_id"
-                                        required
-                                        className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:border-cyan-500 outline-none transition-all"
-                                    >
-                                        <option value="">Pilih Pelanggan</option>
-                                        {clients.map((client) => (
-                                            <option key={client.id} value={client.id}>{client.name}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium text-muted-foreground">Tanggal</label>
-                                    <input
-                                        name="date"
-                                        type="date"
-                                        required
-                                        defaultValue={createDefaults.date}
-                                        className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:border-cyan-500 outline-none transition-all"
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium text-muted-foreground">Jatuh Tempo</label>
-                                    <input
-                                        name="due_date"
-                                        type="date"
-                                        required
-                                        defaultValue={createDefaults.dueDate}
-                                        className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:border-cyan-500 outline-none transition-all font-mono"
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium text-muted-foreground">Subjek/Keterangan</label>
-                                <input
-                                    name="subject"
-                                    placeholder="Deskripsi singkat invoice..."
-                                    required
-                                    className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-white focus:border-cyan-500 outline-none transition-all"
-                                />
-                            </div>
-
-                            {/* Multiple Line Items Creator (QARC-011) */}
-                            <div className="p-4 bg-slate-950/50 rounded-xl border border-slate-800 space-y-3">
-                                <div className="flex justify-between items-center">
-                                    <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Item Penjualan</h3>
-                                    <button
-                                        type="button"
-                                        onClick={() => setCreateItems([...createItems, { description: '', quantity: '1.0000', unit_price: '0.0000' }])}
-                                        className="text-xs text-cyan-400 hover:text-cyan-300 flex items-center gap-1 cursor-pointer"
-                                    >
-                                        <PlusCircle size={14} /> Tambah Line Item
-                                    </button>
-                                </div>
-
-                                {createItems.map((item, idx) => (
-                                    <div key={idx} className="grid grid-cols-12 gap-2 items-center bg-slate-900/80 p-2.5 rounded-lg border border-slate-800">
-                                        <div className="col-span-5">
-                                            <input
-                                                placeholder="Deskripsi Item"
-                                                value={item.description}
-                                                onChange={(e) => {
-                                                    const updated = [...createItems];
-                                                    updated[idx].description = e.target.value;
-                                                    setCreateItems(updated);
-                                                }}
-                                                required
-                                                className="w-full bg-slate-950 border border-slate-800 rounded px-2.5 py-1.5 text-xs text-white focus:border-cyan-500 outline-none"
-                                            />
-                                        </div>
-                                        <div className="col-span-2">
-                                            <input
-                                                type="number"
-                                                placeholder="Qty"
-                                                value={item.quantity}
-                                                onChange={(e) => {
-                                                    const updated = [...createItems];
-                                                    updated[idx].quantity = e.target.value;
-                                                    setCreateItems(updated);
-                                                }}
-                                                required
-                                                className="w-full bg-slate-950 border border-slate-800 rounded px-2 py-1.5 text-xs text-white font-mono text-center focus:border-cyan-500 outline-none"
-                                            />
-                                        </div>
-                                        <div className="col-span-4">
-                                            <input
-                                                type="number"
-                                                placeholder="Harga Satuan"
-                                                value={item.unit_price}
-                                                onChange={(e) => {
-                                                    const updated = [...createItems];
-                                                    updated[idx].unit_price = e.target.value;
-                                                    setCreateItems(updated);
-                                                }}
-                                                required
-                                                className="w-full bg-slate-950 border border-slate-800 rounded px-2 py-1.5 text-xs text-white font-mono text-right focus:border-cyan-500 outline-none"
-                                            />
-                                        </div>
-                                        <div className="col-span-1 text-center">
-                                            {createItems.length > 1 && (
-                                                <button
-                                                    type="button"
-                                                    onClick={() => setCreateItems(createItems.filter((_, i) => i !== idx))}
-                                                    className="text-muted-foreground hover:text-rose-400 p-1 cursor-pointer"
-                                                >
-                                                    <Trash size={14} />
-                                                </button>
-                                            )}
-                                        </div>
-                                    </div>
-                                ))}
-
-                                <div className="text-right pt-2 border-t border-slate-800">
-                                    <span className="text-xs text-muted-foreground uppercase mr-2">Estimasi Total:</span>
-                                    <span className="text-sm font-bold text-white font-mono">{formatCurrencyIDR(calculateInvoiceTotalString(createItems))}</span>
-                                </div>
-                            </div>
-
-                            <div className="flex gap-3 pt-4">
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    onClick={() => setIsModalOpen(false)}
-                                    className="flex-1 border-slate-800 text-muted-foreground"
-                                >
-                                    Batal
-                                </Button>
-                                <Button
-                                    type="submit"
-                                    disabled={createMutation.isPending}
-                                    className="flex-1 bg-cyan-600 hover:bg-cyan-500"
-                                >
-                                    {createMutation.isPending ? 'Menyimpan...' : 'Buat Invoice'}
-                                </Button>
-                            </div>
-                        </form>
-                    </Card>
-                </div>
-            )}
+            {/* DocType Form Modal (100% ERPNext Aligned) */}
+            <DocTypeFormModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                title="Sales Invoice"
+                moduleName="Selling"
+                onSave={(data) => {
+                    createMutation.mutate({
+                        invoice_number: data.naming_series || `INV-${Date.now()}`,
+                        client_id: data.customer_name,
+                        date: data.posting_date,
+                        due_date: data.due_date,
+                        subject: data.terms || '',
+                        items: (data.items || []).map((it: any) => ({
+                            description: it.item_code || 'Item Sales Invoice',
+                            quantity: String(it.qty || 1),
+                            unit_price: String(it.rate || 0)
+                        }))
+                    });
+                }}
+            />
         </div>
     );
 }

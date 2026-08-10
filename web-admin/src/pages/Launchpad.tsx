@@ -123,6 +123,7 @@ export default function Launchpad() {
                             const ids = (m.menuIds || []).filter((id: string) => id !== 'maintenance-templates');
                             if (!ids.includes('conversions')) ids.push('conversions');
                             if (!ids.includes('categories')) ids.push('categories');
+                            if (!ids.includes('locations')) ids.push('locations');
                             return { ...m, menuIds: ids };
                         }
                         if (m.id === 'commercial') {
@@ -155,6 +156,7 @@ export default function Launchpad() {
                         if (m.id === 'admin') {
                             const ids = m.menuIds || [];
                             return { ...m, menuIds: ids.filter((id: string) => 
+                                id !== 'locations' &&
                                 id !== 'approval-workflow-settings' &&
                                 id !== 'users' &&
                                 id !== 'roles' &&

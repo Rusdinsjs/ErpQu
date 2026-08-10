@@ -472,6 +472,7 @@ export default function AdminDashboard() {
                             const ids = (m.menuIds || []).filter((id: string) => id !== 'maintenance-templates');
                             if (!ids.includes('conversions')) ids.push('conversions');
                             if (!ids.includes('categories')) ids.push('categories');
+                            if (!ids.includes('locations')) ids.push('locations');
                             return { ...m, menuIds: ids };
                         }
                         if (m.id === 'commercial') {
@@ -565,6 +566,7 @@ export default function AdminDashboard() {
                         if (m.id === 'admin') {
                             const ids = m.menuIds || [];
                             return { ...m, menuIds: ids.filter((id: string) => 
+                                id !== 'locations' &&
                                 id !== 'approval-workflow-settings' &&
                                 id !== 'users' &&
                                 id !== 'roles' &&
@@ -819,7 +821,7 @@ export default function AdminDashboard() {
                 label: 'Assets',
                 icon: Box,
                 minLevel: 5,
-                children: getGroupItems(assetIds, ['assets', 'categories', 'asset-lifecycle', 'asset-audit'], ['assets', 'categories', 'asset-lifecycle', 'asset-audit'])
+                children: getGroupItems(assetIds, ['assets', 'categories', 'locations', 'asset-lifecycle', 'asset-audit'], ['assets', 'categories', 'locations', 'asset-lifecycle', 'asset-audit'])
             },
             {
                 id: 'inventory_group',
@@ -1025,12 +1027,10 @@ export default function AdminDashboard() {
                 icon: Settings,
                 minLevel: 2,
                 children: [
-                    { type: 'header', label: 'Master Data' },
-                    ...getGroupItems(adminIds, ['locations'], ['locations']),
                     { type: 'header', label: 'Operational Templates' },
                     ...getGroupItems(adminIds, ['contract-templates'], ['contract-templates']),
                     { type: 'header', label: 'System & Security' },
-                    ...getGroupItems(adminIds.filter(id => id !== 'locations' && id !== 'contract-templates'), ['approvals', 'audit', 'settings']),
+                    ...getGroupItems(adminIds.filter(id => id !== 'contract-templates'), ['approvals', 'audit', 'settings']),
                 ]
             },
         ];
