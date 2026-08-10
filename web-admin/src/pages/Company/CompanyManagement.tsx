@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Card } from '../../components/ui/Card';
-import { 
-    Building2, Plus, Search, Phone, Mail, 
-    ChevronRight, ChevronDown, Edit, Trash2, 
+import {
+    Building2, Plus, Search, Phone, Mail,
+    ChevronRight, ChevronDown, Edit, Trash2,
     Layers, GitFork, RefreshCw, X, FileText, ScrollText
 } from 'lucide-react';
-import { 
+import {
     fetchCompanies, fetchCompanyTree, fetchCompanyById, createCompany, updateCompany, deleteCompany
 } from '../../api/companyApi';
-import type { 
-    Company, CompanyTreeNode, CompanyPayload, CompanyAmendmentDeed 
+import type {
+    Company, CompanyTreeNode, CompanyPayload, CompanyAmendmentDeed
 } from '../../api/companyApi';
 import { showToast } from '../../components/ui/Toast';
 import { settingsApi } from '../../api/settings';
@@ -264,7 +264,7 @@ export const CompanyManagement: React.FC = () => {
                         <div>
                             <h1 className="text-2xl font-bold text-foreground tracking-tight">Company Management</h1>
                             <p className="text-sm text-muted-foreground">
-                                ERPNext & Frappe Framework Multi-Company Setup, Akta Legalitas & Hierarki Organisasi
+                                Multi-Company Setup, Akta Legalitas & Hierarki Organisasi
                             </p>
                         </div>
                     </div>
@@ -278,7 +278,7 @@ export const CompanyManagement: React.FC = () => {
                     >
                         <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
                     </button>
-                    
+
                     <button
                         onClick={handleOpenCreateModal}
                         className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors shadow-md shadow-indigo-600/20 font-medium text-sm"
@@ -364,25 +364,23 @@ export const CompanyManagement: React.FC = () => {
                 <div className="flex items-center bg-muted p-1 rounded-xl w-full sm:w-auto">
                     <button
                         onClick={() => setViewMode('grid')}
-                        className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                            viewMode === 'grid' 
-                                ? 'bg-card text-indigo-400 shadow-sm' 
-                                : 'text-muted-foreground hover:text-foreground'
-                        }`}
+                        className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${viewMode === 'grid'
+                            ? 'bg-card text-indigo-400 shadow-sm'
+                            : 'text-muted-foreground hover:text-foreground'
+                            }`}
                     >
                         <Layers className="w-3.5 h-3.5" />
                         Grid / Daftar
                     </button>
                     <button
                         onClick={() => setViewMode('tree')}
-                        className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                            viewMode === 'tree' 
-                                ? 'bg-card text-indigo-400 shadow-sm' 
-                                : 'text-muted-foreground hover:text-foreground'
-                        }`}
+                        className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-1.5 rounded-lg text-xs font-semibold transition-all ${viewMode === 'tree'
+                            ? 'bg-card text-indigo-400 shadow-sm'
+                            : 'text-muted-foreground hover:text-foreground'
+                            }`}
                     >
                         <GitFork className="w-3.5 h-3.5" />
-                        Frappe Tree Hierarchy
+                        Tree Hierarchy
                     </button>
                 </div>
             </div>
@@ -396,7 +394,7 @@ export const CompanyManagement: React.FC = () => {
             ) : viewMode === 'grid' ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                     {companies.map((comp) => (
-                        <div 
+                        <div
                             key={comp.id}
                             className="bg-card rounded-2xl border border-border shadow-sm hover:shadow-md transition-all p-5 flex flex-col justify-between relative overflow-hidden group"
                         >
@@ -413,11 +411,10 @@ export const CompanyManagement: React.FC = () => {
                                                 className="w-11 h-11 rounded-xl object-contain bg-muted/30 border border-border p-1 shrink-0"
                                             />
                                         ) : (
-                                            <div className={`w-11 h-11 rounded-xl flex items-center justify-center font-bold text-sm tracking-wider shrink-0 ${
-                                                comp.is_group 
-                                                    ? 'bg-purple-500/100/15 text-purple-400 border border-purple-500/20' 
-                                                    : 'bg-indigo-500/100/15 text-indigo-400 border border-indigo-500/20'
-                                            }`}>
+                                            <div className={`w-11 h-11 rounded-xl flex items-center justify-center font-bold text-sm tracking-wider shrink-0 ${comp.is_group
+                                                ? 'bg-purple-500/100/15 text-purple-400 border border-purple-500/20'
+                                                : 'bg-indigo-500/100/15 text-indigo-400 border border-indigo-500/20'
+                                                }`}>
                                                 {comp.code}
                                             </div>
                                         )}
@@ -427,11 +424,10 @@ export const CompanyManagement: React.FC = () => {
                                         </div>
                                     </div>
 
-                                    <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ${
-                                        comp.status === 'ACTIVE' 
-                                            ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' 
-                                            : 'bg-muted text-muted-foreground border border-border'
-                                    }`}>
+                                    <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ${comp.status === 'ACTIVE'
+                                        ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                                        : 'bg-muted text-muted-foreground border border-border'
+                                        }`}>
                                         <span className={`w-1.5 h-1.5 rounded-full ${comp.status === 'ACTIVE' ? 'bg-emerald-500/100' : 'bg-slate-400'}`} />
                                         {comp.status}
                                     </span>
@@ -528,7 +524,7 @@ export const CompanyManagement: React.FC = () => {
                     <div>
                         <h3 className="text-base font-bold text-foreground flex items-center gap-2">
                             <GitFork className="w-5 h-5 text-indigo-400" />
-                            Struktur Pohon Perusahaan (Frappe Tree Structure)
+                            Struktur Pohon Perusahaan (Tree Structure)
                         </h3>
                         <p className="text-xs text-muted-foreground mt-1">
                             Visualisasi hierarki entitas dari Holding Company hingga ke Anak Perusahaan Operasional.
@@ -570,41 +566,37 @@ export const CompanyManagement: React.FC = () => {
                         <div className="flex border-b border-border bg-muted/30 px-6 pt-3 gap-2 overflow-x-auto">
                             <button
                                 onClick={() => setActiveTab('general')}
-                                className={`pb-3 px-3 text-xs font-bold border-b-2 whitespace-nowrap transition-all ${
-                                    activeTab === 'general'
-                                        ? 'border-indigo-600 text-indigo-400'
-                                        : 'border-transparent text-muted-foreground hover:text-foreground'
-                                }`}
+                                className={`pb-3 px-3 text-xs font-bold border-b-2 whitespace-nowrap transition-all ${activeTab === 'general'
+                                    ? 'border-indigo-600 text-indigo-400'
+                                    : 'border-transparent text-muted-foreground hover:text-foreground'
+                                    }`}
                             >
                                 🏢 Profil Utama
                             </button>
                             <button
                                 onClick={() => setActiveTab('legal')}
-                                className={`pb-3 px-3 text-xs font-bold border-b-2 whitespace-nowrap transition-all ${
-                                    activeTab === 'legal'
-                                        ? 'border-indigo-600 text-indigo-400'
-                                        : 'border-transparent text-muted-foreground hover:text-foreground'
-                                }`}
+                                className={`pb-3 px-3 text-xs font-bold border-b-2 whitespace-nowrap transition-all ${activeTab === 'legal'
+                                    ? 'border-indigo-600 text-indigo-400'
+                                    : 'border-transparent text-muted-foreground hover:text-foreground'
+                                    }`}
                             >
                                 📜 Akta & Legalitas
                             </button>
                             <button
                                 onClick={() => setActiveTab('contact')}
-                                className={`pb-3 px-3 text-xs font-bold border-b-2 whitespace-nowrap transition-all ${
-                                    activeTab === 'contact'
-                                        ? 'border-indigo-600 text-indigo-400'
-                                        : 'border-transparent text-muted-foreground hover:text-foreground'
-                                }`}
+                                className={`pb-3 px-3 text-xs font-bold border-b-2 whitespace-nowrap transition-all ${activeTab === 'contact'
+                                    ? 'border-indigo-600 text-indigo-400'
+                                    : 'border-transparent text-muted-foreground hover:text-foreground'
+                                    }`}
                             >
                                 📍 Alamat & Kontak
                             </button>
                             <button
                                 onClick={() => setActiveTab('finance')}
-                                className={`pb-3 px-3 text-xs font-bold border-b-2 whitespace-nowrap transition-all ${
-                                    activeTab === 'finance'
-                                        ? 'border-indigo-600 text-indigo-400'
-                                        : 'border-transparent text-muted-foreground hover:text-foreground'
-                                }`}
+                                className={`pb-3 px-3 text-xs font-bold border-b-2 whitespace-nowrap transition-all ${activeTab === 'finance'
+                                    ? 'border-indigo-600 text-indigo-400'
+                                    : 'border-transparent text-muted-foreground hover:text-foreground'
+                                    }`}
                             >
                                 💳 Keuangan
                             </button>
@@ -1076,17 +1068,16 @@ const TreeNodeCard: React.FC<{ node: CompanyTreeNode; onEdit?: (comp: Company) =
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                     {node.children.length > 0 && (
-                        <button 
-                            onClick={() => setIsOpen(!isOpen)} 
+                        <button
+                            onClick={() => setIsOpen(!isOpen)}
                             className="p-1 hover:bg-muted rounded text-muted-foreground"
                         >
                             {isOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                         </button>
                     )}
-                    
-                    <div className={`px-2.5 py-1 rounded-lg text-xs font-bold ${
-                        node.is_group ? 'bg-purple-500/100/15 text-purple-400' : 'bg-indigo-500/100/15 text-indigo-400'
-                    }`}>
+
+                    <div className={`px-2.5 py-1 rounded-lg text-xs font-bold ${node.is_group ? 'bg-purple-500/100/15 text-purple-400' : 'bg-indigo-500/100/15 text-indigo-400'
+                        }`}>
                         {node.code}
                     </div>
 
@@ -1097,9 +1088,8 @@ const TreeNodeCard: React.FC<{ node: CompanyTreeNode; onEdit?: (comp: Company) =
                 </div>
 
                 <div className="flex items-center gap-2">
-                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                        node.status === 'ACTIVE' ? 'bg-emerald-500/100/15 text-emerald-400' : 'bg-muted text-muted-foreground'
-                    }`}>
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${node.status === 'ACTIVE' ? 'bg-emerald-500/100/15 text-emerald-400' : 'bg-muted text-muted-foreground'
+                        }`}>
                         {node.status}
                     </span>
                 </div>

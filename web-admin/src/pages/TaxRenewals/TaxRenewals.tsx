@@ -3,8 +3,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { taxRenewalApi, type TaxRenewal } from '../../api/tax-renewals';
 import { assetApi } from '../../api/assets';
 import { uploadApi } from '../../api/upload';
-import { Card, Button, Badge, Modal, NumberInput, Input, Textarea, Pagination, SearchInput, Select, TableSkeleton, DateInput } from '../../components/ui';
-import { CheckCircle, Plus, FileText, Upload } from 'lucide-react';
+import { Card, Button, Badge, Modal, NumberInput, Input, Textarea, Pagination, SearchInput, Select, TableSkeleton, DateInput, Table, TableHead, TableBody, TableRow, TableTh, TableTd } from '../../components/ui';
+import { CheckCircle, Plus, FileText, Upload, ArrowUp, ArrowDown, Eye } from 'lucide-react';
 import dayjs from 'dayjs';
 import { toast } from 'sonner';
 
@@ -490,12 +490,13 @@ export default function TaxRenewals() {
                             <option value="LAPOR_TIBA">Lapor Tiba</option>
                             <option value="OTHER">Lainnya</option>
                         </select>
-                        <button
-                            className="flex items-center gap-1 bg-background border border-border rounded px-3 py-2 text-sm h-[40px] hover:bg-secondary/50"
+                        <Button
+                            variant="outline"
+                            size="sm"
                             onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
                         >
                             Expiry {sortOrder === 'asc' ? '↑' : '↓'}
-                        </button>
+                        </Button>
                     </div>
                 </div>
 
@@ -509,73 +510,80 @@ export default function TaxRenewals() {
                     </div>
                 ) : (
                     <>
-                        <div className="overflow-x-auto">
-                            <table className="w-full text-sm text-left">
-                                <thead className="text-xs text-muted-foreground uppercase bg-secondary/50">
-                                    <tr>
-                                        <th className="px-4 py-3">Aset</th>
-                                        <th className="px-4 py-3">Dokumen</th>
-                                        <th className="px-4 py-3 cursor-pointer hover:text-foreground" onClick={() => setSortOrder(p => p === 'asc' ? 'desc' : 'asc')}>
-                                            Expiry {sortOrder === 'asc' ? '↑' : '↓'}
-                                        </th>
-                                        <th className="px-4 py-3">Biaya</th>
-                                        <th className="px-4 py-3 text-center">Bukti</th>
-                                        {activeTab === 'History' && <th className="px-4 py-3">Tgl Bayar</th>}
-                                        <th className="px-4 py-3">Status</th>
-                                        <th className="px-4 py-3 text-right">Aksi</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {paginatedRenewals.map((item) => (
-                                        <tr key={item.id} className="border-b border-border hover:bg-secondary/20 transition-colors">
-                                            <td className="px-4 py-3 font-medium">
+                        <Table>
+                            <TableHead>
+                                <TableRow>
+                                    <TableTh>Aset</TableTh>
+                                    <TableTh>Dokumen</TableTh>
+                                    <TableTh className="cursor-pointer hover:text-white transition-colors" onClick={() => setSortOrder(p => p === 'asc' ? 'desc' : 'asc')}>
+                                        <div className="flex items-center gap-1.5">
+                                            <span>Expiry</span>
+                                            {sortOrder === 'asc' ? <ArrowUp size={12} className="text-cyan-400" /> : <ArrowDown size={12} className="text-cyan-400" />}
+                                        </div>
+                                    </TableTh>
+                                    <TableTh>Biaya</TableTh>
+                                    <TableTh align="center">Bukti</TableTh>
+                                    {activeTab === 'History' && <TableTh>Tgl Bayar</TableTh>}
+                                    <TableTh>Status</TableTh>
+                                    <TableTh align="right">Aksi</TableTh>
+                                </TableRow>
+                            </TableHead>
+                            <TableBody>
+                                {paginatedRenewals.map((item) => (
+                                    <TableRow key={item.id}>
+                                        <TableTd>
+                                            <span className="font-medium text-white">
                                                 {item.asset_name || <span className="text-muted-foreground font-mono text-xs">{item.asset_id}</span>}
-                                            </td>
-                                            <td className="px-4 py-3">
-                                                <Badge variant={docBadgeVariant(item.document_type)}>{item.document_type}</Badge>
-                                            </td>
-                                            <td className="px-4 py-3 font-mono text-xs">
-                                                {dayjs(item.current_expiry).format('DD MMM YYYY')}
-                                            </td>
-                                            <td className="px-4 py-3 text-foreground">
-                                                {item.renewal_cost ? new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(item.renewal_cost as any) : '-'}
-                                            </td>
-                                            <td className="px-4 py-3 text-center">
-                                                {item.invoice_attachment ? (
-                                                    <a href={item.invoice_attachment} target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:text-cyan-300 underline text-xs">Lihat</a>
-                                                ) : '-'}
-                                            </td>
-                                            {activeTab === 'History' && (
-                                                <td className="px-4 py-3 font-mono text-xs text-emerald-400">
+                                            </span>
+                                        </TableTd>
+                                        <TableTd>
+                                            <Badge variant={docBadgeVariant(item.document_type)}>{item.document_type}</Badge>
+                                        </TableTd>
+                                        <TableTd>
+                                            <span className="font-mono text-xs">{dayjs(item.current_expiry).format('DD MMM YYYY')}</span>
+                                        </TableTd>
+                                        <TableTd>
+                                            {item.renewal_cost ? new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(item.renewal_cost as any) : '-'}
+                                        </TableTd>
+                                        <TableTd align="center">
+                                            {item.invoice_attachment ? (
+                                                <a href={item.invoice_attachment} target="_blank" rel="noopener noreferrer" className="text-cyan-400 hover:text-cyan-300 underline text-xs flex items-center justify-center gap-1">
+                                                    <Eye size={14} /> Lihat
+                                                </a>
+                                            ) : '-'}
+                                        </TableTd>
+                                        {activeTab === 'History' && (
+                                            <TableTd>
+                                                <span className="font-mono text-xs text-emerald-400">
                                                     {item.payment_date ? dayjs(item.payment_date).format('DD MMM YYYY') : '-'}
-                                                </td>
-                                            )}
-                                            <td className="px-4 py-3">
-                                                <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium ${item.status === 'PENDING_INPUT' ? 'bg-red-500/10 text-red-400' :
-                                                    item.status === 'PENDING_APPROVAL' ? 'bg-yellow-500/10 text-yellow-400' :
-                                                        item.status === 'APPROVED' || item.status === 'INVOICED' ? 'bg-green-500/10 text-green-400' :
-                                                            'bg-muted/300/10 text-muted-foreground'
-                                                    }`}>
-                                                    {item.status.replace(/_/g, ' ')}
                                                 </span>
-                                            </td>
-                                            <td className="px-4 py-3 text-right">
-                                                {activeTab === 'Needs Attention' && (
-                                                    <Button size="sm" onClick={() => { setSelectedRenewal(item); setIsCostModalOpen(true); }}>
-                                                        Input Biaya
-                                                    </Button>
-                                                )}
-                                                {activeTab === 'Payment' && (
-                                                    <Button size="sm" variant="outline" onClick={() => { setSelectedRenewal(item); setIsCompleteModalOpen(true); }}>
-                                                        Selesai
-                                                    </Button>
-                                                )}
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
+                                            </TableTd>
+                                        )}
+                                        <TableTd>
+                                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold ${item.status === 'PENDING_INPUT' ? 'bg-red-500/10 text-red-400 border border-red-500/20' :
+                                                item.status === 'PENDING_APPROVAL' ? 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20' :
+                                                    item.status === 'APPROVED' || item.status === 'INVOICED' ? 'bg-green-500/10 text-green-400 border border-green-500/20' :
+                                                        'bg-muted/300/10 text-muted-foreground border border-slate-700'
+                                                }`}>
+                                                {item.status.replace(/_/g, ' ')}
+                                            </span>
+                                        </TableTd>
+                                        <TableTd align="right">
+                                            {activeTab === 'Needs Attention' && (
+                                                <Button size="sm" onClick={() => { setSelectedRenewal(item); setIsCostModalOpen(true); }}>
+                                                    Input Biaya
+                                                </Button>
+                                            )}
+                                            {activeTab === 'Payment' && (
+                                                <Button size="sm" variant="outline" onClick={() => { setSelectedRenewal(item); setIsCompleteModalOpen(true); }}>
+                                                    Selesai
+                                                </Button>
+                                            )}
+                                        </TableTd>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
                         <div className="flex justify-between items-center mt-4 pt-4 border-t border-border">
                             <div className="text-sm text-muted-foreground">
                                 {((currentPage - 1) * itemsPerPage) + 1}–{Math.min(currentPage * itemsPerPage, processedRenewals.length)} dari {processedRenewals.length} data

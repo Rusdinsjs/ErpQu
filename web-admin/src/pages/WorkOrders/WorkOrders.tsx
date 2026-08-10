@@ -1,8 +1,8 @@
 // WorkOrders Page - Pure Tailwind
 // Work Order Management Page
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Plus, Edit, AlertTriangle, Wrench, Clock, CheckCircle, AlertCircle } from 'lucide-react';
+import { Plus, Edit, Eye, Search, Filter, X, ArrowUpDown, ArrowUp, ArrowDown, AlertTriangle, Wrench, Clock, CheckCircle, AlertCircle } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { workOrderApi } from '../../api/work-order';
 import type { WorkOrder } from '../../api/work-order';
@@ -26,6 +26,14 @@ export default function WorkOrders() {
     const [drawerOpen, setDrawerOpen] = useState(false);
     const [selectedId, setSelectedId] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState('active');
+
+    // Search, Filter & Sort states
+    const [searchQuery, setSearchQuery] = useState('');
+    const [statusFilter, setStatusFilter] = useState('all');
+    const [typeFilter, setTypeFilter] = useState('all');
+    const [priorityFilter, setPriorityFilter] = useState('all');
+    const [sortField, setSortField] = useState<'id' | 'asset_name' | 'wo_type' | 'status' | 'scheduled_date' | 'priority'>('scheduled_date');
+    const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
 
     const queryClient = useQueryClient();
     const navigate = useNavigate();
@@ -54,7 +62,7 @@ export default function WorkOrders() {
             if (activeTab === 'overdue') {
                 return await workOrderApi.listOverdue();
             }
-            return await workOrderApi.list({ page, per_page: 20 });
+            return await workOrderApi.list({ page, per_page: 50 });
         },
     });
 
@@ -70,6 +78,87 @@ export default function WorkOrders() {
         setSelectedId(null);
         setDrawerOpen(true);
     };
+
+    const handleSort = (field: 'id' | 'asset_name' | 'wo_type' | 'status' | 'scheduled_date' | 'priority') => {
+        if (sortField === field) {
+            setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+        } else {
+            setSortField(field);
+            setSortDirection('asc');
+        }
+    };
+
+    const hasActiveFilters = searchQuery.trim() !== '' || statusFilter !== 'all' || typeFilter !== 'all' || priorityFilter !== 'all';
+
+    const resetFilters = () => {
+        setSearchQuery('');
+        setStatusFilter('all');
+        setTypeFilter('all');
+        setPriorityFilter('all');
+    };
+
+    // Filter & Sort records
+    const filteredRecords = useMemo(() => {
+        return records.filter((r: any) => {
+            // Search query filter
+            if (searchQuery.trim()) {
+                const query = searchQuery.toLowerCase().trim();
+                const ticketRef = (r.id || '').toLowerCase();
+                const woNumber = (r.wo_number || '').toLowerCase();
+                const assetName = (r.asset_name || r.asset?.name || r.asset_id || '').toLowerCase();
+                const woType = (r.wo_type || '').toLowerCase();
+                const problem = (r.problem_description || '').toLowerCase();
+                const assigned = (r.assigned_to || r.assigned_technician || '').toLowerCase();
+
+                const matchesSearch = ticketRef.includes(query) ||
+                    woNumber.includes(query) ||
+                    assetName.includes(query) ||
+                    woType.includes(query) ||
+                    problem.includes(query) ||
+                    assigned.includes(query);
+
+                if (!matchesSearch) return false;
+            }
+
+            // Status filter
+            if (statusFilter !== 'all') {
+                if (statusFilter === 'overdue') {
+                    if (r.status !== 'overdue' && !(new Date(r.scheduled_date || '').getTime() < Date.now() && r.status !== 'completed')) {
+                        return false;
+                    }
+                } else if (r.status !== statusFilter) {
+                    return false;
+                }
+            }
+
+            // Type filter
+            if (typeFilter !== 'all' && r.wo_type !== typeFilter) {
+                return false;
+            }
+
+            // Priority filter
+            if (priorityFilter !== 'all' && r.priority !== priorityFilter) {
+                return false;
+            }
+
+            return true;
+        }).sort((a: any, b: any) => {
+            let valA = a[sortField] || '';
+            let valB = b[sortField] || '';
+
+            if (sortField === 'asset_name') {
+                valA = a.asset_name || a.asset?.name || a.asset_id || '';
+                valB = b.asset_name || b.asset?.name || b.asset_id || '';
+            }
+
+            if (typeof valA === 'string') valA = valA.toLowerCase();
+            if (typeof valB === 'string') valB = valB.toLowerCase();
+
+            if (valA < valB) return sortDirection === 'asc' ? -1 : 1;
+            if (valA > valB) return sortDirection === 'asc' ? 1 : -1;
+            return 0;
+        });
+    }, [records, searchQuery, statusFilter, typeFilter, priorityFilter, sortField, sortDirection]);
 
     return (
         <div>
@@ -170,7 +259,7 @@ export default function WorkOrders() {
                     </Tabs>
                 </div>
 
-                {/* Kanban Board Area */}
+                {/* Kanban Board Area / History Table */}
                 <div className="relative bg-background/50 p-6 min-h-[600px] overflow-x-auto custom-scrollbar">
                     {isLoading ? (
                         <div className="flex gap-6 h-[500px]">
@@ -194,34 +283,232 @@ export default function WorkOrders() {
                             <Button variant="secondary" onClick={handleCreate} className="mt-4 rounded-xl px-8">Create New Ticket</Button>
                         </div>
                     ) : activeTab === 'history' || activeTab === 'overdue' ? (
-                        /* Fallback to Table for History/Overdue for density */
-                        <div className="bg-card/40 backdrop-blur-xl border border-border rounded-3xl overflow-hidden">
-                            <table className="w-full text-left text-sm text-foreground/80 border-separate border-spacing-0">
-                                <thead className="bg-card/90 sticky top-0 z-20 backdrop-blur-md">
-                                    <tr>
-                                        <th className="px-6 py-4 text-[10px] font-bold text-muted-foreground uppercase tracking-widest border-b border-border">Ticket Ref</th>
-                                        <th className="px-6 py-4 text-[10px] font-bold text-muted-foreground uppercase tracking-widest border-b border-border">Asset Info</th>
-                                        <th className="px-6 py-4 text-[10px] font-bold text-muted-foreground uppercase tracking-widest border-b border-border">Status</th>
-                                        <th className="px-6 py-4 text-[10px] font-bold text-muted-foreground uppercase tracking-widest border-b border-border">Scheduled</th>
-                                        <th className="px-6 py-4 text-[10px] font-bold text-muted-foreground uppercase tracking-widest border-b border-border text-center">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-border">
-                                    {records.map((record: any) => (
-                                        <tr key={record.id} onClick={() => navigate(`/work-orders/${record.id}`)} className="group cursor-pointer hover:bg-muted/30 transition-colors">
-                                            <td className="px-6 py-4 font-mono font-bold text-primary">#{record.id.slice(0, 8)}</td>
-                                            <td className="px-6 py-4 font-medium">{record.asset_name || record.asset?.name || record.asset_id}</td>
-                                            <td className="px-6 py-4"><StatusBadge status={record.status} /></td>
-                                            <td className="px-6 py-4 text-muted-foreground">{record.scheduled_date}</td>
-                                            <td className="px-6 py-4 text-center">
-                                                <div className="flex justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    <ActionIcon onClick={(e) => { e.stopPropagation(); navigate(`/work-orders/${record.id}`); }} variant="default" className="rounded-xl hover:bg-primary/20 hover:text-primary w-10 h-10 border border-border"><Edit size={16} /></ActionIcon>
+                        /* History / Overdue Table View with Filter, Search, Sort & Action buttons */
+                        <div className="space-y-4">
+                            {/* Search and Filter Controls Toolbar */}
+                            <div className="flex flex-col md:flex-row gap-4 items-stretch md:items-center justify-between bg-card/40 backdrop-blur-xl border border-border p-4 rounded-2xl">
+                                {/* Search Box */}
+                                <div className="relative flex-1 min-w-[240px]">
+                                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" size={16} />
+                                    <input
+                                        type="text"
+                                        placeholder="Search ticket #, asset, technician..."
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        className="w-full pl-10 pr-8 py-2 bg-background/80 border border-border rounded-xl text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                                    />
+                                    {searchQuery && (
+                                        <button
+                                            onClick={() => setSearchQuery('')}
+                                            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-0.5 rounded-full"
+                                        >
+                                            <X size={14} />
+                                        </button>
+                                    )}
+                                </div>
+
+                                {/* Filters & Reset */}
+                                <div className="flex flex-wrap items-center gap-3">
+                                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-semibold uppercase tracking-wider">
+                                        <Filter size={14} className="text-primary" />
+                                        <span>Filter:</span>
+                                    </div>
+
+                                    {/* Status Filter */}
+                                    <select
+                                        value={statusFilter}
+                                        onChange={(e) => setStatusFilter(e.target.value)}
+                                        className="bg-background/80 border border-border text-foreground text-xs rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/50 font-medium cursor-pointer"
+                                    >
+                                        <option value="all">All Statuses</option>
+                                        <option value="completed">Completed</option>
+                                        <option value="in_progress">In Progress</option>
+                                        <option value="assigned">Assigned</option>
+                                        <option value="approved">Approved</option>
+                                        <option value="pending">Pending</option>
+                                        <option value="overdue">Overdue</option>
+                                        <option value="cancelled">Cancelled</option>
+                                    </select>
+
+                                    {/* Type Filter */}
+                                    <select
+                                        value={typeFilter}
+                                        onChange={(e) => setTypeFilter(e.target.value)}
+                                        className="bg-background/80 border border-border text-foreground text-xs rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/50 font-medium cursor-pointer"
+                                    >
+                                        <option value="all">All Types</option>
+                                        <option value="preventive">Preventive</option>
+                                        <option value="corrective">Corrective</option>
+                                        <option value="maintenance">Maintenance</option>
+                                        <option value="repair">Repair</option>
+                                    </select>
+
+                                    {/* Priority Filter */}
+                                    <select
+                                        value={priorityFilter}
+                                        onChange={(e) => setPriorityFilter(e.target.value)}
+                                        className="bg-background/80 border border-border text-foreground text-xs rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary/50 font-medium cursor-pointer"
+                                    >
+                                        <option value="all">All Priorities</option>
+                                        <option value="emergency">Emergency</option>
+                                        <option value="high">High</option>
+                                        <option value="medium">Medium</option>
+                                        <option value="low">Low</option>
+                                    </select>
+
+                                    {/* Reset Button */}
+                                    {hasActiveFilters && (
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={resetFilters}
+                                            leftIcon={<X size={14} />}
+                                            className="text-xs rounded-xl hover:bg-destructive/10 hover:text-destructive"
+                                        >
+                                            Reset
+                                        </Button>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Table */}
+                            <div className="bg-card/40 backdrop-blur-xl border border-border rounded-3xl overflow-hidden shadow-lg">
+                                <table className="w-full text-left text-sm text-foreground/80 border-separate border-spacing-0">
+                                    <thead className="bg-card/90 sticky top-0 z-20 backdrop-blur-md">
+                                        <tr>
+                                            <th
+                                                onClick={() => handleSort('id')}
+                                                className="px-6 py-4 text-[10px] font-bold text-muted-foreground uppercase tracking-widest border-b border-border cursor-pointer hover:bg-muted/50 transition-colors select-none"
+                                            >
+                                                <div className="flex items-center gap-1.5">
+                                                    <span>Ticket Ref</span>
+                                                    {sortField === 'id' ? (
+                                                        sortDirection === 'asc' ? <ArrowUp size={12} className="text-primary" /> : <ArrowDown size={12} className="text-primary" />
+                                                    ) : (
+                                                        <ArrowUpDown size={12} className="opacity-40" />
+                                                    )}
                                                 </div>
-                                            </td>
+                                            </th>
+                                            <th
+                                                onClick={() => handleSort('asset_name')}
+                                                className="px-6 py-4 text-[10px] font-bold text-muted-foreground uppercase tracking-widest border-b border-border cursor-pointer hover:bg-muted/50 transition-colors select-none"
+                                            >
+                                                <div className="flex items-center gap-1.5">
+                                                    <span>Asset Info</span>
+                                                    {sortField === 'asset_name' ? (
+                                                        sortDirection === 'asc' ? <ArrowUp size={12} className="text-primary" /> : <ArrowDown size={12} className="text-primary" />
+                                                    ) : (
+                                                        <ArrowUpDown size={12} className="opacity-40" />
+                                                    )}
+                                                </div>
+                                            </th>
+                                            <th
+                                                onClick={() => handleSort('wo_type')}
+                                                className="px-6 py-4 text-[10px] font-bold text-muted-foreground uppercase tracking-widest border-b border-border cursor-pointer hover:bg-muted/50 transition-colors select-none"
+                                            >
+                                                <div className="flex items-center gap-1.5">
+                                                    <span>Type</span>
+                                                    {sortField === 'wo_type' ? (
+                                                        sortDirection === 'asc' ? <ArrowUp size={12} className="text-primary" /> : <ArrowDown size={12} className="text-primary" />
+                                                    ) : (
+                                                        <ArrowUpDown size={12} className="opacity-40" />
+                                                    )}
+                                                </div>
+                                            </th>
+                                            <th
+                                                onClick={() => handleSort('status')}
+                                                className="px-6 py-4 text-[10px] font-bold text-muted-foreground uppercase tracking-widest border-b border-border cursor-pointer hover:bg-muted/50 transition-colors select-none"
+                                            >
+                                                <div className="flex items-center gap-1.5">
+                                                    <span>Status</span>
+                                                    {sortField === 'status' ? (
+                                                        sortDirection === 'asc' ? <ArrowUp size={12} className="text-primary" /> : <ArrowDown size={12} className="text-primary" />
+                                                    ) : (
+                                                        <ArrowUpDown size={12} className="opacity-40" />
+                                                    )}
+                                                </div>
+                                            </th>
+                                            <th
+                                                onClick={() => handleSort('scheduled_date')}
+                                                className="px-6 py-4 text-[10px] font-bold text-muted-foreground uppercase tracking-widest border-b border-border cursor-pointer hover:bg-muted/50 transition-colors select-none"
+                                            >
+                                                <div className="flex items-center gap-1.5">
+                                                    <span>Scheduled</span>
+                                                    {sortField === 'scheduled_date' ? (
+                                                        sortDirection === 'asc' ? <ArrowUp size={12} className="text-primary" /> : <ArrowDown size={12} className="text-primary" />
+                                                    ) : (
+                                                        <ArrowUpDown size={12} className="opacity-40" />
+                                                    )}
+                                                </div>
+                                            </th>
+                                            <th className="px-6 py-4 text-[10px] font-bold text-muted-foreground uppercase tracking-widest border-b border-border text-center">
+                                                Actions
+                                            </th>
                                         </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody className="divide-y divide-border">
+                                        {filteredRecords.length === 0 ? (
+                                            <tr>
+                                                <td colSpan={6} className="px-6 py-12 text-center text-muted-foreground">
+                                                    <div className="flex flex-col items-center justify-center gap-2">
+                                                        <Search size={32} className="opacity-30" />
+                                                        <p className="font-semibold text-sm">No work orders match the search or filter criteria</p>
+                                                        {hasActiveFilters && (
+                                                            <Button variant="ghost" size="sm" onClick={resetFilters} className="mt-2 text-xs">
+                                                                Reset Filters
+                                                            </Button>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ) : (
+                                            filteredRecords.map((record: any) => (
+                                                <tr key={record.id} onClick={() => navigate(`/work-orders/${record.id}`)} className="group cursor-pointer hover:bg-muted/30 transition-colors">
+                                                    <td className="px-6 py-4 font-mono font-bold text-primary">#{record.wo_number || record.id.slice(0, 8)}</td>
+                                                    <td className="px-6 py-4 font-medium">
+                                                        <div>
+                                                            <span className="font-semibold text-foreground block">{record.asset_name || record.asset?.name || record.asset_id}</span>
+                                                            {(record.assigned_to || record.assigned_technician) && (
+                                                                <span className="text-[11px] text-muted-foreground">Assigned: {record.assigned_to || record.assigned_technician}</span>
+                                                            )}
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-6 py-4">
+                                                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold capitalize bg-muted/50 text-foreground border border-border/50">
+                                                            {record.wo_type ? record.wo_type.replace('_', ' ') : 'General'}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-6 py-4"><StatusBadge status={record.status} /></td>
+                                                    <td className="px-6 py-4 text-muted-foreground">{record.scheduled_date || '-'}</td>
+                                                    <td className="px-6 py-4 text-center">
+                                                        <div className="flex justify-center items-center gap-2">
+                                                            {/* View Action Button */}
+                                                            <Button
+                                                                size="sm"
+                                                                variant="outline"
+                                                                leftIcon={<Eye size={14} />}
+                                                                onClick={(e) => { e.stopPropagation(); navigate(`/work-orders/${record.id}`); }}
+                                                                className="rounded-xl text-xs hover:bg-primary/20 hover:text-primary hover:border-primary/50 transition-all"
+                                                            >
+                                                                View
+                                                            </Button>
+                                                            {/* Edit Action Button */}
+                                                            <ActionIcon
+                                                                onClick={(e) => { e.stopPropagation(); handleEdit(record.id); }}
+                                                                variant="default"
+                                                                title="Edit Work Order"
+                                                                className="rounded-xl hover:bg-amber-500/20 hover:text-amber-400 w-8 h-8 border border-border transition-all"
+                                                            >
+                                                                <Edit size={14} />
+                                                            </ActionIcon>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     ) : (
                         /* Kanban Board View for Active & Planned */

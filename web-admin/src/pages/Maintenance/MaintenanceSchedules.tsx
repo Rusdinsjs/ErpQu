@@ -1,9 +1,9 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { maintenanceApi, type MaintenanceSchedule, type CreateMaintenanceScheduleRequest } from '../../api/maintenance';
 import { assetApi } from '../../api/assets';
-import { Plus, Calendar, Gauge, Wrench, Clock, CheckCircle, Play } from 'lucide-react';
+import { Plus, Calendar, Gauge, Wrench, Clock, CheckCircle, Play, Eye, Filter, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import {
     Card,
     Button,
@@ -11,13 +11,22 @@ import {
     Modal,
     StatusBadge,
     ActionIcon,
-    TableSkeleton
+    TableSkeleton,
+    SearchInput,
+    Select,
 } from '../../components/ui';
 import { showToast } from '../../components/ui/Toast';
 
 const MaintenanceSchedules: React.FC = () => {
     const queryClient = useQueryClient();
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [viewModalOpen, setViewModalOpen] = useState(false);
+    const [selectedSchedule, setSelectedSchedule] = useState<MaintenanceSchedule | null>(null);
+
+    const [search, setSearch] = useState('');
+    const [statusFilter, setStatusFilter] = useState('all');
+    const [sortField, setSortField] = useState<'title' | 'asset_name' | 'next_run_date' | 'is_active'>('next_run_date');
+    const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
     // Form state
     const [formData, setFormData] = useState<CreateMaintenanceScheduleRequest>({
@@ -77,10 +86,44 @@ const MaintenanceSchedules: React.FC = () => {
         }
     };
 
+    const handleSort = (field: 'title' | 'asset_name' | 'next_run_date' | 'is_active') => {
+        if (sortField === field) {
+            setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+        } else {
+            setSortField(field);
+            setSortDirection('asc');
+        }
+    };
+
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         createMutation.mutate(formData);
     };
+
+    const filteredSchedules = useMemo(() => {
+        return (schedules as MaintenanceSchedule[]).filter((s: MaintenanceSchedule) => {
+            if (search.trim()) {
+                const query = search.toLowerCase().trim();
+                const matches = (s.title || '').toLowerCase().includes(query) ||
+                    (s.asset_name || '').toLowerCase().includes(query) ||
+                    (s.description || '').toLowerCase().includes(query);
+                if (!matches) return false;
+            }
+
+            if (statusFilter === 'active' && !s.is_active) return false;
+            if (statusFilter === 'inactive' && s.is_active) return false;
+
+            return true;
+        }).sort((a: MaintenanceSchedule, b: MaintenanceSchedule) => {
+            let valA: any = a[sortField] ?? '';
+            let valB: any = b[sortField] ?? '';
+            if (typeof valA === 'string') valA = valA.toLowerCase();
+            if (typeof valB === 'string') valB = valB.toLowerCase();
+            if (valA < valB) return sortDirection === 'asc' ? -1 : 1;
+            if (valA > valB) return sortDirection === 'asc' ? 1 : -1;
+            return 0;
+        });
+    }, [schedules, search, statusFilter, sortField, sortDirection]);
 
     // Stats
     const totalSchedules = schedules.length;
@@ -164,26 +207,86 @@ const MaintenanceSchedules: React.FC = () => {
                 </Card>
             </div>
 
-            {/* List */}
-            <Card className="overflow-hidden p-0 border-border bg-card/60 backdrop-blur-xl shadow-2xl rounded-3xl">
-                <div className="overflow-x-auto">
+            {/* List Card */}
+            <Card className="overflow-hidden p-6 border-border bg-card/60 backdrop-blur-xl shadow-2xl rounded-3xl space-y-4">
+                {/* Search & Filter Toolbar */}
+                <div className="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
+                    <div className="relative max-w-md flex-1">
+                        <SearchInput
+                            value={search}
+                            onChange={setSearch}
+                            placeholder="Search schedule title, description or asset..."
+                        />
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Filter size={14} className="text-primary" />
+                        <Select
+                            value={statusFilter}
+                            onChange={setStatusFilter}
+                            options={[
+                                { value: 'all', label: 'All Status' },
+                                { value: 'active', label: 'Active Only' },
+                                { value: 'inactive', label: 'Inactive Only' },
+                            ]}
+                            className="w-40 text-xs"
+                        />
+                    </div>
+                </div>
+
+                <div className="overflow-x-auto rounded-2xl border border-border">
                     {isLoading ? (
-                        <div className="p-6"><TableSkeleton rows={5} cols={5} /></div>
+                        <div className="p-6"><TableSkeleton rows={5} cols={7} /></div>
                     ) : (
                         <Table className="border-none text-sm w-full text-left text-foreground">
                             <TableHead className="bg-muted/30 border-b border-border">
                                 <TableRow>
-                                    <TableTh className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Title</TableTh>
-                                    <TableTh className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Asset</TableTh>
+                                    <TableTh onClick={() => handleSort('title')} className="px-6 py-4 cursor-pointer hover:text-white transition-colors">
+                                        <div className="flex items-center gap-1.5">
+                                            <span>Title</span>
+                                            {sortField === 'title' ? (
+                                                sortDirection === 'asc' ? <ArrowUp size={12} className="text-primary" /> : <ArrowDown size={12} className="text-primary" />
+                                            ) : (
+                                                <ArrowUpDown size={12} className="opacity-40" />
+                                            )}
+                                        </div>
+                                    </TableTh>
+                                    <TableTh onClick={() => handleSort('asset_name')} className="px-6 py-4 cursor-pointer hover:text-white transition-colors">
+                                        <div className="flex items-center gap-1.5">
+                                            <span>Asset</span>
+                                            {sortField === 'asset_name' ? (
+                                                sortDirection === 'asc' ? <ArrowUp size={12} className="text-primary" /> : <ArrowDown size={12} className="text-primary" />
+                                            ) : (
+                                                <ArrowUpDown size={12} className="opacity-40" />
+                                            )}
+                                        </div>
+                                    </TableTh>
                                     <TableTh className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Frequency</TableTh>
                                     <TableTh className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Last Run</TableTh>
-                                    <TableTh className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Next Due</TableTh>
-                                    <TableTh className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Status</TableTh>
+                                    <TableTh onClick={() => handleSort('next_run_date')} className="px-6 py-4 cursor-pointer hover:text-white transition-colors">
+                                        <div className="flex items-center gap-1.5">
+                                            <span>Next Due</span>
+                                            {sortField === 'next_run_date' ? (
+                                                sortDirection === 'asc' ? <ArrowUp size={12} className="text-primary" /> : <ArrowDown size={12} className="text-primary" />
+                                            ) : (
+                                                <ArrowUpDown size={12} className="opacity-40" />
+                                            )}
+                                        </div>
+                                    </TableTh>
+                                    <TableTh onClick={() => handleSort('is_active')} className="px-6 py-4 cursor-pointer hover:text-white transition-colors">
+                                        <div className="flex items-center gap-1.5">
+                                            <span>Status</span>
+                                            {sortField === 'is_active' ? (
+                                                sortDirection === 'asc' ? <ArrowUp size={12} className="text-primary" /> : <ArrowDown size={12} className="text-primary" />
+                                            ) : (
+                                                <ArrowUpDown size={12} className="opacity-40" />
+                                            )}
+                                        </div>
+                                    </TableTh>
                                     <TableTh align="center" className="px-6 py-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground text-center">Actions</TableTh>
                                 </TableRow>
                             </TableHead>
                             <TableBody className="divide-y divide-border/50">
-                                {schedules.map((schedule: MaintenanceSchedule) => (
+                                {filteredSchedules.map((schedule: MaintenanceSchedule) => (
                                     <TableRow key={schedule.id} className="hover:bg-muted/20 transition-colors group">
                                         <TableTd className="px-6 py-4">
                                             <div className="font-bold text-foreground">{schedule.title}</div>
@@ -217,7 +320,7 @@ const MaintenanceSchedules: React.FC = () => {
                                             <StatusBadge status={schedule.is_active ? 'active' : 'inactive'} className="px-3 py-1 shadow-sm text-[10px] uppercase font-black tracking-widest" />
                                         </TableTd>
                                         <TableTd align="center" className="px-6 py-4 text-center">
-                                            <div className="flex justify-center gap-2 opacity-50 group-hover:opacity-100 transition-opacity">
+                                            <div className="flex justify-center items-center gap-1.5 opacity-80 group-hover:opacity-100 transition-opacity">
                                                 <ActionIcon
                                                     variant="success"
                                                     title="Run Now"
@@ -227,17 +330,24 @@ const MaintenanceSchedules: React.FC = () => {
                                                 >
                                                     <Play size={14} />
                                                 </ActionIcon>
-                                                <ActionIcon variant="default" title="Edit" className="w-8 h-8 bg-muted hover:bg-primary text-muted-foreground hover:text-white">
+                                                <ActionIcon
+                                                    onClick={() => { setSelectedSchedule(schedule); setViewModalOpen(true); }}
+                                                    title="View Details"
+                                                    className="w-8 h-8 bg-muted hover:bg-cyan-500 text-muted-foreground hover:text-white"
+                                                >
+                                                    <Eye size={14} />
+                                                </ActionIcon>
+                                                <ActionIcon variant="default" title="Edit Schedule" className="w-8 h-8 bg-muted hover:bg-primary text-muted-foreground hover:text-white">
                                                     <Wrench size={14} />
                                                 </ActionIcon>
                                             </div>
                                         </TableTd>
                                     </TableRow>
                                 ))}
-                                {schedules.length === 0 && (
+                                {filteredSchedules.length === 0 && (
                                     <TableRow>
                                         <TableTd colSpan={7}>
-                                            <TableEmpty message="No maintenance schedules found." colSpan={7} />
+                                            <TableEmpty message="No maintenance schedules found matching your criteria." colSpan={7} />
                                         </TableTd>
                                     </TableRow>
                                 )}
@@ -246,6 +356,48 @@ const MaintenanceSchedules: React.FC = () => {
                     )}
                 </div>
             </Card>
+
+            {/* View Schedule Modal */}
+            <Modal
+                isOpen={viewModalOpen}
+                onClose={() => setViewModalOpen(false)}
+                title="Maintenance Schedule Details"
+            >
+                {selectedSchedule && (
+                    <div className="p-6 space-y-4 text-sm">
+                        <div>
+                            <p className="text-xs text-muted-foreground uppercase font-bold">Schedule Title</p>
+                            <p className="text-lg font-bold text-white mt-1">{selectedSchedule.title}</p>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <p className="text-xs text-muted-foreground uppercase font-bold">Target Asset</p>
+                                <span className="text-primary font-semibold mt-1 block">{selectedSchedule.asset_name || 'Unknown'}</span>
+                            </div>
+                            <div>
+                                <p className="text-xs text-muted-foreground uppercase font-bold">Frequency</p>
+                                <span className="text-slate-300 mt-1 block uppercase font-mono">Every {selectedSchedule.interval_value} {selectedSchedule.interval_unit}</span>
+                            </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <p className="text-xs text-muted-foreground uppercase font-bold">Last Run Date</p>
+                                <span className="font-mono text-slate-300 mt-1 block">{selectedSchedule.last_run_date || 'Never'}</span>
+                            </div>
+                            <div>
+                                <p className="text-xs text-muted-foreground uppercase font-bold">Next Due Date</p>
+                                <span className="font-mono text-cyan-400 font-bold mt-1 block">{selectedSchedule.next_run_date || 'Pending'}</span>
+                            </div>
+                        </div>
+                        {selectedSchedule.description && (
+                            <div>
+                                <p className="text-xs text-muted-foreground uppercase font-bold">Description</p>
+                                <p className="text-slate-300 mt-1">{selectedSchedule.description}</p>
+                            </div>
+                        )}
+                    </div>
+                )}
+            </Modal>
 
             {/* Create Modal */}
             <Modal

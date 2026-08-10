@@ -1,6 +1,6 @@
 // Clients Page - Pure Tailwind
-import { useState } from 'react';
-import { Plus, Search, Edit, Trash2, Eye, Building2 } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { Plus, Edit, Trash2, Eye, Building2, ArrowUpDown, ArrowUp, ArrowDown, Filter } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { clientApi } from '../api/client-management';
 import type { Client } from '../api/client-management';
@@ -12,6 +12,7 @@ import {
     ActionIcon,
     Modal,
     Input,
+    Select,
     LoadingOverlay,
     useToast,
     SearchInput,
@@ -21,6 +22,10 @@ export default function Clients() {
     const queryClient = useQueryClient();
     const { success, error: showError } = useToast();
     const [search, setSearch] = useState('');
+    const [statusFilter, setStatusFilter] = useState('all');
+    const [sortField, setSortField] = useState<'client_code' | 'name' | 'email' | 'is_active'>('name');
+    const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+
     const [modalOpen, setModalOpen] = useState(false);
     const [viewModalOpen, setViewModalOpen] = useState(false);
     const [selectedClient, setSelectedClient] = useState<Client | null>(null);
@@ -168,6 +173,15 @@ export default function Clients() {
         }
     };
 
+    const handleSort = (field: 'client_code' | 'name' | 'email' | 'is_active') => {
+        if (sortField === field) {
+            setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+        } else {
+            setSortField(field);
+            setSortDirection('asc');
+        }
+    };
+
     const clientList: Client[] = Array.isArray(clientsResponse)
         ? clientsResponse
         : Array.isArray(clientsResponse?.data)
@@ -178,11 +192,31 @@ export default function Clients() {
         ? clientsResponse.items
         : [];
 
-    const filteredClients = clientList.filter((c: any) =>
-        c.name?.toLowerCase().includes(search.toLowerCase()) ||
-        c.client_code?.toLowerCase().includes(search.toLowerCase()) ||
-        c.company_name?.toLowerCase().includes(search.toLowerCase())
-    );
+    const filteredClients = useMemo(() => {
+        return clientList.filter((c: any) => {
+            if (search.trim()) {
+                const query = search.toLowerCase().trim();
+                const matches = (c.name || '').toLowerCase().includes(query) ||
+                    (c.client_code || '').toLowerCase().includes(query) ||
+                    (c.company_name || '').toLowerCase().includes(query) ||
+                    (c.email || '').toLowerCase().includes(query);
+                if (!matches) return false;
+            }
+
+            if (statusFilter === 'active' && !c.is_active) return false;
+            if (statusFilter === 'inactive' && c.is_active) return false;
+
+            return true;
+        }).sort((a: any, b: any) => {
+            let valA = a[sortField] ?? '';
+            let valB = b[sortField] ?? '';
+            if (typeof valA === 'string') valA = valA.toLowerCase();
+            if (typeof valB === 'string') valB = valB.toLowerCase();
+            if (valA < valB) return sortDirection === 'asc' ? -1 : 1;
+            if (valA > valB) return sortDirection === 'asc' ? 1 : -1;
+            return 0;
+        });
+    }, [clientList, search, statusFilter, sortField, sortDirection]);
 
     return (
         <div className="space-y-4">
@@ -197,13 +231,26 @@ export default function Clients() {
             </div>
 
             <Card padding="lg">
-                {/* Search */}
-                <div className="mb-4">
-                    <div className="relative max-w-md">
+                {/* Search and Filters */}
+                <div className="mb-4 flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
+                    <div className="relative max-w-md flex-1">
                         <SearchInput
                             value={search}
                             onChange={setSearch}
                             placeholder="Search by name, code or company..."
+                        />
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Filter size={14} className="text-primary" />
+                        <Select
+                            value={statusFilter}
+                            onChange={setStatusFilter}
+                            options={[
+                                { value: 'all', label: 'All Status' },
+                                { value: 'active', label: 'Active Only' },
+                                { value: 'inactive', label: 'Inactive Only' },
+                            ]}
+                            className="w-40 text-xs"
                         />
                     </div>
                 </div>
@@ -214,10 +261,46 @@ export default function Clients() {
                     <Table>
                         <TableHead>
                             <TableRow>
-                                <TableTh>Code</TableTh>
-                                <TableTh>Name / Company</TableTh>
-                                <TableTh>Contact</TableTh>
-                                <TableTh>Status</TableTh>
+                                <TableTh onClick={() => handleSort('client_code')} className="cursor-pointer hover:text-white transition-colors">
+                                    <div className="flex items-center gap-1.5">
+                                        <span>Code</span>
+                                        {sortField === 'client_code' ? (
+                                            sortDirection === 'asc' ? <ArrowUp size={12} className="text-cyan-400" /> : <ArrowDown size={12} className="text-cyan-400" />
+                                        ) : (
+                                            <ArrowUpDown size={12} className="opacity-40" />
+                                        )}
+                                    </div>
+                                </TableTh>
+                                <TableTh onClick={() => handleSort('name')} className="cursor-pointer hover:text-white transition-colors">
+                                    <div className="flex items-center gap-1.5">
+                                        <span>Name / Company</span>
+                                        {sortField === 'name' ? (
+                                            sortDirection === 'asc' ? <ArrowUp size={12} className="text-cyan-400" /> : <ArrowDown size={12} className="text-cyan-400" />
+                                        ) : (
+                                            <ArrowUpDown size={12} className="opacity-40" />
+                                        )}
+                                    </div>
+                                </TableTh>
+                                <TableTh onClick={() => handleSort('email')} className="cursor-pointer hover:text-white transition-colors">
+                                    <div className="flex items-center gap-1.5">
+                                        <span>Contact</span>
+                                        {sortField === 'email' ? (
+                                            sortDirection === 'asc' ? <ArrowUp size={12} className="text-cyan-400" /> : <ArrowDown size={12} className="text-cyan-400" />
+                                        ) : (
+                                            <ArrowUpDown size={12} className="opacity-40" />
+                                        )}
+                                    </div>
+                                </TableTh>
+                                <TableTh onClick={() => handleSort('is_active')} className="cursor-pointer hover:text-white transition-colors">
+                                    <div className="flex items-center gap-1.5">
+                                        <span>Status</span>
+                                        {sortField === 'is_active' ? (
+                                            sortDirection === 'asc' ? <ArrowUp size={12} className="text-cyan-400" /> : <ArrowDown size={12} className="text-cyan-400" />
+                                        ) : (
+                                            <ArrowUpDown size={12} className="opacity-40" />
+                                        )}
+                                    </div>
+                                </TableTh>
                                 <TableTh align="center">Actions</TableTh>
                             </TableRow>
                         </TableHead>

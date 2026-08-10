@@ -1,6 +1,6 @@
 // Loans Page - Pure Tailwind
 import { useEffect, useState, useMemo } from 'react';
-import { Plus, Eye, Check, X, Hand, HandMetal, Search, Briefcase, Clock, AlertTriangle, Camera } from 'lucide-react';
+import { Plus, Eye, Check, X, Hand, HandMetal, Briefcase, Clock, AlertTriangle, Camera, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { loanApi, type Loan } from '../api/loan';
 import { assetApi } from '../api/assets';
 import { employeeApi, type Employee } from '../api/employee';
@@ -52,6 +52,9 @@ export default function Loans() {
     const [search, setSearch] = useState('');
     const [borrowerType, setBorrowerType] = useState<'self' | 'employee'>('self');
 
+    const [sortField, setSortField] = useState<'asset_name' | 'loan_date' | 'expected_return_date' | 'status'>('loan_date');
+    const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
+
     // Modals
     const [createModalOpen, setCreateModalOpen] = useState(false);
     const [detailModalOpen, setDetailModalOpen] = useState(false);
@@ -98,6 +101,15 @@ export default function Loans() {
         }
     };
 
+    const handleSort = (field: 'asset_name' | 'loan_date' | 'expected_return_date' | 'status') => {
+        if (sortField === field) {
+            setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+        } else {
+            setSortField(field);
+            setSortDirection('asc');
+        }
+    };
+
     const stats = useMemo(() => ({
         total: loans.length,
         pending: loans.filter(l => l.status === 'requested').length,
@@ -111,8 +123,20 @@ export default function Loans() {
             const borrowerName = (loan.employee_name || loan.borrower_name || '').toLowerCase();
             const query = search.toLowerCase();
             return assetName.includes(query) || borrowerName.includes(query);
+        }).sort((a: any, b: any) => {
+            let valA = a[sortField] ?? '';
+            let valB = b[sortField] ?? '';
+            if (sortField === 'asset_name') {
+                valA = a.asset_name || getAssetName(a.asset_id);
+                valB = b.asset_name || getAssetName(b.asset_id);
+            }
+            if (typeof valA === 'string') valA = valA.toLowerCase();
+            if (typeof valB === 'string') valB = valB.toLowerCase();
+            if (valA < valB) return sortDirection === 'asc' ? -1 : 1;
+            if (valA > valB) return sortDirection === 'asc' ? 1 : -1;
+            return 0;
         });
-    }, [loans, search, assets]);
+    }, [loans, search, assets, sortField, sortDirection]);
 
     const handleCreate = async () => {
         if (!newLoan.asset_id) {
@@ -308,11 +332,47 @@ export default function Loans() {
                     <Table>
                         <TableHead>
                             <TableRow>
-                                <TableTh>Aset / Peminjam</TableTh>
-                                <TableTh>Tanggal Pinjam</TableTh>
-                                <TableTh>Batas Kembali</TableTh>
+                                <TableTh onClick={() => handleSort('asset_name')} className="cursor-pointer hover:text-white transition-colors">
+                                    <div className="flex items-center gap-1.5">
+                                        <span>Aset / Peminjam</span>
+                                        {sortField === 'asset_name' ? (
+                                            sortDirection === 'asc' ? <ArrowUp size={12} className="text-cyan-400" /> : <ArrowDown size={12} className="text-cyan-400" />
+                                        ) : (
+                                            <ArrowUpDown size={12} className="opacity-40" />
+                                        )}
+                                    </div>
+                                </TableTh>
+                                <TableTh onClick={() => handleSort('loan_date')} className="cursor-pointer hover:text-white transition-colors">
+                                    <div className="flex items-center gap-1.5">
+                                        <span>Tanggal Pinjam</span>
+                                        {sortField === 'loan_date' ? (
+                                            sortDirection === 'asc' ? <ArrowUp size={12} className="text-cyan-400" /> : <ArrowDown size={12} className="text-cyan-400" />
+                                        ) : (
+                                            <ArrowUpDown size={12} className="opacity-40" />
+                                        )}
+                                    </div>
+                                </TableTh>
+                                <TableTh onClick={() => handleSort('expected_return_date')} className="cursor-pointer hover:text-white transition-colors">
+                                    <div className="flex items-center gap-1.5">
+                                        <span>Batas Kembali</span>
+                                        {sortField === 'expected_return_date' ? (
+                                            sortDirection === 'asc' ? <ArrowUp size={12} className="text-cyan-400" /> : <ArrowDown size={12} className="text-cyan-400" />
+                                        ) : (
+                                            <ArrowUpDown size={12} className="opacity-40" />
+                                        )}
+                                    </div>
+                                </TableTh>
                                 <TableTh>Tgl Dikembalikan</TableTh>
-                                <TableTh>Status</TableTh>
+                                <TableTh onClick={() => handleSort('status')} className="cursor-pointer hover:text-white transition-colors">
+                                    <div className="flex items-center gap-1.5">
+                                        <span>Status</span>
+                                        {sortField === 'status' ? (
+                                            sortDirection === 'asc' ? <ArrowUp size={12} className="text-cyan-400" /> : <ArrowDown size={12} className="text-cyan-400" />
+                                        ) : (
+                                            <ArrowUpDown size={12} className="opacity-40" />
+                                        )}
+                                    </div>
+                                </TableTh>
                                 <TableTh align="center">Tindakan</TableTh>
                             </TableRow>
                         </TableHead>

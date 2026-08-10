@@ -1,6 +1,6 @@
 // Users Page - Pure Tailwind
 import { useEffect, useState } from 'react';
-import { Edit, Trash2, Link, UserCheck, Eye } from 'lucide-react';
+import { Edit, Trash2, Link, UserCheck, Eye, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { usersApi, type UserSummary, type UpdateUserRequest } from '../api/users';
 import { departmentApi, type Department } from '../api/departments';
 import { getImageUrl } from '../utils/image';
@@ -15,6 +15,7 @@ import {
     Select,
     LoadingOverlay,
     useToast,
+    SearchInput,
 } from '../components/ui';
 
 interface Role {
@@ -40,11 +41,14 @@ export default function Users() {
     const [selectedUser, setSelectedUser] = useState<UserSummary | null>(null);
     const [editFormData, setEditFormData] = useState<UpdateUserRequest>({});
 
-    // Filters
+    // Filters & Search & Sort
+    const [search, setSearch] = useState('');
     const [filterRole, setFilterRole] = useState<string>('all');
     const [filterDepartment, setFilterDepartment] = useState<string>('all');
     const [filterStatus, setFilterStatus] = useState<string>('all');
     const [filterLinked, setFilterLinked] = useState<string>('all');
+    const [sortField, setSortField] = useState<'name' | 'email' | 'role_code' | 'department' | 'is_active'>('name');
+    const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
     const { success, error: showError } = useToast();
 
@@ -84,9 +88,28 @@ export default function Users() {
         }
     };
 
-    // Apply filters whenever users or filter values change
+    const handleSort = (field: 'name' | 'email' | 'role_code' | 'department' | 'is_active') => {
+        if (sortField === field) {
+            setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+        } else {
+            setSortField(field);
+            setSortDirection('asc');
+        }
+    };
+
+    // Apply search, filters & sort whenever values change
     useEffect(() => {
         let filtered = [...users];
+
+        if (search.trim()) {
+            const query = search.toLowerCase().trim();
+            filtered = filtered.filter(u =>
+                (u.name || '').toLowerCase().includes(query) ||
+                (u.email || '').toLowerCase().includes(query) ||
+                (u.employee_name || '').toLowerCase().includes(query) ||
+                (u.employee_nik || '').toLowerCase().includes(query)
+            );
+        }
 
         if (filterRole !== 'all') {
             filtered = filtered.filter(u => {
@@ -112,8 +135,18 @@ export default function Users() {
             filtered = filtered.filter(u => !u.employee_name && !u.employee_id);
         }
 
+        filtered.sort((a: any, b: any) => {
+            let valA = a[sortField] ?? '';
+            let valB = b[sortField] ?? '';
+            if (typeof valA === 'string') valA = valA.toLowerCase();
+            if (typeof valB === 'string') valB = valB.toLowerCase();
+            if (valA < valB) return sortDirection === 'asc' ? -1 : 1;
+            if (valA > valB) return sortDirection === 'asc' ? 1 : -1;
+            return 0;
+        });
+
         setFilteredUsers(filtered);
-    }, [users, filterRole, filterDepartment, filterStatus, filterLinked]);
+    }, [users, search, filterRole, filterDepartment, filterStatus, filterLinked, sortField, sortDirection]);
 
 
     const handleUpdate = async () => {
@@ -291,40 +324,49 @@ export default function Users() {
                 </div>
             </div>
 
-            {/* Filters */}
+            {/* Filters & Search */}
             <Card padding="md">
-                <div className="flex gap-3 flex-wrap items-end">
-                    <div className="min-w-[180px]">
-                        <Select
-                            label="Filter by Role"
-                            value={filterRole}
-                            onChange={setFilterRole}
-                            options={[{ value: 'all', label: 'All Roles' }, ...roleOptions]}
-                        />
-                    </div>
-                    <div className="min-w-[180px]">
-                        <Select
-                            label="Filter by Department"
-                            value={filterDepartment}
-                            onChange={setFilterDepartment}
-                            options={departmentOptions}
-                        />
-                    </div>
-                    <div className="min-w-[150px]">
-                        <Select
-                            label="Filter by Account Status"
-                            value={filterStatus}
-                            onChange={setFilterStatus}
-                            options={statusOptions}
-                        />
-                    </div>
-                    <div className="min-w-[180px]">
-                        <Select
-                            label="Filter by Employee Link"
-                            value={filterLinked}
-                            onChange={setFilterLinked}
-                            options={linkStatusOptions}
-                        />
+                <div className="flex gap-3 flex-wrap items-end justify-between">
+                    <div className="flex gap-3 flex-wrap items-end flex-1">
+                        <div className="min-w-[220px] flex-1 max-w-sm">
+                            <SearchInput
+                                value={search}
+                                onChange={setSearch}
+                                placeholder="Search by name, email, NIK..."
+                            />
+                        </div>
+                        <div className="min-w-[160px]">
+                            <Select
+                                label="Filter by Role"
+                                value={filterRole}
+                                onChange={setFilterRole}
+                                options={[{ value: 'all', label: 'All Roles' }, ...roleOptions]}
+                            />
+                        </div>
+                        <div className="min-w-[160px]">
+                            <Select
+                                label="Filter by Department"
+                                value={filterDepartment}
+                                onChange={setFilterDepartment}
+                                options={departmentOptions}
+                            />
+                        </div>
+                        <div className="min-w-[140px]">
+                            <Select
+                                label="Filter by Account Status"
+                                value={filterStatus}
+                                onChange={setFilterStatus}
+                                options={statusOptions}
+                            />
+                        </div>
+                        <div className="min-w-[160px]">
+                            <Select
+                                label="Filter by Employee Link"
+                                value={filterLinked}
+                                onChange={setFilterLinked}
+                                options={linkStatusOptions}
+                            />
+                        </div>
                     </div>
                     <div className="flex items-center pb-2">
                         <span className="text-sm text-muted-foreground font-medium">
@@ -340,11 +382,56 @@ export default function Users() {
                     <Table>
                         <TableHead>
                             <TableRow>
-                                <TableTh>Name</TableTh>
-                                <TableTh>Email</TableTh>
-                                <TableTh>Role</TableTh>
-                                <TableTh>Access Scope</TableTh>
-                                <TableTh>Login Status</TableTh>
+                                <TableTh onClick={() => handleSort('name')} className="cursor-pointer hover:text-white transition-colors">
+                                    <div className="flex items-center gap-1.5">
+                                        <span>Name</span>
+                                        {sortField === 'name' ? (
+                                            sortDirection === 'asc' ? <ArrowUp size={12} className="text-cyan-400" /> : <ArrowDown size={12} className="text-cyan-400" />
+                                        ) : (
+                                            <ArrowUpDown size={12} className="opacity-40" />
+                                        )}
+                                    </div>
+                                </TableTh>
+                                <TableTh onClick={() => handleSort('email')} className="cursor-pointer hover:text-white transition-colors">
+                                    <div className="flex items-center gap-1.5">
+                                        <span>Email</span>
+                                        {sortField === 'email' ? (
+                                            sortDirection === 'asc' ? <ArrowUp size={12} className="text-cyan-400" /> : <ArrowDown size={12} className="text-cyan-400" />
+                                        ) : (
+                                            <ArrowUpDown size={12} className="opacity-40" />
+                                        )}
+                                    </div>
+                                </TableTh>
+                                <TableTh onClick={() => handleSort('role_code')} className="cursor-pointer hover:text-white transition-colors">
+                                    <div className="flex items-center gap-1.5">
+                                        <span>Role</span>
+                                        {sortField === 'role_code' ? (
+                                            sortDirection === 'asc' ? <ArrowUp size={12} className="text-cyan-400" /> : <ArrowDown size={12} className="text-cyan-400" />
+                                        ) : (
+                                            <ArrowUpDown size={12} className="opacity-40" />
+                                        )}
+                                    </div>
+                                </TableTh>
+                                <TableTh onClick={() => handleSort('department')} className="cursor-pointer hover:text-white transition-colors">
+                                    <div className="flex items-center gap-1.5">
+                                        <span>Access Scope</span>
+                                        {sortField === 'department' ? (
+                                            sortDirection === 'asc' ? <ArrowUp size={12} className="text-cyan-400" /> : <ArrowDown size={12} className="text-cyan-400" />
+                                        ) : (
+                                            <ArrowUpDown size={12} className="opacity-40" />
+                                        )}
+                                    </div>
+                                </TableTh>
+                                <TableTh onClick={() => handleSort('is_active')} className="cursor-pointer hover:text-white transition-colors">
+                                    <div className="flex items-center gap-1.5">
+                                        <span>Login Status</span>
+                                        {sortField === 'is_active' ? (
+                                            sortDirection === 'asc' ? <ArrowUp size={12} className="text-cyan-400" /> : <ArrowDown size={12} className="text-cyan-400" />
+                                        ) : (
+                                            <ArrowUpDown size={12} className="opacity-40" />
+                                        )}
+                                    </div>
+                                </TableTh>
                                 <TableTh>Linked Employee</TableTh>
                                 <TableTh align="center">Action</TableTh>
                             </TableRow>
@@ -411,13 +498,16 @@ export default function Users() {
                                         ) : (
                                             <div className="flex items-center gap-2">
                                                 <span className="text-xs text-muted-foreground italic">Not Linked</span>
-                                                <button
+                                                <Button
+                                                    variant="ghost"
+                                                    size="xs"
                                                     onClick={() => openEditModal(user)}
-                                                    className="text-xs text-cyan-400 hover:text-cyan-300 hover:underline font-medium flex items-center gap-1 ml-1"
+                                                    className="text-cyan-400 hover:text-cyan-300 font-medium ml-1"
                                                     title="Link an Employee to this User"
+                                                    leftIcon={<Link size={12} />}
                                                 >
-                                                    <Link size={12} /> Link
-                                                </button>
+                                                    Link
+                                                </Button>
                                             </div>
                                         )}
                                     </TableTd>

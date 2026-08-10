@@ -1,8 +1,8 @@
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Shield, Settings, Plus, Edit2, Trash2, Save } from 'lucide-react';
-import { Card, Modal, Input, Button, useToast, Skeleton } from '../components/ui';
+import { Shield, Settings, Plus, Edit, Trash2, Save, Eye, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { Card, Modal, Input, Button, useToast, Skeleton, Table, TableHead, TableBody, TableRow, TableTh, TableTd, TableEmpty, SearchInput, Badge, ActionIcon } from '../components/ui';
 import { rbacApi } from '../api/rbac';
 
 import type { Role } from '../types';
@@ -12,14 +12,18 @@ import { FrappeRolePermissionManager } from '../components/Admin/FrappeRolePermi
 type TabType = 'overview' | 'frappe_matrix';
 
 
-// ... RolesList definition ...
-
-
 function RolesList() {
     const queryClient = useQueryClient();
     const { success, error: showError } = useToast();
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [viewModalOpen, setViewModalOpen] = useState(false);
+    const [viewingRole, setViewingRole] = useState<Role | null>(null);
     const [editingRole, setEditingRole] = useState<Role | null>(null);
+
+    const [search, setSearch] = useState('');
+    const [sortField, setSortField] = useState<'name' | 'code' | 'role_level'>('role_level');
+    const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+
     const [formData, setFormData] = useState({
         code: '',
         name: '',
@@ -68,6 +72,15 @@ function RolesList() {
         setFormData({ code: '', name: '', description: '', role_level: 5 });
     };
 
+    const handleSort = (field: 'name' | 'code' | 'role_level') => {
+        if (sortField === field) {
+            setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+        } else {
+            setSortField(field);
+            setSortDirection('asc');
+        }
+    };
+
     const handleEdit = (role: Role) => {
         setEditingRole(role);
         setFormData({
@@ -77,6 +90,11 @@ function RolesList() {
             role_level: role.role_level
         });
         setIsModalOpen(true);
+    };
+
+    const handleView = (role: Role) => {
+        setViewingRole(role);
+        setViewModalOpen(true);
     };
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -91,6 +109,24 @@ function RolesList() {
             createMutation.mutate(formData);
         }
     };
+
+    const filteredRoles = useMemo(() => {
+        return (roles as Role[]).filter((r: Role) => {
+            if (!search.trim()) return true;
+            const query = search.toLowerCase().trim();
+            return (r.name || '').toLowerCase().includes(query) ||
+                (r.code || '').toLowerCase().includes(query) ||
+                (r.description || '').toLowerCase().includes(query);
+        }).sort((a: Role, b: Role) => {
+            let valA: any = a[sortField] ?? '';
+            let valB: any = b[sortField] ?? '';
+            if (typeof valA === 'string') valA = valA.toLowerCase();
+            if (typeof valB === 'string') valB = valB.toLowerCase();
+            if (valA < valB) return sortDirection === 'asc' ? -1 : 1;
+            if (valA > valB) return sortDirection === 'asc' ? 1 : -1;
+            return 0;
+        });
+    }, [roles, search, sortField, sortDirection]);
 
     if (isLoading) return (
         <Card padding="lg">
@@ -124,54 +160,126 @@ function RolesList() {
                 </Button>
             </div>
 
-            <div className="grid gap-4">
-                {roles.map((role: Role) => (
-                    <div key={role.id} className="p-4 bg-slate-800/50 border border-slate-700 rounded-xl hover:border-slate-600 transition-all group">
-                        <div className="flex justify-between items-start">
-                            <div>
-                                <div className="flex items-center gap-3">
-                                    <span className="font-semibold text-white text-lg">{role.name}</span>
-                                    <span className="px-2 py-0.5 rounded-full bg-slate-700 text-xs text-slate-300 font-mono">
-                                        Level {role.role_level}
-                                    </span>
-                                    <span className="px-2 py-0.5 rounded-full bg-slate-700 text-xs text-muted-foreground font-mono">
-                                        {role.code}
-                                    </span>
-                                </div>
-                                <p className="text-sm text-muted-foreground mt-1">{role.description || 'No description provided'}</p>
+            {/* Search */}
+            <div className="mb-4 max-w-md">
+                <SearchInput
+                    value={search}
+                    onChange={setSearch}
+                    placeholder="Search role by name, code or description..."
+                />
+            </div>
+
+            <Table>
+                <TableHead>
+                    <TableRow>
+                        <TableTh onClick={() => handleSort('name')} className="cursor-pointer hover:text-white transition-colors">
+                            <div className="flex items-center gap-1.5">
+                                <span>Role Name</span>
+                                {sortField === 'name' ? (
+                                    sortDirection === 'asc' ? <ArrowUp size={12} className="text-cyan-400" /> : <ArrowDown size={12} className="text-cyan-400" />
+                                ) : (
+                                    <ArrowUpDown size={12} className="opacity-40" />
+                                )}
                             </div>
-                            <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    onClick={() => handleEdit(role)}
-                                    className="text-blue-400 hover:text-blue-300 hover:bg-blue-400/10"
-                                >
-                                    <Edit2 size={16} />
-                                </Button>
-                                <Button
-                                    size="sm"
-                                    variant="ghost"
-                                    onClick={() => {
-                                        if (confirm(`Delete role ${role.name}? This cannot be undone.`)) {
-                                            deleteMutation.mutate(role.id);
-                                        }
-                                    }}
-                                    className="text-red-400 hover:text-red-300 hover:bg-red-400/10"
-                                >
-                                    <Trash2 size={16} />
-                                </Button>
+                        </TableTh>
+                        <TableTh onClick={() => handleSort('code')} className="cursor-pointer hover:text-white transition-colors">
+                            <div className="flex items-center gap-1.5">
+                                <span>Code</span>
+                                {sortField === 'code' ? (
+                                    sortDirection === 'asc' ? <ArrowUp size={12} className="text-cyan-400" /> : <ArrowDown size={12} className="text-cyan-400" />
+                                ) : (
+                                    <ArrowUpDown size={12} className="opacity-40" />
+                                )}
+                            </div>
+                        </TableTh>
+                        <TableTh onClick={() => handleSort('role_level')} className="cursor-pointer hover:text-white transition-colors">
+                            <div className="flex items-center gap-1.5">
+                                <span>Role Level</span>
+                                {sortField === 'role_level' ? (
+                                    sortDirection === 'asc' ? <ArrowUp size={12} className="text-cyan-400" /> : <ArrowDown size={12} className="text-cyan-400" />
+                                ) : (
+                                    <ArrowUpDown size={12} className="opacity-40" />
+                                )}
+                            </div>
+                        </TableTh>
+                        <TableTh>Description</TableTh>
+                        <TableTh align="center">Actions</TableTh>
+                    </TableRow>
+                </TableHead>
+                <TableBody>
+                    {filteredRoles.length > 0 ? filteredRoles.map((role: Role) => (
+                        <TableRow key={role.id}>
+                            <TableTd>
+                                <span className="font-semibold text-white">{role.name}</span>
+                            </TableTd>
+                            <TableTd>
+                                <Badge variant="default" className="font-mono">{role.code}</Badge>
+                            </TableTd>
+                            <TableTd>
+                                <Badge variant={role.role_level === 1 ? 'danger' : role.role_level <= 3 ? 'warning' : 'info'}>
+                                    Level {role.role_level}
+                                </Badge>
+                            </TableTd>
+                            <TableTd>
+                                <span className="text-sm text-muted-foreground">{role.description || 'No description'}</span>
+                            </TableTd>
+                            <TableTd align="center">
+                                <div className="flex items-center justify-center gap-1.5">
+                                    <ActionIcon onClick={() => handleView(role)} title="View Details">
+                                        <Eye size={16} className="text-cyan-400" />
+                                    </ActionIcon>
+                                    <ActionIcon onClick={() => handleEdit(role)} title="Edit Role">
+                                        <Edit size={16} className="text-amber-400" />
+                                    </ActionIcon>
+                                    <ActionIcon
+                                        variant="danger"
+                                        title="Delete Role"
+                                        onClick={() => {
+                                            if (confirm(`Delete role ${role.name}? This cannot be undone.`)) {
+                                                deleteMutation.mutate(role.id);
+                                            }
+                                        }}
+                                    >
+                                        <Trash2 size={16} className="text-rose-400" />
+                                    </ActionIcon>
+                                </div>
+                            </TableTd>
+                        </TableRow>
+                    )) : (
+                        <TableEmpty colSpan={5} message="No roles found" />
+                    )}
+                </TableBody>
+            </Table>
+
+            {/* View Modal */}
+            <Modal
+                isOpen={viewModalOpen}
+                onClose={() => setViewModalOpen(false)}
+                title="Role Details"
+            >
+                {viewingRole && (
+                    <div className="p-6 space-y-4 text-sm">
+                        <div>
+                            <p className="text-xs text-muted-foreground uppercase font-bold">Role Name</p>
+                            <p className="text-lg font-bold text-white mt-1">{viewingRole.name}</p>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <p className="text-xs text-muted-foreground uppercase font-bold">Code</p>
+                                <Badge variant="default" className="font-mono mt-1">{viewingRole.code}</Badge>
+                            </div>
+                            <div>
+                                <p className="text-xs text-muted-foreground uppercase font-bold">Level</p>
+                                <Badge variant="info" className="mt-1">Level {viewingRole.role_level}</Badge>
                             </div>
                         </div>
-                    </div>
-                ))}
-
-                {roles.length === 0 && (
-                    <div className="text-center py-12 text-muted-foreground bg-slate-800/20 rounded-xl border border-dashed border-slate-700">
-                        No roles found. Create one to get started.
+                        <div>
+                            <p className="text-xs text-muted-foreground uppercase font-bold">Description</p>
+                            <p className="text-slate-300 mt-1">{viewingRole.description || 'No description provided.'}</p>
+                        </div>
                     </div>
                 )}
-            </div>
+            </Modal>
 
             <Modal
                 isOpen={isModalOpen}

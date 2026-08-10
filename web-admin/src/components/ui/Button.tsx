@@ -1,11 +1,10 @@
-// Common UI Components - Pure Tailwind
-// Button Component
+// Standardized Button Component - Pure Tailwind UI Design System
 import { type ReactNode, type ButtonHTMLAttributes } from 'react';
 
-interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
     children: ReactNode;
-    variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
-    size?: 'sm' | 'md' | 'lg';
+    variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'success' | 'warning' | 'cyan';
+    size?: 'xs' | 'sm' | 'md' | 'lg';
     loading?: boolean;
     leftIcon?: ReactNode;
     rightIcon?: ReactNode;
@@ -24,20 +23,24 @@ export function Button({
     disabled,
     ...props
 }: ButtonProps) {
-    const baseStyles = 'inline-flex items-center justify-center gap-2 font-medium rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-background disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.95]';
+    const baseStyles = 'inline-flex items-center justify-center gap-2 font-semibold tracking-wide transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-background disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none active:scale-[0.97] select-none';
 
     const variants = {
-        primary: 'bg-primary text-primary-foreground hover:opacity-90 shadow-lg shadow-primary/10 focus:ring-primary',
-        secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80 focus:ring-secondary',
-        outline: 'border border-border hover:bg-accent text-foreground focus:ring-border',
-        ghost: 'hover:bg-accent text-muted-foreground hover:text-foreground focus:ring-accent',
-        danger: 'bg-destructive text-destructive-foreground hover:bg-destructive/90 focus:ring-destructive shadow-lg shadow-destructive/20',
+        primary: 'bg-primary text-primary-foreground hover:bg-primary/90 shadow-md shadow-primary/20 focus:ring-primary',
+        secondary: 'bg-slate-800 text-slate-200 hover:bg-slate-700 border border-slate-700/80 focus:ring-slate-700',
+        outline: 'border border-border bg-background/50 hover:bg-accent text-foreground focus:ring-border',
+        ghost: 'bg-transparent hover:bg-muted/80 text-muted-foreground hover:text-foreground focus:ring-accent',
+        danger: 'bg-rose-600 text-white hover:bg-rose-500 shadow-md shadow-rose-600/20 focus:ring-rose-600',
+        success: 'bg-emerald-600 text-white hover:bg-emerald-500 shadow-md shadow-emerald-600/20 focus:ring-emerald-600',
+        warning: 'bg-amber-500 text-slate-950 font-bold hover:bg-amber-400 shadow-md shadow-amber-500/20 focus:ring-amber-500',
+        cyan: 'bg-cyan-500 text-slate-950 font-bold hover:bg-cyan-400 shadow-md shadow-cyan-500/25 focus:ring-cyan-500',
     };
 
     const sizes = {
-        sm: 'px-3 py-1.5 text-sm',
-        md: 'px-5 py-2.5 text-sm', // Slightly larger touch target
-        lg: 'px-6 py-3 text-base',
+        xs: 'px-2.5 py-1 text-xs rounded-lg',
+        sm: 'px-3.5 py-1.5 text-xs rounded-xl font-semibold',
+        md: 'px-4.5 py-2.5 text-sm rounded-xl font-semibold',
+        lg: 'px-6 py-3 text-base rounded-2xl font-bold',
     };
 
     return (
@@ -47,10 +50,13 @@ export function Button({
             {...props}
         >
             {loading ? (
-                <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-            ) : leftIcon}
-            {children}
-            {!loading && rightIcon}
+                <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin shrink-0" />
+            ) : (
+                leftIcon && <span className="shrink-0 flex items-center">{leftIcon}</span>
+            )}
+            <span>{children}</span>
+            {!loading && rightIcon && <span className="shrink-0 flex items-center">{rightIcon}</span>}
         </button>
     );
 }
+
