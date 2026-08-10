@@ -56,7 +56,7 @@ const ContractForm: React.FC<ContractFormProps> = ({ onClose, onSuccess, contrac
 
     // Extract clients array from nested response structure
     // api.list returns AxiosResponse<PaginatedResponse<Client>>
-    const clients = clientsResponse?.data?.data || [];
+    const clients = Array.isArray(clientsResponse?.data) ? clientsResponse.data : (clientsResponse as any)?.data?.data || [];
 
     const createMutation = useMutation({
         mutationFn: contractApi.create,

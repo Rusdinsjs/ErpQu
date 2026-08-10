@@ -10,7 +10,7 @@ import {
     Calendar as CalendarIcon, ArrowLeftRight, TrendingUp,
     Wallet, ShoppingCart, Receipt, History, Wrench, Fuel, Shield, Layers,
     CheckSquare, Box, Sun, Moon, ShieldAlert,
-    Database, Mail
+    Database, Mail, ShoppingBag, Tag, Download, RefreshCw, Lock, CheckCircle2, DollarSign, BarChart2
 } from 'lucide-react';
 import { getImageUrl } from '../utils/image';
 import { PageLoading, Logo } from '../components/ui';
@@ -18,83 +18,10 @@ import { useQuery } from '@tanstack/react-query';
 import { settingsApi } from '../api/settings';
 import { useTheme } from '../contexts/ThemeContext';
 import { AIChatWidget } from '../components/AI/AIChatWidget';
+import { AdminContentRouter } from '../components/Admin/AdminContentRouter';
+import { AdminHeaderBar } from '../components/Admin/AdminHeaderBar';
 import type { MenuId, LaunchpadConfig } from '../config/launchpadConfig';
 import { MENU_TO_RESOURCE, MENU_LABELS, DEFAULT_LAUNCHPAD_CONFIG } from '../config/launchpadConfig';
-
-// Import all views
-const DashboardView = lazy(() => import('./Dashboard'));
-const AssetsView = lazy(() => import('./Assets/Assets'));
-const AssetDetailsView = lazy(() => import('./Assets/AssetDetails'));
-const CategoriesView = lazy(() => import('./Assets/Categories'));
-const WorkOrdersView = lazy(() => import('./WorkOrders/WorkOrders'));
-const WorkOrderDetailsView = lazy(() => import('./WorkOrders/WorkOrderDetails'));
-const ApprovalCenterView = lazy(() => import('./ApprovalCenter'));
-const UsersView = lazy(() => import('./Users'));
-const RolesView = lazy(() => import('./Roles'));
-const ProfileView = lazy(() => import('./Profile'));
-const ReportsView = lazy(() => import('./Reports/ReportCenter'));
-const AuditModeView = lazy(() => import('./AuditMode'));
-const AuditLogsView = lazy(() => import('./AuditLogs'));
-const AssetLifecycleView = lazy(() => import('./Assets/AssetLifecycle'));
-const ConversionsView = lazy(() => import('./Assets/Conversions'));
-const FuelView = lazy(() => import('./Fuel/FuelDashboard'));
-const RentalsView = lazy(() => import('./rentals/Rentals'));
-const RentalFormView = lazy(() => import('./rentals/RentalForm'));
-const RentalDetailView = lazy(() => import('./rentals/RentalDetail'));
-const ContractListView = lazy(() => import('./Contracts/Contracts')); // Added ContractList
-const ContractDetailView = lazy(() => import('./Contracts/ContractDetail')); // Added ContractDetail
-const ContractAnalyticsView = lazy(() => import('./Contracts/ContractAnalytics')); // Added ContractAnalytics
-const ContractTemplatesView = lazy(() => import('./Contracts/ContractTemplates')); // Added ContractTemplates
-const ClientsView = lazy(() => import('./Clients'));
-const LoansView = lazy(() => import('./Loans'));
-const LocationsView = lazy(() => import('./Assets/Locations'));
-const EmployeesView = lazy(() => import('./HR/Employees'));
-const DepartmentsView = lazy(() => import('./HR/Departments'));
-const AttendanceView = lazy(() => import('./HR/Attendance/AttendanceDashboard'));
-const LeaveDashboardView = lazy(() => import('./HR/Leaves/LeaveDashboard'));
-const ChartOfAccountsView = lazy(() => import('./Finance/ChartOfAccounts'));
-const JournalEntriesView = lazy(() => import('./Finance/JournalEntries'));
-const JournalEntryFormView = lazy(() => import('./Finance/JournalEntryForm'));
-const GeneralLedgerView = lazy(() => import('./Finance/GeneralLedger'));
-const TrialBalanceView = lazy(() => import('./Finance/TrialBalance'));
-const FinancialReportsView = lazy(() => import('./Finance/FinancialReports'));
-
-// Placeholder for new Kledo-style views (to be created)
-const CashBankView = lazy(() => import('./Finance/CashBank'));
-const SalesOverviewView = lazy(() => import('./Finance/SalesOverview'));
-const SalesInvoicesView = lazy(() => import('./Finance/SalesInvoices'));
-const SalesQuotesView = lazy(() => import('./Finance/SalesQuotes'));
-const SalesOrdersView = lazy(() => import('./Finance/SalesOrders'));
-const SalesShipmentsView = lazy(() => import('./Finance/SalesShipments'));
-const PurchaseOverviewView = lazy(() => import('./Finance/PurchaseOverview'));
-const PurchaseQuotesView = lazy(() => import('./Finance/PurchaseQuotes'));
-const PurchaseOrdersView = lazy(() => import('./Finance/PurchaseOrders'));
-const PurchaseShipmentsView = lazy(() => import('./Finance/PurchaseShipments'));
-const PurchaseBillsView = lazy(() => import('./Finance/PurchaseBills'));
-const MaintenanceTemplatesView = lazy(() => import('./Maintenance/MaintenanceTemplates'));
-const MaintenanceSchedulesView = lazy(() => import('./Maintenance/MaintenanceSchedules'));
-const MaintenanceTeamsView = lazy(() => import('./Maintenance/MaintenanceTeams'));
-const WorkflowBuilderView = lazy(() => import('./Settings/WorkflowBuilder').then(m => ({ default: m.WorkflowBuilder })));
-
-const SettingsView = lazy(() => import('./Settings'));
-const InventoryItemsView = lazy(() => import('./Inventory/InventoryItems'));
-const InventoryDetailView = lazy(() => import('./Inventory/InventoryDetail'));
-const InventoryCategoriesView = lazy(() => import('./Inventory/InventoryCategories'));
-const StockOpnameView = lazy(() => import('./Inventory/StockOpname'));
-const StockEntryView = lazy(() => import('./Inventory/StockEntry'));
-const MaterialRequestView = lazy(() => import('./Inventory/MaterialRequest'));
-const WarehousesView = lazy(() => import('./Inventory/Warehouses'));
-const PurchaseReceiptsView = lazy(() => import('./Inventory/PurchaseReceipts'));
-const QualityInspectionsView = lazy(() => import('./Operations/QualityInspections'));
-const DeliveryTripsView = lazy(() => import('./Operations/DeliveryTrips'));
-const TaxRenewalsView = lazy(() => import('./TaxRenewals/TaxRenewals'));
-
-const ExpensesView = lazy(() => import('./Finance/Expenses'));
-const AnalyticsDashboardView = lazy(() => import('./AnalyticsDashboard'));
-const MetadataEditorView = lazy(() => import('./Metadata/MetadataEditor'));
-const CompanyManagementView = lazy(() => import('./Company/CompanyManagement').then(m => ({ default: m.CompanyManagement })));
-const BranchView = lazy(() => import('./Organization/Branch'));
-const EmailAccountView = lazy(() => import('./Organization/EmailAccount'));
 
 // Define the available tabs
 type TabId =
@@ -110,6 +37,16 @@ type TabId =
     | 'purchase-receipt'     // New
     | 'quality-inspection'
     | 'delivery-trip'
+    | 'stock-workspace' | 'delivery-notes' | 'pick-lists' | 'landed-cost-vouchers' | 'stock-product-bundles'
+    | 'item-alternatives' | 'item-manufacturers' | 'manufacturers' | 'serial-numbers' | 'batches' | 'installation-notes'
+    | 'stock-settings' | 'brands' | 'item-attributes' | 'uoms' | 'uom-conversions' | 'stock-tax-templates'
+    | 'stock-ledger' | 'stock-balance' | 'stock-summary' | 'stock-ageing' | 'stock-projected-qty' | 'stock-analytics'
+    | 'batch-wise-balance' | 'serial-no-status' | 'item-shortage-report'
+    | 'accounting-workspace' | 'chart-of-accounts' | 'journal-entries-view' | 'payment-entries' | 'payment-reconciliation'
+    | 'bank-accounts' | 'bank-transactions' | 'bank-clearance' | 'cashier-closing' | 'cost-centers' | 'accounting-dimensions'
+    | 'budgets-view' | 'sales-tax-templates' | 'purchase-tax-templates-view' | 'tax-categories' | 'tax-rules'
+    | 'credit-notes' | 'debit-notes' | 'dunnings' | 'balance-sheet' | 'profit-loss' | 'cash-flow' | 'trial-balance'
+    | 'general-ledger-report' | 'ar-aging' | 'ap-aging'
     | 'locations'
     | 'work-orders'
     | 'rentals'
@@ -147,12 +84,69 @@ type TabId =
     | 'sales-orders'
     | 'sales-shipments'
     | 'sales-invoices'
+    | 'selling-workspace'
+    | 'customers'
+    | 'quotations'
+    | 'blanket-orders'
+    | 'sales-partners'
+    | 'sales-persons'
+    | 'pos-profiles'
+    | 'pos-settings'
+    | 'pos-opening'
+    | 'pos-closing'
+    | 'loyalty-programs'
+    | 'loyalty-points'
+    | 'items'
+    | 'item-prices'
+    | 'price-lists'
+    | 'item-groups'
+    | 'product-bundles'
+    | 'promotional-schemes'
+    | 'pricing-rules'
+    | 'shipping-rules'
+    | 'coupon-codes'
+    | 'selling-settings'
+    | 'terms-templates'
+    | 'tax-templates'
+    | 'utm-sources'
+    | 'customer-groups'
+    | 'contacts'
+    | 'addresses'
+    | 'territories'
+    | 'campaigns'
+    | 'sales-analytics'
+    | 'so-analysis'
+    | 'sales-funnel'
+    | 'so-trends'
+    | 'quotation-trends'
+    | 'customer-acquisition'
+    | 'inactive-customers'
+    | 'salesperson-summary'
+    | 'item-sales-history'
+    | 'customer-directory'
+    | 'packing-stock'
+    | 'pending-so-pr'
+    | 'delivery-trends'
+    | 'invoice-trends'
+    | 'customer-credit-balance'
+    | 'dormant-customers'
+    | 'partner-commissions'
+    | 'territory-target-variance'
+    | 'salesperson-target-variance'
+    | 'partner-target-variance'
     | 'purchases' // This now refers to the group
     | 'purchase-overview'
     | 'purchase-quotes'
     | 'purchase-orders'
     | 'purchase-shipments'
     | 'purchase-bills'
+    | 'buying-workspace' | 'material-requests' | 'rfqs' | 'supplier-quotations'
+    | 'buying-item-prices' | 'buying-price-lists' | 'buying-product-bundles' | 'buying-item-groups' | 'buying-promotional-schemes' | 'buying-pricing-rules'
+    | 'buying-settings' | 'purchase-tax-templates' | 'buying-terms-templates'
+    | 'suppliers' | 'supplier-groups' | 'supplier-contacts' | 'supplier-addresses'
+    | 'supplier-scorecards' | 'scorecard-variables' | 'scorecard-criteria' | 'scorecard-standings'
+    | 'purchase-analytics' | 'po-analysis' | 'item-consumption' | 'items-to-order-receive' | 'po-trends' | 'procurement-tracker'
+    | 'items-to-request' | 'item-purchase-history' | 'purchase-receipt-trends' | 'purchase-invoice-trends' | 'subcontract-materials' | 'subcontract-received' | 'rfq-comparison' | 'pr-to-rfq' | 'supplier-directory' | 'import-supplier-invoice'
     | 'maintenance-templates'
     | 'maintenance-schedules'
     | 'maintenance-teams'
@@ -240,13 +234,156 @@ const ALL_NAV_ITEMS: Record<string, NavItem> = {
     'loans': { id: 'loans', icon: HandMetal, label: 'Internal Loans', minLevel: 5 },
 
     'sales-invoices': { id: 'sales-invoices', icon: FileText, label: 'Sales Invoices', minLevel: 3 },
+    'selling-workspace': { id: 'selling-workspace', icon: ShoppingBag, label: 'Selling Workspace', minLevel: 4 },
+    'customers': { id: 'customers', icon: Users, label: 'Customers', minLevel: 4 },
+    'quotations': { id: 'quotations', icon: FileText, label: 'Quotations', minLevel: 4 },
+    'sales-orders': { id: 'sales-orders', icon: ShoppingCart, label: 'Sales Orders', minLevel: 4 },
+    'blanket-orders': { id: 'blanket-orders', icon: FileText, label: 'Blanket Orders', minLevel: 3 },
+    'sales-partners': { id: 'sales-partners', icon: Users, label: 'Sales Partners', minLevel: 3 },
+    'sales-persons': { id: 'sales-persons', icon: Users, label: 'Sales Persons', minLevel: 3 },
+    'pos-profiles': { id: 'pos-profiles', icon: Receipt, label: 'POS Profiles', minLevel: 3 },
+    'pos-settings': { id: 'pos-settings', icon: Settings, label: 'POS Settings', minLevel: 2 },
+    'pos-opening': { id: 'pos-opening', icon: Receipt, label: 'POS Opening Entry', minLevel: 4 },
+    'pos-closing': { id: 'pos-closing', icon: Receipt, label: 'POS Closing Entry', minLevel: 4 },
+    'loyalty-programs': { id: 'loyalty-programs', icon: Tag, label: 'Loyalty Programs', minLevel: 3 },
+    'loyalty-points': { id: 'loyalty-points', icon: Tag, label: 'Loyalty Points Entry', minLevel: 4 },
+    'items': { id: 'items', icon: Package, label: 'Items', minLevel: 4 },
+    'item-prices': { id: 'item-prices', icon: Tag, label: 'Item Prices', minLevel: 3 },
+    'price-lists': { id: 'price-lists', icon: Tag, label: 'Price Lists', minLevel: 3 },
+    'item-groups': { id: 'item-groups', icon: FolderTree, label: 'Item Groups', minLevel: 4 },
+    'product-bundles': { id: 'product-bundles', icon: Package, label: 'Product Bundles', minLevel: 3 },
+    'promotional-schemes': { id: 'promotional-schemes', icon: Tag, label: 'Promotional Schemes', minLevel: 3 },
+    'pricing-rules': { id: 'pricing-rules', icon: Tag, label: 'Pricing Rules', minLevel: 3 },
+    'shipping-rules': { id: 'shipping-rules', icon: Truck, label: 'Shipping Rules', minLevel: 3 },
+    'coupon-codes': { id: 'coupon-codes', icon: Tag, label: 'Coupon Codes', minLevel: 3 },
+    'selling-settings': { id: 'selling-settings', icon: Settings, label: 'Selling Settings', minLevel: 2 },
+    'terms-templates': { id: 'terms-templates', icon: FileText, label: 'Terms & Conditions', minLevel: 3 },
+    'tax-templates': { id: 'tax-templates', icon: Receipt, label: 'Sales Taxes Templates', minLevel: 3 },
+    'utm-sources': { id: 'utm-sources', icon: Tag, label: 'UTM Sources', minLevel: 3 },
+    'customer-groups': { id: 'customer-groups', icon: Users, label: 'Customer Groups', minLevel: 3 },
+    'contacts': { id: 'contacts', icon: Users, label: 'Contacts', minLevel: 4 },
+    'addresses': { id: 'addresses', icon: MapPin, label: 'Addresses', minLevel: 4 },
+    'territories': { id: 'territories', icon: MapPin, label: 'Territories', minLevel: 3 },
+    'campaigns': { id: 'campaigns', icon: Tag, label: 'Campaigns', minLevel: 3 },
+    'sales-analytics': { id: 'sales-analytics', icon: TrendingUp, label: 'Sales Analytics', minLevel: 3 },
+    'so-analysis': { id: 'so-analysis', icon: TrendingUp, label: 'Sales Order Analysis', minLevel: 3 },
+    'sales-funnel': { id: 'sales-funnel', icon: TrendingUp, label: 'Sales Funnel', minLevel: 3 },
+    'so-trends': { id: 'so-trends', icon: TrendingUp, label: 'Sales Order Trends', minLevel: 3 },
+    'quotation-trends': { id: 'quotation-trends', icon: TrendingUp, label: 'Quotation Trends', minLevel: 3 },
+    'customer-acquisition': { id: 'customer-acquisition', icon: TrendingUp, label: 'Customer Acquisition & Loyalty', minLevel: 3 },
+    'inactive-customers': { id: 'inactive-customers', icon: Users, label: 'Inactive Customers', minLevel: 3 },
+    'salesperson-summary': { id: 'salesperson-summary', icon: FileText, label: 'Sales Person Summary', minLevel: 3 },
+    'item-sales-history': { id: 'item-sales-history', icon: History, label: 'Item Sales History', minLevel: 3 },
+    'customer-directory': { id: 'customer-directory', icon: Users, label: 'Customer Directory', minLevel: 3 },
+    'packing-stock': { id: 'packing-stock', icon: Package, label: 'Available Stock for Packing', minLevel: 3 },
+    'pending-so-pr': { id: 'pending-so-pr', icon: ShoppingCart, label: 'Pending SO Items for PR', minLevel: 3 },
+    'delivery-trends': { id: 'delivery-trends', icon: Truck, label: 'Delivery Note Trends', minLevel: 3 },
+    'invoice-trends': { id: 'invoice-trends', icon: Receipt, label: 'Sales Invoice Trends', minLevel: 3 },
+    'customer-credit-balance': { id: 'customer-credit-balance', icon: Receipt, label: 'Customer Credit Balance', minLevel: 3 },
+    'dormant-customers': { id: 'dormant-customers', icon: Users, label: 'Customers Without Transactions', minLevel: 3 },
+    'partner-commissions': { id: 'partner-commissions', icon: Receipt, label: 'Sales Partners Commission', minLevel: 3 },
+    'territory-target-variance': { id: 'territory-target-variance', icon: TrendingUp, label: 'Territory Target Variance', minLevel: 3 },
+    'salesperson-target-variance': { id: 'salesperson-target-variance', icon: TrendingUp, label: 'Sales Person Target Variance', minLevel: 3 },
+    'partner-target-variance': { id: 'partner-target-variance', icon: TrendingUp, label: 'Sales Partner Target Variance', minLevel: 3 },
     'clients': { id: 'clients', icon: Building2, label: 'Clients / Partners', minLevel: 4 },
+
+    'buying-workspace': { id: 'buying-workspace', icon: ShoppingBag, label: 'Buying Workspace', minLevel: 4 },
+    'material-requests': { id: 'material-requests', icon: Package, label: 'Material Requests', minLevel: 4 },
+    'rfqs': { id: 'rfqs', icon: FileText, label: 'Requests for Quotation (RFQ)', minLevel: 4 },
+    'supplier-quotations': { id: 'supplier-quotations', icon: FileText, label: 'Supplier Quotations', minLevel: 4 },
+    'buying-item-prices': { id: 'buying-item-prices', icon: Tag, label: 'Item Prices (Buying)', minLevel: 3 },
+    'buying-price-lists': { id: 'buying-price-lists', icon: Tag, label: 'Price Lists (Buying)', minLevel: 3 },
+    'buying-product-bundles': { id: 'buying-product-bundles', icon: Package, label: 'Product Bundles', minLevel: 3 },
+    'buying-item-groups': { id: 'buying-item-groups', icon: FolderTree, label: 'Item Groups', minLevel: 3 },
+    'buying-promotional-schemes': { id: 'buying-promotional-schemes', icon: Tag, label: 'Promotional Schemes', minLevel: 3 },
+    'buying-pricing-rules': { id: 'buying-pricing-rules', icon: Tag, label: 'Pricing Rules', minLevel: 3 },
+    'buying-settings': { id: 'buying-settings', icon: Settings, label: 'Buying Settings', minLevel: 2 },
+    'purchase-tax-templates': { id: 'purchase-tax-templates', icon: Receipt, label: 'Purchase Taxes Templates', minLevel: 3 },
+    'buying-terms-templates': { id: 'buying-terms-templates', icon: FileText, label: 'Terms & Conditions', minLevel: 3 },
+    'suppliers': { id: 'suppliers', icon: Users, label: 'Suppliers (Vendors)', minLevel: 4 },
+    'supplier-groups': { id: 'supplier-groups', icon: Users, label: 'Supplier Groups', minLevel: 3 },
+    'supplier-contacts': { id: 'supplier-contacts', icon: Users, label: 'Supplier Contacts', minLevel: 4 },
+    'supplier-addresses': { id: 'supplier-addresses', icon: MapPin, label: 'Supplier Addresses', minLevel: 4 },
+    'supplier-scorecards': { id: 'supplier-scorecards', icon: ShieldAlert, label: 'Supplier Scorecard', minLevel: 3 },
+    'scorecard-variables': { id: 'scorecard-variables', icon: ShieldAlert, label: 'Scorecard Variables', minLevel: 3 },
+    'scorecard-criteria': { id: 'scorecard-criteria', icon: ShieldAlert, label: 'Scorecard Criteria', minLevel: 3 },
+    'scorecard-standings': { id: 'scorecard-standings', icon: ShieldAlert, label: 'Scorecard Standings', minLevel: 3 },
+    'purchase-analytics': { id: 'purchase-analytics', icon: TrendingUp, label: 'Purchase Analytics', minLevel: 3 },
+    'po-analysis': { id: 'po-analysis', icon: TrendingUp, label: 'Purchase Order Analysis', minLevel: 3 },
+    'item-consumption': { id: 'item-consumption', icon: TrendingUp, label: 'Item Wise Consumption', minLevel: 3 },
+    'items-to-order-receive': { id: 'items-to-order-receive', icon: ShoppingCart, label: 'Items to Order and Receive', minLevel: 3 },
+    'po-trends': { id: 'po-trends', icon: TrendingUp, label: 'Purchase Order Trends', minLevel: 3 },
+    'procurement-tracker': { id: 'procurement-tracker', icon: TrendingUp, label: 'Procurement Tracker', minLevel: 3 },
+    'items-to-request': { id: 'items-to-request', icon: Package, label: 'Items To Be Requested', minLevel: 3 },
+    'item-purchase-history': { id: 'item-purchase-history', icon: History, label: 'Item-wise Purchase History', minLevel: 3 },
+    'purchase-receipt-trends': { id: 'purchase-receipt-trends', icon: TrendingUp, label: 'Purchase Receipt Trends', minLevel: 3 },
+    'purchase-invoice-trends': { id: 'purchase-invoice-trends', icon: Receipt, label: 'Purchase Invoice Trends', minLevel: 3 },
+    'subcontract-materials': { id: 'subcontract-materials', icon: Package, label: 'Subcontracted Raw Materials', minLevel: 3 },
+    'subcontract-received': { id: 'subcontract-received', icon: Package, label: 'Subcontracted Item To Be Received', minLevel: 3 },
+    'rfq-comparison': { id: 'rfq-comparison', icon: FileText, label: 'Supplier Quotation Comparison', minLevel: 3 },
+    'pr-to-rfq': { id: 'pr-to-rfq', icon: FileText, label: 'Material Requests for Quote', minLevel: 3 },
+    'supplier-directory': { id: 'supplier-directory', icon: Users, label: 'Supplier Addresses & Contacts', minLevel: 3 },
+    'import-supplier-invoice': { id: 'import-supplier-invoice', icon: Download, label: 'Import Supplier Invoice', minLevel: 3 },
+
+    'stock-workspace': { id: 'stock-workspace', icon: Package, label: 'Stock Workspace', minLevel: 3 },
+    'delivery-notes': { id: 'delivery-notes', icon: Truck, label: 'Delivery Notes (Surat Jalan)', minLevel: 4 },
+    'pick-lists': { id: 'pick-lists', icon: FileText, label: 'Pick Lists', minLevel: 3 },
+    'landed-cost-vouchers': { id: 'landed-cost-vouchers', icon: Receipt, label: 'Landed Cost Vouchers', minLevel: 3 },
+    'stock-product-bundles': { id: 'stock-product-bundles', icon: Package, label: 'Product Bundles', minLevel: 3 },
+    'item-alternatives': { id: 'item-alternatives', icon: Package, label: 'Item Alternatives', minLevel: 3 },
+    'item-manufacturers': { id: 'item-manufacturers', icon: Package, label: 'Item Manufacturers', minLevel: 3 },
+    'manufacturers': { id: 'manufacturers', icon: Building2, label: 'Manufacturers', minLevel: 3 },
+    'serial-numbers': { id: 'serial-numbers', icon: Tag, label: 'Serial Numbers', minLevel: 3 },
+    'batches': { id: 'batches', icon: Tag, label: 'Batches', minLevel: 3 },
+    'installation-notes': { id: 'installation-notes', icon: FileText, label: 'Installation Notes', minLevel: 3 },
+    'stock-settings': { id: 'stock-settings', icon: Settings, label: 'Stock Settings', minLevel: 2 },
+    'brands': { id: 'brands', icon: Tag, label: 'Brands', minLevel: 3 },
+    'item-attributes': { id: 'item-attributes', icon: FolderTree, label: 'Item Attributes', minLevel: 3 },
+    'uoms': { id: 'uoms', icon: Package, label: 'Units of Measure (UOM)', minLevel: 3 },
+    'uom-conversions': { id: 'uom-conversions', icon: Package, label: 'UOM Conversion Factors', minLevel: 3 },
+    'stock-tax-templates': { id: 'stock-tax-templates', icon: Receipt, label: 'Item Tax Templates', minLevel: 3 },
+    'stock-ledger': { id: 'stock-ledger', icon: History, label: 'Stock Ledger', minLevel: 3 },
+    'stock-balance': { id: 'stock-balance', icon: Package, label: 'Stock Balance', minLevel: 3 },
+    'stock-summary': { id: 'stock-summary', icon: TrendingUp, label: 'Stock Summary', minLevel: 3 },
+    'stock-ageing': { id: 'stock-ageing', icon: Clock, label: 'Stock Ageing', minLevel: 3 },
+    'stock-projected-qty': { id: 'stock-projected-qty', icon: Package, label: 'Stock Projected Qty', minLevel: 3 },
+    'stock-analytics': { id: 'stock-analytics', icon: TrendingUp, label: 'Stock Analytics', minLevel: 3 },
+    'batch-wise-balance': { id: 'batch-wise-balance', icon: History, label: 'Batch-wise Balance History', minLevel: 3 },
+    'serial-no-status': { id: 'serial-no-status', icon: Tag, label: 'Serial No Status', minLevel: 3 },
+    'item-shortage-report': { id: 'item-shortage-report', icon: ShieldAlert, label: 'Item Shortage Report', minLevel: 3 },
 
     'finance': { id: 'finance', icon: FolderTree, label: 'Chart of Accounts', minLevel: 2 },
     'cash-bank': { id: 'cash-bank', icon: Wallet, label: 'Cash & Bank', minLevel: 2 },
     'expenses': { id: 'expenses', icon: Receipt, label: 'Expenses (Opex/Capex)', minLevel: 2 },
     'journal-entries': { id: 'journal-entries', icon: FileText, label: 'Journal Entries', minLevel: 2 },
     'financial-reports': { id: 'financial-reports', icon: TrendingUp, label: 'Reports', minLevel: 2 },
+
+    'accounting-workspace': { id: 'accounting-workspace', icon: Wallet, label: 'Accounting Workspace', minLevel: 2 },
+    'chart-of-accounts': { id: 'chart-of-accounts', icon: FolderTree, label: 'Chart of Accounts', minLevel: 2 },
+    'journal-entries-view': { id: 'journal-entries-view', icon: FileText, label: 'Journal Entry', minLevel: 2 },
+    'payment-entries': { id: 'payment-entries', icon: Receipt, label: 'Payment Entry', minLevel: 2 },
+    'payment-reconciliation': { id: 'payment-reconciliation', icon: RefreshCw, label: 'Payment Reconciliation', minLevel: 2 },
+    'bank-accounts': { id: 'bank-accounts', icon: Wallet, label: 'Bank Accounts', minLevel: 2 },
+    'bank-transactions': { id: 'bank-transactions', icon: TrendingUp, label: 'Bank Transactions', minLevel: 2 },
+    'bank-clearance': { id: 'bank-clearance', icon: CheckCircle2, label: 'Bank Clearance', minLevel: 2 },
+    'cashier-closing': { id: 'cashier-closing', icon: Lock, label: 'Cashier Closing Entry', minLevel: 2 },
+    'cost-centers': { id: 'cost-centers', icon: Building2, label: 'Cost Center', minLevel: 2 },
+    'accounting-dimensions': { id: 'accounting-dimensions', icon: Layers, label: 'Accounting Dimension', minLevel: 2 },
+    'budgets-view': { id: 'budgets-view', icon: DollarSign, label: 'Budget', minLevel: 2 },
+    'sales-tax-templates': { id: 'sales-tax-templates', icon: Receipt, label: 'Sales Taxes and Charges Template', minLevel: 2 },
+    'purchase-tax-templates-view': { id: 'purchase-tax-templates-view', icon: Receipt, label: 'Purchase Taxes and Charges Template', minLevel: 2 },
+    'tax-categories': { id: 'tax-categories', icon: Tag, label: 'Tax Category', minLevel: 2 },
+    'tax-rules': { id: 'tax-rules', icon: Settings, label: 'Tax Rule', minLevel: 2 },
+    'credit-notes': { id: 'credit-notes', icon: FileText, label: 'Credit Note', minLevel: 2 },
+    'debit-notes': { id: 'debit-notes', icon: FileText, label: 'Debit Note', minLevel: 2 },
+    'dunnings': { id: 'dunnings', icon: ShieldAlert, label: 'Dunning', minLevel: 2 },
+    'balance-sheet': { id: 'balance-sheet', icon: BarChart2, label: 'Balance Sheet (Neraca)', minLevel: 2 },
+    'profit-loss': { id: 'profit-loss', icon: TrendingUp, label: 'Profit and Loss Statement', minLevel: 2 },
+    'cash-flow': { id: 'cash-flow', icon: Wallet, label: 'Cash Flow Statement', minLevel: 2 },
+    'trial-balance': { id: 'trial-balance', icon: FileText, label: 'Trial Balance', minLevel: 2 },
+    'general-ledger-report': { id: 'general-ledger-report', icon: History, label: 'General Ledger Report', minLevel: 2 },
+    'ar-aging': { id: 'ar-aging', icon: Clock, label: 'Accounts Receivable (AR) Aging', minLevel: 2 },
+    'ap-aging': { id: 'ap-aging', icon: Clock, label: 'Accounts Payable (AP) Aging', minLevel: 2 },
 
     'employees': { id: 'employees', icon: Users, label: 'Employees', minLevel: 3 },
     'departments': { id: 'departments', icon: Building2, label: 'Departments', minLevel: 3 },
@@ -339,11 +476,43 @@ export default function AdminDashboard() {
                         }
                         if (m.id === 'commercial') {
                             const ids = (m.menuIds || []).filter((id: string) => id !== 'purchase-bills' && id !== 'contracts');
+                            const sellingIds: MenuId[] = [
+                                'selling-workspace', 'customers', 'quotations', 'sales-orders', 'sales-invoices',
+                                'blanket-orders', 'sales-partners', 'sales-persons', 'pos-profiles', 'pos-settings',
+                                'pos-opening', 'pos-closing', 'loyalty-programs', 'loyalty-points', 'items', 'item-prices',
+                                'price-lists', 'item-groups', 'product-bundles', 'promotional-schemes', 'pricing-rules',
+                                'shipping-rules', 'coupon-codes', 'selling-settings', 'terms-templates', 'tax-templates',
+                                'utm-sources', 'customer-groups', 'contacts', 'addresses', 'territories', 'campaigns',
+                                'sales-analytics', 'so-analysis', 'sales-funnel', 'so-trends', 'quotation-trends',
+                                'customer-acquisition', 'inactive-customers', 'salesperson-summary', 'item-sales-history',
+                                'customer-directory', 'packing-stock', 'pending-so-pr', 'delivery-trends', 'invoice-trends',
+                                'customer-credit-balance', 'dormant-customers', 'partner-commissions',
+                                'territory-target-variance', 'salesperson-target-variance', 'partner-target-variance'
+                            ];
+                            sellingIds.forEach(id => {
+                                if (!ids.includes(id)) ids.push(id);
+                            });
                             return { ...m, menuIds: ids };
                         }
                         if (m.id === 'procurement') {
                             const ids = m.menuIds || [];
-                            if (!ids.includes('purchase-bills')) ids.push('purchase-bills');
+                            const buyingIds: MenuId[] = [
+                                'buying-workspace', 'material-requests', 'purchase-orders', 'purchase-bills',
+                                'rfqs', 'supplier-quotations', 'items', 'buying-item-prices', 'buying-price-lists',
+                                'buying-product-bundles', 'buying-item-groups', 'buying-promotional-schemes',
+                                'buying-pricing-rules', 'buying-settings', 'purchase-tax-templates',
+                                'buying-terms-templates', 'suppliers', 'supplier-groups', 'supplier-contacts',
+                                'supplier-addresses', 'supplier-scorecards', 'scorecard-variables',
+                                'scorecard-criteria', 'scorecard-standings', 'purchase-analytics', 'po-analysis',
+                                'item-consumption', 'items-to-order-receive', 'po-trends', 'procurement-tracker',
+                                'items-to-request', 'item-purchase-history', 'purchase-receipt-trends',
+                                'purchase-invoice-trends', 'subcontract-materials', 'subcontract-received',
+                                'rfq-comparison', 'pr-to-rfq', 'supplier-directory', 'import-supplier-invoice',
+                                'purchase-receipt'
+                            ];
+                            buyingIds.forEach(id => {
+                                if (!ids.includes(id)) ids.push(id);
+                            });
                             return { ...m, menuIds: ids };
                         }
                         if (m.id === 'rental') {
@@ -354,13 +523,39 @@ export default function AdminDashboard() {
                         }
                         if (m.id === 'supply-chain') {
                             const ids = (m.menuIds || []).filter((id: string) => id !== 'conversions' && id !== 'purchase-bills');
-                            if (!ids.includes('inventory-categories')) ids.push('inventory-categories');
-                            if (!ids.includes('warehouses')) ids.push('warehouses');
-                            if (!ids.includes('stock-entry')) ids.push('stock-entry');
-                            if (!ids.includes('material-request')) ids.push('material-request');
-                            if (!ids.includes('purchase-receipt')) ids.push('purchase-receipt');
-                            if (!ids.includes('quality-inspection')) ids.push('quality-inspection');
-                            if (!ids.includes('delivery-trip')) ids.push('delivery-trip');
+                            const stockIds: MenuId[] = [
+                                'stock-workspace', 'stock-entry', 'delivery-notes', 'purchase-receipt',
+                                'material-request', 'pick-lists', 'delivery-trip', 'stock-opname',
+                                'landed-cost-vouchers', 'inventory-items', 'inventory-categories',
+                                'stock-product-bundles', 'item-alternatives', 'item-manufacturers',
+                                'manufacturers', 'serial-numbers', 'batches', 'installation-notes',
+                                'stock-settings', 'warehouses', 'brands', 'item-attributes', 'uoms',
+                                'uom-conversions', 'stock-tax-templates', 'stock-ledger', 'stock-balance',
+                                'stock-summary', 'stock-ageing', 'stock-projected-qty', 'stock-analytics',
+                                'batch-wise-balance', 'serial-no-status', 'item-shortage-report',
+                                'quality-inspection'
+                            ];
+                            stockIds.forEach(id => {
+                                if (!ids.includes(id)) ids.push(id);
+                            });
+                            return { ...m, menuIds: ids };
+                        }
+                        if (m.id === 'finance') {
+                            const ids = m.menuIds || [];
+                            const accIds: MenuId[] = [
+                                'accounting-workspace', 'chart-of-accounts', 'journal-entries-view',
+                                'payment-entries', 'payment-reconciliation', 'bank-accounts',
+                                'bank-transactions', 'bank-clearance', 'cashier-closing', 'cost-centers',
+                                'accounting-dimensions', 'budgets-view', 'sales-tax-templates',
+                                'purchase-tax-templates-view', 'tax-categories', 'tax-rules',
+                                'credit-notes', 'debit-notes', 'dunnings', 'balance-sheet',
+                                'profit-loss', 'cash-flow', 'trial-balance', 'general-ledger-report',
+                                'ar-aging', 'ap-aging', 'finance', 'cash-bank', 'expenses', 'journal-entries',
+                                'financial-reports'
+                            ];
+                            accIds.forEach(id => {
+                                if (!ids.includes(id)) ids.push(id);
+                            });
                             return { ...m, menuIds: ids };
                         }
                         if (m.id === 'hr') {
@@ -562,7 +757,7 @@ export default function AdminDashboard() {
         if (!activeModule && activeTab !== 'dashboard') {
             const menuId = activeTab as MenuId;
             const matchingModule = launchpadConfig.modules.find(m =>
-                m.menuIds.includes(menuId)
+                (m.menuIds || []).includes(menuId)
             );
             if (matchingModule) {
                 setActiveModule(matchingModule.id);
@@ -574,7 +769,7 @@ export default function AdminDashboard() {
     const navItems: NavEntry[] = useMemo(() => {
         const getModuleMenuIds = (moduleId: string): string[] => {
             const mod = launchpadConfig?.modules?.find(m => m.id === moduleId);
-            return mod ? mod.menuIds : [];
+            return (mod && Array.isArray(mod.menuIds)) ? mod.menuIds : [];
         };
 
         const fieldOpsIds = getModuleMenuIds('field-operations');
@@ -593,18 +788,13 @@ export default function AdminDashboard() {
 
         const getGroupItems = (moduleIds: string[], preferredOrder: string[], allowedFilter?: string[]) => {
             const result: NavItem[] = [];
-            const activeIds = moduleIds.length > 0
-                ? moduleIds
-                : preferredOrder;
+            const filterList = allowedFilter || preferredOrder;
 
             preferredOrder.forEach(id => {
-                if (activeIds.includes(id) && ALL_NAV_ITEMS[id] && (!allowedFilter || allowedFilter.includes(id))) {
-                    result.push(ALL_NAV_ITEMS[id]);
-                }
-            });
-            activeIds.forEach(id => {
-                if (!preferredOrder.includes(id) && ALL_NAV_ITEMS[id] && (!allowedFilter || allowedFilter.includes(id))) {
-                    result.push(ALL_NAV_ITEMS[id]);
+                if (ALL_NAV_ITEMS[id] && filterList.includes(id)) {
+                    if (!result.some(item => item.id === id)) {
+                        result.push(ALL_NAV_ITEMS[id]);
+                    }
                 }
             });
             return result;
@@ -633,10 +823,47 @@ export default function AdminDashboard() {
             },
             {
                 id: 'inventory_group',
-                label: 'Inventory',
+                label: 'Supply Chain & Inventory',
                 icon: Package,
                 minLevel: 4,
-                children: getGroupItems(supplyChainIds, ['inventory-items', 'inventory-categories', 'warehouses', 'stock-opname', 'stock-entry', 'material-request', 'purchase-receipt', 'quality-inspection', 'delivery-trip'], ['inventory-items', 'inventory-categories', 'warehouses', 'stock-opname', 'stock-entry', 'material-request', 'purchase-receipt', 'quality-inspection', 'delivery-trip'])
+                children: [
+                    ...getGroupItems(supplyChainIds, [
+                        'stock-workspace', 'stock-entry', 'delivery-notes', 'purchase-receipt',
+                        'material-request', 'pick-lists', 'delivery-trip', 'stock-opname',
+                        'landed-cost-vouchers', 'inventory-items', 'inventory-categories'
+                    ]),
+                    {
+                        id: 'serial_batch_subgroup',
+                        label: 'Serial No and Batch',
+                        icon: Tag,
+                        minLevel: 3,
+                        children: getGroupItems(supplyChainIds, [
+                            'serial-numbers', 'batches', 'installation-notes'
+                        ])
+                    },
+                    {
+                        id: 'stock_setup_subgroup',
+                        label: 'Setup',
+                        icon: Settings,
+                        minLevel: 3,
+                        children: getGroupItems(supplyChainIds, [
+                            'stock-settings', 'warehouses', 'brands', 'item-attributes',
+                            'uoms', 'uom-conversions', 'stock-tax-templates', 'stock-product-bundles',
+                            'item-alternatives', 'item-manufacturers', 'manufacturers', 'quality-inspection'
+                        ])
+                    },
+                    {
+                        id: 'stock_reports_subgroup',
+                        label: 'Reports',
+                        icon: FileText,
+                        minLevel: 3,
+                        children: getGroupItems(supplyChainIds, [
+                            'stock-ledger', 'stock-balance', 'stock-summary', 'stock-ageing',
+                            'stock-projected-qty', 'stock-analytics', 'batch-wise-balance',
+                            'serial-no-status', 'item-shortage-report'
+                        ])
+                    }
+                ]
             },
             {
                 id: 'maintenance_group',
@@ -654,24 +881,136 @@ export default function AdminDashboard() {
             },
             {
                 id: 'procurement_group',
-                label: 'Procurement',
+                label: 'Procurement & Buying',
                 icon: ShoppingCart,
                 minLevel: 3,
-                children: getGroupItems(procurementIds, ['purchase-bills', 'purchase-receipt'], ['purchase-bills', 'purchase-receipt'])
+                children: [
+                    ...getGroupItems(procurementIds, [
+                        'buying-workspace', 'material-requests', 'purchase-orders', 'purchase-bills',
+                        'rfqs', 'supplier-quotations'
+                    ]),
+                    {
+                        id: 'buying_setup_subgroup',
+                        label: 'Setup',
+                        icon: Settings,
+                        minLevel: 3,
+                        children: getGroupItems(procurementIds, [
+                            'suppliers', 'supplier-groups', 'supplier-contacts', 'supplier-addresses',
+                            'buying-item-prices', 'buying-price-lists', 'buying-product-bundles',
+                            'buying-item-groups', 'buying-promotional-schemes', 'buying-pricing-rules',
+                            'buying-settings', 'purchase-tax-templates', 'buying-terms-templates',
+                            'supplier-scorecards', 'scorecard-variables', 'scorecard-criteria', 'scorecard-standings'
+                        ])
+                    },
+                    {
+                        id: 'buying_reports_subgroup',
+                        label: 'Reports',
+                        icon: FileText,
+                        minLevel: 3,
+                        children: getGroupItems(procurementIds, [
+                            'purchase-analytics', 'po-analysis', 'item-consumption', 'items-to-order-receive',
+                            'po-trends', 'procurement-tracker', 'items-to-request', 'item-purchase-history',
+                            'purchase-receipt-trends', 'purchase-invoice-trends', 'subcontract-materials',
+                            'subcontract-received', 'rfq-comparison', 'pr-to-rfq', 'supplier-directory',
+                            'import-supplier-invoice', 'purchase-receipt'
+                        ])
+                    }
+                ]
             },
             {
                 id: 'commercial_group',
-                label: 'Commercial',
+                label: 'Commercial & Selling',
                 icon: TrendingUp,
                 minLevel: 3,
-                children: getGroupItems(commercialIds, ['sales-invoices', 'clients'], ['sales-invoices', 'clients'])
+                children: [
+                    ...getGroupItems(commercialIds, [
+                        'selling-workspace', 'customers', 'quotations', 'sales-orders', 'sales-invoices',
+                        'blanket-orders', 'sales-partners', 'sales-persons', 'clients'
+                    ]),
+                    {
+                        id: 'pos_subgroup',
+                        label: 'POS',
+                        icon: ShoppingBag,
+                        minLevel: 3,
+                        children: getGroupItems(commercialIds, [
+                            'pos-profiles', 'pos-settings', 'pos-opening', 'pos-closing', 'loyalty-programs', 'loyalty-points'
+                        ])
+                    },
+                    {
+                        id: 'items_pricing_subgroup',
+                        label: 'Items & Pricing',
+                        icon: Tag,
+                        minLevel: 3,
+                        children: getGroupItems(commercialIds, [
+                            'items', 'item-prices', 'price-lists', 'item-groups', 'product-bundles',
+                            'promotional-schemes', 'pricing-rules', 'shipping-rules', 'coupon-codes'
+                        ])
+                    },
+                    {
+                        id: 'setup_subgroup',
+                        label: 'Setup',
+                        icon: Settings,
+                        minLevel: 3,
+                        children: getGroupItems(commercialIds, [
+                            'selling-settings', 'terms-templates', 'tax-templates', 'utm-sources',
+                            'customer-groups', 'contacts', 'addresses', 'territories', 'campaigns'
+                        ])
+                    },
+                    {
+                        id: 'reports_subgroup',
+                        label: 'Reports',
+                        icon: FileText,
+                        minLevel: 3,
+                        children: getGroupItems(commercialIds, [
+                            'sales-analytics', 'so-analysis', 'sales-funnel', 'so-trends', 'quotation-trends',
+                            'customer-acquisition', 'inactive-customers', 'salesperson-summary', 'item-sales-history',
+                            'customer-directory', 'packing-stock', 'pending-so-pr', 'delivery-trends', 'invoice-trends',
+                            'customer-credit-balance', 'dormant-customers', 'partner-commissions',
+                            'territory-target-variance', 'salesperson-target-variance', 'partner-target-variance'
+                        ])
+                    }
+                ]
             },
             {
                 id: 'finance_group',
-                label: 'Finance',
+                label: 'Finance & Accounting',
                 icon: Wallet,
                 minLevel: 2,
-                children: getGroupItems(financeIds, ['finance', 'cash-bank', 'expenses', 'journal-entries', 'financial-reports'])
+                children: [
+                    ...getGroupItems(financeIds, [
+                        'accounting-workspace', 'chart-of-accounts', 'journal-entries-view',
+                        'payment-entries', 'payment-reconciliation', 'credit-notes', 'debit-notes', 'dunnings'
+                    ]),
+                    {
+                        id: 'cash_bank_subgroup',
+                        label: 'Cash & Bank',
+                        icon: Wallet,
+                        minLevel: 2,
+                        children: getGroupItems(financeIds, [
+                            'bank-accounts', 'bank-transactions', 'bank-clearance', 'cashier-closing', 'cash-bank', 'expenses'
+                        ])
+                    },
+                    {
+                        id: 'acc_setup_subgroup',
+                        label: 'Setup & Taxes',
+                        icon: Settings,
+                        minLevel: 2,
+                        children: getGroupItems(financeIds, [
+                            'cost-centers', 'accounting-dimensions', 'budgets-view', 'sales-tax-templates',
+                            'purchase-tax-templates-view', 'tax-categories', 'tax-rules'
+                        ])
+                    },
+                    {
+                        id: 'fin_reports_subgroup',
+                        label: 'Financial Statements',
+                        icon: FileText,
+                        minLevel: 2,
+                        children: getGroupItems(financeIds, [
+                            'balance-sheet', 'profit-loss', 'cash-flow', 'trial-balance',
+                            'general-ledger-report', 'ar-aging', 'ap-aging', 'financial-reports'
+                        ])
+                    }
+                ]
             },
             {
                 id: 'hr_group',
@@ -891,152 +1230,6 @@ export default function AdminDashboard() {
         );
     };
 
-    // Access Denied View
-    const renderAccessDenied = () => (
-        <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-6 bg-card/40 backdrop-blur border border-border/40 rounded-2xl shadow-xl">
-            <div className="w-16 h-16 rounded-2xl bg-red-500/10 text-red-500 flex items-center justify-center mb-4 border border-red-500/20">
-                <ShieldAlert size={32} />
-            </div>
-            <h2 className="text-xl font-bold text-foreground mb-2">Akses Dibatasi (403 Forbidden)</h2>
-            <p className="text-muted-foreground max-w-md text-sm mb-6">
-                Peran atau hak akses akun Anda tidak memiliki izin untuk membuka modul ini. Silakan hubungi Administrator jika Anda memerlukan akses.
-            </p>
-            <button
-                onClick={() => { setActiveTab('dashboard'); navigate('/dashboard'); }}
-                className="px-5 py-2.5 bg-primary text-primary-foreground font-medium rounded-xl text-sm hover:bg-primary/90 transition-colors shadow-lg shadow-primary/20"
-            >
-                Kembali ke Dashboard
-            </button>
-        </div>
-    );
-
-    // Main Content Renderer
-    const renderContent = () => {
-        // Route Authorization Guard
-        if (activeTab !== 'dashboard' && activeTab !== 'profile') {
-            const menuId = activeTab as MenuId;
-            const resourceId = MENU_TO_RESOURCE[menuId] || activeTab.replace(/-/g, '_');
-
-            let hasAccess = hasPermission(`${resourceId}.read`) ||
-                hasPermission(`${resourceId}.view`) ||
-                hasPermission(`${resourceId}.*`);
-
-            if (!hasAccess && resourceId === 'work_order') {
-                hasAccess = hasPermission('maintenance.read') || hasPermission('maintenance.view') || hasPermission('maintenance.*');
-            }
-            if (!hasAccess && resourceId === 'approval_center') {
-                hasAccess = hasPermission('approval_center.read') || hasPermission('approval_center.view') || hasPermission('approval_center.*') || hasPermission('maintenance.approve') || hasPermission('work_order.approve_cost');
-            }
-
-            if (!hasAccess) {
-                return renderAccessDenied();
-            }
-        }
-
-        // Special case for deep views
-        if (activeTab === 'assets' && selectedAssetId) {
-            if (assetViewMode === 'lifecycle') {
-                return <AssetLifecycleView assetId={selectedAssetId} />;
-            } else if (assetViewMode === 'details') {
-                return <AssetDetailsView assetId={selectedAssetId} />;
-            }
-        }
-        if (activeTab === 'work-orders' && selectedWorkOrderId) {
-            return <WorkOrderDetailsView workOrderId={selectedWorkOrderId} />;
-        }
-
-        switch (activeTab) {
-            case 'dashboard': return <DashboardView />;
-            case 'assets': return <AssetsView />;
-            case 'categories': return <CategoriesView />;
-            case 'inventory-categories': return <InventoryCategoriesView />;
-            case 'warehouses': return <WarehousesView />;
-            case 'inventory-items':
-                if (selectedInventoryId) return <InventoryDetailView itemId={selectedInventoryId} />;
-                return <InventoryItemsView />;
-            case 'stock-opname': return <StockOpnameView />;
-            case 'stock-entry': return <StockEntryView />;
-            case 'material-request': return <MaterialRequestView />;
-            case 'purchase-receipt': return <PurchaseReceiptsView />;
-            case 'quality-inspection': return <QualityInspectionsView />;
-            case 'delivery-trip': return <DeliveryTripsView />;
-            case 'locations': return <LocationsView />;
-            case 'work-orders': return <WorkOrdersView />;
-            case 'conversions': return <ConversionsView />;
-            case 'rentals':
-                if (selectedRentalId) return <RentalDetailView rentalId={selectedRentalId} />;
-                return <RentalsView />;
-            case 'rental-form':
-                return <RentalFormView />;
-            case 'contracts': // Added
-                if (selectedContractId) return <ContractDetailView />;
-                return <ContractListView />;
-            case 'approval-workflow-settings':
-                return <WorkflowBuilderView />;
-            case 'contract-detail':
-                return <ContractDetailView />;
-            case 'contract-analytics':
-                return <ContractAnalyticsView />;
-            case 'contract-templates':
-                return <ContractTemplatesView />;
-            case 'clients': return <ClientsView />;
-            case 'loans': return <LoansView />;
-            case 'fuel': return <FuelView />;
-            case 'employees': return <EmployeesView />;
-            case 'attendance': return <AttendanceView />;
-            case 'leaves': return <LeaveDashboardView />;
-            case 'approvals': return <ApprovalCenterView />;
-            case 'reports': return <ReportsView />;
-            case 'users': return <UsersView />;
-            case 'roles': return <RolesView />;
-            case 'departments': return <DepartmentsView />;
-            case 'companies': return <CompanyManagementView />;
-            case 'company': return <CompanyManagementView />;
-            case 'branch': return <BranchView />;
-            case 'email-account': return <EmailAccountView />;
-            case 'audit': return <AuditLogsView />;
-            case 'asset-audit': return <AuditModeView />;
-            case 'system-audit': return <AuditLogsView />;
-            case 'finance': return <ChartOfAccountsView />;
-            case 'journal-entries': return <JournalEntriesView />;
-            case 'journal-form': return <JournalEntryFormView />;
-            case 'general-ledger': return <GeneralLedgerView />;
-            case 'trial-balance': return <TrialBalanceView />;
-            case 'financial-reports': return <FinancialReportsView />;
-            case 'cash-bank': return <CashBankView />;
-            case 'sales': return <SalesOverviewView />;
-            case 'sales-overview': return <SalesOverviewView />;
-            case 'sales-quotes': return <SalesQuotesView />;
-            case 'sales-orders': return <SalesOrdersView />;
-            case 'sales-shipments': return <SalesShipmentsView />;
-            case 'sales-invoices': return <SalesInvoicesView />;
-            case 'purchase-overview':
-                return <PurchaseOverviewView />;
-            case 'purchase-quotes':
-                return <PurchaseQuotesView />;
-            case 'purchase-orders':
-                return <PurchaseOrdersView />;
-            case 'purchase-shipments':
-                return <PurchaseShipmentsView />;
-            case 'purchase-bills':
-                return <PurchaseBillsView />;
-            case 'metadata-editor':
-                return <MetadataEditorView />;
-            case 'maintenance-templates': return <MaintenanceTemplatesView />;
-            case 'maintenance-schedules': return <MaintenanceSchedulesView />;
-            case 'maintenance-teams': return <MaintenanceTeamsView />;
-            case 'tax-renewals': return <TaxRenewalsView />;
-            case 'purchases': // Fallback or remove if parent doesn't render content
-                return <PurchaseOverviewView />; // Default to overview for the group
-            case 'expenses': return <ExpensesView />;
-            case 'asset-lifecycle': return <AssetLifecycleView />;
-            case 'settings': return <SettingsView />;
-            case 'analytics': return <AnalyticsDashboardView />;
-            case 'profile': return <ProfileView />;
-            default: return <DashboardView />;
-        }
-    };
-
     return (
         <div className="flex h-screen bg-background text-foreground font-sans overflow-hidden">
             {/* Mobile Backdrop */}
@@ -1142,134 +1335,51 @@ export default function AdminDashboard() {
                 </div>
 
                 {/* Header */}
-                <header className="h-16 bg-card/80 backdrop-blur-md border-b border-border flex items-center justify-between px-6 gap-4 relative z-10 shadow-sm">
-
-                    {/* Sidebar Toggle Button (Mobile Only) */}
-                    <button
-                        onClick={() => setSidebarOpen(!sidebarOpen)}
-                        className="p-2 -ml-2 hover:bg-muted rounded-lg text-muted-foreground hover:text-foreground transition-colors lg:hidden"
-                    >
-                        <Menu size={24} />
-                    </button>
-
-                    <Logo className="lg:hidden" collapsed={false} />
-
-                    {/* Back to Launchpad Button & Breadcrumb */}
-                    <div className="flex items-center gap-2">
-                        <button
-                            onClick={() => { setActiveModule(null); navigate('/launchpad'); }}
-                            className="flex items-center gap-2 px-2.5 py-1.5 sm:px-3 sm:py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-all"
-                            title="Kembali ke Menu Utama / Launchpad"
-                        >
-                            <LayoutDashboard size={18} />
-                            <span className="hidden sm:inline">Menu Utama</span>
-                        </button>
-
-                        {activeTab !== 'dashboard' && MENU_LABELS[activeTab as MenuId] && (
-                            <>
-                                <span className="text-muted-foreground/40 text-xs hidden sm:inline">/</span>
-                                <span className="text-xs font-semibold text-foreground/80 bg-muted/50 px-2.5 py-1 rounded-md hidden sm:inline border border-border/50">
-                                    {MENU_LABELS[activeTab as MenuId]}
-                                </span>
-                            </>
-                        )}
-                    </div>
-
-                    <div className="flex-1" /> {/* Spacer */}
-
-                    {/* Theme Toggle */}
-                    <button
-                        onClick={toggleTheme}
-                        className="p-2 rounded-xl bg-card/40 border border-border/60 hover:bg-card hover:border-primary/30 text-muted-foreground hover:text-foreground transition-all duration-300 backdrop-blur-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/50 cursor-pointer"
-                        title={theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
-                    >
-                        {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
-                    </button>
-
-                    {/* Notification Bell */}
-                    <div className="relative">
-                        <button
-                            onClick={() => setNotifOpen(!notifOpen)}
-                            className="p-2 hover:bg-muted rounded-full relative transition-colors text-muted-foreground hover:text-foreground"
-                        >
-                            <Bell size={22} />
-                        </button>
-
-                        {notifOpen && (
-                            <div className="absolute right-0 mt-2 w-80 bg-card rounded-xl shadow-2xl border border-border z-50">
-                                <div className="p-4 border-b border-border">
-                                    <h3 className="font-semibold text-card-foreground">Notifikasi</h3>
-                                </div>
-                                <div className="p-4">
-                                    <p className="text-sm text-muted-foreground text-center">
-                                        Tidak ada notifikasi baru
-                                    </p>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* User Profile */}
-                    <button
-                        onClick={() => { setActiveTab('profile'); navigate('/profile'); }}
-                        className="flex items-center gap-2 px-3 py-1.5 hover:bg-muted rounded-lg transition-colors border border-transparent hover:border-border cursor-pointer group"
-                        title="Buka Profil Saya"
-                    >
-                        <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm overflow-hidden border border-border/50">
-                            {user?.avatar_url ? (
-                                <img
-                                    src={getImageUrl(user.avatar_url)}
-                                    alt={user.name}
-                                    className="w-full h-full object-cover"
-                                    onError={(e) => {
-                                        const isAdmin = user?.role === 'admin' || user?.role === 'super_admin';
-                                        (e.target as HTMLImageElement).src = isAdmin ? '/avatar-admin.png' : '/avatar-user.png';
-                                    }}
-                                />
-                            ) : (
-                                <img
-                                    src={user?.role === 'admin' || user?.role === 'super_admin' ? '/avatar-admin.png' : '/avatar-user.png'}
-                                    alt={user?.name}
-                                    className="w-full h-full object-cover"
-                                />
-                            )}
-                        </div>
-                        <div className="hidden sm:block text-left">
-                            <p className="text-sm font-medium text-foreground leading-none mb-1">{user?.name}</p>
-                            <p className="text-[10px] text-muted-foreground uppercase tracking-wider leading-none">
-                                {user?.role}
-                            </p>
-                        </div>
-                    </button>
-                </header>
+                <AdminHeaderBar
+                    sidebarOpen={sidebarOpen}
+                    setSidebarOpen={setSidebarOpen}
+                    activeTab={activeTab}
+                    setActiveTab={setActiveTab}
+                    setActiveModule={setActiveModule}
+                    theme={theme}
+                    toggleTheme={toggleTheme}
+                    user={user}
+                    navigate={navigate}
+                />
 
                 {/* Content Area */}
                 <main className="flex-1 overflow-x-hidden overflow-y-auto bg-transparent relative z-10 global-scrollbar p-6 lg:p-8">
-                    <Suspense fallback={<PageLoading />}>
-                        {renderContent()}
-                    </Suspense>
+                    <AdminContentRouter
+                        activeTab={activeTab}
+                        selectedAssetId={selectedAssetId}
+                        assetViewMode={assetViewMode}
+                        selectedWorkOrderId={selectedWorkOrderId}
+                        selectedInventoryId={selectedInventoryId}
+                        selectedRentalId={selectedRentalId}
+                        selectedContractId={selectedContractId}
+                        hasPermission={hasPermission}
+                        setActiveTab={setActiveTab}
+                        navigate={navigate}
+                    />
                 </main>
             </div>
 
             {/* Logout Modal */}
             {logoutModalOpen && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md">
-                    <div className="bg-card/85 backdrop-blur-2xl border border-border/80 p-6 rounded-2xl max-w-sm w-full shadow-2xl relative overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                        {/* Visual flourish */}
-                        <div className="absolute -top-24 -left-24 w-48 h-48 bg-primary/5 rounded-full blur-[80px] pointer-events-none" />
-
-                        <h3 className="text-xl font-bold text-foreground mb-2 relative z-10">Konfirmasi Logout</h3>
-                        <p className="text-muted-foreground mb-6 relative z-10">Apakah Anda yakin ingin keluar dari sistem?</p>
-                        <div className="flex gap-3 relative z-10">
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+                    <div className="bg-card border border-border/80 p-6 rounded-2xl max-w-sm w-full shadow-2xl relative overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                        <h3 className="text-xl font-bold text-foreground mb-2">Konfirmasi Logout</h3>
+                        <p className="text-sm text-muted-foreground mb-6">Apakah Anda yakin ingin keluar dari sistem?</p>
+                        <div className="flex gap-3 justify-end">
                             <button
                                 onClick={() => setLogoutModalOpen(false)}
-                                className="flex-1 px-4 py-2 bg-secondary text-secondary-foreground rounded-xl hover:bg-muted/80 transition-colors border border-border cursor-pointer"
+                                className="px-4 py-2 bg-secondary text-secondary-foreground font-medium text-sm rounded-xl hover:bg-muted transition-colors border border-border cursor-pointer"
                             >
                                 Batal
                             </button>
                             <button
                                 onClick={confirmLogout}
-                                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-xl hover:bg-red-500 shadow-lg shadow-red-500/20 transition-colors cursor-pointer"
+                                className="px-4 py-2 bg-red-600 text-white font-semibold text-sm rounded-xl hover:bg-red-500 shadow-md transition-colors cursor-pointer"
                             >
                                 Keluar
                             </button>

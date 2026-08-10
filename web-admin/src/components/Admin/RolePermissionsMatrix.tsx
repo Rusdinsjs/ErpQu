@@ -183,7 +183,7 @@ export function RolePermissionsMatrix() {
                                                 </tr>
                                                 
                                                 {/* Menu Rows */}
-                                                {isExpanded && module.menuIds.map(menuId => {
+                                                {isExpanded && (module.menuIds || []).map(menuId => {
                                                     const resource = MENU_TO_RESOURCE[menuId] || menuId.replace(/-/g, '_');
                                                     return (
                                                         <tr key={menuId} className="border-b border-border/50 hover:bg-muted/20 transition-colors">

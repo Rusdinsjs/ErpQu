@@ -22,13 +22,13 @@ export default function PurchaseQuotes() {
         queryKey: ['finance', 'purchase-quotes'],
         queryFn: financeApi.listPurchaseQuotes
     });
-    const quotes = quotesResponse?.data || [];
+    const quotes = Array.isArray(quotesResponse) ? quotesResponse : (quotesResponse as any)?.data || [];
 
     const { data: vendorsResponse } = useQuery({
         queryKey: ['vendors'], // Assuming clients can act as vendors for now, or fetch specific vendors
         queryFn: () => clientApi.list({ limit: 100 })
     });
-    const vendors = vendorsResponse?.data?.data || [];
+    const vendors = Array.isArray(vendorsResponse?.data) ? vendorsResponse.data : (vendorsResponse as any)?.data?.data || [];
 
     const createMutation = useMutation({
         mutationFn: financeApi.createPurchaseQuote,
@@ -129,7 +129,7 @@ export default function PurchaseQuotes() {
                                 <tr>
                                     <td colSpan={7} className="px-6 py-8 text-center animate-pulse">Memuat data...</td>
                                 </tr>
-                            ) : quotes.length > 0 ? (
+                            ) : quotes && quotes.length > 0 ? (
                                 quotes.map((quote: any) => (
                                     <tr key={quote.id} className="hover:bg-muted/50 transition-colors cursor-pointer group">
                                         <td className="px-6 py-4 font-medium text-primary">{quote.quote_number}</td>

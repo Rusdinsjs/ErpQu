@@ -65,11 +65,11 @@ export function MultiSelect({
                     `}
                 >
                     <div className="flex flex-wrap gap-1.5">
-                        {value.length === 0 && (
+                        {(value || []).length === 0 && (
                             <span className="text-muted-foreground/50 ml-1">{placeholder}</span>
                         )}
-                        {value.map(val => {
-                            const option = options.find(o => o.value === val);
+                        {(value || []).map(val => {
+                            const option = (options || []).find(o => o.value === val);
                             return (
                                 <span
                                     key={val}
@@ -94,8 +94,8 @@ export function MultiSelect({
                 {isOpen && (
                     <div className="absolute z-50 w-full mt-2 bg-card border border-border rounded-xl shadow-xl max-h-60 overflow-y-auto global-scrollbar">
                         <div className="p-1 space-y-0.5">
-                            {options.map((option) => {
-                                const isSelected = value.includes(option.value);
+                            {(options || []).map((option) => {
+                                const isSelected = (value || []).includes(option.value);
                                 return (
                                     <div
                                         key={option.value}

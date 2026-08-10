@@ -40,7 +40,7 @@ export default function PurchaseReceipts() {
         queryKey: ['vendors'],
         queryFn: () => clientApi.list({ limit: 100 })
     });
-    const vendors = vendorsResponse?.data?.data || [];
+    const vendors = Array.isArray(vendorsResponse?.data) ? vendorsResponse.data : (vendorsResponse as any)?.data?.data || [];
 
     const createMutation = useMutation({
         mutationFn: financeApi.createPurchaseReceipt,

@@ -427,21 +427,21 @@ export default function InventoryItems() {
 
             {/* Create/Edit Modal */}
             {modalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-                    <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-xl shadow-2xl animate-in zoom-in-95 duration-200">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+                    <div className="bg-card border border-border/80 rounded-2xl w-full max-w-xl shadow-2xl animate-in zoom-in-95 duration-200">
                         <Tabs defaultValue="general">
-                            <div className="flex items-center justify-between p-6 border-b border-slate-800">
+                            <div className="flex items-center justify-between p-6 border-b border-border/60">
                                 <div className="flex items-center gap-4">
-                                    <h2 className="text-xl font-bold text-white">
+                                    <h2 className="text-xl font-bold text-foreground">
                                         {editingItem ? 'Edit Barang Inventory' : 'Tambah Barang Baru'}
                                     </h2>
-                                    <TabsList className="bg-slate-950/50 p-1 rounded-xl border border-slate-800">
-                                        <TabsTrigger value="general" className="px-4 py-1.5 text-xs rounded-lg data-[state=active]:bg-cyan-600 data-[state=active]:text-white transition-all">General</TabsTrigger>
-                                        {editingItem && <TabsTrigger value="visuals" className="px-4 py-1.5 text-xs rounded-lg data-[state=active]:bg-cyan-600 data-[state=active]:text-white transition-all">Visuals (4-Sisi)</TabsTrigger>}
+                                    <TabsList className="bg-muted/40 p-1 rounded-xl border border-border/60">
+                                        <TabsTrigger value="general" className="px-4 py-1.5 text-xs rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all">General</TabsTrigger>
+                                        {editingItem && <TabsTrigger value="visuals" className="px-4 py-1.5 text-xs rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all">Visuals (4-Sisi)</TabsTrigger>}
                                     </TabsList>
                                 </div>
-                                <button onClick={() => setModalOpen(false)} className="text-muted-foreground hover:text-white transition-colors">
-                                    <X size={24} />
+                                <button onClick={() => setModalOpen(false)} className="text-muted-foreground hover:text-foreground transition-colors">
+                                    <X size={20} />
                                 </button>
                             </div>
 
@@ -456,9 +456,9 @@ export default function InventoryItems() {
                                             disabled={!!editingItem}
                                         />
                                         <div className="space-y-1.5">
-                                            <label className="text-sm font-medium text-muted-foreground">Kategori</label>
+                                            <label className="text-xs font-semibold text-foreground/80 block">Kategori</label>
                                             <select
-                                                className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white outline-none focus:ring-2 focus:ring-cyan-500/50"
+                                                className="w-full bg-background border border-border/80 rounded-xl p-2.5 text-sm text-foreground outline-none focus:ring-2 focus:ring-primary/20 transition-all shadow-sm"
                                                 value={formData.category_id}
                                                 onChange={(e) => setFormData({ ...formData, category_id: e.target.value })}
                                                 disabled={!!editingItem}
@@ -478,10 +478,10 @@ export default function InventoryItems() {
                                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                                     />
 
-                                    <div>
-                                        <label className="block text-sm font-medium text-muted-foreground mb-1.5">Deskripsi</label>
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-semibold text-foreground/80 block">Deskripsi</label>
                                         <textarea
-                                            className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-cyan-500/50 min-h-[80px]"
+                                            className="w-full bg-background border border-border/80 rounded-xl p-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 min-h-[80px] shadow-sm"
                                             value={formData.description}
                                             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                                         />
@@ -503,7 +503,7 @@ export default function InventoryItems() {
                                     </div>
 
                                     {!editingItem && (
-                                        <div className="grid grid-cols-2 gap-4 border-t border-slate-800 pt-4">
+                                        <div className="grid grid-cols-2 gap-4 border-t border-border/60 pt-4">
                                             <Input
                                                 label="Stok Awal"
                                                 type="number"
@@ -519,14 +519,14 @@ export default function InventoryItems() {
                                         </div>
                                     )}
 
-                                    <div className="flex justify-end gap-3 pt-4 border-t border-slate-800">
-                                        <Button type="button" variant="ghost" onClick={() => setModalOpen(false)}>
+                                    <div className="flex justify-end gap-3 pt-4 border-t border-border/60">
+                                        <Button type="button" variant="outline" onClick={() => setModalOpen(false)} className="rounded-xl border-border/80 font-medium px-4 py-2 text-sm text-muted-foreground hover:text-foreground">
                                             Batal
                                         </Button>
                                         <Button
                                             type="submit"
                                             variant="primary"
-                                            className="bg-cyan-600 hover:bg-cyan-500"
+                                            className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-xl px-5 py-2.5 shadow-md text-sm"
                                             loading={createMutation.isPending || updateMutation.isPending}
                                         >
                                             {editingItem ? 'Simpan Perubahan' : 'Tambah Barang'}

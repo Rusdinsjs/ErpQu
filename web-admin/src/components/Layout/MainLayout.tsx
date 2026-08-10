@@ -1,5 +1,5 @@
 // MainLayout - Pure Tailwind
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Outlet, useLocation } from 'react-router-dom';
 import { useNavigationStore } from '../../store/useNavigationStore';
 import {
@@ -16,13 +16,23 @@ export function MainLayout() {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const navigate = useNavigate();
     const location = useLocation();
-    const [openMenus, setOpenMenus] = useState<string[]>(['/assets', '/ops', '/finance']);
+    const [openMenus, setOpenMenus] = useState<string[]>([
+        '/assets-module', '/ops-module', '/selling-module', '/buying-module', '/stock-module', '/finance-module', '/finance'
+    ]);
 
     const toggleMenu = (path: string) => {
         setOpenMenus(prev =>
             prev.includes(path) ? prev.filter(p => p !== path) : [...prev, path]
         );
     };
+
+    useEffect(() => {
+        navItems.forEach(item => {
+            if (item.children && item.children.some((c: any) => location.pathname === c.path || location.pathname.startsWith(c.path + '/'))) {
+                setOpenMenus(prev => prev.includes(item.path) ? prev : [...prev, item.path]);
+            }
+        });
+    }, [location.pathname]);
     const logout = useAuthStore((state) => state.logout);
     const user = useAuthStore((state) => state.user);
     const hasPermission = useAuthStore((state) => state.hasPermission);
@@ -116,18 +126,196 @@ export function MainLayout() {
             ]
         },
 
-        // MODUL FINANCE
+        // MODUL COMMERCIAL & SELLING
         {
-            label: 'Finance',
+            label: 'Commercial & Selling',
+            icon: Wallet,
+            path: '/selling-module',
+            minLevel: 4,
+            children: [
+                { label: 'Selling Workspace', path: '/selling-workspace', minLevel: 4 },
+                { label: 'Customers', path: '/customers', minLevel: 4 },
+                { label: 'Quotations', path: '/quotations', minLevel: 4 },
+                { label: 'Sales Orders', path: '/sales-orders', minLevel: 4 },
+                { label: 'Sales Invoices', path: '/sales-invoices', minLevel: 3 },
+                { label: 'Blanket Orders', path: '/blanket-orders', minLevel: 3 },
+                { label: 'Sales Partners', path: '/sales-partners', minLevel: 3 },
+                { label: 'Sales Persons', path: '/sales-persons', minLevel: 3 },
+                { label: 'POS Profiles', path: '/pos-profiles', minLevel: 3 },
+                { label: 'POS Settings', path: '/pos-settings', minLevel: 2 },
+                { label: 'POS Opening Entry', path: '/pos-opening', minLevel: 4 },
+                { label: 'POS Closing Entry', path: '/pos-closing', minLevel: 4 },
+                { label: 'Loyalty Programs', path: '/loyalty-programs', minLevel: 3 },
+                { label: 'Loyalty Points Entry', path: '/loyalty-points', minLevel: 4 },
+                { label: 'Items & Pricing', path: '/items', minLevel: 4 },
+                { label: 'Item Prices', path: '/item-prices', minLevel: 3 },
+                { label: 'Price Lists', path: '/price-lists', minLevel: 3 },
+                { label: 'Product Bundles', path: '/product-bundles', minLevel: 3 },
+                { label: 'Promotional Schemes', path: '/promotional-schemes', minLevel: 3 },
+                { label: 'Pricing Rules', path: '/pricing-rules', minLevel: 3 },
+                { label: 'Shipping Rules', path: '/shipping-rules', minLevel: 3 },
+                { label: 'Coupon Codes', path: '/coupon-codes', minLevel: 3 },
+                { label: 'Selling Settings', path: '/selling-settings', minLevel: 2 },
+                { label: 'Terms & Conditions', path: '/terms-templates', minLevel: 3 },
+                { label: 'Sales Taxes Templates', path: '/tax-templates', minLevel: 3 },
+                { label: 'UTM Sources', path: '/utm-sources', minLevel: 3 },
+                { label: 'Customer Groups', path: '/customer-groups', minLevel: 3 },
+                { label: 'Contacts', path: '/contacts', minLevel: 4 },
+                { label: 'Addresses', path: '/addresses', minLevel: 4 },
+                { label: 'Territories', path: '/territories', minLevel: 3 },
+                { label: 'Campaigns', path: '/campaigns', minLevel: 3 },
+                { label: 'Sales Analytics', path: '/sales-analytics', minLevel: 3 },
+                { label: 'Sales Order Analysis', path: '/so-analysis', minLevel: 3 },
+                { label: 'Sales Funnel', path: '/sales-funnel', minLevel: 3 },
+                { label: 'Sales Order Trends', path: '/so-trends', minLevel: 3 },
+                { label: 'Quotation Trends', path: '/quotation-trends', minLevel: 3 },
+                { label: 'Customer Acquisition', path: '/customer-acquisition', minLevel: 3 },
+                { label: 'Inactive Customers', path: '/inactive-customers', minLevel: 3 },
+                { label: 'Sales Person Summary', path: '/salesperson-summary', minLevel: 3 },
+                { label: 'Item Sales History', path: '/item-sales-history', minLevel: 3 },
+                { label: 'Customer Directory', path: '/customer-directory', minLevel: 3 },
+                { label: 'Packing Stock', path: '/packing-stock', minLevel: 3 },
+                { label: 'Pending SO Items for PR', path: '/pending-so-pr', minLevel: 3 },
+                { label: 'Delivery Trends', path: '/delivery-trends', minLevel: 3 },
+                { label: 'Invoice Trends', path: '/invoice-trends', minLevel: 3 },
+                { label: 'Customer Credit Balance', path: '/customer-credit-balance', minLevel: 3 },
+                { label: 'Dormant Customers', path: '/dormant-customers', minLevel: 3 },
+                { label: 'Partner Commissions', path: '/partner-commissions', minLevel: 3 },
+                { label: 'Territory Target Variance', path: '/territory-target-variance', minLevel: 3 },
+                { label: 'Sales Person Target Variance', path: '/salesperson-target-variance', minLevel: 3 },
+                { label: 'Partner Target Variance', path: '/partner-target-variance', minLevel: 3 },
+            ]
+        },
+
+        // MODUL PROCUREMENT & BUYING
+        {
+            label: 'Procurement & Buying',
+            icon: ShoppingCart,
+            path: '/buying-module',
+            minLevel: 4,
+            children: [
+                { label: 'Buying Workspace', path: '/buying-workspace', minLevel: 4 },
+                { label: 'Material Requests', path: '/buying/material-requests', minLevel: 4 },
+                { label: 'Purchase Orders', path: '/buying/purchase-orders', minLevel: 4 },
+                { label: 'Purchase Bills (Vendor Bills)', path: '/buying/purchase-bills', minLevel: 3 },
+                { label: 'Requests for Quotation (RFQ)', path: '/buying/rfqs', minLevel: 4 },
+                { label: 'Supplier Quotations', path: '/buying/supplier-quotations', minLevel: 4 },
+                { label: 'Suppliers (Vendors)', path: '/buying/suppliers', minLevel: 4 },
+                { label: 'Supplier Groups', path: '/buying/supplier-groups', minLevel: 3 },
+                { label: 'Supplier Contacts', path: '/buying/supplier-contacts', minLevel: 4 },
+                { label: 'Supplier Addresses', path: '/buying/supplier-addresses', minLevel: 4 },
+                { label: 'Item Prices (Buying)', path: '/buying/item-prices', minLevel: 3 },
+                { label: 'Price Lists (Buying)', path: '/buying/price-lists', minLevel: 3 },
+                { label: 'Product Bundles', path: '/buying/product-bundles', minLevel: 3 },
+                { label: 'Item Groups', path: '/inventory-categories', minLevel: 3 },
+                { label: 'Promotional Schemes', path: '/buying/promotional-schemes', minLevel: 3 },
+                { label: 'Pricing Rules', path: '/buying/pricing-rules', minLevel: 3 },
+                { label: 'Buying Settings', path: '/buying/settings', minLevel: 2 },
+                { label: 'Purchase Taxes Templates', path: '/buying/tax-templates', minLevel: 3 },
+                { label: 'Terms & Conditions Template', path: '/buying/terms-templates', minLevel: 3 },
+                { label: 'Supplier Scorecard', path: '/buying/supplier-scorecards', minLevel: 3 },
+                { label: 'Scorecard Variables', path: '/buying/scorecard-variables', minLevel: 3 },
+                { label: 'Scorecard Criteria', path: '/buying/scorecard-criteria', minLevel: 3 },
+                { label: 'Scorecard Standings', path: '/buying/scorecard-standings', minLevel: 3 },
+                { label: 'Purchase Analytics', path: '/buying/reports/purchase-analytics', minLevel: 3 },
+                { label: 'Purchase Order Analysis', path: '/buying/reports/po-analysis', minLevel: 3 },
+                { label: 'Item Wise Consumption', path: '/buying/reports/item-consumption', minLevel: 3 },
+                { label: 'Items to Order and Receive', path: '/buying/reports/items-to-order-receive', minLevel: 3 },
+                { label: 'Purchase Order Trends', path: '/buying/reports/po-trends', minLevel: 3 },
+                { label: 'Procurement Tracker', path: '/buying/reports/procurement-tracker', minLevel: 3 },
+                { label: 'Items To Be Requested', path: '/buying/reports/items-to-request', minLevel: 3 },
+                { label: 'Item-wise Purchase History', path: '/buying/reports/item-purchase-history', minLevel: 3 },
+                { label: 'Purchase Receipt Trends', path: '/buying/reports/receipt-trends', minLevel: 3 },
+                { label: 'Purchase Invoice Trends', path: '/buying/reports/invoice-trends', minLevel: 3 },
+                { label: 'Subcontracted Raw Materials', path: '/buying/reports/subcontract-materials', minLevel: 3 },
+                { label: 'Subcontracted Item To Be Received', path: '/buying/reports/subcontract-received', minLevel: 3 },
+                { label: 'Supplier Quotation Comparison', path: '/buying/reports/rfq-comparison', minLevel: 3 },
+                { label: 'Material Requests for Quote', path: '/buying/reports/pr-to-rfq', minLevel: 3 },
+                { label: 'Supplier Addresses & Contacts', path: '/buying/reports/supplier-directory', minLevel: 3 },
+                { label: 'Import Supplier Invoice', path: '/buying/reports/import-invoice', minLevel: 3 },
+            ]
+        },
+
+        // MODUL SUPPLY CHAIN & INVENTORY
+        {
+            label: 'Supply Chain & Inventory',
+            icon: Package,
+            path: '/stock-module',
+            minLevel: 4,
+            children: [
+                { label: 'Stock Workspace', path: '/stock-workspace', minLevel: 4 },
+                { label: 'Items', path: '/inventory-items', minLevel: 4 },
+                { label: 'Item Groups', path: '/inventory-categories', minLevel: 4 },
+                { label: 'Stock Entry', path: '/stock-entry', minLevel: 4 },
+                { label: 'Delivery Notes (Surat Jalan)', path: '/delivery-notes', minLevel: 4 },
+                { label: 'Purchase Receipts (GRN)', path: '/purchase-receipt', minLevel: 4 },
+                { label: 'Material Request', path: '/material-request', minLevel: 4 },
+                { label: 'Pick Lists', path: '/pick-lists', minLevel: 3 },
+                { label: 'Delivery Trips', path: '/delivery-trip', minLevel: 4 },
+                { label: 'Stock Reconciliation (Opname)', path: '/stock-opname', minLevel: 3 },
+                { label: 'Landed Cost Vouchers', path: '/landed-cost-vouchers', minLevel: 3 },
+                { label: 'Product Bundles', path: '/stock/product-bundles', minLevel: 3 },
+                { label: 'Item Alternatives', path: '/stock/item-alternatives', minLevel: 3 },
+                { label: 'Item Manufacturers', path: '/stock/item-manufacturers', minLevel: 3 },
+                { label: 'Manufacturers', path: '/stock/manufacturers', minLevel: 3 },
+                { label: 'Serial Numbers', path: '/stock/serial-numbers', minLevel: 3 },
+                { label: 'Batches', path: '/stock/batches', minLevel: 3 },
+                { label: 'Installation Notes', path: '/stock/installation-notes', minLevel: 3 },
+                { label: 'Stock Settings', path: '/stock/settings', minLevel: 2 },
+                { label: 'Warehouses', path: '/warehouses', minLevel: 3 },
+                { label: 'Brands', path: '/stock/brands', minLevel: 3 },
+                { label: 'Item Attributes', path: '/stock/item-attributes', minLevel: 3 },
+                { label: 'Units of Measure (UOM)', path: '/stock/uoms', minLevel: 3 },
+                { label: 'UOM Conversion Factors', path: '/stock/uom-conversions', minLevel: 3 },
+                { label: 'Item Tax Templates', path: '/stock/tax-templates', minLevel: 3 },
+                { label: 'Stock Ledger', path: '/stock/reports/stock-ledger', minLevel: 3 },
+                { label: 'Stock Balance', path: '/stock/reports/stock-balance', minLevel: 3 },
+                { label: 'Stock Summary', path: '/stock/reports/stock-summary', minLevel: 3 },
+                { label: 'Stock Ageing', path: '/stock/reports/stock-ageing', minLevel: 3 },
+                { label: 'Stock Projected Qty', path: '/stock/reports/projected-qty', minLevel: 3 },
+                { label: 'Stock Analytics', path: '/stock/reports/stock-analytics', minLevel: 3 },
+                { label: 'Batch-wise Balance History', path: '/stock/reports/batch-balance', minLevel: 3 },
+                { label: 'Serial No Status', path: '/stock/reports/serial-status', minLevel: 3 },
+                { label: 'Item Shortage Report', path: '/stock/reports/item-shortage', minLevel: 3 },
+            ]
+        },
+
+        // MODUL FINANCE & ACCOUNTING
+        {
+            label: 'Finance & Accounting',
             icon: Wallet,
             path: '/finance-module',
-            minLevel: 2, // Finance usually restricted
+            minLevel: 2,
             children: [
-                { label: 'Overview', path: '/finance', minLevel: 2 },
-                { label: 'Expenses (Opex/Capex)', path: '/finance/expenses', minLevel: 2 },
+                { label: 'Accounting Workspace', path: '/accounting-workspace', minLevel: 2 },
+                { label: 'Chart of Accounts', path: '/finance', minLevel: 2 },
+                { label: 'Cash & Bank', path: '/cash-bank', minLevel: 2 },
+                { label: 'Journal Entry', path: '/accounting/journal-entries', minLevel: 2 },
+                { label: 'Payment Entry', path: '/accounting/payment-entries', minLevel: 2 },
+                { label: 'Payment Reconciliation', path: '/accounting/payment-reconciliation', minLevel: 2 },
                 { label: 'Sales Invoices', path: '/finance/invoices', minLevel: 2 },
                 { label: 'Purchase Bills', path: '/finance/bills', minLevel: 2 },
-                { label: 'Financial Reports', path: '/finance/reports', minLevel: 2 },
+                { label: 'Credit Notes', path: '/accounting/credit-notes', minLevel: 2 },
+                { label: 'Debit Notes', path: '/accounting/debit-notes', minLevel: 2 },
+                { label: 'Dunning (Surat Tagihan)', path: '/accounting/dunnings', minLevel: 2 },
+                { label: 'Bank Accounts', path: '/accounting/bank-accounts', minLevel: 2 },
+                { label: 'Bank Transactions', path: '/accounting/bank-transactions', minLevel: 2 },
+                { label: 'Bank Clearance', path: '/accounting/bank-clearance', minLevel: 2 },
+                { label: 'Cashier Closing Entry', path: '/accounting/cashier-closing', minLevel: 2 },
+                { label: 'Expenses (Opex/Capex)', path: '/finance/expenses', minLevel: 2 },
+                { label: 'Cost Center', path: '/accounting/cost-centers', minLevel: 2 },
+                { label: 'Accounting Dimension', path: '/accounting/dimensions', minLevel: 2 },
+                { label: 'Budget', path: '/accounting/budgets', minLevel: 2 },
+                { label: 'Sales Taxes Template', path: '/accounting/sales-tax-templates', minLevel: 2 },
+                { label: 'Purchase Taxes Template', path: '/accounting/purchase-tax-templates', minLevel: 2 },
+                { label: 'Tax Category & Rules', path: '/accounting/tax-rules', minLevel: 2 },
+                { label: 'Balance Sheet (Neraca)', path: '/accounting/reports/balance-sheet', minLevel: 2 },
+                { label: 'Profit and Loss Statement', path: '/accounting/reports/profit-loss', minLevel: 2 },
+                { label: 'Cash Flow Statement', path: '/accounting/reports/cash-flow', minLevel: 2 },
+                { label: 'Trial Balance (Neraca Saldo)', path: '/accounting/reports/trial-balance', minLevel: 2 },
+                { label: 'General Ledger Report', path: '/accounting/reports/general-ledger', minLevel: 2 },
+                { label: 'Accounts Receivable (AR) Aging', path: '/accounting/reports/ar-aging', minLevel: 2 },
+                { label: 'Accounts Payable (AP) Aging', path: '/accounting/reports/ap-aging', minLevel: 2 },
             ]
         },
 

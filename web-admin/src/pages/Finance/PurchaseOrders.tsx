@@ -22,13 +22,13 @@ export default function PurchaseOrders() {
         queryKey: ['finance', 'purchase-orders'],
         queryFn: financeApi.listPurchaseOrders
     });
-    const orders = ordersResponse?.data || [];
+    const orders = Array.isArray(ordersResponse) ? ordersResponse : (ordersResponse as any)?.data || [];
 
     const { data: vendorsResponse } = useQuery({
         queryKey: ['vendors'],
         queryFn: () => clientApi.list({ limit: 100 })
     });
-    const vendors = vendorsResponse?.data?.data || [];
+    const vendors = Array.isArray(vendorsResponse?.data) ? vendorsResponse.data : (vendorsResponse as any)?.data?.data || [];
 
     const createMutation = useMutation({
         mutationFn: financeApi.createPurchaseOrder,
@@ -131,7 +131,7 @@ export default function PurchaseOrders() {
                                 <tr>
                                     <td colSpan={7} className="px-6 py-8 text-center animate-pulse">Memuat data...</td>
                                 </tr>
-                            ) : orders.length > 0 ? (
+                            ) : orders && orders.length > 0 ? (
                                 orders.map((order: any) => (
                                     <tr key={order.id} className="hover:bg-muted/50 transition-colors cursor-pointer group">
                                         <td className="px-6 py-4 font-medium text-primary">{order.order_number}</td>

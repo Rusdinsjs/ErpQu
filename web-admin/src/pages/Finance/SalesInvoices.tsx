@@ -56,7 +56,7 @@ export default function SalesInvoices() {
         queryKey: ['clients'],
         queryFn: () => clientApi.list({ limit: 100 })
     });
-    const clients = clientsResponse?.data?.data || [];
+    const clients = Array.isArray(clientsResponse?.data) ? clientsResponse.data : (clientsResponse as any)?.data?.data || [];
 
     const createMutation = useMutation({
         mutationFn: financeApi.createSalesInvoice,
@@ -401,22 +401,22 @@ export default function SalesInvoices() {
 
             {/* Modal View Invoice */}
             {viewInvoice && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-                    <Card className="w-full max-w-xl bg-slate-900 border-slate-800 shadow-2xl">
-                        <div className="p-6 border-b border-slate-800 flex justify-between items-center">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+                    <Card className="w-full max-w-xl bg-card border-border/80 shadow-2xl rounded-2xl">
+                        <div className="p-6 border-b border-border/60 flex justify-between items-center">
                             <div className="flex items-center gap-3">
-                                <FileText className="text-cyan-400" size={24} />
+                                <FileText className="text-primary" size={24} />
                                 <div>
-                                    <h2 className="text-xl font-bold text-white font-mono">{viewInvoice.invoice_number}</h2>
+                                    <h2 className="text-xl font-bold text-foreground font-mono">{viewInvoice.invoice_number}</h2>
                                     <p className="text-xs text-muted-foreground">Faktur Penjualan Detail</p>
                                 </div>
                             </div>
-                            <button onClick={() => setViewInvoice(null)} className="text-muted-foreground hover:text-white transition-colors">
-                                <X size={24} />
+                            <button onClick={() => setViewInvoice(null)} className="text-muted-foreground hover:text-foreground transition-colors">
+                                <X size={20} />
                             </button>
                         </div>
                         <div className="p-6 space-y-4">
-                            <div className="grid grid-cols-2 gap-4 bg-slate-950/50 p-4 rounded-xl border border-slate-800">
+                            <div className="grid grid-cols-2 gap-4 bg-muted/30 p-4 rounded-xl border border-border/60">
                                 <div>
                                     <p className="text-xs text-muted-foreground uppercase">Pelanggan</p>
                                     <p className="text-sm font-semibold text-white">
@@ -502,12 +502,12 @@ export default function SalesInvoices() {
 
             {/* Modal Edit Invoice */}
             {editInvoice && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-                    <Card className="w-full max-w-2xl bg-slate-900 border-slate-800 shadow-2xl max-h-[90vh] overflow-y-auto">
-                        <div className="p-6 border-b border-slate-800 flex justify-between items-center">
-                            <h2 className="text-xl font-bold text-white">Edit Invoice #{editInvoice.invoice_number}</h2>
-                            <button onClick={() => setEditInvoice(null)} className="text-muted-foreground hover:text-white transition-colors">
-                                <X size={24} />
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+                    <Card className="w-full max-w-2xl bg-card border-border/80 shadow-2xl rounded-2xl max-h-[90vh] overflow-y-auto">
+                        <div className="p-6 border-b border-border/60 flex justify-between items-center">
+                            <h2 className="text-xl font-bold text-foreground">Edit Invoice #{editInvoice.invoice_number}</h2>
+                            <button onClick={() => setEditInvoice(null)} className="text-muted-foreground hover:text-foreground transition-colors">
+                                <X size={20} />
                             </button>
                         </div>
                         <form onSubmit={handleUpdate} className="p-6 space-y-4">
@@ -671,12 +671,12 @@ export default function SalesInvoices() {
 
             {/* Modal Buat Invoice */}
             {isModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-                    <Card className="w-full max-w-2xl bg-slate-900 border-slate-800 shadow-2xl max-h-[90vh] overflow-y-auto">
-                        <div className="p-6 border-b border-slate-800 flex justify-between items-center">
-                            <h2 className="text-xl font-bold text-white">Buat Invoice Baru</h2>
-                            <button onClick={() => setIsModalOpen(false)} className="text-muted-foreground hover:text-white transition-colors">
-                                <X size={24} />
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+                    <Card className="w-full max-w-2xl bg-card border-border/80 shadow-2xl rounded-2xl max-h-[90vh] overflow-y-auto">
+                        <div className="p-6 border-b border-border/60 flex justify-between items-center">
+                            <h2 className="text-xl font-bold text-foreground">Buat Invoice Baru</h2>
+                            <button onClick={() => setIsModalOpen(false)} className="text-muted-foreground hover:text-foreground transition-colors">
+                                <X size={20} />
                             </button>
                         </div>
                         <form onSubmit={handleCreate} className="p-6 space-y-4">

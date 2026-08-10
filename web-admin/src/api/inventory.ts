@@ -46,58 +46,64 @@ export interface UpdateInventoryCategoryRequest {
     expense_account_id?: string;
 }
 
+const extractArray = <T>(data: any): T[] => {
+    if (Array.isArray(data)) return data;
+    if (data && Array.isArray(data.data)) return data.data;
+    return [];
+};
+
 export const inventoryApi = {
     // Categories
     listCategories: async () => {
         const response = await api.get('/inventory/categories');
-        return response.data.data;
+        return extractArray(response.data);
     },
     getCategory: async (id: string) => {
         const response = await api.get(`/inventory/categories/${id}`);
-        return response.data.data;
+        return response.data?.data || response.data;
     },
     createCategory: async (data: CreateInventoryCategoryRequest) => {
         const response = await api.post('/inventory/categories', data);
-        return response.data.data;
+        return response.data?.data || response.data;
     },
     updateCategory: async (id: string, data: UpdateInventoryCategoryRequest) => {
         const response = await api.put(`/inventory/categories/${id}`, data);
-        return response.data.data;
+        return response.data?.data || response.data;
     },
     deleteCategory: async (id: string) => {
         const response = await api.delete(`/inventory/categories/${id}`);
-        return response.data.data;
+        return response.data?.data || response.data;
     },
 
     // Items
     listItems: async (params?: any) => {
         const response = await api.get('/inventory/items', { params });
-        return response.data.data;
+        return extractArray(response.data);
     },
     getItem: async (id: string) => {
         const response = await api.get(`/inventory/items/${id}`);
-        return response.data.data;
+        return response.data?.data || response.data;
     },
     createItem: async (data: any) => {
         const response = await api.post('/inventory/items', data);
-        return response.data.data;
+        return response.data?.data || response.data;
     },
     updateItem: async (id: string, data: any) => {
         const response = await api.put(`/inventory/items/${id}`, data);
-        return response.data.data;
+        return response.data?.data || response.data;
     },
     deleteItem: async (id: string) => {
         const response = await api.delete(`/inventory/items/${id}`);
-        return response.data.data;
+        return response.data?.data || response.data;
     },
     listMovements: async (params?: { item_id?: string; limit?: number }) => {
         const response = await api.get('/inventory/movements', { params });
-        return response.data.data;
+        return extractArray(response.data);
     },
     // Add other item methods as needed
     batchAdjust: async (data: BatchInventoryAdjustmentRequest) => {
         const response = await api.post('/inventory/adjust/batch', data);
-        return response.data.data;
+        return response.data?.data || response.data;
     },
 
     bulkCreate: async (data: { items: any[] }) => {

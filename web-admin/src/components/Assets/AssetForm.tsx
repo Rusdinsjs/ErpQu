@@ -441,14 +441,14 @@ export function AssetForm({ initialValues, categories, locations, onSubmit, onCa
     });
 
     const categoryOptions = useMemo(() => {
-        return categories.map(c => ({
+        return (categories || []).map(c => ({
             value: c.id,
             label: c.full_path || c.name,
         }));
     }, [categories]);
 
     const locationOptions = useMemo(() => {
-        return locations.map(l => ({
+        return (locations || []).map(l => ({
             value: l.id,
             label: l.name,
         }));

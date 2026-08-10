@@ -22,7 +22,7 @@ export default function SalesOrders() {
         queryKey: ['clients'],
         queryFn: () => clientApi.list({ limit: 100 })
     });
-    const clients = clientsResponse?.data?.data || [];
+    const clients = Array.isArray(clientsResponse?.data) ? clientsResponse.data : (clientsResponse as any)?.data?.data || [];
 
     const createMutation = useMutation({
         mutationFn: financeApi.createSalesOrder,

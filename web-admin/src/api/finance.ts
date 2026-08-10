@@ -41,78 +41,84 @@ export type {
     CashBankTransaction
 };
 
+const extractArray = <T>(data: any): T[] => {
+    if (Array.isArray(data)) return data;
+    if (data && Array.isArray(data.data)) return data.data;
+    return [];
+};
+
 export const financeApi = {
     listAccounts: async (): Promise<ChartOfAccount[]> => {
         const response = await api.get('/finance/accounts');
-        return response.data.data;
+        return extractArray<ChartOfAccount>(response.data);
     },
 
     listTree: async (): Promise<ChartOfAccount[]> => {
         const response = await api.get('/finance/accounts/tree');
-        return response.data.data;
+        return extractArray<ChartOfAccount>(response.data);
     },
 
     createAccount: async (data: CreateAccountRequest): Promise<ChartOfAccount> => {
         const response = await api.post('/finance/accounts', data);
-        return response.data.data;
+        return response.data?.data || response.data;
     },
 
     updateAccount: async (id: string, data: UpdateAccountRequest): Promise<ChartOfAccount> => {
         const response = await api.put(`/finance/accounts/${id}`, data);
-        return response.data.data;
+        return response.data?.data || response.data;
     },
 
     getGeneralLedger: async (accountId: string, startDate?: string, endDate?: string): Promise<GeneralLedgerEntry[]> => {
         const response = await api.get(`/finance/reports/ledger/${accountId}`, {
             params: { start_date: startDate, end_date: endDate }
         });
-        return response.data.data;
+        return extractArray<GeneralLedgerEntry>(response.data);
     },
 
     getTrialBalance: async (): Promise<TrialBalanceEntry[]> => {
         const response = await api.get('/finance/reports/trial-balance');
-        return response.data.data;
+        return extractArray<TrialBalanceEntry>(response.data);
     },
 
     getBalanceSheet: async (): Promise<FinancialReportEntry[]> => {
         const response = await api.get('/finance/reports/balance-sheet');
-        return response.data.data;
+        return extractArray<FinancialReportEntry>(response.data);
     },
 
     getIncomeStatement: async (): Promise<FinancialReportEntry[]> => {
         const response = await api.get('/finance/reports/income-statement');
-        return response.data.data;
+        return extractArray<FinancialReportEntry>(response.data);
     },
 
     // Operational Finance
     listSalesInvoices: async (): Promise<SalesInvoice[]> => {
         const response = await api.get('/finance/sales/invoices');
-        return response.data.data;
+        return extractArray<SalesInvoice>(response.data);
     },
     listPurchaseBills: async (): Promise<PurchaseBill[]> => {
         const response = await api.get('/finance/purchase/bills');
-        return response.data.data;
+        return extractArray<PurchaseBill>(response.data);
     },
     listExpenses: async (): Promise<Expense[]> => {
         const response = await api.get('/finance/expenses');
-        return response.data.data;
+        return extractArray<Expense>(response.data);
     },
     listCashBankTransactions: async (): Promise<CashBankTransaction[]> => {
         const response = await api.get('/finance/cash-bank');
-        return response.data.data;
+        return extractArray<CashBankTransaction>(response.data);
     },
 
     createSalesInvoice: async (data: CreateSalesInvoiceRequest): Promise<SalesInvoice> => {
         const response = await api.post('/finance/sales/invoices', data);
-        return response.data.data;
+        return response.data?.data || response.data;
     },
     getSalesInvoice: async (id: string): Promise<SalesInvoice> => {
         const response = await api.get(`/finance/sales/invoices/${id}`);
-        return response.data.data;
+        return response.data?.data || response.data;
     },
     updateSalesInvoice: async (id: string, data: UpdateSalesInvoiceRequest): Promise<SalesInvoice> => {
         const response = await api.put(`/finance/sales/invoices/${id}`, data);
-        return response.data.data;
+        return response.data?.data || response.data;
     },
     deleteSalesInvoice: async (id: string): Promise<{ success: boolean; message: string }> => {
         const response = await api.delete(`/finance/sales/invoices/${id}`);

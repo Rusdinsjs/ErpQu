@@ -439,14 +439,14 @@ export default function InventoryCategories() {
 
             {/* Create/Edit Modal */}
             {modalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-                    <div className="bg-gray-900 border border-white/10 rounded-2xl w-full max-w-lg shadow-2xl animate-in zoom-in-95 duration-200">
-                        <div className="flex items-center justify-between p-6 border-b border-white/5">
-                            <h2 className="text-xl font-bold text-white">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+                    <div className="bg-card border border-border/80 rounded-2xl w-full max-w-lg shadow-2xl animate-in zoom-in-95 duration-200">
+                        <div className="flex items-center justify-between p-6 border-b border-border/60">
+                            <h2 className="text-xl font-bold text-foreground">
                                 {editingCategory ? 'Edit Kategori' : 'Tambah Kategori'}
                             </h2>
-                            <button onClick={() => setModalOpen(false)} className="text-muted-foreground hover:text-white transition-colors">
-                                <X size={24} />
+                            <button onClick={() => setModalOpen(false)} className="text-muted-foreground hover:text-foreground transition-colors">
+                                <X size={20} />
                             </button>
                         </div>
 
@@ -458,39 +458,37 @@ export default function InventoryCategories() {
                                         placeholder="e.g. INV-EL"
                                         value={formData.code}
                                         onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-                                        className="bg-black/20 border-white/5"
-                                        disabled={!!editingCategory} // Usually code is unique/immutable
+                                        disabled={!!editingCategory}
                                     />
                                     <Input
                                         label="Nama Kategori"
                                         placeholder="e.g. Elektronik"
                                         value={formData.name}
                                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                        className="bg-black/20 border-white/5"
                                     />
                                 </div>
 
-                                <div>
-                                    <label className="block text-sm font-medium text-muted-foreground mb-1.5">Deskripsi</label>
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-semibold text-foreground/80 block">Deskripsi</label>
                                     <textarea
-                                        className="w-full bg-black/20 border border-white/5 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-blue-500/50 min-h-[80px]"
+                                        className="w-full bg-background border border-border/80 rounded-xl p-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 min-h-[80px] shadow-sm"
                                         placeholder="Deskripsi singkat kategori..."
                                         value={formData.description}
                                         onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                                     />
                                 </div>
 
-                                <div className="border-t border-white/5 pt-4 space-y-4">
-                                    <h3 className="text-sm font-semibold text-blue-400 flex items-center gap-2">
+                                <div className="border-t border-border/60 pt-4 space-y-4">
+                                    <h3 className="text-sm font-semibold text-primary flex items-center gap-2">
                                         <Link2 size={16} /> Pemetaan Akun (Mapping)
                                     </h3>
 
-                                    <div>
-                                        <label className="block text-sm font-medium text-muted-foreground mb-1.5">
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-semibold text-foreground/80 block">
                                             Akun Kredit (Persediaan)
                                         </label>
                                         <select
-                                            className="w-full bg-black/20 border border-white/5 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-blue-500/50 appearance-none"
+                                            className="w-full bg-background border border-border/80 rounded-xl p-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 shadow-sm"
                                             value={formData.inventory_account_id}
                                             onChange={(e) => setFormData({ ...formData, inventory_account_id: e.target.value })}
                                         >
@@ -504,12 +502,12 @@ export default function InventoryCategories() {
                                         <p className="text-xs text-muted-foreground mt-1">Akun Kredit saat barang keluar.</p>
                                     </div>
 
-                                    <div>
-                                        <label className="block text-sm font-medium text-muted-foreground mb-1.5">
+                                    <div className="space-y-1.5">
+                                        <label className="text-xs font-semibold text-foreground/80 block">
                                             Akun Debit OPEX (Biaya)
                                         </label>
                                         <select
-                                            className="w-full bg-black/20 border border-white/5 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-blue-500/50 appearance-none"
+                                            className="w-full bg-background border border-border/80 rounded-xl p-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 shadow-sm"
                                             value={formData.expense_account_id}
                                             onChange={(e) => setFormData({ ...formData, expense_account_id: e.target.value })}
                                         >
@@ -525,14 +523,14 @@ export default function InventoryCategories() {
                                 </div>
                             </div>
 
-                            <div className="flex justify-end gap-3 pt-4 border-t border-white/5">
-                                <Button type="button" variant="ghost" onClick={() => setModalOpen(false)}>
+                            <div className="flex justify-end gap-3 pt-4 border-t border-border/60">
+                                <Button type="button" variant="outline" onClick={() => setModalOpen(false)} className="rounded-xl border-border/80 font-medium px-4 py-2 text-sm text-muted-foreground hover:text-foreground">
                                     Batal
                                 </Button>
                                 <Button
                                     type="submit"
                                     variant="primary"
-                                    className="bg-cyan-600 hover:bg-cyan-500"
+                                    className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold rounded-xl px-5 py-2.5 shadow-md text-sm"
                                     loading={createMutation.isPending || updateMutation.isPending}
                                 >
                                     Simpan Kategori

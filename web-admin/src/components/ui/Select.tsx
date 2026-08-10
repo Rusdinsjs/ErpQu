@@ -12,14 +12,14 @@ interface SelectProps extends Omit<SelectHTMLAttributes<HTMLSelectElement>, 'onC
     label?: string;
     error?: string;
     hint?: string;
-    options: SelectOption[];
+    options?: SelectOption[];
     placeholder?: string;
     onChange?: (value: string) => void;
     onCreate?: () => void;
 }
 
 export const Select = forwardRef<HTMLSelectElement, SelectProps>(
-    ({ label, error, hint, options, placeholder, className = '', onChange, onCreate, ...props }, ref) => {
+    ({ label, error, hint, options = [], placeholder, className = '', onChange, onCreate, children, ...props }, ref) => {
         const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
             const newValue = e.target.value;
             if (onCreate && newValue === '__CREATE_NEW__') {
@@ -59,7 +59,8 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
                                 {placeholder}
                             </option>
                         )}
-                        {options.map((option) => (
+                        {children}
+                        {(options || []).map((option) => (
                             <option
                                 key={option.value}
                                 value={option.value}

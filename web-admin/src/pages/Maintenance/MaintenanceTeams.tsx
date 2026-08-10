@@ -391,18 +391,18 @@ export default function MaintenanceTeams() {
 
             {/* Modal Create / Edit */}
             {isModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 overflow-y-auto">
-                    <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl my-8">
-                        <div className="p-5 border-b border-slate-800 flex items-center justify-between bg-slate-900/80">
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 overflow-y-auto">
+                    <div className="bg-card border border-border/80 rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl my-8">
+                        <div className="p-5 border-b border-border/60 flex items-center justify-between bg-card">
                             <div className="flex items-center gap-3">
-                                <div className="p-2 bg-emerald-500/100/10 text-emerald-400 rounded-lg">
+                                <div className="p-2 bg-primary/10 text-primary rounded-lg">
                                     <Briefcase size={20} />
                                 </div>
-                                <h2 className="text-lg font-bold text-white">
-                                    {editingTeam ? 'Edit Tim Pemeliharaan' : 'Tambah Tim Pemeliharaan Baru'}
+                                <h2 className="text-lg font-bold text-foreground">
+                                    {editingTeam ? 'Edit Tim Pemeliharaan' : 'Buat Tim Pemeliharaan Baru'}
                                 </h2>
                             </div>
-                            <button onClick={closeModal} className="text-muted-foreground hover:text-white">
+                            <button onClick={closeModal} className="text-muted-foreground hover:text-foreground">
                                 <X size={20} />
                             </button>
                         </div>

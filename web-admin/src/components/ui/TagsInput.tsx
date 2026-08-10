@@ -59,7 +59,7 @@ export function TagsInput({
                 onClick={() => containerRef.current?.querySelector('input')?.focus()}
                 ref={containerRef}
             >
-                {value.map((tag) => (
+                {(value || []).map((tag) => (
                     <span
                         key={tag}
                         className="flex items-center gap-1 px-2 py-0.5 text-sm bg-muted text-foreground rounded-md border border-border"

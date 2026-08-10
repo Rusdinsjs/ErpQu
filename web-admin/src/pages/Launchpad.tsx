@@ -193,7 +193,7 @@ export default function Launchpad() {
             // Super Admin or Level <= 2 sees all cards
             if (user?.role === 'super_admin' || user?.role === 'admin' || (user?.role_level && user.role_level <= 2)) return true;
             // For other users, only show cards where they have at least one menu permission
-            const hasAnyMenuPermission = card.menuIds.some(menuId => canAccessMenu(menuId));
+            const hasAnyMenuPermission = (card.menuIds || []).some(menuId => canAccessMenu(menuId));
             return hasAnyMenuPermission;
         })
         .sort((a, b) => a.order - b.order);
@@ -212,7 +212,7 @@ export default function Launchpad() {
         }
 
         // Smart Default Route: Navigate to first accessible menu in this module card
-        const accessibleMenu = card.menuIds.find(id => canAccessMenu(id));
+        const accessibleMenu = (card.menuIds || []).find(id => canAccessMenu(id));
         if (accessibleMenu) {
             navigate(`/${accessibleMenu}`);
         } else {

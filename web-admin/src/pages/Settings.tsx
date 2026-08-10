@@ -693,8 +693,8 @@ function LaunchpadConfigEditor({ formData, handleChange }: LaunchpadConfigEditor
     // Get menu IDs already assigned to any module or global
     const getAssignedMenuIds = useCallback((): Set<MenuId> => {
         const assigned = new Set<MenuId>();
-        currentConfig.modules.forEach(m => m.menuIds.forEach(id => assigned.add(id)));
-        currentConfig.globalMenuIds.forEach(id => assigned.add(id));
+        (currentConfig.modules || []).forEach(m => (m.menuIds || []).forEach(id => assigned.add(id)));
+        (currentConfig.globalMenuIds || []).forEach(id => assigned.add(id));
         return assigned;
     }, [currentConfig]);
 
@@ -705,22 +705,22 @@ function LaunchpadConfigEditor({ formData, handleChange }: LaunchpadConfigEditor
 
     // Toggle a menu ID in a module (ensures menu is moved if assigned elsewhere)
     const toggleMenuInModule = (targetModuleId: string, menuId: MenuId) => {
-        const targetModule = currentConfig.modules.find(m => m.id === targetModuleId);
-        const alreadyInTarget = targetModule?.menuIds.includes(menuId);
+        const targetModule = (currentConfig.modules || []).find(m => m.id === targetModuleId);
+        const alreadyInTarget = (targetModule?.menuIds || []).includes(menuId);
 
-        const newModules = currentConfig.modules.map(m => {
+        const newModules = (currentConfig.modules || []).map(m => {
             if (m.id === targetModuleId) {
                 return {
                     ...m,
                     menuIds: alreadyInTarget
-                        ? m.menuIds.filter(id => id !== menuId)
-                        : [...m.menuIds, menuId]
+                        ? (m.menuIds || []).filter(id => id !== menuId)
+                        : [...(m.menuIds || []), menuId]
                 };
             } else if (!alreadyInTarget) {
                 // If moving menuId to targetModuleId, remove it from other modules
                 return {
                     ...m,
-                    menuIds: m.menuIds.filter(id => id !== menuId)
+                    menuIds: (m.menuIds || []).filter(id => id !== menuId)
                 };
             }
             return m;
@@ -857,7 +857,7 @@ function LaunchpadConfigEditor({ formData, handleChange }: LaunchpadConfigEditor
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2">
                                             <h4 className="font-semibold text-foreground text-sm">{mod.title}</h4>
-                                            <span className="text-xs text-muted-foreground">({mod.menuIds.length} menu)</span>
+                                            <span className="text-xs text-muted-foreground">({(mod.menuIds || []).length} menu)</span>
                                         </div>
                                         <p className="text-xs text-muted-foreground truncate">{mod.subtitle}</p>
                                     </div>
@@ -914,7 +914,7 @@ function LaunchpadConfigEditor({ formData, handleChange }: LaunchpadConfigEditor
                                         <div>
                                             <label className="text-sm font-medium text-foreground block mb-2">Assigned Menus</label>
                                             <div className="flex flex-wrap gap-2 mb-3">
-                                                {mod.menuIds.map(menuId => (
+                                                {(mod.menuIds || []).map(menuId => (
                                                     <span
                                                         key={menuId}
                                                         className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 text-primary rounded-lg text-xs font-medium border border-primary/20"
@@ -943,7 +943,7 @@ function LaunchpadConfigEditor({ formData, handleChange }: LaunchpadConfigEditor
                                             >
                                                 <option value="">+ Add menu to this module...</option>
                                                 {allMenuIds
-                                                    .filter(id => !mod.menuIds.includes(id) && !currentConfig.globalMenuIds.includes(id))
+                                                    .filter(id => !(mod.menuIds || []).includes(id) && !(currentConfig.globalMenuIds || []).includes(id))
                                                     .map(id => (
                                                         <option key={id} value={id}>
                                                             {MENU_LABELS[id]}

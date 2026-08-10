@@ -44,7 +44,7 @@ export default function SalesShipments() {
         queryKey: ['clients'],
         queryFn: () => clientApi.list({ limit: 100 })
     });
-    const clients = clientsResponse?.data?.data || [];
+    const clients = Array.isArray(clientsResponse?.data) ? clientsResponse.data : (clientsResponse as any)?.data?.data || [];
 
     // Form dynamic items state based on selected sales order
     const [lines, setLines] = useState<any[]>([]);

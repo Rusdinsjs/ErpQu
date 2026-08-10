@@ -541,14 +541,14 @@ export const CompanyManagement: React.FC = () => {
 
             {/* Modal Dialog Form - Frappe Company DocType */}
             {isModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
-                    <div className="bg-card w-full max-w-3xl rounded-2xl shadow-2xl border border-border overflow-hidden flex flex-col max-h-[90vh]">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in">
+                    <div className="bg-card w-full max-w-3xl rounded-2xl shadow-2xl border border-border/80 overflow-hidden flex flex-col max-h-[90vh]">
                         {/* Modal Header */}
-                        <div className="px-6 py-4 bg-gradient-to-r from-slate-900 to-indigo-950 text-white flex items-center justify-between">
+                        <div className="px-6 py-4 bg-card border-b border-border/60 text-foreground flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                                <Building2 className="w-5 h-5 text-indigo-400" />
+                                <Building2 className="w-5 h-5 text-primary" />
                                 <div>
-                                    <h3 className="font-bold text-base">
+                                    <h3 className="font-bold text-base text-foreground">
                                         {editingCompany ? 'Edit Perusahaan & Legalitas Akta' : 'Tambah Perusahaan Baru'}
                                     </h3>
                                     <p className="text-xs text-muted-foreground">Kelola Profil, Akta Pendirian, & Multiple Akta Perubahan</p>
@@ -556,7 +556,7 @@ export const CompanyManagement: React.FC = () => {
                             </div>
                             <button
                                 onClick={() => setIsModalOpen(false)}
-                                className="p-1.5 text-muted-foreground hover:text-white hover:bg-card/10 rounded-lg transition-colors"
+                                className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-colors"
                             >
                                 <X className="w-5 h-5" />
                             </button>
