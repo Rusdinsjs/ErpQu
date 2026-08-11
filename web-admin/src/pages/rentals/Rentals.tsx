@@ -46,7 +46,6 @@ export default function Rentals() {
                                 { value: 'reviewer', label: 'Reviewer', icon: <CheckSquare size={16} /> },
                                 { value: 'pricelist', label: 'Price List', icon: <Tags size={16} /> },
                                 { value: 'billing', label: 'Billing', icon: <Receipt size={16} /> },
-                                { value: 'clients', label: 'Clients', icon: <Users size={16} /> },
                             ].map((tab) => (
                                 <TabsTrigger
                                     key={tab.value}
@@ -83,10 +82,6 @@ export default function Rentals() {
 
                         <TabsContent value="billing" className="p-0 animate-in fade-in slide-in-from-bottom-2 duration-500">
                             <BillingList />
-                        </TabsContent>
-
-                        <TabsContent value="clients" className="p-0 animate-in fade-in slide-in-from-bottom-2 duration-500">
-                            <ClientList />
                         </TabsContent>
                     </div>
                 </Tabs>

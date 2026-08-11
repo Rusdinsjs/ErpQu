@@ -27,7 +27,6 @@ const ContractListView = lazy(() => import('../../pages/Contracts/Contracts'));
 const ContractDetailView = lazy(() => import('../../pages/Contracts/ContractDetail'));
 const ContractAnalyticsView = lazy(() => import('../../pages/Contracts/ContractAnalytics'));
 const ContractTemplatesView = lazy(() => import('../../pages/Contracts/ContractTemplates'));
-const ClientsView = lazy(() => import('../../pages/Clients'));
 const LoansView = lazy(() => import('../../pages/Loans'));
 const LocationsView = lazy(() => import('../../pages/Assets/Locations'));
 const EmployeesView = lazy(() => import('../../pages/HR/Employees'));
@@ -194,7 +193,6 @@ export function AdminContentRouter({
                 return <ContractAnalyticsView />;
             case 'contract-templates':
                 return <ContractTemplatesView />;
-            case 'clients': return <ClientsView />;
             case 'loans': return <LoansView />;
             case 'fuel': return <FuelView />;
             case 'employees': return <EmployeesView />;

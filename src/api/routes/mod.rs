@@ -11,7 +11,25 @@ pub mod inventory_routes;
 pub mod main_router;
 pub mod maintenance_routes;
 pub mod rental_routes;
+pub mod work_order_routes;
 pub mod timesheet_routes;
+pub mod quotation_routes;
+pub mod sales_master_data_routes;
+pub mod sales_pricing_data_routes;
+pub mod sales_pos_data_routes;
+pub mod sales_setup_data_routes;
+pub mod buying_master_data_routes;
+pub mod buying_quotation_data_routes;
+pub mod buying_scorecard_data_routes;
+
+pub use quotation_routes::*;
+pub use sales_master_data_routes::*;
+pub use sales_pricing_data_routes::*;
+pub use sales_pos_data_routes::*;
+pub use sales_setup_data_routes::*;
+pub use buying_master_data_routes::*;
+pub use buying_quotation_data_routes::*;
+pub use buying_scorecard_data_routes::*;
 
 pub use main_router::*;
 pub mod data_routes;

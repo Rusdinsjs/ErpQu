@@ -36,6 +36,14 @@ pub mod timesheet_repository;
 pub mod user_repository;
 pub mod vendor_repository;
 pub mod work_order_repository;
+pub mod quotation_repository;
+pub mod sales_master_data_repository;
+pub mod sales_pricing_data_repository;
+pub mod sales_pos_data_repository;
+pub mod sales_setup_data_repository;
+pub mod buying_master_data_repository;
+pub mod buying_quotation_data_repository;
+pub mod buying_scorecard_data_repository;
 
 pub use approval_repository::*;
 pub use approval_workflow_repository::*;
@@ -71,6 +79,14 @@ pub use timesheet_repository::*;
 pub use user_repository::*;
 pub use vendor_repository::*;
 pub use work_order_repository::*;
+pub use quotation_repository::*;
+pub use sales_master_data_repository::*;
+pub use sales_pricing_data_repository::*;
+pub use sales_pos_data_repository::*;
+pub use sales_setup_data_repository::*;
+pub use buying_master_data_repository::*;
+pub use buying_quotation_data_repository::*;
+pub use buying_scorecard_data_repository::*;
 
 /// Base repository trait
 #[async_trait::async_trait]

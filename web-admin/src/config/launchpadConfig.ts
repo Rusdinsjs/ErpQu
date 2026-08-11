@@ -9,9 +9,8 @@ export type MenuId =
     | 'assets' | 'asset-lifecycle' | 'categories' | 'locations' | 'asset-audit'
     | 'work-orders' | 'conversions' | 'maintenance-schedules' | 'maintenance-templates' | 'maintenance-teams'
     | 'fuel' | 'loans' | 'tax-renewals'
-    | 'rentals' | 'contracts' | 'contract-templates' | 'clients'
-    | 'sales-invoices' | 'selling-workspace'
-    | 'customers' | 'quotations' | 'sales-orders' | 'blanket-orders' | 'sales-partners' | 'sales-persons'
+    | 'rentals' | 'contracts' | 'contract-templates'
+    | 'sales-invoices' | 'selling-workspace' | 'customers' | 'quotations' | 'sales-orders' | 'blanket-orders' | 'sales-partners' | 'sales-persons'
     | 'pos-profiles' | 'pos-settings' | 'pos-opening' | 'pos-closing' | 'loyalty-programs' | 'loyalty-points'
     | 'items' | 'item-prices' | 'price-lists' | 'item-groups' | 'product-bundles' | 'promotional-schemes' | 'pricing-rules' | 'shipping-rules' | 'coupon-codes'
     | 'selling-settings' | 'terms-templates' | 'tax-templates' | 'utm-sources' | 'customer-groups' | 'contacts' | 'addresses' | 'territories' | 'campaigns'
@@ -83,7 +82,6 @@ export const MENU_LABELS: Record<MenuId, string> = {
     'rentals': 'Rental Orders',
     'contracts': 'Contracts',
     'contract-templates': 'Contract Templates',
-    'clients': 'Clients / Partners',
     'sales-invoices': 'Sales Invoices',
     'selling-workspace': 'Selling Workspace',
     'customers': 'Customers',
@@ -278,7 +276,6 @@ export const MENU_TO_RESOURCE: Record<MenuId, string> = {
     'rentals': 'rental',
     'contracts': 'contract',
     'contract-templates': 'contract_template',
-    'clients': 'client',
     'sales-invoices': 'sales_invoice',
     'selling-workspace': 'selling',
     'customers': 'client',
@@ -514,8 +511,8 @@ export const DEFAULT_LAUNCHPAD_CONFIG: LaunchpadConfig = {
         },
         {
             id: 'commercial',
-            title: 'Commercial & Sales',
-            subtitle: 'Clients, Sales & Contracts',
+            title: 'Commercial',
+            subtitle: 'Customers, Sales & Contracts',
             icon: 'TrendingUp',
             gradient: 'from-violet-500/20 to-purple-500/20',
             iconBg: 'bg-gradient-to-br from-violet-500 to-purple-500',
@@ -533,7 +530,7 @@ export const DEFAULT_LAUNCHPAD_CONFIG: LaunchpadConfig = {
                 'customer-acquisition', 'inactive-customers', 'salesperson-summary', 'item-sales-history',
                 'customer-directory', 'packing-stock', 'pending-so-pr', 'delivery-trends', 'invoice-trends',
                 'customer-credit-balance', 'dormant-customers', 'partner-commissions',
-                'territory-target-variance', 'salesperson-target-variance', 'partner-target-variance', 'clients'
+                'territory-target-variance', 'salesperson-target-variance', 'partner-target-variance'
             ],
             order: 5,
             enabled: true,

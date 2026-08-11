@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowLeft, Save } from 'lucide-react';
+import { DocTypeFormModal } from '../../components/Forms/DocTypeFormModal';
 import { rentalApi, type CreateRentalRequest, type RentalRate } from '../../api/rental';
 import { clientApi } from '../../api/client-management';
 import { assetApi } from '../../api/assets';
@@ -18,7 +19,6 @@ import {
     Modal,
     Input
 } from '../../components/ui';
-import { CreateClientModal } from '../../components/Clients/CreateClientModal';
 
 // Simplified Asset Quick Add (Placeholder for now, or minimal fields)
 // Ideally we reuse the AssetForm, but it's large. For "Quick Add" let's redirect or use a simple modal if crucial.
@@ -200,8 +200,8 @@ export default function RentalForm() {
                     {/* Header Info */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <Select
-                            label="Client"
-                            placeholder="Select Client"
+                            label="Customer"
+                            placeholder="Select Customer"
                             options={clients.map((c: any) => ({ value: c.id, label: c.name }))}
                             value={headerData.client_id}
                             onChange={(val) => setHeaderData(p => ({ ...p, client_id: val }))}
@@ -322,10 +322,26 @@ export default function RentalForm() {
                 </form>
             </Card>
 
-            <CreateClientModal
+            <DocTypeFormModal
                 isOpen={showClientModal}
                 onClose={() => setShowClientModal(false)}
-                onSuccess={(newId) => setHeaderData(p => ({ ...p, client_id: newId }))}
+                title="Customer"
+                moduleName="Selling"
+                onSave={async (formData) => {
+                    try {
+                        const payload = {
+                            name: formData.customer_name || 'New Customer',
+                            client_code: `CUST-${Date.now()}`,
+                            company_name: formData.customer_name,
+                            notes: `Group: ${formData.customer_group}, Type: ${formData.customer_type}`
+                        };
+                        const res = await clientApi.create(payload);
+                        queryClient.invalidateQueries({ queryKey: ['clients-list'] });
+                        setHeaderData(p => ({ ...p, client_id: res.data.id }));
+                    } catch (err) {
+                        console.error('Failed to create customer:', err);
+                    }
+                }}
             />
 
             {/* Rate Modal - Simplified reuse */}

@@ -229,13 +229,13 @@ export default function Sales() {
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium text-muted-foreground">Pelanggan</label>
+                                    <label className="text-sm font-medium text-muted-foreground">Customer</label>
                                     <select
                                         name="client_id"
                                         required
                                         className="w-full bg-background border border-border rounded-lg px-4 py-2 text-foreground focus:border-primary outline-none transition-all"
                                     >
-                                        <option value="">Pilih Pelanggan</option>
+                                        <option value="">Pilih Customer</option>
                                         {clients.map((client) => (
                                             <option key={client.id} value={client.id}>{client.name}</option>
                                         ))}

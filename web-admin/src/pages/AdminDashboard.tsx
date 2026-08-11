@@ -55,7 +55,6 @@ type TabId =
     | 'contract-detail'
     | 'contract-analytics'
     | 'contract-templates'
-    | 'clients'
     | 'loans'
     | 'fuel'
     | 'employees'
@@ -287,7 +286,6 @@ const ALL_NAV_ITEMS: Record<string, NavItem> = {
     'territory-target-variance': { id: 'territory-target-variance', icon: TrendingUp, label: 'Territory Target Variance', minLevel: 3 },
     'salesperson-target-variance': { id: 'salesperson-target-variance', icon: TrendingUp, label: 'Sales Person Target Variance', minLevel: 3 },
     'partner-target-variance': { id: 'partner-target-variance', icon: TrendingUp, label: 'Sales Partner Target Variance', minLevel: 3 },
-    'clients': { id: 'clients', icon: Building2, label: 'Clients / Partners', minLevel: 4 },
 
     'buying-workspace': { id: 'buying-workspace', icon: ShoppingBag, label: 'Buying Workspace', minLevel: 4 },
     'material-requests': { id: 'material-requests', icon: Package, label: 'Material Requests', minLevel: 4 },
@@ -929,7 +927,7 @@ export default function AdminDashboard() {
                 children: [
                     ...getGroupItems(commercialIds, [
                         'selling-workspace', 'customers', 'quotations', 'sales-orders', 'sales-invoices',
-                        'blanket-orders', 'sales-partners', 'sales-persons', 'clients'
+                        'blanket-orders', 'sales-partners', 'sales-persons'
                     ]),
                     {
                         id: 'pos_subgroup',

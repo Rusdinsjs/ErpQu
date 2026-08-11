@@ -42,6 +42,29 @@ pub fn create_router(state: AppState) -> Router {
         );
 
     // Protected routes
+    
+    // Fix: Instantiate missing handlers for Sales & Buying modules
+    let sales_master_repo = std::sync::Arc::new(crate::infrastructure::repositories::SalesMasterDataRepository::new(state.pool.clone()));
+    let sales_master_handler = crate::api::handlers::SalesMasterDataHandler::new(sales_master_repo);
+
+    let sales_pricing_repo = std::sync::Arc::new(crate::infrastructure::repositories::SalesPricingDataRepository::new(state.pool.clone()));
+    let sales_pricing_handler = crate::api::handlers::SalesPricingDataHandler::new(sales_pricing_repo);
+
+    let sales_pos_repo = std::sync::Arc::new(crate::infrastructure::repositories::SalesPosDataRepository::new(state.pool.clone()));
+    let sales_pos_handler = crate::api::handlers::SalesPosDataHandler::new(sales_pos_repo);
+
+    let sales_setup_repo = std::sync::Arc::new(crate::infrastructure::repositories::SalesSetupDataRepository::new(state.pool.clone()));
+    let sales_setup_handler = crate::api::handlers::SalesSetupDataHandler::new(sales_setup_repo);
+
+    let buying_master_repo = std::sync::Arc::new(crate::infrastructure::repositories::BuyingMasterDataRepository::new(state.pool.clone()));
+    let buying_master_handler = crate::api::handlers::BuyingMasterDataHandler::new(buying_master_repo);
+
+    let buying_quotation_repo = std::sync::Arc::new(crate::infrastructure::repositories::BuyingQuotationDataRepository::new(state.pool.clone()));
+    let buying_quotation_handler = crate::api::handlers::BuyingQuotationDataHandler::new(buying_quotation_repo);
+
+    let buying_scorecard_repo = std::sync::Arc::new(crate::infrastructure::repositories::BuyingScorecardDataRepository::new(state.pool.clone()));
+    let buying_scorecard_handler = crate::api::handlers::BuyingScorecardDataHandler::new(buying_scorecard_repo);
+
     let protected_routes = Router::new()
         // Assets
         .route(
@@ -525,6 +548,38 @@ pub fn create_router(state: AppState) -> Router {
         .merge(crate::api::routes::asset_expense_routes::asset_expense_routes())
         .merge(crate::api::routes::fuel_routes::fuel_routes())
         .merge(crate::api::routes::contract_routes::contract_routes())
+        .nest(
+            "/api/quotations",
+            crate::api::routes::quotation_routes::routes(state.pool.clone()),
+        )
+        .nest(
+            "/api/sales-master",
+            sales_master_data_routes::sales_master_data_routes(sales_master_handler),
+        )
+        .nest(
+            "/api/sales-pricing",
+            sales_pricing_data_routes::sales_pricing_data_routes(sales_pricing_handler),
+        )
+        .nest(
+            "/api/sales-pos",
+            sales_pos_data_routes::sales_pos_data_routes(sales_pos_handler),
+        )
+        .nest(
+            "/api/sales-setup",
+            sales_setup_data_routes::sales_setup_data_routes(sales_setup_handler),
+        )
+        .nest(
+            "/api/buying-master",
+            buying_master_data_routes::buying_master_data_routes(buying_master_handler),
+        )
+        .nest(
+            "/api/buying-quotation",
+            buying_quotation_data_routes::buying_quotation_data_routes(buying_quotation_handler),
+        )
+        .nest(
+            "/api/buying-scorecard",
+            buying_scorecard_data_routes::buying_scorecard_data_routes(buying_scorecard_handler),
+        )
         .nest(
             "/api/inventory",
             crate::api::routes::inventory_routes::inventory_routes(),
