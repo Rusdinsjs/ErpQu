@@ -1,6 +1,6 @@
-// Locations Page - Pure Tailwind
+// Locations Page - ERPNext Geolocation & Interactive OpenStreetMap Pin
 import { useEffect, useState } from 'react';
-import { Plus, Edit, Trash2, Search } from 'lucide-react';
+import { Plus, Edit, Trash2, Search, MapPin, Globe, Compass, ExternalLink, Eye, Settings, RotateCcw } from 'lucide-react';
 import { locationApi, type Location } from '../../api/locations';
 import {
     Button,
@@ -16,14 +16,43 @@ import {
     useToast,
 } from '../../components/ui';
 
-const initialFormState = {
+interface ExtendedLocationForm {
+    code: string;
+    name: string;
+    location_type: string;
+    address: string;
+    parent_id: string | null;
+    capacity?: number;
+    latitude: string;
+    longitude: string;
+}
+
+interface LocationPreset {
+    id: string;
+    label: string;
+    lat: string;
+    lng: string;
+}
+
+const initialFormState: ExtendedLocationForm = {
     code: '',
     name: '',
     location_type: 'other',
     address: '',
-    parent_id: null as string | null,
-    capacity: undefined as number | undefined,
+    parent_id: null,
+    capacity: undefined,
+    latitude: '-6.2088',
+    longitude: '106.8456',
 };
+
+// Default ERPNext Indonesian City Coordinates Presets
+const DEFAULT_PRESETS: LocationPreset[] = [
+    { id: 'p1', label: 'Jakarta Pusat (Head Office)', lat: '-6.1754', lng: '106.8272' },
+    { id: 'p2', label: 'Surabaya (Cabang Jawa Timur)', lat: '-7.2575', lng: '112.7521' },
+    { id: 'p3', label: 'Bandung (Depot Jawa Barat)', lat: '-6.9175', lng: '107.6191' },
+    { id: 'p4', label: 'Medan (Pabrik Sumatera)', lat: '3.5952', lng: '98.6722' },
+    { id: 'p5', label: 'Denpasar (Hub Bali & Nusa Tenggara)', lat: '-8.6705', lng: '115.2126' },
+];
 
 export default function Locations() {
     const [locations, setLocations] = useState<Location[]>([]);
@@ -31,11 +60,30 @@ export default function Locations() {
     const [search, setSearch] = useState('');
 
     const [modalOpen, setModalOpen] = useState(false);
+    const [mapPreviewModal, setMapPreviewModal] = useState<Location | null>(null);
     const [submitting, setSubmitting] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
 
     const [editingLocation, setEditingLocation] = useState<Location | null>(null);
-    const [formData, setFormData] = useState(initialFormState);
+    const [formData, setFormData] = useState<ExtendedLocationForm>(initialFormState);
+
+    // Custom Location Presets State (Persisted in localStorage)
+    const [presets, setPresets] = useState<LocationPreset[]>(() => {
+        try {
+            const saved = localStorage.getItem('erpqu_custom_location_presets');
+            return saved ? JSON.parse(saved) : DEFAULT_PRESETS;
+        } catch {
+            return DEFAULT_PRESETS;
+        }
+    });
+
+    const [isManagingPresets, setIsManagingPresets] = useState(false);
+    const [presetForm, setPresetForm] = useState<{ label: string; lat: string; lng: string }>({
+        label: '',
+        lat: '-6.2088',
+        lng: '106.8456',
+    });
+    const [editingPresetId, setEditingPresetId] = useState<string | null>(null);
 
     const { success, error: showError } = useToast();
 
@@ -48,24 +96,91 @@ export default function Locations() {
         try {
             const data = await locationApi.list();
             setLocations(data);
-        } catch (error) {
-            console.error(error);
-            showError('Failed to load locations', 'Error');
+        } catch (err: any) {
+            showError('Failed to load locations', err?.message || 'Error occurred');
         } finally {
             setLoading(false);
         }
     };
 
+    // Helper to persist custom presets
+    const savePresetsToStorage = (newPresets: LocationPreset[]) => {
+        setPresets(newPresets);
+        try {
+            localStorage.setItem('erpqu_custom_location_presets', JSON.stringify(newPresets));
+        } catch (e) {
+            console.error('Failed to save presets to localStorage', e);
+        }
+    };
+
+    const handleSavePreset = () => {
+        if (!presetForm.label || !presetForm.lat || !presetForm.lng) {
+            showError('Validasi Gagal', 'Nama preset, latitude, dan longitude wajib diisi');
+            return;
+        }
+
+        if (editingPresetId) {
+            const updated = presets.map(p =>
+                p.id === editingPresetId ? { ...p, label: presetForm.label, lat: presetForm.lat, lng: presetForm.lng } : p
+            );
+            savePresetsToStorage(updated);
+            success('Berhasil', 'Preset koordinat berhasil diperbarui');
+        } else {
+            const newPreset: LocationPreset = {
+                id: `p_${Date.now()}`,
+                label: presetForm.label,
+                lat: presetForm.lat,
+                lng: presetForm.lng,
+            };
+            savePresetsToStorage([...presets, newPreset]);
+            success('Berhasil', 'Preset koordinat baru berhasil ditambahkan');
+        }
+
+        setEditingPresetId(null);
+        setPresetForm({ label: '', lat: formData.latitude || '-6.2088', lng: formData.longitude || '106.8456' });
+    };
+
+    const handleDeletePreset = (id: string) => {
+        if (presets.length <= 1) {
+            showError('Perhatian', 'Minimal harus ada 1 preset tersimpan');
+            return;
+        }
+        const updated = presets.filter(p => p.id !== id);
+        savePresetsToStorage(updated);
+        success('Berhasil', 'Preset koordinat dihapus');
+        if (editingPresetId === id) {
+            setEditingPresetId(null);
+            setPresetForm({ label: '', lat: '-6.2088', lng: '106.8456' });
+        }
+    };
+
+    const handleResetDefaultPresets = () => {
+        savePresetsToStorage(DEFAULT_PRESETS);
+        success('Berhasil', 'Preset dikembalikan ke default');
+    };
+
     const handleCreate = async () => {
+        if (!formData.code || !formData.name) {
+            showError('Validation Error', 'Code and Name are required');
+            return;
+        }
+
         setSubmitting(true);
         try {
-            await locationApi.create(formData);
-            success('Location created', 'Success');
+            await locationApi.create({
+                code: formData.code,
+                name: formData.name,
+                location_type: formData.location_type,
+                address: `${formData.address}${formData.latitude && formData.longitude ? ` [Geo: ${formData.latitude}, ${formData.longitude}]` : ''}`,
+                parent_id: formData.parent_id,
+                capacity: formData.capacity,
+            });
+            success('Success', 'Location created successfully');
             setModalOpen(false);
-            setFormData(initialFormState);
+            setIsManagingPresets(false);
             loadData();
-        } catch (e: any) {
-            showError(e.response?.data?.message || 'Failed to create location', 'Error');
+        } catch (err: any) {
+            showError('Failed to create location', err?.message || 'Error occurred');
         } finally {
             setSubmitting(false);
         }
@@ -73,47 +188,76 @@ export default function Locations() {
 
     const handleUpdate = async () => {
         if (!editingLocation) return;
+
         setSubmitting(true);
         try {
-            await locationApi.update(editingLocation.id, formData);
-            success('Location updated', 'Success');
+            await locationApi.update(editingLocation.id, {
+                code: formData.code,
+                name: formData.name,
+                location_type: formData.location_type,
+                address: `${formData.address}${formData.latitude && formData.longitude ? ` [Geo: ${formData.latitude}, ${formData.longitude}]` : ''}`,
+                parent_id: formData.parent_id,
+                capacity: formData.capacity,
+            });
+            success('Success', 'Location updated successfully');
             setModalOpen(false);
+            setIsManagingPresets(false);
             loadData();
-        } catch (e: any) {
-            showError(e.response?.data?.message || 'Failed to update location', 'Error');
+        } catch (err: any) {
+            showError('Failed to update location', err?.message || 'Error occurred');
         } finally {
             setSubmitting(false);
         }
     };
 
     const handleDelete = async (location: Location) => {
-        if (!window.confirm(`Are you sure you want to delete ${location.name}?`)) return;
+        if (!confirm(`Are you sure you want to delete "${location.name}"?`)) return;
+
         try {
             await locationApi.delete(location.id);
-            success('Location deleted', 'Success');
+            success('Success', 'Location deleted');
             loadData();
-        } catch (e: any) {
-            showError('Failed to delete location', 'Error');
+        } catch (err: any) {
+            showError('Failed to delete location', err?.message || 'Error occurred');
         }
     };
 
     const openCreateModal = () => {
-        setFormData(initialFormState);
         setEditingLocation(null);
         setIsEditing(false);
+        setFormData(initialFormState);
+        setIsManagingPresets(false);
         setModalOpen(true);
     };
 
-    const openEditModal = (location: Location) => {
+    const openEditModal = (location: any) => {
         setEditingLocation(location);
         setIsEditing(true);
+        setIsManagingPresets(false);
+
+        // Extract coordinates if present
+        let lat = '-6.2088';
+        let lng = '106.8456';
+        if (location.latitude && location.longitude) {
+            lat = location.latitude;
+            lng = location.longitude;
+        } else if (location.address && location.address.includes('[Geo:')) {
+            const match = location.address.match(/\[Geo:\s*([-\d.]+),\s*([-\d.]+)\]/);
+            if (match) {
+                lat = match[1];
+                lng = match[2];
+            }
+        }
+
         setFormData({
             code: location.code,
             name: location.name,
             location_type: location.location_type || 'other',
-            address: location.address || '',
+            address: location.address ? location.address.replace(/\s*\[Geo:.*\]/, '') : '',
             parent_id: location.parent_id || null,
             capacity: location.capacity || undefined,
+            latitude: lat,
+            longitude: lng,
         });
         setModalOpen(true);
     };
@@ -153,132 +297,435 @@ export default function Locations() {
         { value: 'other', label: 'Other' },
     ];
 
+    // Build OpenStreetMap Iframe URL
+    const getMapUrl = (lat: string, lng: string) => {
+        const latitude = parseFloat(lat) || -6.2088;
+        const longitude = parseFloat(lng) || 106.8456;
+        const bbox = `${longitude - 0.01}%2C${latitude - 0.01}%2C${longitude + 0.01}%2C${latitude + 0.01}`;
+        return `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${latitude}%2C${longitude}`;
+    };
+
     return (
-        <div className="space-y-4">
-            <div className="flex items-center justify-between">
-                <h1 className="text-2xl font-bold text-white">Locations</h1>
-                <Button leftIcon={<Plus size={16} />} onClick={openCreateModal}>
+        <div className="space-y-6 p-6 bg-background min-h-screen">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                    <h1 className="text-2xl font-bold text-foreground tracking-tight flex items-center gap-2">
+                        <MapPin size={24} className="text-cyan-500" /> Locations & Geolocation Map
+                    </h1>
+                    <p className="text-xs sm:text-sm text-muted-foreground">
+                        Peta lokasi fisik aset, gedung, zona, dan koordinat GPS Geolocation terintegrasi ERPNext
+                    </p>
+                </div>
+                <Button leftIcon={<Plus size={16} />} onClick={openCreateModal} className="rounded-xl font-bold">
                     Add Location
                 </Button>
             </div>
 
-            <Card padding="lg">
+            <Card padding="lg" className="rounded-2xl border-border/60 shadow-sm">
                 {/* Search */}
                 <div className="mb-4">
                     <div className="relative max-w-md">
-                        <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                        <Search size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
                         <input
                             type="text"
-                            placeholder="Search by name or code..."
+                            placeholder="Cari lokasi berdasarkan nama atau kode..."
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2.5 bg-slate-950/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500 outline-none transition-all"
+                            className="w-full pl-10 pr-4 py-2.5 bg-background border border-border/80 rounded-xl text-foreground placeholder-muted-foreground focus:ring-2 focus:ring-primary/20 outline-none transition-all text-sm"
                         />
                     </div>
                 </div>
 
-                {/* Table */}
-                <div className="relative">
-                    <LoadingOverlay visible={loading} />
-                    <Table>
-                        <TableHead>
-                            <TableRow>
-                                <TableTh>Name / Code</TableTh>
-                                <TableTh>Type</TableTh>
-                                <TableTh>Parent Location</TableTh>
-                                <TableTh>Address</TableTh>
-                                <TableTh>Capacity</TableTh>
-                                <TableTh align="center">Actions</TableTh>
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {filteredLocations.length > 0 ? filteredLocations.map((location) => (
-                                <TableRow key={location.id}>
-                                    <TableTd>
-                                        <div>
-                                            <p className="font-medium text-white">{location.name}</p>
-                                            <p className="text-xs text-muted-foreground">{location.code}</p>
-                                        </div>
-                                    </TableTd>
-                                    <TableTd>
-                                        <Badge variant={getTypeBadge(location.location_type)}>
-                                            {location.location_type}
-                                        </Badge>
-                                    </TableTd>
-                                    <TableTd>{getParentName(location.parent_id)}</TableTd>
-                                    <TableTd>{location.address || '-'}</TableTd>
-                                    <TableTd>{location.capacity ? location.capacity : 'Unlimited'}</TableTd>
-                                    <TableTd align="center">
-                                        <div className="flex items-center justify-center gap-1">
-                                            <ActionIcon onClick={() => openEditModal(location)} title="Edit">
-                                                <Edit size={16} />
-                                            </ActionIcon>
-                                            <ActionIcon variant="danger" onClick={() => handleDelete(location)} title="Delete">
-                                                <Trash2 size={16} />
-                                            </ActionIcon>
-                                        </div>
-                                    </TableTd>
+                {loading ? (
+                    <LoadingOverlay visible />
+                ) : (
+                    <div className="overflow-x-auto">
+                        <Table>
+                            <TableHead>
+                                <TableRow>
+                                    <TableTh>Code</TableTh>
+                                    <TableTh>Name</TableTh>
+                                    <TableTh>Type</TableTh>
+                                    <TableTh>Parent</TableTh>
+                                    <TableTh>Address & Geo Map</TableTh>
+                                    <TableTh className="text-right">Actions</TableTh>
                                 </TableRow>
-                            )) : (
-                                <TableEmpty colSpan={6} message="No locations found" />
-                            )}
-                        </TableBody>
-                    </Table>
-                </div>
+                            </TableHead>
+                            <TableBody>
+                                {filteredLocations.length === 0 ? (
+                                    <TableEmpty
+                                        colSpan={6}
+                                        message="No locations found"
+                                        description="Add your first location to start managing asset placements and GPS map coordinates"
+                                        action={
+                                            <Button size="sm" onClick={openCreateModal} className="rounded-xl">
+                                                Add Location
+                                            </Button>
+                                        }
+                                    />
+                                ) : (
+                                    filteredLocations.map((location) => {
+                                        let lat = '-6.2088';
+                                        let lng = '106.8456';
+                                        if ((location as any).latitude && (location as any).longitude) {
+                                            lat = (location as any).latitude;
+                                            lng = (location as any).longitude;
+                                        } else if (location.address && location.address.includes('[Geo:')) {
+                                            const match = location.address.match(/\[Geo:\s*([-\d.]+),\s*([-\d.]+)\]/);
+                                            if (match) {
+                                                lat = match[1];
+                                                lng = match[2];
+                                            }
+                                        }
+
+                                        return (
+                                            <TableRow key={location.id}>
+                                                <TableTd className="font-mono text-xs font-semibold text-primary">
+                                                    {location.code}
+                                                </TableTd>
+                                                <TableTd className="font-medium text-foreground">
+                                                    {location.name}
+                                                </TableTd>
+                                                <TableTd>
+                                                    <Badge variant={getTypeBadge(location.location_type || 'other')}>
+                                                        {location.location_type || 'other'}
+                                                    </Badge>
+                                                </TableTd>
+                                                <TableTd className="text-xs text-muted-foreground">
+                                                    {getParentName(location.parent_id)}
+                                                </TableTd>
+                                                <TableTd className="text-xs text-muted-foreground max-w-xs truncate">
+                                                    <div className="flex items-center gap-2">
+                                                        <span>{location.address ? location.address.replace(/\s*\[Geo:.*\]/, '') : '-'}</span>
+                                                        <button
+                                                            onClick={() => setMapPreviewModal({ ...location, latitude: lat, longitude: lng } as any)}
+                                                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-bold bg-cyan-500/10 text-cyan-500 hover:bg-cyan-500/20 transition-colors"
+                                                            title="Buka OpenStreetMap View"
+                                                        >
+                                                            <MapPin size={11} /> Map Pin ({lat.slice(0, 6)}, {lng.slice(0, 6)})
+                                                        </button>
+                                                    </div>
+                                                </TableTd>
+                                                <TableTd className="text-right">
+                                                    <div className="flex items-center justify-end gap-1">
+                                                        <ActionIcon
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            onClick={() => setMapPreviewModal({ ...location, latitude: lat, longitude: lng } as any)}
+                                                            title="Preview Geolocation Map"
+                                                        >
+                                                            <Eye size={15} className="text-cyan-500" />
+                                                        </ActionIcon>
+                                                        <ActionIcon
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            onClick={() => openEditModal(location)}
+                                                            title="Edit Location"
+                                                        >
+                                                            <Edit size={15} />
+                                                        </ActionIcon>
+                                                        <ActionIcon
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            onClick={() => handleDelete(location)}
+                                                            title="Delete Location"
+                                                            className="text-red-500 hover:text-red-600"
+                                                        >
+                                                            <Trash2 size={15} />
+                                                        </ActionIcon>
+                                                    </div>
+                                                </TableTd>
+                                            </TableRow>
+                                        );
+                                    })
+                                )}
+                            </TableBody>
+                        </Table>
+                    </div>
+                )}
             </Card>
 
-            {/* Create/Edit Modal */}
+            {/* Create/Edit Modal with GPS Coordinates and Customizable Presets */}
             <Modal
                 isOpen={modalOpen}
-                onClose={() => setModalOpen(false)}
-                title={isEditing ? "Edit Location" : "Add Location"}
+                onClose={() => {
+                    setModalOpen(false);
+                    setIsManagingPresets(false);
+                }}
+                title={isEditing ? 'Edit Lokasi & Koordinat Map' : 'Tambah Lokasi Baru & Koordinat Geolocation'}
+                size="lg"
             >
                 <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-3">
+                        <Input
+                            label="Kode Lokasi"
+                            placeholder="Misal: BLD-01"
+                            value={formData.code}
+                            onChange={(e) => setFormData({ ...formData, code: e.target.value })}
+                            required
+                        />
+                        <Input
+                            label="Nama Lokasi"
+                            placeholder="Misal: Gedung Utama"
+                            value={formData.name}
+                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                            required
+                        />
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                        <Select
+                            label="Tipe Lokasi"
+                            value={formData.location_type}
+                            onChange={(val) => setFormData({ ...formData, location_type: val || 'other' })}
+                            options={typeOptions}
+                            required
+                        />
+                        <Select
+                            label="Induk Lokasi (Parent)"
+                            placeholder="Pilih induk (opsional)"
+                            value={formData.parent_id || ''}
+                            onChange={(val) => setFormData({ ...formData, parent_id: val || null })}
+                            options={parentOptions}
+                        />
+                    </div>
                     <Input
-                        label="Code"
-                        placeholder="e.g. BLD-01"
-                        value={formData.code}
-                        onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-                        required
-                    />
-                    <Input
-                        label="Name"
-                        placeholder="e.g. Main Building"
-                        value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        required
-                    />
-                    <Select
-                        label="Type"
-                        value={formData.location_type}
-                        onChange={(val) => setFormData({ ...formData, location_type: val || 'other' })}
-                        options={typeOptions}
-                        required
-                    />
-                    <Select
-                        label="Parent Location"
-                        placeholder="Select parent (optional)"
-                        value={formData.parent_id || ''}
-                        onChange={(val) => setFormData({ ...formData, parent_id: val || null })}
-                        options={parentOptions}
-                    />
-                    <Input
-                        label="Address"
-                        placeholder="Optional address"
+                        label="Alamat Fisik"
+                        placeholder="Alamat lengkap lokasi"
                         value={formData.address}
                         onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                     />
-                    <NumberInput
-                        label="Capacity"
-                        hint="Max items (optional)"
-                        value={formData.capacity}
-                        onChange={(val) => setFormData({ ...formData, capacity: val })}
-                    />
-                    <Button fullWidth onClick={isEditing ? handleUpdate : handleCreate} loading={submitting}>
-                        {isEditing ? "Update" : "Save"}
+
+                    {/* Geolocation Section */}
+                    <div className="p-4 rounded-xl bg-muted/40 border border-border/60 space-y-3">
+                        <label className="text-xs font-bold text-foreground flex items-center justify-between">
+                            <span className="flex items-center gap-1.5">
+                                <Globe size={14} className="text-cyan-500" /> Koordinat Geolocation (ERPNext Reference)
+                            </span>
+                            <span className="text-[11px] font-normal text-muted-foreground">Latitude / Longitude GPS</span>
+                        </label>
+
+                        {/* Preset Buttons with Inline Expandable Editor */}
+                        <div className="space-y-2">
+                            <div className="flex items-center justify-between">
+                                <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">PRESET KOORDINAT KOTA:</span>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setIsManagingPresets(!isManagingPresets);
+                                        setEditingPresetId(null);
+                                        setPresetForm({
+                                            label: '',
+                                            lat: formData.latitude || '-6.2088',
+                                            lng: formData.longitude || '106.8456',
+                                        });
+                                    }}
+                                    className="text-[11px] font-bold text-cyan-500 hover:text-cyan-600 flex items-center gap-1 hover:underline"
+                                >
+                                    <Settings size={12} /> {isManagingPresets ? 'Tutup Editor Preset' : '⚙️ Kelola / Custom Preset'}
+                                </button>
+                            </div>
+
+                            <div className="flex flex-wrap gap-1.5">
+                                {presets.map((preset) => (
+                                    <button
+                                        key={preset.id}
+                                        type="button"
+                                        onClick={() => setFormData({ ...formData, latitude: preset.lat, longitude: preset.lng })}
+                                        className="px-2.5 py-1 rounded-lg text-[11px] bg-background border border-border/80 hover:border-cyan-500 hover:text-cyan-500 transition-colors flex items-center gap-1 font-medium shadow-2xs"
+                                        title={`Gunakan koordinat ${preset.label} (Lat: ${preset.lat}, Lng: ${preset.lng})`}
+                                    >
+                                        {preset.label}
+                                    </button>
+                                ))}
+                            </div>
+
+                            {/* Inline Expandable Preset Manager Panel */}
+                            {isManagingPresets && (
+                                <div className="p-4 rounded-xl bg-card border border-cyan-500/40 shadow-md space-y-3 mt-2">
+                                    <div className="flex items-center justify-between border-b border-border/50 pb-2">
+                                        <h4 className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                                            <Compass size={15} className="text-cyan-500" />
+                                            {editingPresetId ? 'Edit Preset Koordinat' : 'Tambah Preset Koordinat Baru'}
+                                        </h4>
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsManagingPresets(false)}
+                                            className="text-xs text-muted-foreground hover:text-foreground font-semibold"
+                                        >
+                                            ✕ Tutup
+                                        </button>
+                                    </div>
+
+                                    {/* Input Form */}
+                                    <div className="space-y-2">
+                                        <Input
+                                            label="Nama / Label Preset"
+                                            placeholder="Misal: Surabaya (Cabang Timur) atau Depok Main Workshop"
+                                            value={presetForm.label}
+                                            onChange={(e) => setPresetForm({ ...presetForm, label: e.target.value })}
+                                        />
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <Input
+                                                label="Latitude"
+                                                placeholder="-6.2088"
+                                                value={presetForm.lat}
+                                                onChange={(e) => setPresetForm({ ...presetForm, lat: e.target.value })}
+                                            />
+                                            <Input
+                                                label="Longitude"
+                                                placeholder="106.8456"
+                                                value={presetForm.lng}
+                                                onChange={(e) => setPresetForm({ ...presetForm, lng: e.target.value })}
+                                            />
+                                        </div>
+                                        <div className="flex gap-2 justify-end pt-1">
+                                            {editingPresetId && (
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    className="rounded-xl text-xs"
+                                                    onClick={() => {
+                                                        setEditingPresetId(null);
+                                                        setPresetForm({ label: '', lat: formData.latitude || '-6.2088', lng: formData.longitude || '106.8456' });
+                                                    }}
+                                                >
+                                                    Batal Edit
+                                                </Button>
+                                            )}
+                                            <Button size="sm" variant="primary" className="rounded-xl font-bold text-xs" onClick={handleSavePreset}>
+                                                {editingPresetId ? 'Simpan Perubahan' : '+ Simpan Preset Baru'}
+                                            </Button>
+                                        </div>
+                                    </div>
+
+                                    {/* Existing Presets List */}
+                                    <div className="border-t border-border/50 pt-2 space-y-1.5">
+                                        <div className="flex items-center justify-between text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+                                            <span>Daftar Preset Tersimpan ({presets.length})</span>
+                                            <button
+                                                type="button"
+                                                onClick={handleResetDefaultPresets}
+                                                className="text-[10px] text-amber-500 hover:underline font-semibold flex items-center gap-1"
+                                                title="Kembalikan preset ke 5 kota awal"
+                                            >
+                                                <RotateCcw size={11} /> Reset Default
+                                            </button>
+                                        </div>
+                                        <div className="max-h-40 overflow-y-auto space-y-1 pr-1">
+                                            {presets.map((p) => (
+                                                <div key={p.id} className="flex items-center justify-between p-2 rounded-lg bg-muted/40 border border-border/40 hover:border-cyan-500/30 text-xs">
+                                                    <div>
+                                                        <span className="font-semibold text-foreground">{p.label}</span>
+                                                        <span className="text-[10px] text-muted-foreground ml-2 font-mono">({p.lat}, {p.lng})</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-1">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setEditingPresetId(p.id);
+                                                                setPresetForm({ label: p.label, lat: p.lat, lng: p.lng });
+                                                            }}
+                                                            className="p-1 text-muted-foreground hover:text-foreground rounded hover:bg-muted"
+                                                            title="Edit Preset"
+                                                        >
+                                                            <Edit size={13} />
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleDeletePreset(p.id)}
+                                                            className="p-1 text-muted-foreground hover:text-red-500 rounded hover:bg-red-500/10"
+                                                            title="Hapus Preset"
+                                                        >
+                                                            <Trash2 size={13} />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3">
+                            <Input
+                                label="Latitude"
+                                placeholder="-6.2088"
+                                value={formData.latitude}
+                                onChange={(e) => setFormData({ ...formData, latitude: e.target.value })}
+                            />
+                            <Input
+                                label="Longitude"
+                                placeholder="106.8456"
+                                value={formData.longitude}
+                                onChange={(e) => setFormData({ ...formData, longitude: e.target.value })}
+                            />
+                        </div>
+
+                        {/* Embedded OpenStreetMap Preview */}
+                        <div className="rounded-xl overflow-hidden border border-border/80 h-44 bg-card relative shadow-inner">
+                            <iframe
+                                title="OpenStreetMap Geolocation Preview"
+                                width="100%"
+                                height="100%"
+                                frameBorder="0"
+                                scrolling="no"
+                                src={getMapUrl(formData.latitude, formData.longitude)}
+                            />
+                        </div>
+                    </div>
+
+                    <Button fullWidth onClick={isEditing ? handleUpdate : handleCreate} loading={submitting} className="rounded-xl font-bold">
+                        {isEditing ? "Perbarui Lokasi" : "Simpan Lokasi Baru"}
                     </Button>
                 </div>
             </Modal>
+
+            {/* Map Interactive Full Modal View */}
+            {mapPreviewModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+                    <div className="bg-card border border-border/80 rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-4">
+                        <div className="flex items-center justify-between border-b border-border/60 pb-3">
+                            <div>
+                                <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
+                                    <MapPin size={20} className="text-cyan-500" /> {mapPreviewModal.name}
+                                </h3>
+                                <p className="text-xs text-muted-foreground font-mono">Kode: {mapPreviewModal.code} | Lat/Lng: {mapPreviewModal.latitude || '-6.2088'}, {mapPreviewModal.longitude || '106.8456'}</p>
+                            </div>
+                            <button
+                                onClick={() => setMapPreviewModal(null)}
+                                className="p-1.5 text-muted-foreground hover:text-foreground rounded-lg hover:bg-muted text-sm font-bold"
+                            >
+                                ✕
+                            </button>
+                        </div>
+                        <div className="rounded-xl overflow-hidden border border-border/80 h-80 bg-background relative shadow-inner">
+                            <iframe
+                                title="OpenStreetMap Interactive Full View"
+                                width="100%"
+                                height="100%"
+                                frameBorder="0"
+                                scrolling="no"
+                                src={getMapUrl(mapPreviewModal.latitude || '-6.2088', mapPreviewModal.longitude || '106.8456')}
+                            />
+                        </div>
+                        <div className="flex items-center justify-between pt-2">
+                            <a
+                                href={`https://www.openstreetmap.org/?mlat=${mapPreviewModal.latitude || '-6.2088'}&mlon=${mapPreviewModal.longitude || '106.8456'}#map=15/${mapPreviewModal.latitude || '-6.2088'}/${mapPreviewModal.longitude || '106.8456'}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-xs text-cyan-500 hover:underline flex items-center gap-1 font-medium"
+                            >
+                                <ExternalLink size={13} /> Buka di OpenStreetMap Full Tab
+                            </a>
+                            <Button size="sm" variant="outline" className="rounded-xl" onClick={() => setMapPreviewModal(null)}>
+                                Tutup Peta
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
+

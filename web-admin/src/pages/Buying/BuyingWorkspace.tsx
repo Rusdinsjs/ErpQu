@@ -29,80 +29,80 @@ export default function BuyingWorkspace() {
         {
             title: 'Buying',
             links: [
-                { label: 'Material Request', route: '/buying/material-requests' },
-                { label: 'Purchase Order', route: '/buying/purchase-orders' },
-                { label: 'Purchase Invoice', route: '/buying/purchase-bills' },
-                { label: 'Request for Quotation', route: '/buying/rfqs' },
-                { label: 'Supplier Quotation', route: '/buying/supplier-quotations' },
+                { label: 'Material Request', route: '/material-requests' },
+                { label: 'Purchase Order', route: '/purchase-orders' },
+                { label: 'Purchase Invoice', route: '/purchase-bills' },
+                { label: 'Request for Quotation', route: '/rfqs' },
+                { label: 'Supplier Quotation', route: '/supplier-quotations' },
             ]
         },
         {
             title: 'Items & Pricing',
             links: [
                 { label: 'Item', route: '/inventory-items' },
-                { label: 'Item Price', route: '/buying/item-prices' },
-                { label: 'Price List', route: '/buying/price-lists' },
-                { label: 'Product Bundle', route: '/buying/product-bundles' },
+                { label: 'Item Price', route: '/buying-item-prices' },
+                { label: 'Price List', route: '/buying-price-lists' },
+                { label: 'Product Bundle', route: '/buying-product-bundles' },
                 { label: 'Item Group', route: '/inventory-categories' },
-                { label: 'Promotional Scheme', route: '/buying/promotional-schemes' },
-                { label: 'Pricing Rule', route: '/buying/pricing-rules' },
+                { label: 'Promotional Scheme', route: '/buying-promotional-schemes' },
+                { label: 'Pricing Rule', route: '/buying-pricing-rules' },
             ]
         },
         {
             title: 'Settings',
             links: [
-                { label: 'Buying Settings', route: '/buying/settings' },
-                { label: 'Purchase Taxes and Charges Template', route: '/buying/tax-templates' },
-                { label: 'Terms and Conditions Template', route: '/buying/terms-templates' },
+                { label: 'Buying Settings', route: '/buying-settings' },
+                { label: 'Purchase Taxes and Charges Template', route: '/purchase-tax-templates' },
+                { label: 'Terms and Conditions Template', route: '/buying-terms-templates' },
             ]
         },
         {
             title: 'Supplier',
             links: [
-                { label: 'Supplier', route: '/buying/suppliers' },
-                { label: 'Supplier Group', route: '/buying/supplier-groups' },
-                { label: 'Contact', route: '/buying/supplier-contacts' },
-                { label: 'Address', route: '/buying/supplier-addresses' },
+                { label: 'Supplier', route: '/suppliers' },
+                { label: 'Supplier Group', route: '/supplier-groups' },
+                { label: 'Contact', route: '/supplier-contacts' },
+                { label: 'Address', route: '/supplier-addresses' },
             ]
         },
         {
             title: 'Supplier Scorecard',
             links: [
-                { label: 'Supplier Scorecard', route: '/buying/supplier-scorecards' },
-                { label: 'Supplier Scorecard Variable', route: '/buying/scorecard-variables' },
-                { label: 'Supplier Scorecard Criteria', route: '/buying/scorecard-criteria' },
-                { label: 'Supplier Scorecard Standing', route: '/buying/scorecard-standings' },
+                { label: 'Supplier Scorecard', route: '/supplier-scorecards' },
+                { label: 'Supplier Scorecard Variable', route: '/scorecard-variables' },
+                { label: 'Supplier Scorecard Criteria', route: '/scorecard-criteria' },
+                { label: 'Supplier Scorecard Standing', route: '/scorecard-standings' },
             ]
         },
         {
             title: 'Key Reports',
             links: [
-                { label: 'Purchase Analytics', route: '/buying/reports/purchase-analytics' },
-                { label: 'Purchase Order Analysis', route: '/buying/reports/po-analysis' },
-                { label: 'Item Wise Consumption', route: '/buying/reports/item-consumption' },
-                { label: 'Items to Order and Receive', route: '/buying/reports/items-to-order-receive' },
-                { label: 'Purchase Order Trends', route: '/buying/reports/po-trends' },
-                { label: 'Procurement Tracker', route: '/buying/reports/procurement-tracker' },
+                { label: 'Purchase Analytics', route: '/purchase-analytics' },
+                { label: 'Purchase Order Analysis', route: '/po-analysis' },
+                { label: 'Item Wise Consumption', route: '/item-consumption' },
+                { label: 'Items to Order and Receive', route: '/items-to-order-receive' },
+                { label: 'Purchase Order Trends', route: '/po-trends' },
+                { label: 'Procurement Tracker', route: '/procurement-tracker' },
             ]
         },
         {
             title: 'Other Reports',
             links: [
-                { label: 'Items To Be Requested', route: '/buying/reports/items-to-request' },
-                { label: 'Item-wise Purchase History', route: '/buying/reports/item-purchase-history' },
-                { label: 'Purchase Receipt Trends', route: '/buying/reports/receipt-trends' },
-                { label: 'Purchase Invoice Trends', route: '/buying/reports/invoice-trends' },
-                { label: 'Subcontracted Raw Materials To Be Transferred', route: '/buying/reports/subcontract-materials' },
-                { label: 'Subcontracted Item To Be Received', route: '/buying/reports/subcontract-received' },
-                { label: 'Supplier Quotation Comparison', route: '/buying/reports/rfq-comparison' },
-                { label: 'Material Requests for which Supplier Quotation Created', route: '/buying/reports/pr-to-rfq' },
-                { label: 'Supplier Addresses And Contacts', route: '/buying/reports/supplier-directory' },
+                { label: 'Items To Be Requested', route: '/items-to-request' },
+                { label: 'Item-wise Purchase History', route: '/item-purchase-history' },
+                { label: 'Purchase Receipt Trends', route: '/purchase-receipt-trends' },
+                { label: 'Purchase Invoice Trends', route: '/purchase-invoice-trends' },
+                { label: 'Subcontracted Raw Materials To Be Transferred', route: '/subcontract-materials' },
+                { label: 'Subcontracted Item To Be Received', route: '/subcontract-received' },
+                { label: 'Supplier Quotation Comparison', route: '/rfq-comparison' },
+                { label: 'Material Requests for which Supplier Quotation Created', route: '/pr-to-rfq' },
+                { label: 'Supplier Addresses And Contacts', route: '/supplier-directory' },
             ]
         },
         {
             title: 'Regional',
             links: [
-                { label: 'Import Supplier Invoice', route: '/buying/reports/import-invoice' },
+                { label: 'Import Supplier Invoice', route: '/import-supplier-invoice' },
             ]
         }
     ];

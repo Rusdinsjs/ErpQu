@@ -28,7 +28,7 @@ export interface FormField {
 
 export interface DocTypeSchema {
     title: string;
-    module: 'Selling' | 'Buying' | 'Stock';
+    module: 'Selling' | 'Buying' | 'Stock' | 'Finance' | 'Assets';
     namingSeriesPrefix?: string;
     fields: FormField[];
 }
@@ -469,13 +469,23 @@ export const DOCTYPE_SCHEMAS: Record<string, DocTypeSchema> = {
         module: 'Buying',
         namingSeriesPrefix: 'SUPP-',
         fields: [
-            { name: 'supplier_name', label: 'Nama Supplier / Vendor', type: 'Data', required: true },
-            { name: 'supplier_group', label: 'Kelompok Supplier', type: 'Select', options: ['Raw Material', 'Services', 'Equipment', 'Distributor'], targetLink: 'Supplier Group' },
-            { name: 'country', label: 'Negara Asal', type: 'Select', options: ['Indonesia', 'Singapore', 'China', 'Japan', 'USA'] },
-            { name: 'tax_id', label: 'NPWP Vendor', type: 'Data' },
-            { name: 'payment_terms', label: 'Syarat Pembayaran Default', type: 'Select', options: ['Cash', 'Net 30', 'Net 60'] },
-            { name: 'email', label: 'Email Resmi Vendor', type: 'Data' },
-            { name: 'phone', label: 'Nomor Telepon / HP', type: 'Data' }
+            { name: 'supplier_name', label: 'Supplier Name', type: 'Data', required: true },
+            { name: 'supplier_type', label: 'Supplier Type', type: 'Select', required: true, options: ['Company', 'Individual'], defaultValue: 'Company' },
+            { name: 'supplier_group', label: 'Supplier Group', type: 'Select', required: true, options: ['All Supplier Groups', 'Distributor', 'Manufacturer', 'Services', 'Raw Material', 'Local', 'Hardware'], defaultValue: 'Distributor', targetLink: 'Supplier Group' },
+            
+            // Primary Contact Details
+            { name: 'first_name', label: 'First Name', type: 'Data' },
+            { name: 'email_id', label: 'Email Id', type: 'Data' },
+            { name: 'last_name', label: 'Last Name', type: 'Data' },
+            { name: 'mobile_number', label: 'Mobile Number', type: 'Data' },
+
+            // Primary Address Details
+            { name: 'address_line1', label: 'Address Line 1', type: 'Data' },
+            { name: 'city', label: 'City', type: 'Data' },
+            { name: 'address_line2', label: 'Address Line 2', type: 'Data' },
+            { name: 'state', label: 'State/Province', type: 'Data' },
+            { name: 'zip_code', label: 'ZIP Code', type: 'Data' },
+            { name: 'country', label: 'Country', type: 'Select', options: ['Indonesia', 'Singapore', 'Japan', 'USA', 'China'], defaultValue: 'Indonesia' }
         ]
     },
 
@@ -504,39 +514,122 @@ export const DOCTYPE_SCHEMAS: Record<string, DocTypeSchema> = {
         ]
     },
 
+    'Request for Quotation': {
+        title: 'Request for Quotation',
+        module: 'Buying',
+        namingSeriesPrefix: 'PUR-RFQ-.YYYY.-',
+        fields: [
+            { name: 'naming_series', label: 'Series', type: 'Select', required: true, options: ['PUR-RFQ-.YYYY.-'], defaultValue: 'PUR-RFQ-.YYYY.-' },
+            { name: 'transaction_date', label: 'Date', type: 'Date', required: true },
+            { name: 'company', label: 'Company', type: 'Select', required: true, options: ['SJS Group', 'Main Operations'], defaultValue: 'SJS Group', targetLink: 'Company' },
+            { name: 'schedule_date', label: 'Required Date', type: 'Date' },
+            { name: 'status', label: 'Status', type: 'Select', required: true, options: ['Draft', 'Submitted', 'Cancelled'], defaultValue: 'Draft' },
+            {
+                name: 'suppliers', label: 'Suppliers', type: 'Table', tableColumns: [
+                    { name: 'supplier_name', label: 'Supplier', type: 'Data', required: true, targetLink: 'Supplier' },
+                    { name: 'contact', label: 'Contact', type: 'Data' },
+                    { name: 'email_id', label: 'Email ID', type: 'Data' },
+                    { name: 'send_email', label: 'Send Email', type: 'Check', defaultValue: true }
+                ]
+            },
+            {
+                name: 'items', label: 'Items', type: 'Table', tableColumns: [
+                    { name: 'item_code', label: 'Item Code', type: 'Data', required: true, targetLink: 'Item' },
+                    { name: 'schedule_date', label: 'Required Date', type: 'Date', required: true },
+                    { name: 'qty', label: 'Quantity', type: 'Float', required: true, defaultValue: 1 },
+                    { name: 'uom', label: 'UOM', type: 'Select', required: true, options: ['Liter', 'Pcs', 'Box', 'Kg', 'Unit'], targetLink: 'UOM' },
+                    { name: 'warehouse', label: 'Warehouse', type: 'Select', options: ['Gudang Utama - Jakarta', 'Workshop Operasional - Surabaya'], targetLink: 'Warehouse' }
+                ]
+            },
+            { name: 'email_template', label: 'Email Template', type: 'Select', options: ['Standard RFQ Template', 'Urgent Inquiry Template'] },
+            { name: 'send_attached_files', label: 'Send Attached Files', type: 'Check', defaultValue: true, description: 'If enabled, all files attached to this document will be attached to each email' },
+            { name: 'send_document_print', label: 'Send Document Print', type: 'Check', defaultValue: false, description: 'If enabled, a print of this document will be attached to each email' },
+            { name: 'subject', label: 'Subject', type: 'Data', required: true, defaultValue: 'Request for Quotation' },
+            { name: 'message_for_supplier', label: 'Message for Supplier', type: 'Text', defaultValue: 'Mohon berikan penawaran harga terbaik untuk rincian barang/jasa terlampir.' },
+            { name: 'terms', label: 'Terms and Conditions', type: 'Text' }
+        ]
+    },
+
     'Request for Quotation (RFQ)': {
         title: 'Request for Quotation (RFQ)',
         module: 'Buying',
-        namingSeriesPrefix: 'RFQ-',
+        namingSeriesPrefix: 'PUR-RFQ-.YYYY.-',
         fields: [
-            { name: 'transaction_date', label: 'Tanggal RFQ', type: 'Date', required: true },
-            { name: 'required_date', label: 'Batas Penawaran', type: 'Date' },
-            { name: 'suppliers', label: 'Daftar Vendor Tujuan', type: 'Text', description: 'Masukkan nama-nama vendor' },
+            { name: 'naming_series', label: 'Series', type: 'Select', required: true, options: ['PUR-RFQ-.YYYY.-'], defaultValue: 'PUR-RFQ-.YYYY.-' },
+            { name: 'transaction_date', label: 'Date', type: 'Date', required: true },
+            { name: 'company', label: 'Company', type: 'Select', required: true, options: ['SJS Group', 'Main Operations'], defaultValue: 'SJS Group', targetLink: 'Company' },
+            { name: 'schedule_date', label: 'Required Date', type: 'Date' },
+            { name: 'status', label: 'Status', type: 'Select', required: true, options: ['Draft', 'Submitted', 'Cancelled'], defaultValue: 'Draft' },
             {
-                name: 'items', label: 'Daftar Barang Penawaran', type: 'Table', tableColumns: [
-                    { name: 'item_name', label: 'Nama Barang', type: 'Data', required: true, targetLink: 'Item' },
-                    { name: 'qty', label: 'Qty Diberikan Quote', type: 'Float', defaultValue: 1 }
+                name: 'suppliers', label: 'Suppliers', type: 'Table', tableColumns: [
+                    { name: 'supplier_name', label: 'Supplier', type: 'Data', required: true, targetLink: 'Supplier' },
+                    { name: 'contact', label: 'Contact', type: 'Data' },
+                    { name: 'email_id', label: 'Email ID', type: 'Data' },
+                    { name: 'send_email', label: 'Send Email', type: 'Check', defaultValue: true }
                 ]
-            }
+            },
+            {
+                name: 'items', label: 'Items', type: 'Table', tableColumns: [
+                    { name: 'item_code', label: 'Item Code', type: 'Data', required: true, targetLink: 'Item' },
+                    { name: 'schedule_date', label: 'Required Date', type: 'Date', required: true },
+                    { name: 'qty', label: 'Quantity', type: 'Float', required: true, defaultValue: 1 },
+                    { name: 'uom', label: 'UOM', type: 'Select', required: true, options: ['Liter', 'Pcs', 'Box', 'Kg', 'Unit'], targetLink: 'UOM' },
+                    { name: 'warehouse', label: 'Warehouse', type: 'Select', options: ['Gudang Utama - Jakarta', 'Workshop Operasional - Surabaya'], targetLink: 'Warehouse' }
+                ]
+            },
+            { name: 'email_template', label: 'Email Template', type: 'Select', options: ['Standard RFQ Template', 'Urgent Inquiry Template'] },
+            { name: 'send_attached_files', label: 'Send Attached Files', type: 'Check', defaultValue: true, description: 'If enabled, all files attached to this document will be attached to each email' },
+            { name: 'send_document_print', label: 'Send Document Print', type: 'Check', defaultValue: false, description: 'If enabled, a print of this document will be attached to each email' },
+            { name: 'subject', label: 'Subject', type: 'Data', required: true, defaultValue: 'Request for Quotation' },
+            { name: 'message_for_supplier', label: 'Message for Supplier', type: 'Text', defaultValue: 'Mohon berikan penawaran harga terbaik untuk rincian barang/jasa terlampir.' },
+            { name: 'terms', label: 'Terms and Conditions', type: 'Text' }
         ]
     },
 
     'Supplier Quotation': {
         title: 'Supplier Quotation',
         module: 'Buying',
-        namingSeriesPrefix: 'SQ-',
+        namingSeriesPrefix: 'PUR-SQUOT-.YYYY.-',
         fields: [
-            { name: 'supplier_name', label: 'Nama Supplier', type: 'Data', required: true, targetLink: 'Supplier' },
-            { name: 'transaction_date', label: 'Tanggal Penawaran Supplier', type: 'Date', required: true },
-            { name: 'valid_till', label: 'Berlaku Hingga', type: 'Date' },
+            { name: 'naming_series', label: 'Series', type: 'Select', required: true, options: ['PUR-SQUOT-.YYYY.-'], defaultValue: 'PUR-SQUOT-.YYYY.-' },
+            { name: 'supplier', label: 'Supplier', type: 'Select', required: true, options: ['CV Teknik Jaya Abadi', 'PT Pertamina Lubricants', 'PT Utama Jaya'], targetLink: 'Supplier' },
+            { name: 'company', label: 'Company', type: 'Select', required: true, options: ['SJS Group', 'Main Operations'], defaultValue: 'SJS Group', targetLink: 'Company' },
+            { name: 'status', label: 'Status', type: 'Select', required: true, options: ['Draft', 'Submitted', 'Cancelled'], defaultValue: 'Draft' },
+            { name: 'transaction_date', label: 'Date', type: 'Date', required: true },
+            { name: 'valid_till', label: 'Valid Till', type: 'Date' },
+            { name: 'quotation_number', label: 'Quotation Number', type: 'Data' },
+
+            // Currency & Price List
+            { name: 'currency', label: 'Currency', type: 'Select', options: ['IDR', 'USD', 'EUR', 'SGD'], defaultValue: 'IDR' },
+            { name: 'buying_price_list', label: 'Price List', type: 'Select', options: ['Standard Buying', 'Bulk Wholesale Buying'], defaultValue: 'Standard Buying' },
+
+            // Items Child Table
             {
-                name: 'items', label: 'Rincian Penawaran Harga', type: 'Table', tableColumns: [
-                    { name: 'item_name', label: 'Nama Barang', type: 'Data', required: true, targetLink: 'Item' },
-                    { name: 'qty', label: 'Qty Ditawarkan', type: 'Float', defaultValue: 1 },
-                    { name: 'rate', label: 'Harga Satuan (Rp)', type: 'Currency', defaultValue: 0 },
-                    { name: 'amount', label: 'Jumlah (Rp)', type: 'Currency', readOnly: true }
+                name: 'items', label: 'Items', type: 'Table', tableColumns: [
+                    { name: 'item_code', label: 'Item Code', type: 'Data', required: true, targetLink: 'Item' },
+                    { name: 'qty', label: 'Quantity', type: 'Float', required: true, defaultValue: 1 },
+                    { name: 'uom', label: 'UOM', type: 'Select', required: true, options: ['Liter', 'Pcs', 'Box', 'Kg', 'Unit'], targetLink: 'UOM' },
+                    { name: 'rate', label: 'Rate (IDR)', type: 'Currency', required: true, defaultValue: 0 },
+                    { name: 'amount', label: 'Amount (IDR)', type: 'Currency', readOnly: true },
+                    { name: 'warehouse', label: 'Warehouse', type: 'Select', options: ['Gudang Utama - Jakarta', 'Workshop Operasional - Surabaya'], targetLink: 'Warehouse' }
                 ]
-            }
+            },
+
+            // Taxes and Charges
+            { name: 'tax_category', label: 'Tax Category', type: 'Select', options: ['Standard Tax', 'Zero Tax'] },
+            { name: 'shipping_rule', label: 'Shipping Rule', type: 'Select', options: ['Standard Delivery', 'Express Franco'] },
+            { name: 'incoterm', label: 'Incoterm', type: 'Select', options: ['EXW - Ex Works', 'FOB - Free on Board', 'CIF - Cost Insurance Freight'], defaultValue: 'EXW - Ex Works' },
+            { name: 'taxes_and_charges_template', label: 'Purchase Taxes and Charges Template', type: 'Select', options: ['PPN Masukan 11%', 'PPh 23 2%', 'Non Pajak'], defaultValue: 'PPN Masukan 11%' },
+
+            // Additional Discount
+            { name: 'apply_discount_on', label: 'Apply Additional Discount On', type: 'Select', options: ['Grand Total', 'Net Total'], defaultValue: 'Grand Total' },
+            { name: 'additional_discount_percentage', label: 'Additional Discount Percentage', type: 'Float', defaultValue: 0 },
+            { name: 'discount_amount', label: 'Discount Amount (IDR)', type: 'Currency', defaultValue: 0 },
+
+            // Totals & Terms
+            { name: 'disable_rounded_total', label: 'Disable Rounded Total', type: 'Check', defaultValue: false },
+            { name: 'terms', label: 'Terms and Conditions', type: 'Text' },
+            { name: 'remarks', label: 'Catatan / Remarks', type: 'Text' }
         ]
     },
 
@@ -841,11 +934,212 @@ export const DOCTYPE_SCHEMAS: Record<string, DocTypeSchema> = {
             { name: 'allow_negative_stock', label: 'Izinkan Stok Minus Saat Transaksi', type: 'Check', defaultValue: false },
             { name: 'clean_description_html', label: 'Bersihkan Format HTML Pada Deskripsi Barang', type: 'Check', defaultValue: true }
         ]
-    }
+    },
+
+    // ─── FINANCE & ACCOUNTING DOCTYPES ─────────────────────────────────────────
+    'Payment Entry': {
+        title: 'Payment Entry',
+        module: 'Finance',
+        namingSeriesPrefix: 'ACC-PAY-.YYYY.-',
+        fields: [
+            { name: 'voucher_no', label: 'No. Voucher / Seri', type: 'Data', required: true, defaultValue: 'ACC-PAY-2026-0001' },
+            { name: 'posting_date', label: 'Tanggal Posting', type: 'Date', required: true },
+            { name: 'payment_type', label: 'Tipe Pembayaran', type: 'Select', options: ['Receive (Penerimaan)', 'Pay (Pembayaran)', 'Internal Transfer'], required: true, defaultValue: 'Receive (Penerimaan)' },
+            { name: 'party_type', label: 'Tipe Pihak (Party)', type: 'Select', options: ['Customer', 'Supplier', 'Employee', 'Shareholder'], required: true, defaultValue: 'Customer' },
+            { name: 'party_name', label: 'Nama Pihak (Pelanggan / Supplier)', type: 'Data', required: true, targetLink: 'Customer' },
+            { name: 'paid_amount', label: 'Jumlah Dibayar (Rp)', type: 'Currency', required: true, defaultValue: 0 },
+            { name: 'mode_of_payment', label: 'Metode Pembayaran', type: 'Select', options: ['Kas Tunai', 'Transfer Bank BCA', 'Transfer Bank Mandiri', 'Cek / Giro'], required: true, defaultValue: 'Transfer Bank BCA' },
+            { name: 'paid_from_account', label: 'Akun Asal (Paid From)', type: 'Select', options: ['1110.001 - Kas Utam', '1120.001 - Bank BCA Utama', '1120.002 - Bank Mandiri'], targetLink: 'Chart of Accounts' },
+            { name: 'paid_to_account', label: 'Akun Tujuan (Paid To)', type: 'Select', options: ['1120.001 - Bank BCA Utama', '1130.001 - Piutang Usaha', '2110.001 - Hutang Usaha'], targetLink: 'Chart of Accounts' },
+            { name: 'reference_no', label: 'No. Referensi / Cheque No', type: 'Data' },
+            { name: 'remarks', label: 'Catatan / Keterangan', type: 'Text' },
+        ]
+    },
+
+    'Payment Reconciliation': {
+        title: 'Payment Reconciliation',
+        module: 'Finance',
+        namingSeriesPrefix: 'ACC-REC-.YYYY.-',
+        fields: [
+            { name: 'company', label: 'Perusahaan', type: 'Select', options: ['SJS Group', 'Main Operations'], required: true, defaultValue: 'SJS Group' },
+            { name: 'party_type', label: 'Tipe Pihak', type: 'Select', options: ['Customer', 'Supplier'], required: true, defaultValue: 'Customer' },
+            { name: 'party', label: 'Pihak (Customer / Supplier)', type: 'Data', required: true, targetLink: 'Customer' },
+            { name: 'receivable_payable_account', label: 'Akun Piutang / Hutang', type: 'Select', options: ['1130.001 - Piutang Usaha', '2110.001 - Hutang Usaha'], targetLink: 'Chart of Accounts' },
+            { name: 'bank_cash_account', label: 'Akun Bank / Kas', type: 'Select', options: ['1120.001 - Bank BCA Utama', '1110.001 - Kas Utama'], targetLink: 'Chart of Accounts' },
+            { name: 'unreconciled_amount', label: 'Jumlah Belum Direkonsiliasi (Rp)', type: 'Currency', defaultValue: 0 },
+            { name: 'remarks', label: 'Catatan Rekonsiliasi', type: 'Text' },
+        ]
+    },
+
+    'Bank Account': {
+        title: 'Bank Account',
+        module: 'Finance',
+        namingSeriesPrefix: 'BANK-ACC-',
+        fields: [
+            { name: 'account_name', label: 'Nama Rekening / Akun', type: 'Data', required: true },
+            { name: 'account_number', label: 'Nomor Rekening', type: 'Data', required: true },
+            { name: 'bank_name', label: 'Nama Bank', type: 'Select', options: ['Bank Central Asia (BCA)', 'Bank Mandiri', 'Bank Negara Indonesia (BNI)', 'Bank Rakyat Indonesia (BRI)', 'Bank Syariah Indonesia (BSI)'], required: true },
+            { name: 'branch_name', label: 'Cabang Bank', type: 'Data' },
+            { name: 'swift_code', label: 'SWIFT / BIC Code', type: 'Data' },
+            { name: 'company', label: 'Perusahaan Owner', type: 'Select', options: ['SJS Group', 'Main Operations'], defaultValue: 'SJS Group' },
+            { name: 'gl_account', label: 'Akun Buku Besar (GL Account)', type: 'Select', options: ['1120.001 - Bank BCA Utama', '1120.002 - Bank Mandiri Operasional', '1120.003 - Bank BNI Payroll'], targetLink: 'Chart of Accounts' },
+            { name: 'is_active', label: 'Status Rekening Aktif', type: 'Check', defaultValue: true },
+        ]
+    },
+
+    'Bank Transaction': {
+        title: 'Bank Transaction',
+        module: 'Finance',
+        namingSeriesPrefix: 'BT-2026-',
+        fields: [
+            { name: 'bank_account', label: 'Rekening Bank', type: 'Select', options: ['BCA Operasional (1234567890)', 'Mandiri Utama (0987654321)'], required: true, targetLink: 'Bank Account' },
+            { name: 'date', label: 'Tanggal Transaksi Mutasi', type: 'Date', required: true },
+            { name: 'deposit', label: 'Kredit / Masuk (Rp)', type: 'Currency', defaultValue: 0 },
+            { name: 'withdrawal', label: 'Debit / Keluar (Rp)', type: 'Currency', defaultValue: 0 },
+            { name: 'reference_number', label: 'Nomor Referensi Mutasi', type: 'Data' },
+            { name: 'description', label: 'Deskripsi / Berita Mutasi', type: 'Text' },
+        ]
+    },
+
+    'Cost Center': {
+        title: 'Cost Center',
+        module: 'Finance',
+        namingSeriesPrefix: 'CC-',
+        fields: [
+            { name: 'code', label: 'Kode Pusat Biaya (Cost Center Code)', type: 'Data', required: true },
+            { name: 'name', label: 'Nama Pusat Biaya', type: 'Data', required: true },
+            { name: 'parent_cost_center', label: 'Induk Pusat Biaya (Parent)', type: 'Select', options: ['Main Operations', 'Divisi Produksi', 'Divisi Marketing', 'Divisi IT & Infrastruktur'], targetLink: 'Cost Center' },
+            { name: 'company', label: 'Perusahaan', type: 'Select', options: ['SJS Group', 'Main Operations'], defaultValue: 'SJS Group' },
+            { name: 'is_group', label: 'Grup Pusat Biaya (Header)', type: 'Check', defaultValue: false },
+        ]
+    },
+
+    'Sales Tax Template': {
+        title: 'Sales Tax Template',
+        module: 'Finance',
+        namingSeriesPrefix: 'STAX-',
+        fields: [
+            { name: 'title', label: 'Judul Template Pajak Penjualan', type: 'Data', required: true },
+            { name: 'company', label: 'Perusahaan', type: 'Select', options: ['SJS Group', 'Main Operations'], defaultValue: 'SJS Group' },
+            { name: 'tax_category', label: 'Kategori Pajak', type: 'Select', options: ['PPN 11%', 'Pajak Daerah 10%', 'Non Pajak / Bebas PPN'], targetLink: 'Tax Category' },
+            { name: 'total_tax_rate', label: 'Total Tarif Pajak (%)', type: 'Float', required: true, defaultValue: 11 },
+            { name: 'is_default', label: 'Jadikan Template Default', type: 'Check', defaultValue: false },
+        ]
+    },
+
+    'Purchase Tax Template': {
+        title: 'Purchase Tax Template',
+        module: 'Finance',
+        namingSeriesPrefix: 'PTAX-',
+        fields: [
+            { name: 'title', label: 'Judul Template Pajak Pembelian', type: 'Data', required: true },
+            { name: 'company', label: 'Perusahaan', type: 'Select', options: ['SJS Group', 'Main Operations'], defaultValue: 'SJS Group' },
+            { name: 'tax_category', label: 'Kategori Pajak', type: 'Select', options: ['PPN Masukan 11%', 'PPh Pasal 23 (2%)', 'PPh Pasal 4 ayat 2 (10%)'], targetLink: 'Tax Category' },
+            { name: 'total_tax_rate', label: 'Total Tarif Pajak (%)', type: 'Float', required: true, defaultValue: 11 },
+            { name: 'is_default', label: 'Jadikan Template Default', type: 'Check', defaultValue: false },
+        ]
+    },
+
+    'Credit Note': {
+        title: 'Credit Note',
+        module: 'Finance',
+        namingSeriesPrefix: 'ACC-CN-.YYYY.-',
+        fields: [
+            { name: 'voucher_no', label: 'No. Nota Kredit', type: 'Data', required: true, defaultValue: 'ACC-CN-2026-0001' },
+            { name: 'posting_date', label: 'Tanggal Posting', type: 'Date', required: true },
+            { name: 'customer_name', label: 'Nama Pelanggan / Customer', type: 'Data', required: true, targetLink: 'Customer' },
+            { name: 'total_amount', label: 'Total Nilai Retur (Rp)', type: 'Currency', required: true, defaultValue: 0 },
+            { name: 'reason', label: 'Alasan Retur / Credit Note', type: 'Select', options: ['Kerusakan Barang Saat Pengiriman', 'Cacat Produksi / Defect', 'Kelebihan Tagihan / Overcharge', 'Pembatalan Sebagian Pesanan'], required: true },
+            { name: 'remarks', label: 'Catatan / Remarks', type: 'Text' },
+        ]
+    },
+
+    'Debit Note': {
+        title: 'Debit Note',
+        module: 'Finance',
+        namingSeriesPrefix: 'ACC-DN-.YYYY.-',
+        fields: [
+            { name: 'voucher_no', label: 'No. Nota Debit', type: 'Data', required: true, defaultValue: 'ACC-DN-2026-0001' },
+            { name: 'posting_date', label: 'Tanggal Posting', type: 'Date', required: true },
+            { name: 'supplier_name', label: 'Nama Pemasok / Supplier', type: 'Data', required: true, targetLink: 'Supplier' },
+            { name: 'total_amount', label: 'Total Nilai Retur (Rp)', type: 'Currency', required: true, defaultValue: 0 },
+            { name: 'reason', label: 'Alasan Retur / Debit Note', type: 'Select', options: ['Pengembalian Material Cacat Ke Vendor', 'Penyesuaian Diskon Pembelian', 'Kekurangan Kuantitas Kirim Vendor'], required: true },
+            { name: 'remarks', label: 'Catatan / Remarks', type: 'Text' },
+        ]
+    },
+
+    'Dunning': {
+        title: 'Dunning',
+        module: 'Finance',
+        namingSeriesPrefix: 'DUNN-.YYYY.-',
+        fields: [
+            { name: 'voucher_no', label: 'No. Surat Tagihan (Dunning ID)', type: 'Data', required: true, defaultValue: 'DUNN-2026-0001' },
+            { name: 'posting_date', label: 'Tanggal Surat', type: 'Date', required: true },
+            { name: 'customer_name', label: 'Nama Pelanggan (Debitur)', type: 'Data', required: true, targetLink: 'Customer' },
+            { name: 'dunning_type', label: 'Tingkat Peringatan Tagihan', type: 'Select', options: ['Pengingat Pertama (Peringatan Muka)', 'Pengingat Kedua (Surat Peringatan I)', 'Pengingat Ketiga (Surat Peringatan II)', 'Tindakan Hukum / Somasi'], required: true },
+            { name: 'dunning_fee', label: 'Biaya Keterlambatan / Dunning Fee (Rp)', type: 'Currency', defaultValue: 50000 },
+            { name: 'grand_total', label: 'Total Tagihan + Biaya (Rp)', type: 'Currency', required: true, defaultValue: 0 },
+            { name: 'remarks', label: 'Catatan Penagihan', type: 'Text' },
+        ]
+    },
+
+    // ─── ASSET DOCTYPES ────────────────────────────────────────────────────────
+    'Asset Audit Session': {
+        title: 'Asset Audit Session',
+        module: 'Assets',
+        namingSeriesPrefix: 'AUD-SESS-',
+        fields: [
+            { name: 'session_name', label: 'Nama Sesi Stock Opname / Audit Aset', type: 'Data', required: true, defaultValue: 'Audit Aset Q3 2026' },
+            { name: 'audit_date', label: 'Tanggal Pelaksanaan Audit', type: 'Date', required: true },
+            { name: 'location', label: 'Lokasi Audit', type: 'Select', options: ['Gudang Utama - Jakarta', 'Workshop Operasional - Surabaya', 'Head Office - Kuningan'], required: true, targetLink: 'Location' },
+            { name: 'auditor_name', label: 'Nama Auditor / Tim Audit', type: 'Data', required: true, defaultValue: 'Budi Santoso (Internal Auditor)' },
+            { name: 'status', label: 'Status Audit', type: 'Select', options: ['Planned (Direncanakan)', 'In Progress (Berjalan)', 'Completed (Selesai)'], required: true, defaultValue: 'In Progress (Berjalan)' },
+            { name: 'remarks', label: 'Catatan & Temuan Audit', type: 'Text' },
+        ]
+    },
+
+    'Asset Conversion': {
+        title: 'Asset Conversion',
+        module: 'Assets',
+        namingSeriesPrefix: 'AST-CONV-.YYYY.-',
+        fields: [
+            { name: 'conversion_no', label: 'No. Dokumen Konversi Aset', type: 'Data', required: true, defaultValue: 'AST-CONV-2026-001' },
+            { name: 'asset_name', label: 'Nama Aset', type: 'Data', required: true, targetLink: 'Asset' },
+            { name: 'source_category', label: 'Kategori Asal', type: 'Select', options: ['Peralatan & Mesin', 'Kendaraan & Armada', 'Inventaris Kantor'], targetLink: 'Asset Category' },
+            { name: 'target_category', label: 'Kategori Tujuan Konversi', type: 'Select', options: ['Alat Berat Operasional', 'Kendaraan Operasional', 'Infrastruktur IT'], targetLink: 'Asset Category' },
+            { name: 'conversion_date', label: 'Tanggal Konversi', type: 'Date', required: true },
+            { name: 'status', label: 'Status Konversi', type: 'Select', options: ['Draft', 'Approved', 'Rejected'], defaultValue: 'Approved' },
+        ]
+    },
+
+    'Depreciation Method': {
+        title: 'Depreciation Method',
+        module: 'Assets',
+        namingSeriesPrefix: 'DEPR-MTHD-',
+        fields: [
+            { name: 'method_name', label: 'Nama Metode Penyusutan', type: 'Data', required: true },
+            { name: 'code', label: 'Kode Metode', type: 'Data', required: true },
+            { name: 'depreciation_rate', label: 'Tarif Penyusutan Tahunan (%)', type: 'Float', required: true, defaultValue: 25 },
+            { name: 'frequency_months', label: 'Frekuensi Penyusutan (Bulan)', type: 'Int', defaultValue: 12 },
+            { name: 'description', label: 'Deskripsi Formula Penyusutan', type: 'Text' },
+        ]
+    },
+
+    'Maintenance Type': {
+        title: 'Maintenance Type',
+        module: 'Assets',
+        namingSeriesPrefix: 'MAINT-TYPE-',
+        fields: [
+            { name: 'code', label: 'Kode Tipe Perawatan (Code)', type: 'Data', required: true },
+            { name: 'name', label: 'Nama Tipe Pemeliharaan / Perawatan', type: 'Data', required: true },
+            { name: 'is_preventive', label: 'Tipe Preventif (Pencegahan Rutin)', type: 'Check', defaultValue: true },
+            { name: 'description', label: 'Penjelasan Ruang Lingkup Perawatan', type: 'Text' },
+        ]
+    },
 };
 
 // Fallback Schema Generator for any of the 122 DocTypes not explicitly listed above
-export function getDocTypeSchema(title: string, moduleName: 'Selling' | 'Buying' | 'Stock'): DocTypeSchema {
+export function getDocTypeSchema(title: string, moduleName: 'Selling' | 'Buying' | 'Stock' | 'Finance' | 'Assets'): DocTypeSchema {
     if (DOCTYPE_SCHEMAS[title]) {
         return DOCTYPE_SCHEMAS[title];
     }

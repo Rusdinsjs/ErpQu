@@ -202,6 +202,7 @@ const ALL_NAV_ITEMS: Record<string, NavItem> = {
     'analytics': { id: 'analytics', icon: TrendingUp, label: 'Performance Analytics', minLevel: 3 },
     'reports': { id: 'reports', icon: FileText, label: 'Management Reports', minLevel: 3 },
 
+    'assets-workspace': { id: 'assets-workspace', icon: Box, label: 'Assets Workspace', path: '/assets-workspace', minLevel: 5 },
     'assets': { id: 'assets', icon: Box, label: 'All Assets', minLevel: 5 },
     'asset-lifecycle': { id: 'asset-lifecycle', icon: History, label: 'Asset Lifecycle', minLevel: 4 },
     'categories': { id: 'categories', icon: FolderTree, label: 'Asset Categories', minLevel: 4 },
@@ -416,12 +417,12 @@ export default function AdminDashboard() {
     };
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
-        asset_operations: false,
+        asset_operations: true,
         maintenance_group: false,
         hrd_group: false,
         master_data: false,
         rental_group: false,
-        finance_group: false,
+        finance_group: true,
         inventory_group: false,
         settings_group: false
     });
@@ -470,10 +471,11 @@ export default function AdminDashboard() {
                     backendConfig.modules = backendConfig.modules.map((m: any) => {
                         if (m.id === 'asset-management') {
                             const ids = (m.menuIds || []).filter((id: string) => id !== 'maintenance-templates');
+                            if (!ids.includes('assets-workspace')) ids.unshift('assets-workspace');
                             if (!ids.includes('conversions')) ids.push('conversions');
                             if (!ids.includes('categories')) ids.push('categories');
                             if (!ids.includes('locations')) ids.push('locations');
-                            return { ...m, menuIds: ids };
+                            return { ...m, menuIds: ids, defaultRoute: '/assets-workspace' };
                         }
                         if (m.id === 'commercial') {
                             const ids = (m.menuIds || []).filter((id: string) => id !== 'purchase-bills' && id !== 'contracts');
@@ -597,6 +599,8 @@ export default function AdminDashboard() {
     useEffect(() => {
         const path = location.pathname;
 
+        const isUuid = (str: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+
         // 1. Handle Deep Links (Priority)
         const lifecycleMatch = matchPath('/assets/:id/lifecycle', path);
         if (lifecycleMatch?.params.id) {
@@ -608,8 +612,38 @@ export default function AdminDashboard() {
             return;
         }
 
+        // Handle specific asset settings & report sub-routes before :id matching
+        if (path === '/assets/settings' || path === '/assets/asset-settings') {
+            setActiveTab('asset-settings');
+            setSelectedAssetId(null);
+            setOpenGroups(prev => ({ ...prev, asset_operations: true }));
+            return;
+        }
+
+        if (path === '/assets/depreciation-methods') {
+            setActiveTab('depreciation-methods');
+            setSelectedAssetId(null);
+            setOpenGroups(prev => ({ ...prev, asset_operations: true }));
+            return;
+        }
+
+        if (path === '/assets/maintenance-types') {
+            setActiveTab('maintenance-types');
+            setSelectedAssetId(null);
+            setOpenGroups(prev => ({ ...prev, asset_operations: true }));
+            return;
+        }
+
+        if (path.startsWith('/assets/reports/')) {
+            const reportKey = path.replace('/assets/reports/', '');
+            setActiveTab(reportKey as TabId);
+            setSelectedAssetId(null);
+            setOpenGroups(prev => ({ ...prev, asset_operations: true }));
+            return;
+        }
+
         const assetDetailMatch = matchPath('/assets/:id', path);
-        if (assetDetailMatch?.params.id) {
+        if (assetDetailMatch?.params.id && isUuid(assetDetailMatch.params.id)) {
             setActiveTab('assets');
             setSelectedAssetId(assetDetailMatch.params.id);
             setAssetViewMode('details');
@@ -679,6 +713,32 @@ export default function AdminDashboard() {
             return;
         }
 
+        if (path === '/accounting-workspace') {
+            setActiveTab('accounting-workspace');
+            setOpenGroups(prev => ({ ...prev, finance_group: true }));
+            setSelectedAssetId(null);
+            setSelectedWorkOrderId(null);
+            return;
+        }
+
+        if (path.startsWith('/accounting/reports/')) {
+            const reportKey = path.replace('/accounting/reports/', '');
+            setActiveTab(reportKey as TabId);
+            setOpenGroups(prev => ({ ...prev, finance_group: true }));
+            setSelectedAssetId(null);
+            setSelectedWorkOrderId(null);
+            return;
+        }
+
+        if (path.startsWith('/accounting/')) {
+            const accKey = path.replace('/accounting/', '');
+            setActiveTab(accKey as TabId);
+            setOpenGroups(prev => ({ ...prev, finance_group: true }));
+            setSelectedAssetId(null);
+            setSelectedWorkOrderId(null);
+            return;
+        }
+
         // 2. Handle Simple Tabs
         const segments = path.split('/').filter(Boolean);
         const lastSegment = segments[segments.length - 1];
@@ -716,6 +776,10 @@ export default function AdminDashboard() {
                 const foundGroup = findParentGroup(navItems, foundTab);
                 if (foundGroup) {
                     setOpenGroups(prev => ({ ...prev, [foundGroup.id]: true }));
+                } else if (['assets-workspace', 'assets', 'categories', 'locations', 'asset-lifecycle', 'asset-audit'].includes(foundTab)) {
+                    setOpenGroups(prev => ({ ...prev, asset_operations: true }));
+                } else if (['accounting-workspace', 'chart-of-accounts', 'cash-bank', 'journal-entries', 'payment-entries', 'payment-reconciliation', 'sales-invoices', 'purchase-bills', 'credit-notes', 'debit-notes', 'dunnings', 'bank-accounts', 'bank-transactions', 'cost-centers', 'accounting-dimensions', 'budgets', 'sales-tax-templates', 'purchase-tax-templates', 'tax-categories', 'tax-rules', 'balance-sheet', 'profit-loss', 'cash-flow', 'trial-balance', 'general-ledger-report', 'ar-aging', 'ap-aging'].includes(foundTab)) {
+                    setOpenGroups(prev => ({ ...prev, finance_group: true }));
                 } else if (foundTab === 'work-orders') {
                     // Explicit fallback for work-orders to ensure group opens
                     setOpenGroups(prev => ({ ...prev, maintenance_group: true }));
@@ -821,7 +885,7 @@ export default function AdminDashboard() {
                 label: 'Assets',
                 icon: Box,
                 minLevel: 5,
-                children: getGroupItems(assetIds, ['assets', 'categories', 'locations', 'asset-lifecycle', 'asset-audit'], ['assets', 'categories', 'locations', 'asset-lifecycle', 'asset-audit'])
+                children: getGroupItems(assetIds, ['assets-workspace', 'assets', 'categories', 'locations', 'asset-lifecycle', 'asset-audit'], ['assets-workspace', 'assets', 'categories', 'locations', 'asset-lifecycle', 'asset-audit'])
             },
             {
                 id: 'inventory_group',

@@ -6,7 +6,7 @@
 // ─── All available menu IDs in the application ───────────────────────────────
 export type MenuId =
     | 'dashboard' | 'analytics' | 'reports'
-    | 'assets' | 'asset-lifecycle' | 'categories' | 'locations' | 'asset-audit'
+    | 'assets-workspace' | 'assets' | 'asset-lifecycle' | 'categories' | 'locations' | 'asset-audit'
     | 'work-orders' | 'conversions' | 'maintenance-schedules' | 'maintenance-templates' | 'maintenance-teams'
     | 'fuel' | 'loans' | 'tax-renewals'
     | 'rentals' | 'contracts' | 'contract-templates'
@@ -66,6 +66,7 @@ export const MENU_LABELS: Record<MenuId, string> = {
     'dashboard': 'Dashboard Overview',
     'analytics': 'Performance Analytics',
     'reports': 'Management Reports',
+    'assets-workspace': 'Assets Workspace',
     'assets': 'All Assets',
     'asset-lifecycle': 'Asset Lifecycle',
     'categories': 'Asset Categories',
@@ -260,6 +261,7 @@ export const MENU_TO_RESOURCE: Record<MenuId, string> = {
     'dashboard': 'dashboard',
     'analytics': 'analytics',
     'reports': 'report',
+    'assets-workspace': 'asset',
     'assets': 'asset',
     'asset-lifecycle': 'asset_lifecycle',
     'categories': 'categories',
@@ -488,10 +490,10 @@ export const DEFAULT_LAUNCHPAD_CONFIG: LaunchpadConfig = {
             icon: 'Box',
             gradient: 'from-emerald-500/20 to-teal-500/20',
             iconBg: 'bg-gradient-to-br from-emerald-500 to-teal-500',
-            defaultRoute: '/assets',
+            defaultRoute: '/assets-workspace',
             minLevel: 5,
-            features: ['Asset Registry', 'Asset Categories', 'Locations', 'Lifecycle Tracking', 'Asset Audit'],
-            menuIds: ['assets', 'categories', 'locations', 'asset-lifecycle', 'asset-audit', 'conversions'],
+            features: ['Asset Workspace', 'Asset Registry', 'Asset Categories', 'Locations', 'Lifecycle Tracking', 'Asset Audit'],
+            menuIds: ['assets-workspace', 'assets', 'categories', 'locations', 'asset-lifecycle', 'asset-audit', 'conversions'],
             order: 3,
             enabled: true,
         },
@@ -621,7 +623,7 @@ export const DEFAULT_LAUNCHPAD_CONFIG: LaunchpadConfig = {
             icon: 'Wallet',
             gradient: 'from-green-500/20 to-emerald-500/20',
             iconBg: 'bg-gradient-to-br from-green-500 to-emerald-500',
-            defaultRoute: '/cash-bank',
+            defaultRoute: '/accounting-workspace',
             minLevel: 2,
             menuIds: [
                 'accounting-workspace', 'chart-of-accounts', 'journal-entries-view',
@@ -674,16 +676,36 @@ export const DEFAULT_LAUNCHPAD_CONFIG: LaunchpadConfig = {
 export function getMenuIdsForModule(config: LaunchpadConfig, moduleId: string): MenuId[] {
     const mod = config?.modules?.find(m => m.id === moduleId);
     if (!mod) return [];
-    return [...new Set([...(mod.menuIds || []), ...(config.globalMenuIds || [])])];
+    const ids = [...(mod.menuIds || []), ...(config.globalMenuIds || [])];
+    if (moduleId === 'asset-management' && !ids.includes('assets-workspace')) {
+        ids.unshift('assets-workspace');
+    }
+    if (moduleId === 'finance' && !ids.includes('accounting-workspace')) {
+        ids.unshift('accounting-workspace');
+    }
+    return [...new Set(ids)];
 }
 
 /** Get all menuIds across ALL modules (for super admin or fallback) */
 export function getAllMenuIds(config: LaunchpadConfig): MenuId[] {
     const allIds = (config?.modules || []).flatMap(m => m.menuIds || []);
+    if (!allIds.includes('assets-workspace')) {
+        allIds.unshift('assets-workspace');
+    }
+    if (!allIds.includes('accounting-workspace')) {
+        allIds.unshift('accounting-workspace');
+    }
     return [...new Set([...allIds, ...(config?.globalMenuIds || [])])];
 }
 
 /** Find which module a given menuId belongs to */
 export function findModuleForMenu(config: LaunchpadConfig, menuId: MenuId): LaunchpadModuleConfig | undefined {
-    return (config?.modules || []).find(m => (m.menuIds || []).includes(menuId));
+    const found = (config?.modules || []).find(m => (m.menuIds || []).includes(menuId));
+    if (!found && menuId === 'assets-workspace') {
+        return config?.modules?.find(m => m.id === 'asset-management');
+    }
+    if (!found && menuId === 'accounting-workspace') {
+        return config?.modules?.find(m => m.id === 'finance');
+    }
+    return found;
 }

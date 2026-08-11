@@ -6,6 +6,8 @@ import { MENU_TO_RESOURCE } from '../../config/launchpadConfig';
 // Lazy load view components
 const DashboardView = lazy(() => import('../../pages/Dashboard'));
 const AssetsView = lazy(() => import('../../pages/Assets/Assets'));
+const AssetsWorkspaceView = lazy(() => import('../../pages/Assets/AssetsWorkspace'));
+const AssetsGenericView = lazy(() => import('../../pages/Assets/AssetsGenericView'));
 const AssetDetailsView = lazy(() => import('../../pages/Assets/AssetDetails'));
 const CategoriesView = lazy(() => import('../../pages/Assets/Categories'));
 const WorkOrdersView = lazy(() => import('../../pages/WorkOrders/WorkOrders'));
@@ -161,8 +163,25 @@ export function AdminContentRouter({
     const renderActiveView = () => {
         switch (activeTab) {
             case 'dashboard': return <DashboardView />;
+            case 'assets-workspace': return <AssetsWorkspaceView />;
             case 'assets': return <AssetsView />;
             case 'categories': return <CategoriesView />;
+            case 'asset-audit': return <AssetsGenericView title="Asset Audit Session" description="Sesi audit & stok opname aset fisik" type="table" />;
+            case 'asset-lifecycle': return <AssetLifecycleView assetId="" />;
+            case 'fuel': return <FuelView />;
+            case 'loans': return <AssetsGenericView title="Internal Asset Loans" description="Peminjaman aset antar unit internal" type="table" />;
+            case 'asset-settings': return <AssetsGenericView title="Asset Settings & Configuration" description="Pengaturan parameter umum, penomoran kode otomatis & opsi lisensi modul aset" type="settings" />;
+            case 'depreciation-methods': return <AssetsGenericView title="Depreciation Methods" description="Metode & kalkulasi depresiasi aset" type="settings" />;
+            case 'maintenance-types': return <AssetsGenericView title="Maintenance Types" description="Tipe & standar SOP pemeliharaan" type="settings" />;
+            case 'depreciation-ledger': return <AssetsGenericView title="Asset Depreciation Ledger" description="Laporan akumulasi penyusutan aset" type="report" />;
+            case 'roi-trends': return <AssetsGenericView title="Asset ROI & Cost Trends" description="Analisis imbal hasil & tren biaya aset" type="report" />;
+            case 'condition-distribution': return <AssetsGenericView title="Asset Condition Distribution" description="Distribusi kondisi fisik aset" type="report" />;
+            case 'workorder-summary': return <AssetsGenericView title="Work Order Summary" description="Laporan ringkasan kerja pemeliharaan" type="report" />;
+            case 'fuel-consumption': return <AssetsGenericView title="Fuel Consumption Report" description="Laporan penggunaan & efisiensi BBM" type="report" />;
+            case 'custody-history': return <AssetsGenericView title="Asset Custody & Transfer" description="Riwayat perpindahan penanggungjawab aset" type="report" />;
+            case 'team-performance': return <AssetsGenericView title="Maintenance Team Performance" description="Performa & produktivitas tim teknisi" type="report" />;
+            case 'tax-expiry': return <AssetsGenericView title="Tax Renewal Expiry Schedule" description="Jadwal jatuh tempo pajak & dokumen" type="report" />;
+            case 'cost-analysis': return <AssetsGenericView title="Asset Maintenance Cost Analysis" description="Analisis rincian biaya perawatan aset" type="report" />;
             case 'inventory-categories': return <InventoryCategoriesView />;
             case 'warehouses': return <WarehousesView />;
             case 'inventory-items':

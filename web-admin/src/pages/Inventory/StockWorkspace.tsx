@@ -44,49 +44,49 @@ export default function StockWorkspace() {
             links: [
                 { label: 'Item', route: '/inventory-items' },
                 { label: 'Item Group', route: '/inventory-categories' },
-                { label: 'Product Bundle', route: '/stock/product-bundles' },
-                { label: 'Item Alternative', route: '/stock/item-alternatives' },
-                { label: 'Item Manufacturer', route: '/stock/item-manufacturers' },
-                { label: 'Manufacturer', route: '/stock/manufacturers' },
+                { label: 'Product Bundle', route: '/stock-product-bundles' },
+                { label: 'Item Alternative', route: '/item-alternatives' },
+                { label: 'Item Manufacturer', route: '/item-manufacturers' },
+                { label: 'Manufacturer', route: '/manufacturers' },
             ]
         },
         {
             title: 'Serial No and Batch',
             links: [
-                { label: 'Serial No', route: '/stock/serial-numbers' },
-                { label: 'Batch', route: '/stock/batches' },
-                { label: 'Installation Note', route: '/stock/installation-notes' },
+                { label: 'Serial No', route: '/serial-numbers' },
+                { label: 'Batch', route: '/batches' },
+                { label: 'Installation Note', route: '/installation-notes' },
             ]
         },
         {
             title: 'Settings & Setup',
             links: [
-                { label: 'Stock Settings', route: '/stock/settings' },
+                { label: 'Stock Settings', route: '/stock-settings' },
                 { label: 'Warehouse', route: '/warehouses' },
-                { label: 'Brand', route: '/stock/brands' },
-                { label: 'Item Attribute', route: '/stock/item-attributes' },
-                { label: 'UOM', route: '/stock/uoms' },
-                { label: 'UOM Conversion Factor', route: '/stock/uom-conversions' },
-                { label: 'Item Tax Template', route: '/stock/tax-templates' },
+                { label: 'Brand', route: '/brands' },
+                { label: 'Item Attribute', route: '/item-attributes' },
+                { label: 'UOM', route: '/uoms' },
+                { label: 'UOM Conversion Factor', route: '/uom-conversions' },
+                { label: 'Item Tax Template', route: '/stock-tax-templates' },
             ]
         },
         {
             title: 'Key Reports',
             links: [
-                { label: 'Stock Ledger', route: '/stock/reports/stock-ledger' },
-                { label: 'Stock Balance', route: '/stock/reports/stock-balance' },
-                { label: 'Stock Summary', route: '/stock/reports/stock-summary' },
-                { label: 'Stock Ageing', route: '/stock/reports/stock-ageing' },
-                { label: 'Stock Projected Qty', route: '/stock/reports/projected-qty' },
+                { label: 'Stock Ledger', route: '/stock-ledger' },
+                { label: 'Stock Balance', route: '/stock-balance' },
+                { label: 'Stock Summary', route: '/stock-summary' },
+                { label: 'Stock Ageing', route: '/stock-ageing' },
+                { label: 'Stock Projected Qty', route: '/stock-projected-qty' },
             ]
         },
         {
             title: 'Other Reports',
             links: [
-                { label: 'Stock Analytics', route: '/stock/reports/stock-analytics' },
-                { label: 'Batch-wise Balance History', route: '/stock/reports/batch-balance' },
-                { label: 'Serial No Status', route: '/stock/reports/serial-status' },
-                { label: 'Item Shortage Report', route: '/stock/reports/item-shortage' },
+                { label: 'Stock Analytics', route: '/stock-analytics' },
+                { label: 'Batch-wise Balance History', route: '/batch-wise-balance' },
+                { label: 'Serial No Status', route: '/serial-no-status' },
+                { label: 'Item Shortage Report', route: '/item-shortage-report' },
             ]
         }
     ];
