@@ -57,6 +57,32 @@ export function AssetForm({ initialValues, categories, locations, onSubmit, onCa
         return s;
     };
 
+    // Read Settings & Depreciation Methods from localStorage Settings & Setup
+    const savedSettings = useMemo(() => {
+        try {
+            const raw = localStorage.getItem('erp_asset_settings');
+            return raw ? JSON.parse(raw) : null;
+        } catch {
+            return null;
+        }
+    }, []);
+
+    const savedDepreciationMethods = useMemo(() => {
+        try {
+            const raw = localStorage.getItem('erp_depreciation_methods');
+            const list = raw ? JSON.parse(raw) : [];
+            return list.length > 0 ? list : [
+                { id: '1', code: 'SLM', method_name: 'Garis Lurus (Straight Line)' },
+                { id: '2', code: 'DBM', method_name: 'Saldo Menurun (Declining Balance)' }
+            ];
+        } catch {
+            return [
+                { id: '1', code: 'SLM', method_name: 'Garis Lurus (Straight Line)' },
+                { id: '2', code: 'DBM', method_name: 'Saldo Menurun (Declining Balance)' }
+            ];
+        }
+    }, []);
+
     // Form State
     const [formData, setFormData] = useState({
         asset_code: initialValues?.asset_code || '',
@@ -73,8 +99,9 @@ export function AssetForm({ initialValues, categories, locations, onSubmit, onCa
         year_manufacture: initialValues?.year_manufacture,
         purchase_date: initialValues?.purchase_date ? new Date(initialValues.purchase_date) : null,
         purchase_price: initialValues?.purchase_price,
-        residual_value: initialValues?.residual_value,
-        useful_life_months: initialValues?.useful_life_months,
+        residual_value: initialValues?.residual_value ?? (initialValues?.purchase_price && savedSettings?.default_residual_percent ? (initialValues.purchase_price * savedSettings.default_residual_percent / 100) : undefined),
+        useful_life_months: initialValues?.useful_life_months ?? (savedSettings?.default_useful_life_months || 60),
+        depreciation_method: (initialValues as any)?.depreciation_method || (savedSettings?.default_depreciation_method || 'Garis Lurus (Straight Line)'),
         notes: initialValues?.notes || '',
         is_rental: initialValues?.is_rental || false,
         is_fuel: initialValues?.is_fuel || false,
@@ -475,6 +502,23 @@ export function AssetForm({ initialValues, categories, locations, onSubmit, onCa
 
     const selectedCategory = categories.find(c => c.id === formData.category_id);
 
+    const activeCategoryRule = useMemo(() => {
+        if (!selectedCategory || !savedSettings?.category_rules) return null;
+        const catName = (selectedCategory.name || '').toLowerCase();
+        const catPath = (selectedCategory.full_path || '').toLowerCase();
+        return savedSettings.category_rules.find((r: any) => {
+            const ruleName = (r.category_name || '').toLowerCase();
+            return catName.includes(ruleName) || catPath.includes(ruleName) ||
+                (catName.includes('bangunan') && ruleName.includes('bangunan')) ||
+                (catName.includes('mesin') && ruleName.includes('mesin')) ||
+                (catName.includes('kendaraan') && ruleName.includes('kendaraan')) ||
+                (catName.includes('berat') && ruleName.includes('berat')) ||
+                ((catName.includes('komputer') || catName.includes('it')) && ruleName.includes('komputer')) ||
+                ((catName.includes('furniture') || catName.includes('kantor')) && ruleName.includes('furniture')) ||
+                (catName.includes('tanah') && ruleName.includes('tanah'));
+        });
+    }, [selectedCategory, savedSettings]);
+
     const isVehicle = useMemo(() => {
         if (!selectedCategory) return false;
         const code = (selectedCategory.code || '').toUpperCase();
@@ -576,6 +620,64 @@ export function AssetForm({ initialValues, categories, locations, onSubmit, onCa
         return 'serial_number';
     }, [isLand, isBuilding, isHeavyEquipment, isRegularVehicle, isMachine]);
 
+    // Auto-populate Useful Life & Depreciation Method when Asset Category changes
+    useEffect(() => {
+        if (!formData.category_id || !selectedCategory) return;
+        const catName = (selectedCategory.name || '').toLowerCase();
+        const catPath = (selectedCategory.full_path || '').toLowerCase();
+
+        const categoryRules = savedSettings?.category_rules || [
+            { category_name: 'Bangunan & Infrastruktur', useful_life_months: 240, depreciation_method: 'Garis Lurus (Straight Line)', residual_percent: 10 },
+            { category_name: 'Mesin & Peralatan Pabrik', useful_life_months: 120, depreciation_method: 'Garis Lurus (Straight Line)', residual_percent: 5 },
+            { category_name: 'Kendaraan Operasional', useful_life_months: 60, depreciation_method: 'Saldo Menurun (Declining Balance)', residual_percent: 5 },
+            { category_name: 'Alat Berat & Excavator', useful_life_months: 96, depreciation_method: 'Saldo Menurun (Declining Balance)', residual_percent: 5 },
+            { category_name: 'Perangkat Komputer & IT', useful_life_months: 36, depreciation_method: 'Jumlah Angka Tahun (Sum of Years Digits)', residual_percent: 0 },
+            { category_name: 'Furniture & Peralatan Kantor', useful_life_months: 48, depreciation_method: 'Garis Lurus (Straight Line)', residual_percent: 5 },
+            { category_name: 'Aset Tanah (Land)', useful_life_months: 0, depreciation_method: 'Manual / Non-Depresiasi', residual_percent: 100 },
+        ];
+
+        // 1. Check if category object has explicit depreciation_period_months
+        if (selectedCategory.depreciation_period_months) {
+            updateField('useful_life_months', selectedCategory.depreciation_period_months);
+            if (selectedCategory.depreciation_method) {
+                updateField('depreciation_method', selectedCategory.depreciation_method);
+            }
+            return;
+        }
+
+        // 2. Match with Category-Specific Useful Life Rules from Asset Settings
+        const matchedRule = categoryRules.find((r: any) => {
+            const ruleName = (r.category_name || '').toLowerCase();
+            return catName.includes(ruleName) || catPath.includes(ruleName) ||
+                (catName.includes('bangunan') && ruleName.includes('bangunan')) ||
+                (catName.includes('mesin') && ruleName.includes('mesin')) ||
+                (catName.includes('kendaraan') && ruleName.includes('kendaraan')) ||
+                (catName.includes('berat') && ruleName.includes('berat')) ||
+                ((catName.includes('komputer') || catName.includes('it')) && ruleName.includes('komputer')) ||
+                ((catName.includes('furniture') || catName.includes('kantor')) && ruleName.includes('furniture')) ||
+                (catName.includes('tanah') && ruleName.includes('tanah'));
+        });
+
+        if (matchedRule) {
+            updateField('useful_life_months', matchedRule.useful_life_months);
+            updateField('depreciation_method', matchedRule.depreciation_method);
+            if (formData.purchase_price && matchedRule.residual_percent !== undefined) {
+                updateField('residual_value', (formData.purchase_price * matchedRule.residual_percent) / 100);
+            }
+
+            // Auto-generate category-specific Asset Code if not creating an existing asset
+            if (!initialValues && savedSettings?.code_generation_mode !== 'manual' && matchedRule.code_prefix) {
+                const year = new Date().getFullYear();
+                const randomNum = Math.floor(10000 + Math.random() * 90000);
+                const generatedCode = matchedRule.code_prefix
+                    .replace('{YYYY}', String(year))
+                    .replace('{YY}', String(year).slice(-2))
+                    .replace('{5DIGIT}', String(randomNum))
+                    .replace('{4DIGIT}', String(randomNum).slice(1));
+                updateField('asset_code', generatedCode);
+            }
+        }
+    }, [formData.category_id, selectedCategory]);
 
     // Template Pre-fill Logic (Dynamic from DB)
     useEffect(() => {
@@ -844,15 +946,42 @@ export function AssetForm({ initialValues, categories, locations, onSubmit, onCa
                                     Identity & Category
                                 </h3>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <Input
-                                        label="Asset Code"
-                                        placeholder="e.g. AST-001"
-                                        value={formData.asset_code}
-                                        onChange={(e) => updateField('asset_code', e.target.value)}
-                                        error={errors.asset_code}
-                                        required
-                                        className="bg-muted/30 border-border focus:border-primary/50 transition-all"
-                                    />
+                                    <div>
+                                        <div className="flex items-center justify-between mb-1.5">
+                                            <label className="text-sm font-medium text-muted-foreground">
+                                                Asset Code <span className="text-destructive">*</span>
+                                            </label>
+                                            {((activeCategoryRule?.code_generation_mode || savedSettings?.code_generation_mode) === 'auto') && (
+                                                <span className="px-2 py-0.5 rounded text-[10px] bg-primary/10 text-primary font-bold border border-primary/20">
+                                                    Otomatis System (Readonly)
+                                                </span>
+                                            )}
+                                            {((activeCategoryRule?.code_generation_mode || savedSettings?.code_generation_mode || 'hybrid') === 'hybrid') && (
+                                                <span className="px-2 py-0.5 rounded text-[10px] bg-emerald-500/10 text-emerald-500 font-bold border border-emerald-500/20">
+                                                    Otomatis + Override Manual
+                                                </span>
+                                            )}
+                                            {((activeCategoryRule?.code_generation_mode || savedSettings?.code_generation_mode) === 'manual') && (
+                                                <span className="px-2 py-0.5 rounded text-[10px] bg-amber-500/10 text-amber-500 font-bold border border-amber-500/20">
+                                                    Manual Input
+                                                </span>
+                                            )}
+                                        </div>
+                                        <Input
+                                            placeholder={(activeCategoryRule?.code_generation_mode || savedSettings?.code_generation_mode) === 'manual' ? "Ketik kode aset fisik..." : "AST-001"}
+                                            value={formData.asset_code}
+                                            onChange={(e) => updateField('asset_code', e.target.value)}
+                                            disabled={(activeCategoryRule?.code_generation_mode || savedSettings?.code_generation_mode) === 'auto'}
+                                            error={errors.asset_code}
+                                            required
+                                            className="bg-muted/30 border-border focus:border-primary/50 transition-all font-mono font-semibold"
+                                        />
+                                        <p className="text-[11px] text-muted-foreground mt-1">
+                                            {(activeCategoryRule?.code_generation_mode || savedSettings?.code_generation_mode) === 'auto' && 'Kode aset dikunci total. Dihasilkan otomatis oleh sistem saat disimpan.'}
+                                            {((activeCategoryRule?.code_generation_mode || savedSettings?.code_generation_mode || 'hybrid') === 'hybrid') && 'Terisi otomatis dari Naming Series kategori. Anda dapat mengubahnya jika memiliki tag fisik lama.'}
+                                            {(activeCategoryRule?.code_generation_mode || savedSettings?.code_generation_mode) === 'manual' && 'Ketik kode barcode / tag fisik aset secara manual.'}
+                                        </p>
+                                    </div>
                                     <Select
                                         label="Status"
                                         value={formData.status}
@@ -1508,6 +1637,15 @@ export function AssetForm({ initialValues, categories, locations, onSubmit, onCa
                                     label="Useful Life (Months)"
                                     value={formData.useful_life_months}
                                     onChange={(val) => updateField('useful_life_months', val)}
+                                />
+                                <Select
+                                    label="Depreciation Method (Settings)"
+                                    value={formData.depreciation_method}
+                                    onChange={(val) => updateField('depreciation_method', val)}
+                                    options={savedDepreciationMethods.map((m: any) => ({
+                                        value: m.method_name || m.code,
+                                        label: `${m.method_name} (${m.code})`
+                                    }))}
                                 />
                             </div>
                             <div className="bg-amber-500/5 rounded-[2rem] p-8 border border-amber-500/10 flex flex-col justify-center items-center text-center space-y-4">

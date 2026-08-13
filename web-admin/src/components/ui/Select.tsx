@@ -43,11 +43,11 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
                     <select
                         ref={ref}
                         className={`
-                            w-full px-4 py-3 pr-10 bg-background border rounded-xl
-                            text-foreground appearance-none cursor-pointer
+                            w-full px-3.5 py-2 pr-9 bg-background border rounded-xl
+                            text-foreground appearance-none cursor-pointer font-medium
                             focus:ring-2 focus:ring-primary/20 focus:border-primary focus:bg-background
                             disabled:opacity-50 disabled:cursor-not-allowed
-                            transition-all duration-200 outline-none
+                            transition-all duration-200 outline-none text-xs sm:text-sm
                             ${error ? 'border-destructive focus:ring-destructive/20' : 'border-border'}
                             ${className}
                         `}

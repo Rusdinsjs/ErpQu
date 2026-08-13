@@ -97,7 +97,7 @@ impl AssetRepository {
                 r#"
                 SELECT 
                     (SELECT COALESCE(SUM(actual_cost), 0) FROM maintenance_work_orders WHERE asset_id = $1 AND status ILIKE 'completed') as maint_cost,
-                    (SELECT COALESCE(SUM(total_amount), 0) FROM rentals WHERE asset_id = $1 AND status ILIKE 'returned') as rental_income
+                    (SELECT COALESCE(SUM(subtotal), 0) FROM rental_items WHERE asset_id = $1 AND status ILIKE 'returned') as rental_income
                 "#
             )
             .bind(id)
@@ -143,9 +143,9 @@ impl AssetRepository {
                 sale_price: r.get("sale_price"),
                 sale_date: r.get("sale_date"),
                 sold_to: r.get("sold_to"),
-                description: r.get("description"),
-                acquisition_method: r.get("acquisition_method"),
-                funding_source: r.get("funding_source"),
+                description: r.try_get("description").ok(),
+                acquisition_method: r.try_get("acquisition_method").ok(),
+                funding_source: r.try_get("funding_source").ok(),
                 purchase_date: r.get("purchase_date"),
                 purchase_price: r.get("purchase_price"),
                 currency_id: r.get("currency_id"),

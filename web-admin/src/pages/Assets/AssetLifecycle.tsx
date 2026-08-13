@@ -1,15 +1,19 @@
 // AssetLifecycle Page - Pure Tailwind
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
     ArrowRight, Check, Clock, AlertTriangle, Package, Truck,
-    Wrench, Trash2, Archive, RefreshCw, Lock, Info, DollarSign
+    Wrench, Trash2, Archive, RefreshCw, Lock, Info, DollarSign,
+    ShieldCheck, Mail, MessageSquare, Bell, XCircle
 } from 'lucide-react';
 import { lifecycleApi } from '../../api/lifecycle';
 import { assetApi } from '../../api/assets';
+import { settingsApi } from '../../api/settings';
+import { approvalApi } from '../../api/approval';
 import { useAuthStore } from '../../store/useAuthStore';
 import { getAssetStatusLabel } from '../../config/assetStatusConfig';
+import type { ApprovalPolicy } from './AssetSettingsView';
 import { AssetConversionModal } from '../../components/Assets/AssetConversionModal';
 import { CreateLoanModal } from '../../components/Assets/CreateLoanModal';
 import { RetiredModal } from '../../components/Assets/RetiredModal';
@@ -109,6 +113,73 @@ export default function AssetLifecycle({ assetId: propAssetId }: AssetLifecycleP
     const [selectedState, setSelectedState] = useState<string | null>(null);
     const [reason, setReason] = useState('');
 
+    // ── Approval Policies (from DB) ──
+    const [approvalPolicies, setApprovalPolicies] = useState<ApprovalPolicy[]>([]);
+    const [pendingApprovalInfo, setPendingApprovalInfo] = useState<{
+        action_type: string;
+        policy: ApprovalPolicy;
+        request_id?: string;
+        requested_at?: string;
+    } | null>(null);
+
+    useEffect(() => {
+        const loadPolicies = async () => {
+            try {
+                const dbSettings = await settingsApi.getAll();
+                const policySetting = dbSettings.find(s => s.key === 'asset_approval_policies');
+                if (policySetting?.value?.policies) {
+                    setApprovalPolicies(policySetting.value.policies);
+                    return;
+                }
+            } catch { /* */ }
+            // Fallback to localStorage
+            const local = localStorage.getItem('erp_asset_approval_policies');
+            if (local) {
+                try {
+                    const parsed = JSON.parse(local);
+                    if (parsed?.policies) setApprovalPolicies(parsed.policies);
+                } catch { /* */ }
+            }
+        };
+        loadPolicies();
+    }, []);
+
+    // Find active policy for a given action type
+    const getActivePolicy = useCallback((actionType: string): ApprovalPolicy | null => {
+        return approvalPolicies.find(p => p.action_type === actionType && p.is_active) ?? null;
+    }, [approvalPolicies]);
+
+    // Submit approval request and block direct execution
+    const submitApprovalRequest = useCallback(async (
+        actionType: string,
+        policy: ApprovalPolicy,
+        extraData?: Record<string, unknown>
+    ) => {
+        try {
+            const result = await approvalApi.create({
+                resource_type: 'Asset',
+                resource_id: assetId!,
+                action_type: actionType,
+                data_snapshot: { asset: assetData, policy, ...extraData },
+            });
+            setPendingApprovalInfo({
+                action_type: actionType,
+                policy,
+                request_id: (result as any)?.data?.id,
+                requested_at: new Date().toISOString(),
+            });
+            info(
+                `Permintaan ${actionType} telah diajukan. Menunggu persetujuan ${policy.approval_levels === 2 ? '2 level' : 'manajer'}.`,
+                '⏳ Approval Diperlukan'
+            );
+            // Invalidate queries to refresh lifecycle state
+            queryClient.invalidateQueries({ queryKey: ['current-status', assetId] });
+            queryClient.invalidateQueries({ queryKey: ['valid-transitions-with-approval', assetId] });
+        } catch (err: any) {
+            showError(err?.message || 'Gagal membuat permintaan approval.', 'Error');
+        }
+    }, [assetId, assetData, info, showError, queryClient]);
+
     // Get user permissions
     const { user, hasRoleLevel } = useAuthStore();
     const userRoleLevel = user?.role_level ?? 5;
@@ -196,11 +267,33 @@ export default function AssetLifecycle({ assetId: propAssetId }: AssetLifecycleP
         },
     });
 
-    const handleCardClick = (stateValue: string) => {
+    const handleCardClick = async (stateValue: string) => {
         if (!canTransition(stateValue)) {
             showError('You do not have permission to perform this transition', 'Permission Denied');
             return;
         }
+
+        // ── Approval Policy Intercept ──────────────────────────────────────────
+        // Map lifecycle state → action_type used in approval policies
+        const stateToActionType: Record<string, string> = {
+            disposed: 'DISPOSAL',
+            retired: 'RETIRED',
+            sold: 'SOLD',
+            lost_stolen: 'LOST_STOLEN',
+            under_conversion: 'CONVERSION',
+            loaned: 'LOAN',
+            in_use: 'LOAN',
+        };
+        const actionType = stateToActionType[stateValue];
+        if (actionType) {
+            const policy = getActivePolicy(actionType);
+            if (policy) {
+                // Block direct execution — submit approval request instead
+                await submitApprovalRequest(actionType, policy);
+                return;
+            }
+        }
+        // ──────────────────────────────────────────────────────────────────────
 
         // For critical transitions, open specialized modals directly
         if (stateValue === 'retired') {
@@ -221,7 +314,6 @@ export default function AssetLifecycle({ assetId: propAssetId }: AssetLifecycleP
         }
 
         // SPECIAL HANDLING: Rented Out -> Redirect to Rental Form
-        // This prevents the asset from becoming "Rented Out" without a rental record.
         if (stateValue === 'rented_out') {
             navigate(`/rentals/new?asset_id=${assetId}`);
             return;
@@ -406,6 +498,50 @@ export default function AssetLifecycle({ assetId: propAssetId }: AssetLifecycleP
                     rentalIncome={Number(assetData.total_rental_income || 0)}
                     purchasePrice={Number(assetData.purchase_price || 0)}
                 />
+            )}
+
+            {/* ── Pending Approval Banner (Step 3) ── */}
+            {pendingApprovalInfo && (
+                <div className="flex items-start gap-4 p-4 rounded-xl border border-amber-500/30 bg-amber-500/10">
+                    <div className="p-2 rounded-lg bg-amber-500/20">
+                        <ShieldCheck size={20} className="text-amber-500" />
+                    </div>
+                    <div className="flex-1">
+                        <div className="font-bold text-amber-400 text-sm flex items-center gap-2">
+                            ⏳ Menunggu Persetujuan {pendingApprovalInfo.policy.approval_levels === 2 ? '(2 Level)' : '(1 Level)'}
+                        </div>
+                        <p className="text-xs text-amber-300/80 mt-1">
+                            Permintaan <span className="font-bold">{pendingApprovalInfo.action_type}</span> telah diajukan
+                            {pendingApprovalInfo.requested_at && ` pada ${new Date(pendingApprovalInfo.requested_at).toLocaleString('id-ID')}`}.
+                            Aksi tidak dapat dilanjutkan hingga disetujui oleh {pendingApprovalInfo.policy.approval_levels === 2 ? 'Manajer & Direktur' : 'Manajer'}.
+                        </p>
+                        <div className="flex items-center gap-3 mt-2">
+                            {pendingApprovalInfo.policy.notify_email && (
+                                <span className="flex items-center gap-1 text-[11px] text-amber-400/70">
+                                    <Mail size={12} /> Notif Email terkirim
+                                </span>
+                            )}
+                            {pendingApprovalInfo.policy.notify_whatsapp && (
+                                <span className="flex items-center gap-1 text-[11px] text-amber-400/70">
+                                    <MessageSquare size={12} /> Notif WA terkirim
+                                </span>
+                            )}
+                            <button
+                                onClick={() => navigate('/approvals')}
+                                className="text-[11px] text-amber-400 underline underline-offset-2 hover:text-amber-300 cursor-pointer"
+                            >
+                                Lihat di Approval Queue →
+                            </button>
+                            <button
+                                onClick={() => setPendingApprovalInfo(null)}
+                                className="ml-auto text-amber-400/60 hover:text-amber-400 cursor-pointer"
+                                title="Tutup banner"
+                            >
+                                <XCircle size={15} />
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
 
             <Tabs defaultValue="lifecycle">

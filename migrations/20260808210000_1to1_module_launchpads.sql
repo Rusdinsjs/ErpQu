@@ -20,20 +20,6 @@ SET value = '{
             "enabled": true
         },
         {
-            "id": "insights",
-            "title": "Insights & Reporting",
-            "subtitle": "Business Intelligence",
-            "icon": "BarChart3",
-            "gradient": "from-blue-500/20 to-cyan-500/20",
-            "iconBg": "bg-gradient-to-br from-blue-500 to-cyan-500",
-            "defaultRoute": "/dashboard",
-            "minLevel": 5,
-            "features": ["Dashboard Overview", "Analytics", "Reports"],
-            "menuIds": ["dashboard", "analytics", "reports"],
-            "order": 2,
-            "enabled": true
-        },
-        {
             "id": "asset-management",
             "title": "Asset Management",
             "subtitle": "Asset Registry & Tracking",
@@ -44,7 +30,7 @@ SET value = '{
             "minLevel": 5,
             "features": ["Asset Registry", "Asset Categories", "Lifecycle Tracking", "Asset Audit"],
             "menuIds": ["assets", "categories", "asset-lifecycle", "asset-audit", "conversions"],
-            "order": 3,
+            "order": 2,
             "enabled": true
         },
         {
@@ -58,7 +44,7 @@ SET value = '{
             "minLevel": 5,
             "features": ["Work Orders & Teams", "PM Schedules", "Maintenance SOP", "Fuel & Tax", "Internal Loans"],
             "menuIds": ["work-orders", "maintenance-schedules", "maintenance-templates", "maintenance-teams", "fuel", "tax-renewals", "loans"],
-            "order": 4,
+            "order": 3,
             "enabled": true
         },
         {
@@ -72,7 +58,7 @@ SET value = '{
             "minLevel": 4,
             "features": ["Client Management", "Sales Invoices", "Partner Directory"],
             "menuIds": ["clients", "sales-invoices"],
-            "order": 5,
+            "order": 4,
             "enabled": true
         },
         {
@@ -86,7 +72,7 @@ SET value = '{
             "minLevel": 4,
             "features": ["Vendor Bills", "Purchase Orders", "Supplier Procurement"],
             "menuIds": ["purchase-bills"],
-            "order": 6,
+            "order": 5,
             "enabled": true
         },
         {
@@ -100,7 +86,7 @@ SET value = '{
             "minLevel": 4,
             "features": ["Rental Orders", "Rental Contracts", "Contract Templates"],
             "menuIds": ["rentals", "contracts", "contract-templates"],
-            "order": 7,
+            "order": 6,
             "enabled": true
         },
         {
@@ -114,7 +100,7 @@ SET value = '{
             "minLevel": 4,
             "features": ["IoT Sensor Stream", "Threshold Alert Engine", "Asset Health Telemetry"],
             "menuIds": ["analytics"],
-            "order": 8,
+            "order": 7,
             "enabled": true
         },
         {
@@ -128,7 +114,7 @@ SET value = '{
             "minLevel": 3,
             "features": ["Inventory Control", "Inventory Categories", "Stock Opname", "Stock Entry", "Material Request"],
             "menuIds": ["inventory-items", "inventory-categories", "stock-opname", "stock-entry", "material-request"],
-            "order": 9,
+            "order": 8,
             "enabled": true
         },
         {
@@ -142,7 +128,7 @@ SET value = '{
             "minLevel": 2,
             "features": ["Cash & Bank", "Expenses (Opex/Capex)", "General Ledger & Reports"],
             "menuIds": ["finance", "cash-bank", "expenses", "journal-entries", "financial-reports"],
-            "order": 10,
+            "order": 9,
             "enabled": true
         },
         {
@@ -151,11 +137,25 @@ SET value = '{
             "subtitle": "People & Attendance",
             "icon": "Users",
             "gradient": "from-pink-500/20 to-rose-500/20",
-            "iconBg": "bg-gradient-to-br from-pink-500 to-rose-500",
+            iconBg: "bg-gradient-to-br from-pink-500 to-rose-500",
             "defaultRoute": "/employees",
             "minLevel": 3,
             "features": ["Employees Directory", "Attendance Records", "Leave Requests"],
             "menuIds": ["employees", "attendance", "leaves"],
+            "order": 10,
+            "enabled": true
+        },
+        {
+            "id": "insights",
+            "title": "Insights & Reporting",
+            "subtitle": "Business Intelligence",
+            "icon": "BarChart3",
+            "gradient": "from-blue-500/20 to-cyan-500/20",
+            "iconBg": "bg-gradient-to-br from-blue-500 to-cyan-500",
+            "defaultRoute": "/dashboard",
+            "minLevel": 5,
+            "features": ["Dashboard Overview", "Analytics", "Reports"],
+            "menuIds": ["dashboard", "analytics", "reports"],
             "order": 11,
             "enabled": true
         },

@@ -216,15 +216,21 @@ function RequestDetails({ request, showDetails = false }: { request: ApprovalReq
         );
     }
 
-    if (request.resource_type === 'asset') {
+    if (request.resource_type === 'Asset' || request.resource_type === 'asset') {
+        const assetObj = data?.asset || data;
+        const policyObj = data?.policy;
         return (
             <div className="space-y-1">
-                <p className="text-sm font-medium text-white">{data?.name || data?.asset_name || 'Asset'}</p>
-                <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <ClipboardList size={12} />
-                    <span>SN: {data?.serial_number || 'N/A'}</span>
+                <p className="text-sm font-medium text-white">{assetObj?.name || assetObj?.asset_name || 'Asset Request'}</p>
+                <div className="flex items-center gap-2 text-xs">
+                    <Badge variant="info">{request.action_type || 'APPROVAL'}</Badge>
+                    {assetObj?.asset_code && (
+                        <span className="text-muted-foreground font-mono">({assetObj.asset_code})</span>
+                    )}
                 </div>
-                <Badge variant="default">{data?.category || 'Unknown Category'}</Badge>
+                {policyObj?.label && (
+                    <p className="text-xs text-purple-400">Kebijakan: {policyObj.label}</p>
+                )}
             </div>
         );
     }

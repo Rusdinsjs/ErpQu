@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import { useNavigationStore } from '../store/useNavigationStore';
@@ -21,6 +21,8 @@ import {
     Moon,
     Activity,
     Truck,
+    GripVertical,
+    RotateCcw,
 } from 'lucide-react';
 import { getImageUrl } from '../utils/image';
 import clsx from 'clsx';
@@ -61,6 +63,12 @@ export default function Launchpad() {
     const { user, logout, hasPermission } = useAuthStore();
     const { theme, setTheme } = useTheme();
     const { setActiveModule, setLaunchpadConfig, launchpadConfig } = useNavigationStore();
+
+    // Drag and Drop States
+    const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+    const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+    const [isDragging, setIsDragging] = useState(false);
+    const [hasCustomOrder, setHasCustomOrder] = useState(false);
 
     // Check if user has permission for a specific menu resource
     const canAccessMenu = (menuId: string) => {
@@ -104,89 +112,109 @@ export default function Launchpad() {
 
     const appName = publicSettings?.app_name || 'Management System';
 
-    // Load launchpad config from backend settings, fallback to default
+    // Load launchpad config from backend settings and user local custom drag order
     useEffect(() => {
+        let baseConfig = DEFAULT_LAUNCHPAD_CONFIG;
         if (publicSettings?.launchpad_config) {
             try {
                 const backendConfigStr = typeof publicSettings.launchpad_config === 'string'
                     ? publicSettings.launchpad_config
                     : JSON.stringify(publicSettings.launchpad_config);
                 const backendConfig = JSON.parse(backendConfigStr);
-                
-                // Validate shape: must have modules array
                 if (backendConfig && Array.isArray(backendConfig.modules)) {
-                    if (!backendConfig.modules.some((m: any) => m.id === 'organization')) {
-                        backendConfig.modules.unshift(DEFAULT_LAUNCHPAD_CONFIG.modules[0]);
-                    }
-                    backendConfig.modules = backendConfig.modules.map((m: any) => {
-                        if (m.id === 'asset-management') {
-                            const ids = (m.menuIds || []).filter((id: string) => id !== 'maintenance-templates');
-                            if (!ids.includes('conversions')) ids.push('conversions');
-                            if (!ids.includes('categories')) ids.push('categories');
-                            if (!ids.includes('locations')) ids.push('locations');
-                            return { ...m, menuIds: ids };
-                        }
-                        if (m.id === 'commercial') {
-                            const ids = (m.menuIds || []).filter((id: string) => id !== 'purchase-bills' && id !== 'contracts');
-                            return { ...m, menuIds: ids };
-                        }
-                        if (m.id === 'procurement') {
-                            const ids = m.menuIds || [];
-                            if (!ids.includes('purchase-bills')) ids.push('purchase-bills');
-                            return { ...m, menuIds: ids };
-                        }
-                        if (m.id === 'rental') {
-                            const ids = m.menuIds || [];
-                            if (!ids.includes('contracts')) ids.push('contracts');
-                            if (!ids.includes('contract-templates')) ids.push('contract-templates');
-                            return { ...m, menuIds: ids };
-                        }
-                        if (m.id === 'supply-chain') {
-                            const ids = (m.menuIds || []).filter((id: string) => id !== 'conversions' && id !== 'purchase-bills');
-                            if (!ids.includes('inventory-categories')) ids.push('inventory-categories');
-                            if (!ids.includes('warehouses')) ids.push('warehouses');
-                            if (!ids.includes('stock-entry')) ids.push('stock-entry');
-                            if (!ids.includes('material-request')) ids.push('material-request');
-                            return { ...m, menuIds: ids };
-                        }
-                        if (m.id === 'hr') {
-                            const ids = m.menuIds || [];
-                            return { ...m, menuIds: ids.filter((id: string) => id !== 'departments') };
-                        }
-                        if (m.id === 'admin') {
-                            const ids = m.menuIds || [];
-                            return { ...m, menuIds: ids.filter((id: string) => 
-                                id !== 'locations' &&
-                                id !== 'approval-workflow-settings' &&
-                                id !== 'users' &&
-                                id !== 'roles' &&
-                                id !== 'inventory-categories' &&
-                                id !== 'categories' &&
-                                id !== 'maintenance-templates'
-                            ) };
-                        }
-                        if (m.id === 'organization') {
-                            const ids = m.menuIds || [];
-                            if (!ids.includes('departments')) ids.push('departments');
-                            if (!ids.includes('approval-workflow-settings')) ids.push('approval-workflow-settings');
-                            if (!ids.includes('users')) ids.push('users');
-                            if (!ids.includes('roles')) ids.push('roles');
-                            return { ...m, menuIds: ids };
-                        }
-                        return m;
-                    });
-                    setLaunchpadConfig(backendConfig as LaunchpadConfig);
-                } else {
-                    setLaunchpadConfig(DEFAULT_LAUNCHPAD_CONFIG);
+                    baseConfig = backendConfig;
                 }
             } catch {
                 console.warn('Invalid launchpad_config in settings, using defaults');
-                setLaunchpadConfig(DEFAULT_LAUNCHPAD_CONFIG);
+            }
+        }
+
+        // Apply custom drag order from localStorage if saved by user
+        const storageKey = `launchpad_user_order_${user?.id || 'default'}`;
+        const savedOrderStr = localStorage.getItem(storageKey);
+        if (savedOrderStr) {
+            try {
+                const savedOrderMap: Record<string, number> = JSON.parse(savedOrderStr);
+                const reorderedModules = baseConfig.modules.map(mod => {
+                    if (typeof savedOrderMap[mod.id] === 'number') {
+                        return { ...mod, order: savedOrderMap[mod.id] };
+                    }
+                    return mod;
+                });
+                baseConfig = { ...baseConfig, modules: reorderedModules };
+                setHasCustomOrder(true);
+            } catch {
+                console.warn('Failed to parse user launchpad order');
             }
         } else {
-            setLaunchpadConfig(DEFAULT_LAUNCHPAD_CONFIG);
+            setHasCustomOrder(false);
         }
-    }, [publicSettings, setLaunchpadConfig]);
+
+        // Validate shape & sanitize menuIds
+        if (!baseConfig.modules.some((m: any) => m.id === 'organization')) {
+            baseConfig.modules.unshift(DEFAULT_LAUNCHPAD_CONFIG.modules[0]);
+        }
+
+        const sanitizedModules = baseConfig.modules.map((m: any) => {
+            if (m.id === 'asset-management') {
+                const ids = (m.menuIds || []).filter((id: string) => id !== 'maintenance-templates');
+                if (!ids.includes('conversions')) ids.push('conversions');
+                if (!ids.includes('categories')) ids.push('categories');
+                if (!ids.includes('locations')) ids.push('locations');
+                return { ...m, menuIds: ids };
+            }
+            if (m.id === 'commercial') {
+                const ids = (m.menuIds || []).filter((id: string) => id !== 'purchase-bills' && id !== 'contracts');
+                return { ...m, menuIds: ids };
+            }
+            if (m.id === 'procurement') {
+                const ids = m.menuIds || [];
+                if (!ids.includes('purchase-bills')) ids.push('purchase-bills');
+                return { ...m, menuIds: ids };
+            }
+            if (m.id === 'rental') {
+                const ids = m.menuIds || [];
+                if (!ids.includes('contracts')) ids.push('contracts');
+                if (!ids.includes('contract-templates')) ids.push('contract-templates');
+                return { ...m, menuIds: ids };
+            }
+            if (m.id === 'supply-chain') {
+                const ids = (m.menuIds || []).filter((id: string) => id !== 'conversions' && id !== 'purchase-bills');
+                if (!ids.includes('inventory-categories')) ids.push('inventory-categories');
+                if (!ids.includes('warehouses')) ids.push('warehouses');
+                if (!ids.includes('stock-entry')) ids.push('stock-entry');
+                if (!ids.includes('material-request')) ids.push('material-request');
+                return { ...m, menuIds: ids };
+            }
+            if (m.id === 'hr') {
+                const ids = m.menuIds || [];
+                return { ...m, menuIds: ids.filter((id: string) => id !== 'departments') };
+            }
+            if (m.id === 'admin') {
+                const ids = m.menuIds || [];
+                return { ...m, menuIds: ids.filter((id: string) => 
+                    id !== 'locations' &&
+                    id !== 'approval-workflow-settings' &&
+                    id !== 'users' &&
+                    id !== 'roles' &&
+                    id !== 'inventory-categories' &&
+                    id !== 'categories' &&
+                    id !== 'maintenance-templates'
+                ) };
+            }
+            if (m.id === 'organization') {
+                const ids = m.menuIds || [];
+                if (!ids.includes('departments')) ids.push('departments');
+                if (!ids.includes('approval-workflow-settings')) ids.push('approval-workflow-settings');
+                if (!ids.includes('users')) ids.push('users');
+                if (!ids.includes('roles')) ids.push('roles');
+                return { ...m, menuIds: ids };
+            }
+            return m;
+        });
+
+        setLaunchpadConfig({ ...baseConfig, modules: sanitizedModules } as LaunchpadConfig);
+    }, [publicSettings, user?.id, setLaunchpadConfig]);
 
     // Get visible cards based on user Permission Matrix permissions
     const visibleCards = launchpadConfig.modules
@@ -200,7 +228,88 @@ export default function Launchpad() {
         })
         .sort((a, b) => a.order - b.order);
 
+    // Drag and Drop Event Handlers
+    const handleDragStart = (e: React.DragEvent, index: number) => {
+        setDraggedIndex(index);
+        setIsDragging(true);
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', index.toString());
+    };
+
+    const handleDragOver = (e: React.DragEvent, index: number) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        if (dragOverIndex !== index) {
+            setDragOverIndex(index);
+        }
+    };
+
+    const handleDragLeave = (index: number) => {
+        if (dragOverIndex === index) {
+            setDragOverIndex(null);
+        }
+    };
+
+    const handleDrop = (e: React.DragEvent, targetIndex: number) => {
+        e.preventDefault();
+        if (draggedIndex === null || draggedIndex === targetIndex) {
+            setDraggedIndex(null);
+            setDragOverIndex(null);
+            setIsDragging(false);
+            return;
+        }
+
+        const newCards = [...visibleCards];
+        const [movedCard] = newCards.splice(draggedIndex, 1);
+        newCards.splice(targetIndex, 0, movedCard);
+
+        // Calculate new order values
+        const orderMap: Record<string, number> = {};
+        newCards.forEach((card, idx) => {
+            orderMap[card.id] = idx + 1;
+        });
+
+        // Update all modules order
+        const updatedModules = launchpadConfig.modules.map(mod => {
+            if (typeof orderMap[mod.id] === 'number') {
+                return { ...mod, order: orderMap[mod.id] };
+            }
+            return mod;
+        });
+
+        const newConfig = { ...launchpadConfig, modules: updatedModules };
+        setLaunchpadConfig(newConfig);
+
+        // Save order to localStorage for current user
+        const storageKey = `launchpad_user_order_${user?.id || 'default'}`;
+        const allOrders: Record<string, number> = {};
+        updatedModules.forEach(m => {
+            allOrders[m.id] = m.order;
+        });
+        localStorage.setItem(storageKey, JSON.stringify(allOrders));
+        setHasCustomOrder(true);
+
+        setDraggedIndex(null);
+        setDragOverIndex(null);
+        setTimeout(() => setIsDragging(false), 150);
+    };
+
+    const handleDragEnd = () => {
+        setDraggedIndex(null);
+        setDragOverIndex(null);
+        setTimeout(() => setIsDragging(false), 150);
+    };
+
+    const handleResetOrder = () => {
+        const storageKey = `launchpad_user_order_${user?.id || 'default'}`;
+        localStorage.removeItem(storageKey);
+        setLaunchpadConfig(DEFAULT_LAUNCHPAD_CONFIG);
+        setHasCustomOrder(false);
+    };
+
     const handleCardClick = (card: LaunchpadModuleConfig) => {
+        if (isDragging) return;
+
         // Set the active module context in the navigation store
         setActiveModule(card.id);
         
@@ -293,7 +402,7 @@ export default function Launchpad() {
                 </header>
 
                 {/* Hero Section */}
-                <div className="px-6 py-8 md:py-12 text-center">
+                <div className="px-6 py-6 md:py-10 text-center">
                     <div className="flex justify-center mb-4">
                         {user?.avatar_url ? (
                             <img
@@ -310,7 +419,7 @@ export default function Launchpad() {
                                 src={user?.role === 'admin' || user?.role === 'super_admin' ? '/avatar-admin.png' : '/avatar-user.png'}
                                 alt="Avatar"
                                 className="w-20 h-20 rounded-2xl object-cover ring-4 ring-primary/20 shadow-xl"
-                                />
+                            />
                         )}
                     </div>
 
@@ -323,15 +432,33 @@ export default function Launchpad() {
                     <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-2">
                         {getGreeting()}, {user?.name?.split(' ')[0] || 'User'}!
                     </h2>
-                    <p className="text-muted-foreground text-lg">
+                    <p className="text-muted-foreground text-base md:text-lg mb-3">
                         Pilih modul untuk memulai
                     </p>
+
+                    {/* Drag & Drop Hint & Reset Order Control */}
+                    <div className="flex items-center justify-center gap-3 text-xs text-muted-foreground flex-wrap">
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-accent/40 border border-border/50 shadow-sm">
+                            <GripVertical size={13} className="text-primary animate-pulse" />
+                            Tarik & geser card untuk mengubah posisi (Shortcut)
+                        </span>
+                        {hasCustomOrder && (
+                            <button
+                                onClick={handleResetOrder}
+                                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-destructive/10 hover:bg-destructive/20 text-destructive border border-destructive/20 transition-all cursor-pointer font-medium shadow-sm active:scale-95"
+                                title="Kembalikan urutan card ke susunan standar"
+                            >
+                                <RotateCcw size={13} />
+                                <span>Reset Tata Letak</span>
+                            </button>
+                        )}
+                    </div>
                 </div>
 
-                {/* Cards Grid — Driven by Config */}
+                {/* Cards Grid — Driven by Config with Drag & Drop support */}
                 <div className="flex-1 px-6 pb-12 flex items-start justify-center">
                     <div className={clsx(
-                        "grid gap-4 md:gap-6 w-full",
+                        "grid gap-4 md:gap-6 w-full transition-all duration-300",
                         visibleCards.length === 1 ? "max-w-md grid-cols-1" :
                         visibleCards.length === 2 ? "max-w-3xl grid-cols-1 sm:grid-cols-2" :
                         visibleCards.length === 3 ? "max-w-5xl grid-cols-1 sm:grid-cols-2 md:grid-cols-3" :
@@ -339,30 +466,49 @@ export default function Launchpad() {
                     )}>
                         {visibleCards.map((card, index) => {
                             const IconComponent = resolveIcon(card.icon);
+                            const isBeingDragged = draggedIndex === index;
+                            const isBeingOver = dragOverIndex === index && draggedIndex !== index;
+
                             return (
-                                <button
+                                <div
                                     key={card.id}
+                                    draggable
+                                    onDragStart={(e) => handleDragStart(e, index)}
+                                    onDragOver={(e) => handleDragOver(e, index)}
+                                    onDragLeave={() => handleDragLeave(index)}
+                                    onDrop={(e) => handleDrop(e, index)}
+                                    onDragEnd={handleDragEnd}
                                     onClick={() => handleCardClick(card)}
                                     className={clsx(
-                                        "group relative p-6 rounded-2xl text-left transition-all duration-300",
+                                        "group relative p-6 rounded-2xl text-left transition-all duration-300 cursor-pointer select-none",
                                         "bg-card/50 hover:bg-card",
                                         "border border-border hover:border-primary/30",
                                         "backdrop-blur-xl",
                                         "hover:scale-[1.02] hover:shadow-2xl hover:shadow-primary/5",
-                                        "focus:outline-none focus:ring-2 focus:ring-primary/50"
+                                        "focus:outline-none focus:ring-2 focus:ring-primary/50",
+                                        isBeingDragged && "opacity-30 scale-95 border-dashed border-primary ring-2 ring-primary/40 shadow-inner",
+                                        isBeingOver && "scale-[1.05] border-primary ring-4 ring-primary/50 bg-primary/10 shadow-2xl z-20 animate-pulse"
                                     )}
                                     style={{
                                         animationDelay: `${index * 50}ms`
                                     }}
                                 >
+                                    {/* Drag Handle Shortcut Indicator */}
+                                    <div
+                                        className="absolute top-3 right-3 p-1.5 rounded-lg opacity-40 group-hover:opacity-100 transition-all text-muted-foreground hover:text-foreground cursor-grab active:cursor-grabbing bg-card/80 border border-border/40 shadow-sm z-20"
+                                        title="Tarik & geser untuk memindahkan posisi card"
+                                    >
+                                        <GripVertical size={16} />
+                                    </div>
+
                                     {/* Gradient Overlay on Hover */}
                                     <div className={clsx(
-                                        "absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-5 transition-opacity duration-300 bg-gradient-to-br",
+                                        "absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-5 transition-opacity duration-300 bg-gradient-to-br pointer-events-none",
                                         card.gradient
                                     )} />
 
                                     {/* Content */}
-                                    <div className="relative z-10">
+                                    <div className="relative z-10 pointer-events-none">
                                         {/* Icon */}
                                         <div className={clsx(
                                             "w-12 h-12 rounded-xl flex items-center justify-center mb-4 shadow-lg transition-transform duration-300 group-hover:scale-110",
@@ -409,7 +555,7 @@ export default function Launchpad() {
                                             <ChevronRight size={16} />
                                         </div>
                                     </div>
-                                </button>
+                                </div>
                             );
                         })}
                     </div>

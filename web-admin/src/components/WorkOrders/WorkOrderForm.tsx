@@ -47,6 +47,27 @@ export function WorkOrderForm({ maintenanceId, initialAssetId, initialType, onCl
         maintenance_team_id: '',
     });
 
+    const customMaintenanceTypeOptions = useMemo(() => {
+        try {
+            const raw = localStorage.getItem('erp_maintenance_types');
+            const list = raw ? JSON.parse(raw) : [];
+            if (list.length > 0) {
+                return list.map((t: any) => ({
+                    value: t.code.toLowerCase(),
+                    label: `${t.name} (${t.code})`
+                }));
+            }
+        } catch {}
+        return [
+            { value: 'preventive', label: 'Preventive Maintenance' },
+            { value: 'corrective', label: 'Corrective / Repair' },
+            { value: 'inspection', label: 'Routine Inspection' },
+            { value: 'emergency', label: 'Emergency Response' },
+            { value: 'upgrade', label: 'Asset Upgrade' },
+            { value: 'conversion', label: 'Asset Conversion' },
+        ];
+    }, []);
+
     const [errors, setErrors] = useState<Record<string, string>>({});
 
     const updateField = (field: string, value: any) => {
@@ -232,14 +253,7 @@ export function WorkOrderForm({ maintenanceId, initialAssetId, initialType, onCl
                             <Select
                                 label="Work Order Type"
                                 placeholder="Select type"
-                                options={[
-                                    { value: 'preventive', label: 'Preventive Maintenance' },
-                                    { value: 'corrective', label: 'Corrective / Repair' },
-                                    { value: 'inspection', label: 'Routine Inspection' },
-                                    { value: 'emergency', label: 'Emergency Response' },
-                                    { value: 'upgrade', label: 'Asset Upgrade' },
-                                    { value: 'conversion', label: 'Asset Conversion' },
-                                ]}
+                                options={customMaintenanceTypeOptions}
                                 value={formData.maintenance_type_id}
                                 onChange={(val: string) => updateField('maintenance_type_id', val)}
                                 className="bg-black/20 border-white/5"
