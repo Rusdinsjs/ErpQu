@@ -1,4 +1,4 @@
-import React, { lazy, Suspense } from 'react';
+import { lazy, Suspense } from 'react';
 import { PageLoading } from '../ui';
 import { ShieldAlert } from 'lucide-react';
 import { MENU_TO_RESOURCE } from '../../config/launchpadConfig';
@@ -134,7 +134,7 @@ export function AdminContentRouter({
 
     // Route Authorization Guard
     if (activeTab !== 'dashboard' && activeTab !== 'profile') {
-        const resourceId = MENU_TO_RESOURCE[activeTab] || activeTab.replace(/-/g, '_');
+        const resourceId = (MENU_TO_RESOURCE as Record<string, string>)[activeTab] || activeTab.replace(/-/g, '_');
 
         let hasAccess = hasPermission(`${resourceId}.read`) ||
             hasPermission(`${resourceId}.view`) ||
@@ -240,6 +240,7 @@ export function AdminContentRouter({
             case 'trial-balance': return <TrialBalanceView />;
             case 'financial-reports': return <FinancialReportsView />;
             case 'cash-bank': return <CashBankView />;
+            case 'expenses': return <ExpensesView />;
             case 'sales': return <SalesOverviewView />;
             case 'sales-overview': return <SalesOverviewView />;
             case 'sales-quotes': return <SalesQuotesView />;
