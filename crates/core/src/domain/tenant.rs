@@ -2,7 +2,46 @@
 
 use crate::domain::entities::UserClaims;
 use crate::domain::errors::{DomainError, DomainResult};
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
+
+/// Explicit Organizational Hierarchy (QTEN-003):
+/// Tenant -> Legal Entity / Company -> Branch -> Cost Center -> Warehouse
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct OrganizationHierarchy {
+    pub tenant_id: Uuid,
+    pub company_id: Uuid,
+    pub branch_id: Option<Uuid>,
+    pub cost_center_id: Option<Uuid>,
+    pub warehouse_id: Option<Uuid>,
+}
+
+impl OrganizationHierarchy {
+    pub fn new(tenant_id: Uuid, company_id: Uuid) -> Self {
+        Self {
+            tenant_id,
+            company_id,
+            branch_id: None,
+            cost_center_id: None,
+            warehouse_id: None,
+        }
+    }
+
+    pub fn with_branch(mut self, branch_id: Uuid) -> Self {
+        self.branch_id = Some(branch_id);
+        self
+    }
+
+    pub fn with_cost_center(mut self, cost_center_id: Uuid) -> Self {
+        self.cost_center_id = Some(cost_center_id);
+        self
+    }
+
+    pub fn with_warehouse(mut self, warehouse_id: Uuid) -> Self {
+        self.warehouse_id = Some(warehouse_id);
+        self
+    }
+}
 
 /// Explicit Tenant & Company Context carried through handler, service, and repository layers (QTEN-001)
 #[derive(Debug, Clone, PartialEq, Eq)]

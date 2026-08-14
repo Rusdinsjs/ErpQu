@@ -1617,4 +1617,86 @@ impl FinanceRepository {
         .map_err(|e| DomainError::Database(e.to_string()))?;
         Ok(rows.into_iter().map(Into::into).collect())
     }
+
+    pub async fn create_commercial_document_link(
+        &self,
+        company_id: Option<Uuid>,
+        source_type: &str,
+        source_id: Uuid,
+        target_type: &str,
+        target_id: Uuid,
+        created_by: Option<Uuid>,
+    ) -> DomainResult<crate::domain::entities::commercial_graph::CommercialDocumentLink> {
+        let id = Uuid::new_v4();
+        let created_at = Utc::now();
+        sqlx::query(
+            r#"
+            INSERT INTO commercial_document_links (id, company_id, source_type, source_id, target_type, target_id, created_at, created_by)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            ON CONFLICT (source_type, source_id, target_type, target_id) DO NOTHING
+            "#,
+        )
+        .bind(id)
+        .bind(company_id)
+        .bind(source_type)
+        .bind(source_id)
+        .bind(target_type)
+        .bind(target_id)
+        .bind(created_at)
+        .bind(created_by)
+        .execute(&self.pool)
+        .await
+        .map_err(|e| DomainError::Database(e.to_string()))?;
+
+        Ok(crate::domain::entities::commercial_graph::CommercialDocumentLink {
+            id,
+            source_type: source_type.to_string(),
+            source_id,
+            target_type: target_type.to_string(),
+            target_id,
+            created_at,
+        })
+    }
+
+    pub async fn get_commercial_document_links(
+        &self,
+        source_type: &str,
+        source_id: Uuid,
+    ) -> DomainResult<Vec<crate::domain::entities::commercial_graph::CommercialDocumentLink>> {
+        #[derive(sqlx::FromRow)]
+        struct LinkRow {
+            id: Uuid,
+            source_type: String,
+            source_id: Uuid,
+            target_type: String,
+            target_id: Uuid,
+            created_at: DateTime<Utc>,
+        }
+
+        let rows = sqlx::query_as::<_, LinkRow>(
+            r#"
+            SELECT id, source_type, source_id, target_type, target_id, created_at
+            FROM commercial_document_links
+            WHERE source_type = $1 AND source_id = $2
+            ORDER BY created_at ASC
+            "#,
+        )
+        .bind(source_type)
+        .bind(source_id)
+        .fetch_all(&self.pool)
+        .await
+        .map_err(|e| DomainError::Database(e.to_string()))?;
+
+        Ok(rows
+            .into_iter()
+            .map(|r| crate::domain::entities::commercial_graph::CommercialDocumentLink {
+                id: r.id,
+                source_type: r.source_type,
+                source_id: r.source_id,
+                target_type: r.target_type,
+                target_id: r.target_id,
+                created_at: r.created_at,
+            })
+            .collect())
+    }
 }

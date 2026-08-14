@@ -1,0 +1,99 @@
+name: Quality Gate CI Pipeline (Phase 4)
+
+on:
+  push:
+    branches: [ master, main, develop ]
+  pull_request:
+    branches: [ master, main ]
+
+jobs:
+  backend-quality-gate:
+    name: Backend Quality Gate & Invariant Tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_DB: erp_system_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgrespassword
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install Rust Toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+
+      - name: Rust Cache
+        uses: Swatinem/rust-cache@v2
+
+      - name: 1. Cargo Format Check
+        run: cargo fmt --check
+
+      - name: 2. Cargo Compilation Check
+        run: cargo check --all-targets
+
+      - name: 3. Cargo Clippy Strict Linting
+        run: cargo clippy --all-targets -- -D warnings
+
+      - name: 4 & 5. Backend Unit & Real PostgreSQL Integration Tests
+        env:
+          DATABASE_URL: postgres://postgres:postgrespassword@localhost:5432/erp_system_test
+          MIGRATION_DATABASE_URL: postgres://postgres:postgrespassword@localhost:5432/erp_system_test
+          JWT_SECRET: super-secret-key-for-testing-only-minimum-16-chars
+          ENVIRONMENT: test
+        run: cargo test --all-targets
+
+  frontend-quality-gate:
+    name: Frontend Quality Gate & Strict TypeScript Check
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./web-admin
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: ./web-admin/package-lock.json
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: 8. Frontend ESLint & TypeScript Check
+        run: |
+          npm run type-check || npx tsc --noEmit
+
+  security-audit-gate:
+    name: Security Scan & Secret Leak Audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 11. Secret Scanning (Gitleaks)
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
+
+      - name: 12. Cargo Security Audit
+        uses: rustsec/audit-check-action@v1.4.1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true

@@ -267,15 +267,14 @@ impl AppState {
             finance_repo.clone(),
             acc_engine.clone(),
         );
-        let finance_service = management_system_finance::FinanceService::with_accounting_engine(
+        let finance_service = management_system_finance::FinanceService::new(
             finance_repo.clone(),
             journal_repo.clone(),
             journal_service.clone(),
             asset_expense_service.clone(),
             asset_repo.clone(),
             event_bus.clone(),
-            acc_engine.clone(),
-        );
+        ).with_accounting_engine(acc_engine.clone());
         let depreciation_service = DepreciationService::new(
             asset_repo.clone(),
             category_repo.clone(),

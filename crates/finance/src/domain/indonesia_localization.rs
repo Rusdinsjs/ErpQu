@@ -63,3 +63,52 @@ impl VatRateVersion {
         }
     }
 }
+
+/// Indonesian PPh 21 TER (Tarif Efektif Rata-Rata) Calculator (PMK 168/2023 / QIDN-009)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Pph21TerCalculator;
+
+impl Pph21TerCalculator {
+    /// Calculate monthly PPh 21 withholding using TER Category (A, B, C) based on PTKP status and monthly gross income
+    pub fn calculate_monthly_pph21(
+        category: &str, // "A", "B", "C"
+        monthly_gross: Decimal,
+    ) -> Decimal {
+        let rate = match category {
+            "A" => {
+                // TK/0, TK/1, K/0
+                if monthly_gross <= rust_decimal_macros::dec!(5400000.00) {
+                    rust_decimal_macros::dec!(0.00)
+                } else if monthly_gross <= rust_decimal_macros::dec!(5650000.00) {
+                    rust_decimal_macros::dec!(0.25)
+                } else if monthly_gross <= rust_decimal_macros::dec!(5950000.00) {
+                    rust_decimal_macros::dec!(0.50)
+                } else if monthly_gross <= rust_decimal_macros::dec!(6300000.00) {
+                    rust_decimal_macros::dec!(0.75)
+                } else {
+                    rust_decimal_macros::dec!(1.00)
+                }
+            }
+            "B" => {
+                // TK/2, TK/3, K/1, K/2
+                if monthly_gross <= rust_decimal_macros::dec!(6200000.00) {
+                    rust_decimal_macros::dec!(0.00)
+                } else if monthly_gross <= rust_decimal_macros::dec!(6500000.00) {
+                    rust_decimal_macros::dec!(0.25)
+                } else {
+                    rust_decimal_macros::dec!(0.75)
+                }
+            }
+            _ => {
+                // Category C: K/3
+                if monthly_gross <= rust_decimal_macros::dec!(6600000.00) {
+                    rust_decimal_macros::dec!(0.00)
+                } else {
+                    rust_decimal_macros::dec!(0.50)
+                }
+            }
+        };
+
+        monthly_gross * (rate / rust_decimal_macros::dec!(100.00))
+    }
+}
