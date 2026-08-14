@@ -186,7 +186,7 @@ impl NotificationService {
             .map_err(|e| DomainError::Database(e.to_string()))?
         {
             if !is_admin && notification.user_id != user_id {
-                return Err(DomainError::forbidden("Forbidden: You do not own this notification"));
+                return Err(DomainError::unauthorized("Forbidden: You do not own this notification"));
             }
             self.repository
                 .mark_as_read(id)
