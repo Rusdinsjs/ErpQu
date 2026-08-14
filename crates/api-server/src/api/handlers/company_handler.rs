@@ -209,7 +209,7 @@ pub async fn list_companies(
 ) -> Result<Json<serde_json::Value>, (StatusCode, String)> {
     let pool = &state.pool;
 
-    let mut query = String::from(
+    let mut builder = sqlx::QueryBuilder::new(
         r#"
         SELECT 
             c.id, c.tenant_id, c.code, c.name, c.legal_name, c.tax_id, c.base_currency, c.country,
@@ -229,28 +229,33 @@ pub async fn list_companies(
 
     if let Some(search) = &params.search {
         if !search.trim().is_empty() {
-            query.push_str(&format!(
-                " AND (c.name ILIKE '%{}%' OR c.code ILIKE '%{}%' OR c.legal_name ILIKE '%{}%')",
-                search.trim(),
-                search.trim(),
-                search.trim()
-            ));
+            let term = format!("%{}%", search.trim());
+            builder.push(" AND (c.name ILIKE ");
+            builder.push_bind(term.clone());
+            builder.push(" OR c.code ILIKE ");
+            builder.push_bind(term.clone());
+            builder.push(" OR c.legal_name ILIKE ");
+            builder.push_bind(term);
+            builder.push(")");
         }
     }
 
     if let Some(status) = &params.status {
         if !status.trim().is_empty() {
-            query.push_str(&format!(" AND c.status = '{}'", status.trim()));
+            builder.push(" AND c.status = ");
+            builder.push_bind(status.trim().to_string());
         }
     }
 
     if let Some(is_group) = params.is_group {
-        query.push_str(&format!(" AND c.is_group = {}", is_group));
+        builder.push(" AND c.is_group = ");
+        builder.push_bind(is_group);
     }
 
-    query.push_str(" ORDER BY c.is_group DESC, c.name ASC");
+    builder.push(" ORDER BY c.is_group DESC, c.name ASC");
 
-    let raw_rows = sqlx::query(&query)
+    let raw_rows = builder
+        .build()
         .fetch_all(pool)
         .await
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("Database error: {}", e)))?;

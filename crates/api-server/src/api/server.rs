@@ -261,14 +261,20 @@ impl AppState {
         );
         let maintenance_template_service =
             MaintenanceTemplateService::new(maintenance_template_repo.clone());
-        let journal_service = JournalService::new(journal_repo.clone(), finance_repo.clone());
-        let finance_service = management_system_finance::FinanceService::new(
+        let acc_engine = management_system_finance::AccountingPostingEngine::new(pool.clone());
+        let journal_service = JournalService::with_posting_engine(
+            journal_repo.clone(),
+            finance_repo.clone(),
+            acc_engine.clone(),
+        );
+        let finance_service = management_system_finance::FinanceService::with_accounting_engine(
             finance_repo.clone(),
             journal_repo.clone(),
             journal_service.clone(),
             asset_expense_service.clone(),
             asset_repo.clone(),
             event_bus.clone(),
+            acc_engine.clone(),
         );
         let depreciation_service = DepreciationService::new(
             asset_repo.clone(),
@@ -276,7 +282,6 @@ impl AppState {
             journal_service.clone(),
         );
 
-        let acc_engine = management_system_finance::AccountingPostingEngine::new(pool.clone());
         let stock_engine = management_system_inventory::StockPostingEngine::new(pool.clone(), Some(acc_engine));
         let stock_doc_repo = Arc::new(management_system_inventory::StockDocumentRepository::new(pool.clone()));
         let stock_document_service = management_system_inventory::StockDocumentService::new(stock_doc_repo, stock_engine.clone());

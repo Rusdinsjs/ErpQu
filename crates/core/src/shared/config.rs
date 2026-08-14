@@ -65,6 +65,7 @@ impl AppConfig {
                 "super-secret-key",
                 "change-me-in-production",
                 "secret",
+                "change-this-jwt-secret-in-production-min-32-chars",
             ];
 
             if INSECURE_JWT_KEYS.contains(&self.jwt_secret.as_str()) || self.jwt_secret.len() < 16 {
@@ -73,9 +74,12 @@ impl AppConfig {
                 );
             }
 
-            if self.database_url.contains("postgres:postgres@") {
-                tracing::warn!(
-                    "SECURITY WARNING (QSEC-010): Default postgres:postgres credentials detected in production database URL!"
+            if self.database_url.contains("postgres:postgres@")
+                || self.database_url.contains("change_this_password")
+                || self.database_url.contains("change_this_app_password")
+            {
+                panic!(
+                    "FATAL SECURITY ERROR (QSEC-010): Default database credentials detected in production DATABASE_URL! You must change default database passwords before running in production."
                 );
             }
         }

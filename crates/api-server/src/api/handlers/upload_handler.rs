@@ -12,14 +12,16 @@ use uuid::Uuid;
 
 use crate::api::server::AppState;
 use management_system_core::domain::entities::UserClaims;
+use management_system_core::domain::tenant::TenantContext;
 use management_system_core::shared::{AppError, AppResult};
 
 const MAX_UPLOAD_SIZE: u64 = 10 * 1024 * 1024; // 10MB
 
-/// Upload a file (QSEC-006: Authenticated file upload)
+/// Upload a file (QSEC-006: Authenticated file upload with metadata tracking)
 pub async fn upload_file(
     Extension(claims): Extension<UserClaims>,
-    State(_state): State<AppState>,
+    Extension(tenant_ctx): Extension<TenantContext>,
+    State(state): State<AppState>,
     mut multipart: Multipart,
 ) -> AppResult<impl IntoResponse> {
     tracing::info!(
@@ -113,6 +115,25 @@ pub async fn upload_file(
 
             let url = format!("/api/{}", file_path);
 
+            // Record upload metadata in database for IDOR & authorization enforcement
+            let _ = sqlx::query(
+                r#"
+                INSERT INTO public.uploads (id, file_path, original_name, content_type, file_size, uploaded_by, company_id, role_level_required)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                ON CONFLICT (file_path) DO NOTHING
+                "#
+            )
+            .bind(file_id)
+            .bind(&file_path)
+            .bind(&file_name)
+            .bind(&content_type)
+            .bind(final_data.len() as i32)
+            .bind(claims.user_id())
+            .bind(tenant_ctx.company_id)
+            .bind(claims.role_level)
+            .execute(&state.pool)
+            .await;
+
             uploaded_file = Some(json!({
                 "id": file_id,
                 "url": url,
@@ -133,9 +154,17 @@ pub async fn upload_file(
     }
 }
 
-/// Private file download service (QSEC-006: Authenticated file access)
+struct UploadRecord {
+    uploaded_by: Uuid,
+    company_id: Option<Uuid>,
+    role_level_required: i32,
+}
+
+/// Private file download service (QSEC-006: Authenticated file access with IDOR check)
 pub async fn get_private_file(
     Extension(claims): Extension<UserClaims>,
+    Extension(tenant_ctx): Extension<TenantContext>,
+    State(state): State<AppState>,
     Path(file_path): Path<String>,
 ) -> Result<impl IntoResponse, AppError> {
     tracing::info!(
@@ -150,10 +179,38 @@ pub async fn get_private_file(
         return Err(AppError::BadRequest("Invalid file path".to_string()));
     }
 
-    let full_path = PathBuf::from("uploads").join(safe_path);
+    let db_path = format!("uploads/{}", safe_path);
+    let full_path = PathBuf::from(&db_path);
 
     if !full_path.exists() || !full_path.is_file() {
         return Err(AppError::NotFound("File not found".to_string()));
+    }
+
+    // Check authorization against DB record if available
+    let record = sqlx::query_as::<_, (Uuid, Option<Uuid>, i32)>(
+        "SELECT uploaded_by, company_id, role_level_required FROM public.uploads WHERE file_path = $1"
+    )
+    .bind(&db_path)
+    .fetch_optional(&state.pool)
+    .await
+    .unwrap_or(None);
+
+    let is_admin = claims.role == "super_admin"
+        || claims.role == "admin"
+        || claims.role.starts_with("admin_")
+        || claims.role_level <= 2;
+
+    if let Some((uploaded_by, company_id, role_level_required)) = record {
+        if !is_admin {
+            // Owner or matching role level required
+            if uploaded_by != claims.user_id() && claims.role_level > role_level_required {
+                return Err(AppError::Forbidden("Access denied to requested file".to_string()));
+            }
+            // Enforce company boundary
+            if tenant_ctx.enforce_company_boundary(company_id).is_err() {
+                return Err(AppError::Forbidden("Cross-company file access denied".to_string()));
+            }
+        }
     }
 
     let contents = fs::read(&full_path)

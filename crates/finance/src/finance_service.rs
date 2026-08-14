@@ -694,15 +694,24 @@ impl FinanceService {
     }
 
     pub async fn delete_sales_invoice(&self, id: Uuid) -> DomainResult<()> {
+        let invoice = self.get_sales_invoice_detail(id).await?;
+        let status = invoice.status.to_lowercase();
+        if status == "posted" || status == "submitted" {
+            return Err(DomainError::business_rule(
+                "ImmutablePostedDocument",
+                "Posted or submitted sales invoices cannot be deleted. You must cancel or reverse the document instead.",
+            ));
+        }
         self.repo.delete_sales_invoice(id).await
     }
 
     pub async fn create_purchase_bill(
         &self,
+        actor_id: Option<Uuid>,
         req: CreatePurchaseBillRequest,
     ) -> DomainResult<PurchaseBill> {
         let total: rust_decimal::Decimal = req.items.iter().map(|i| i.amount).sum();
-        let bill = PurchaseBill {
+        let mut bill = PurchaseBill {
             id: Uuid::new_v4(),
             bill_number: req.bill_number,
             vendor_id: req.vendor_id,
@@ -710,24 +719,76 @@ impl FinanceService {
             due_date: req.due_date,
             total_amount: total,
             amount_paid: rust_decimal::Decimal::ZERO,
-            status: "draft".to_string(),
+            status: "submitted".to_string(),
             budget_type: req.budget_type.unwrap_or_else(|| "OPEX".to_string()),
             journal_entry_id: None,
             created_at: Utc::now(),
             attachment_url: req.attachment_url,
         };
-        self.repo.create_purchase_bill(&bill).await
+
+        let mut uow = UnitOfWork::begin(self.repo.pool()).await?;
+        let created_bill = self.repo.create_purchase_bill_with_uow(&mut uow, &bill).await?;
+
+        // Find Accounts for GL Journal Entry (Hutang Usaha & Beban Ops)
+        let ap_acc = self.find_by_code("2-1100").await?.or(self.find_by_code("21100").await?);
+        let exp_acc = self.find_by_code("6-1000").await?.or(self.find_by_code("51000").await?);
+
+        if let (Some(ap), Some(exp)) = (ap_acc, exp_acc) {
+            let journal_req = CreateJournalEntryRequest {
+                date: created_bill.date,
+                description: format!("Tagihan Pembelian: {}", created_bill.bill_number),
+                reference: Some(created_bill.bill_number.clone()),
+                lines: vec![
+                    CreateJournalLineRequest {
+                        account_id: exp.id,
+                        description: Some(format!("Beban Pembelian {}", created_bill.bill_number)),
+                        debit: total,
+                        credit: rust_decimal::Decimal::ZERO,
+                    },
+                    CreateJournalLineRequest {
+                        account_id: ap.id,
+                        description: Some(format!("Utang Usaha {}", created_bill.bill_number)),
+                        debit: rust_decimal::Decimal::ZERO,
+                        credit: total,
+                    },
+                ],
+            };
+
+            let journal = JournalRepository::create_journal_entry_with_uow(
+                &mut uow,
+                format!("BILL-{}", created_bill.bill_number),
+                &journal_req,
+                actor_id,
+            )
+            .await?;
+
+            sqlx::query("UPDATE purchase_bills SET journal_entry_id = $1 WHERE id = $2")
+                .bind(journal.header.id)
+                .bind(created_bill.id)
+                .execute(uow.conn())
+                .await
+                .map_err(|e| DomainError::Database(e.to_string()))?;
+
+            bill.journal_entry_id = Some(journal.header.id);
+        }
+
+        uow.commit().await?;
+        Ok(created_bill)
     }
 
     pub async fn list_purchase_bills(&self) -> DomainResult<Vec<PurchaseBill>> {
         self.repo.list_purchase_bills().await
     }
 
-    pub async fn create_expense(&self, req: CreateExpenseRequest) -> DomainResult<Expense> {
+    pub async fn create_expense(
+        &self,
+        actor_id: Option<Uuid>,
+        req: CreateExpenseRequest,
+    ) -> DomainResult<Expense> {
         let expense_number = req
             .expense_number
             .unwrap_or_else(|| format!("EXP-{}", Uuid::new_v4().to_string()[..8].to_uppercase()));
-        let expense = Expense {
+        let mut expense = Expense {
             id: Uuid::new_v4(),
             expense_number,
             date: req.date,
@@ -740,7 +801,54 @@ impl FinanceService {
             created_at: Utc::now(),
             attachment_url: req.attachment_url,
         };
-        self.repo.create_expense(&expense).await
+
+        let mut uow = UnitOfWork::begin(self.repo.pool()).await?;
+        let created_expense = self.repo.create_expense_with_uow(&mut uow, &expense).await?;
+
+        // Find Expense Account (Default 6-1000 / 51000)
+        let exp_acc = self.find_by_code("6-1000").await?.or(self.find_by_code("51000").await?);
+
+        if let Some(exp) = exp_acc {
+            let journal_req = CreateJournalEntryRequest {
+                date: created_expense.date,
+                description: format!("Pengeluaran Beban: {}", created_expense.expense_number),
+                reference: Some(created_expense.expense_number.clone()),
+                lines: vec![
+                    CreateJournalLineRequest {
+                        account_id: exp.id,
+                        description: Some(format!("Beban {}", created_expense.expense_number)),
+                        debit: req.amount,
+                        credit: rust_decimal::Decimal::ZERO,
+                    },
+                    CreateJournalLineRequest {
+                        account_id: req.pay_from_account_id,
+                        description: Some(format!("Pembayaran Beban {}", created_expense.expense_number)),
+                        debit: rust_decimal::Decimal::ZERO,
+                        credit: req.amount,
+                    },
+                ],
+            };
+
+            let journal = JournalRepository::create_journal_entry_with_uow(
+                &mut uow,
+                format!("EXP-{}", created_expense.expense_number),
+                &journal_req,
+                actor_id,
+            )
+            .await?;
+
+            sqlx::query("UPDATE expenses SET journal_entry_id = $1 WHERE id = $2")
+                .bind(journal.header.id)
+                .bind(created_expense.id)
+                .execute(uow.conn())
+                .await
+                .map_err(|e| DomainError::Database(e.to_string()))?;
+
+            expense.journal_entry_id = Some(journal.header.id);
+        }
+
+        uow.commit().await?;
+        Ok(created_expense)
     }
 
     pub async fn list_expenses(&self) -> DomainResult<Vec<Expense>> {
@@ -749,13 +857,15 @@ impl FinanceService {
 
     pub async fn create_cash_bank_transaction(
         &self,
+        actor_id: Option<Uuid>,
         req: CreateCashBankTransactionRequest,
     ) -> DomainResult<CashBankTransaction> {
+        let tx_number = req.transaction_number.clone().unwrap_or_else(|| {
+            format!("TX-{}", Uuid::new_v4().to_string()[..8].to_uppercase())
+        });
         let tx = CashBankTransaction {
             id: Uuid::new_v4(),
-            transaction_number: req.transaction_number.unwrap_or_else(|| {
-                format!("TX-{}", Uuid::new_v4().to_string()[..8].to_uppercase())
-            }),
+            transaction_number: tx_number,
             transaction_type: req.transaction_type,
             date: req.date,
             amount: req.amount,
@@ -767,7 +877,50 @@ impl FinanceService {
             journal_entry_id: None,
             created_at: Utc::now(),
         };
-        self.repo.create_cash_bank_transaction(&tx).await
+
+        let mut uow = UnitOfWork::begin(self.repo.pool()).await?;
+        let created_tx = self.repo.create_cash_bank_transaction(&tx).await?;
+
+        // If transfer/inflow/outflow accounts provided, create Journal Entry
+        if let (Some(from_acc), Some(to_acc)) = (req.from_account_id, req.to_account_id) {
+            let journal_req = CreateJournalEntryRequest {
+                date: created_tx.date,
+                description: format!("Transaksi Kas/Bank: {}", created_tx.transaction_number),
+                reference: Some(created_tx.transaction_number.clone()),
+                lines: vec![
+                    CreateJournalLineRequest {
+                        account_id: to_acc,
+                        description: Some(format!("Penerimaan/Transfer {}", created_tx.transaction_number)),
+                        debit: req.amount,
+                        credit: rust_decimal::Decimal::ZERO,
+                    },
+                    CreateJournalLineRequest {
+                        account_id: from_acc,
+                        description: Some(format!("Pengeluaran/Transfer {}", created_tx.transaction_number)),
+                        debit: rust_decimal::Decimal::ZERO,
+                        credit: req.amount,
+                    },
+                ],
+            };
+
+            let journal = JournalRepository::create_journal_entry_with_uow(
+                &mut uow,
+                format!("CASH-{}", created_tx.transaction_number),
+                &journal_req,
+                actor_id,
+            )
+            .await?;
+
+            sqlx::query("UPDATE cash_bank_transactions SET journal_entry_id = $1 WHERE id = $2")
+                .bind(journal.header.id)
+                .bind(created_tx.id)
+                .execute(uow.conn())
+                .await
+                .map_err(|e| DomainError::Database(e.to_string()))?;
+        }
+
+        uow.commit().await?;
+        Ok(created_tx)
     }
 
     pub async fn list_sales_quotes(&self) -> DomainResult<Vec<SalesQuote>> {

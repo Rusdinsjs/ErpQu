@@ -13,7 +13,7 @@ use crate::api::handlers::lifecycle_handler;
 use crate::api::handlers::*;
 use crate::api::middleware::{
     auth_middleware,
-    rbac::{admin_only_middleware, require_permission},
+    rbac::{admin_only_middleware, default_deny_middleware, require_permission},
 };
 use crate::api::server::AppState;
 use management_system_core::domain::entities::UserClaims;
@@ -524,9 +524,13 @@ pub fn create_router(state: AppState) -> Router {
             axum::routing::post(crate::api::handlers::test_handler::send_test_email),
         )
         .layer(axum_middleware::from_fn(
-            crate::api::middleware::request_context::request_context_middleware,
+            crate::api::middleware::rbac::default_deny_middleware,
         ))
         .layer(axum_middleware::from_fn(
+            crate::api::middleware::request_context::request_context_middleware,
+        ))
+        .layer(axum_middleware::from_fn_with_state(
+            state.clone(),
             crate::api::middleware::tenant::tenant_middleware,
         ))
         .layer(axum_middleware::from_fn_with_state(

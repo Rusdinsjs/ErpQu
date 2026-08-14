@@ -1035,6 +1035,67 @@ impl FinanceRepository {
         Ok(row.into())
     }
 
+    pub async fn create_purchase_bill_with_uow(
+        &self,
+        uow: &mut UnitOfWork,
+        bill: &PurchaseBill,
+    ) -> DomainResult<PurchaseBill> {
+        let row = sqlx::query_as::<_, PurchaseBillRow>(
+            r#"
+            INSERT INTO purchase_bills (id, bill_number, vendor_id, date, due_date, total_amount, amount_paid, status, budget_type, journal_entry_id, created_at, attachment_url)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+            RETURNING id, bill_number, vendor_id, date, due_date, total_amount, amount_paid, status, budget_type, journal_entry_id, created_at, attachment_url
+            "#,
+        )
+        .bind(bill.id)
+        .bind(&bill.bill_number)
+        .bind(bill.vendor_id)
+        .bind(bill.date)
+        .bind(bill.due_date)
+        .bind(bill.total_amount)
+        .bind(bill.amount_paid)
+        .bind(&bill.status)
+        .bind(&bill.budget_type)
+        .bind(bill.journal_entry_id)
+        .bind(bill.created_at)
+        .bind(&bill.attachment_url)
+        .fetch_one(uow.conn())
+        .await
+        .map_err(|e| DomainError::Database(e.to_string()))?;
+
+        Ok(row.into())
+    }
+
+    pub async fn create_expense_with_uow(
+        &self,
+        uow: &mut UnitOfWork,
+        expense: &Expense,
+    ) -> DomainResult<Expense> {
+        let row = sqlx::query_as::<_, ExpenseRow>(
+            r#"
+            INSERT INTO expenses (id, expense_number, date, pay_from_account_id, recipient, total_amount, status, expense_type, journal_entry_id, created_at, attachment_url)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+            RETURNING id, expense_number, date, pay_from_account_id, recipient, total_amount, status, expense_type, journal_entry_id, created_at, attachment_url
+            "#,
+        )
+        .bind(expense.id)
+        .bind(&expense.expense_number)
+        .bind(expense.date)
+        .bind(expense.pay_from_account_id)
+        .bind(&expense.recipient)
+        .bind(expense.total_amount)
+        .bind(&expense.status)
+        .bind(&expense.expense_type)
+        .bind(expense.journal_entry_id)
+        .bind(expense.created_at)
+        .bind(&expense.attachment_url)
+        .fetch_one(uow.conn())
+        .await
+        .map_err(|e| DomainError::Database(e.to_string()))?;
+
+        Ok(row.into())
+    }
+
     pub async fn list_purchase_bills(&self) -> DomainResult<Vec<PurchaseBill>> {
         let rows = sqlx::query_as::<_, PurchaseBillRow>(
             r#"

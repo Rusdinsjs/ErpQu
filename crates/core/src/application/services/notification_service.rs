@@ -179,6 +179,24 @@ impl NotificationService {
             .map_err(|e| DomainError::Database(e.to_string()))
     }
 
+    pub async fn mark_as_read_for_user(&self, id: Uuid, user_id: Uuid, is_admin: bool) -> DomainResult<bool> {
+        if let Some(notification) = self.repository
+            .find_by_id(id)
+            .await
+            .map_err(|e| DomainError::Database(e.to_string()))?
+        {
+            if !is_admin && notification.user_id != user_id {
+                return Err(DomainError::forbidden("Forbidden: You do not own this notification"));
+            }
+            self.repository
+                .mark_as_read(id)
+                .await
+                .map_err(|e| DomainError::Database(e.to_string()))
+        } else {
+            Ok(false)
+        }
+    }
+
     pub async fn mark_all_as_read(&self, user_id: Uuid) -> DomainResult<i64> {
         self.repository
             .mark_all_as_read(user_id)

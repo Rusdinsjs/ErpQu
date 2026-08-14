@@ -6,6 +6,7 @@ use axum::{
 use serde_json::{json, Value};
 use uuid::Uuid;
 use management_system_core::domain::entities::UserClaims as Claims;
+use management_system_core::domain::tenant::TenantContext;
 
 use crate::api::server::AppState;
 use management_system_core::shared::errors::AppError;
@@ -92,21 +93,29 @@ pub async fn list_cash_bank_transactions(
 
 pub async fn create_sales_invoice(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Extension(tenant_ctx): Extension<TenantContext>,
     headers: HeaderMap,
     Json(payload): Json<CreateSalesInvoiceRequest>,
 ) -> Result<Json<Value>, AppError> {
-    // TODO: extract actor_id and company_id from auth claims; using defaults for now
     let idempotency_key = headers
         .get("idempotency-key")
         .and_then(|value| value.to_str().ok())
         .filter(|value| !value.trim().is_empty())
         .ok_or_else(|| AppError::BadRequest("Idempotency-Key header is required".to_string()))?
         .to_string();
+
+    let company_id = tenant_ctx.company_id.or_else(|| {
+        claims.org.as_deref().and_then(|id| Uuid::parse_str(id).ok())
+    }).ok_or_else(|| AppError::BadRequest("Company ID / Tenant Context is required for sales invoice".to_string()))?;
+
+    let actor_id = claims.user_id();
+
     let invoice = state
         .finance_service
         .create_sales_invoice(
-            uuid::Uuid::nil(),
-            uuid::Uuid::nil(),
+            actor_id,
+            company_id,
             idempotency_key,
             payload,
         )
@@ -124,6 +133,8 @@ pub async fn get_sales_invoice(
 
 pub async fn update_sales_invoice(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Extension(tenant_ctx): Extension<TenantContext>,
     Path(id): Path<Uuid>,
     headers: HeaderMap,
     Json(payload): Json<CreateSalesInvoiceRequest>,
@@ -134,11 +145,18 @@ pub async fn update_sales_invoice(
         .filter(|value| !value.trim().is_empty())
         .ok_or_else(|| AppError::BadRequest("Idempotency-Key header is required".to_string()))?
         .to_string();
+
+    let company_id = tenant_ctx.company_id.or_else(|| {
+        claims.org.as_deref().and_then(|id| Uuid::parse_str(id).ok())
+    }).ok_or_else(|| AppError::BadRequest("Company ID / Tenant Context is required for sales invoice".to_string()))?;
+
+    let actor_id = claims.user_id();
+
     let invoice = state
         .finance_service
         .update_sales_invoice(
-            uuid::Uuid::nil(),
-            uuid::Uuid::nil(),
+            actor_id,
+            company_id,
             idempotency_key,
             id,
             payload,
@@ -159,27 +177,30 @@ pub async fn delete_sales_invoice(
 
 pub async fn create_purchase_bill(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(payload): Json<CreatePurchaseBillRequest>,
 ) -> Result<Json<Value>, AppError> {
-    let bill = state.finance_service.create_purchase_bill(payload).await?;
+    let bill = state.finance_service.create_purchase_bill(Some(claims.user_id()), payload).await?;
     Ok(Json(json!({ "success": true, "data": bill })))
 }
 
 pub async fn create_expense(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(payload): Json<CreateExpenseRequest>,
 ) -> Result<Json<Value>, AppError> {
-    let expense = state.finance_service.create_expense(payload).await?;
+    let expense = state.finance_service.create_expense(Some(claims.user_id()), payload).await?;
     Ok(Json(json!({ "success": true, "data": expense })))
 }
 
 pub async fn create_cash_bank_transaction(
     State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
     Json(payload): Json<CreateCashBankTransactionRequest>,
 ) -> Result<Json<Value>, AppError> {
     let tx = state
         .finance_service
-        .create_cash_bank_transaction(payload)
+        .create_cash_bank_transaction(Some(claims.user_id()), payload)
         .await?;
     Ok(Json(json!({ "success": true, "data": tx })))
 }
