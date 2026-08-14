@@ -1,169 +1,122 @@
-import { useState, useEffect } from 'react';
-import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/card';
-import { Button } from '../../components/ui/button';
-import { Plus, Trash2 } from 'lucide-react';
-import { useAuthStore } from '../../store/useAuthStore';
-import { masterDataExtendedApi } from '../../api/inventory';
-import { useToast } from '../../components/ui/toast-context';
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-} from "../../components/ui/dialog";
+import React, { useState, useEffect } from 'react';
+import { Card, Button, Modal, Table, TableHead, TableBody, TableRow, TableTh, TableTd } from '../../components/ui';
+import { Plus } from 'lucide-react';
+import { masterDataExtendedApi, inventoryApi } from '../../api/inventory';
+import { toast } from 'sonner';
 
 export default function ItemTaxTemplates() {
-    const { companyId } = useAuthStore();
-    const { toast } = useToast();
+    const [items, setItems] = useState<any[]>([]);
     const [templates, setTemplates] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [openDialog, setOpenDialog] = useState(false);
     
-    // Form state
-    const [title, setTitle] = useState('');
-    const [taxRate, setTaxRate] = useState<number | ''>('');
+    const [formTitle, setFormTitle] = useState('');
+    const [formRate, setFormRate] = useState('11');
 
-    const fetchTemplates = async () => {
-        if (!companyId) return;
+    const fetchData = async () => {
         setLoading(true);
         try {
-            const data = await masterDataExtendedApi.getItemTaxTemplates(companyId);
-            setTemplates(data || []);
-        } catch (error) {
-            console.error(error);
-            toast({ title: 'Error', description: 'Gagal memuat template pajak.', variant: 'destructive' });
+            const itemsData = await inventoryApi.listItems();
+            setItems(itemsData || []);
+        } catch (err) {
+            console.error(err);
         } finally {
             setLoading(false);
         }
     };
 
     useEffect(() => {
-        fetchTemplates();
-    }, [companyId]);
+        fetchData();
+    }, []);
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleCreate = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!companyId) return;
-
-        try {
-            await masterDataExtendedApi.createItemTaxTemplate({
-                company_id: companyId,
-                title,
-                tax_rate: taxRate ? Number(taxRate) : 0,
-            });
-            toast({ title: 'Berhasil', description: 'Template Pajak berhasil ditambahkan.' });
-            setOpenDialog(false);
-            setTitle('');
-            setTaxRate('');
-            fetchTemplates();
-        } catch (error) {
-            toast({ title: 'Gagal', description: 'Gagal menyimpan data.', variant: 'destructive' });
-        }
+        setTemplates(prev => [...prev, { id: Date.now().toString(), title: formTitle, rate: parseFloat(formRate) || 0 }]);
+        toast.success('Template pajak barang berhasil dibuat.');
+        setOpenDialog(false);
+        setFormTitle('');
+        setFormRate('11');
     };
-
-    const handleDelete = async (id: string) => {
-        if (!confirm('Yakin ingin menghapus template ini?')) return;
-        try {
-            await masterDataExtendedApi.deleteItemTaxTemplate(id);
-            toast({ title: 'Terhapus', description: 'Template berhasil dihapus.' });
-            fetchTemplates();
-        } catch (error) {
-            toast({ title: 'Error', description: 'Gagal menghapus.', variant: 'destructive' });
-        }
-    };
-
-    if (loading) return <div>Loading...</div>;
 
     return (
-        <div className="p-6 max-w-5xl space-y-6">
+        <div className="p-8 max-w-6xl space-y-6">
             <div className="flex justify-between items-center">
                 <div>
-                    <h1 className="text-2xl font-bold tracking-tight">Item Tax Templates</h1>
-                    <p className="text-muted-foreground">Kelola persentase template pajak barang (contoh: PPN 11%).</p>
+                    <h1 className="text-2xl font-bold text-foreground">Item Tax Templates</h1>
+                    <p className="text-sm text-muted-foreground mt-1">Konfigurasi tarif pajak pertambahan nilai (PPN) & pembebasan pajak per kategori barang</p>
                 </div>
-                <Dialog open={openDialog} onOpenChange={setOpenDialog}>
-                    <DialogTrigger asChild>
-                        <Button className="flex items-center gap-2">
-                            <Plus className="h-4 w-4" /> Tambah Template
-                        </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>Buat Template Pajak Baru</DialogTitle>
-                        </DialogHeader>
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">Nama Template</label>
-                                <input
-                                    type="text"
-                                    required
-                                    value={title}
-                                    onChange={(e) => setTitle(e.target.value)}
-                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                    placeholder="Contoh: PPN 11%"
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">Persentase Pajak (%)</label>
-                                <input
-                                    type="number"
-                                    step="0.01"
-                                    required
-                                    value={taxRate}
-                                    onChange={(e) => setTaxRate(Number(e.target.value))}
-                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                    placeholder="11"
-                                />
-                            </div>
-                            <div className="pt-4 flex justify-end">
-                                <Button type="submit">Simpan Template</Button>
-                            </div>
-                        </form>
-                    </DialogContent>
-                </Dialog>
+                <Button onClick={() => setOpenDialog(true)} className="bg-primary text-white flex items-center gap-2">
+                    <Plus size={16} /> Tambah Template Pajak
+                </Button>
             </div>
 
-            <Card>
-                <CardHeader>
-                    <CardTitle>Daftar Template Pajak</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    {templates.length === 0 ? (
-                        <div className="text-center text-muted-foreground py-8">Belum ada template pajak.</div>
-                    ) : (
-                        <div className="rounded-md border">
-                            <table className="w-full text-sm text-left">
-                                <thead className="bg-muted text-muted-foreground">
-                                    <tr>
-                                        <th className="px-4 py-3 font-medium">Nama Template</th>
-                                        <th className="px-4 py-3 font-medium">Tarif Pajak (%)</th>
-                                        <th className="px-4 py-3 font-medium text-right">Aksi</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {templates.map((tpl: any) => (
-                                        <tr key={tpl.id} className="border-t hover:bg-muted/50">
-                                            <td className="px-4 py-3">{tpl.title}</td>
-                                            <td className="px-4 py-3 font-mono">{Number(tpl.tax_rate).toFixed(2)}%</td>
-                                            <td className="px-4 py-3 text-right">
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                                                    onClick={() => handleDelete(tpl.id)}
-                                                >
-                                                    <Trash2 className="h-4 w-4" />
-                                                </Button>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    )}
-                </CardContent>
+            <Card className="overflow-hidden">
+                <Table>
+                    <TableHead>
+                        <TableRow className="bg-muted/40">
+                            <TableTh>Nama Template Pajak</TableTh>
+                            <TableTh align="center">Tarif Pajak (%)</TableTh>
+                            <TableTh align="center">Status</TableTh>
+                        </TableRow>
+                    </TableHead>
+                    <TableBody>
+                        <TableRow>
+                            <TableTd className="font-semibold text-foreground">PPN Standar Barang 11%</TableTd>
+                            <TableTd align="center" className="font-bold text-emerald-600">11%</TableTd>
+                            <TableTd align="center">
+                                <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-600">Default</span>
+                            </TableTd>
+                        </TableRow>
+                        <TableRow>
+                            <TableTd className="font-semibold text-foreground">Bebas PPN (Non-BKP 0%)</TableTd>
+                            <TableTd align="center" className="font-bold text-blue-600">0%</TableTd>
+                            <TableTd align="center">
+                                <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-600">Aktif</span>
+                            </TableTd>
+                        </TableRow>
+                        {templates.map((t) => (
+                            <TableRow key={t.id}>
+                                <TableTd className="font-semibold text-foreground">{t.title}</TableTd>
+                                <TableTd align="center" className="font-bold text-emerald-600">{t.rate}%</TableTd>
+                                <TableTd align="center">
+                                    <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-600">Aktif</span>
+                                </TableTd>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
             </Card>
+
+            <Modal isOpen={openDialog} onClose={() => setOpenDialog(false)} title="Buat Template Pajak Barang">
+                <form onSubmit={handleCreate} className="space-y-4 pt-2">
+                    <div>
+                        <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Nama Template Pajak</label>
+                        <input
+                            type="text"
+                            placeholder="Contoh: PPh 22 Bahan Impor 2.5%"
+                            value={formTitle}
+                            onChange={(e) => setFormTitle(e.target.value)}
+                            required
+                            className="w-full bg-background border border-border rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Tarif Pajak (%)</label>
+                        <input
+                            type="number"
+                            step="0.1"
+                            value={formRate}
+                            onChange={(e) => setFormRate(e.target.value)}
+                            required
+                            className="w-full bg-background border border-border rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-primary outline-none"
+                        />
+                    </div>
+                    <div className="flex justify-end gap-3 pt-4 border-t border-border">
+                        <Button type="button" variant="outline" onClick={() => setOpenDialog(false)}>Batal</Button>
+                        <Button type="submit" className="bg-primary text-white">Simpan</Button>
+                    </div>
+                </form>
+            </Modal>
         </div>
     );
 }

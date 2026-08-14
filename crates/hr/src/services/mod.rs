@@ -1,7 +1,23 @@
 pub mod attendance_service;
 pub mod employee_service;
 pub mod leave_service;
+pub mod hr_lifecycle_service;
+pub mod hr_shift_overtime_service;
+pub mod hr_leaves_service;
+pub mod hr_tax_bpjs_engine;
+pub mod hr_payroll_service;
+pub mod hr_loans_claims_kpi_service;
+pub mod hr_recruitment_training_discipline_service;
+pub mod hr_driver_p2h_safety_service;
 
 pub use attendance_service::*;
 pub use employee_service::*;
 pub use leave_service::*;
+pub use hr_lifecycle_service::*;
+pub use hr_shift_overtime_service::*;
+pub use hr_leaves_service::*;
+pub use hr_tax_bpjs_engine::*;
+pub use hr_payroll_service::*;
+pub use hr_loans_claims_kpi_service::*;
+pub use hr_recruitment_training_discipline_service::*;
+pub use hr_driver_p2h_safety_service::*;

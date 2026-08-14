@@ -1,5 +1,5 @@
 // Rentals Page - Pure Tailwind
-import { Truck, Clock, Receipt, Users, CheckSquare, Tags } from 'lucide-react';
+import { Truck, Clock, Receipt, CheckSquare, Tags } from 'lucide-react';
 import {
     Tabs,
     TabsList,
@@ -12,7 +12,6 @@ import { TimesheetList } from '../../components/Rentals/TimesheetList';
 import { TimesheetReviewer } from '../../components/Rentals/TimesheetReviewer';
 import { PriceList } from '../../components/Rentals/PriceList';
 import { BillingList } from '../../components/Rentals/BillingList';
-import { ClientList } from '../../components/Rentals/ClientList';
 import { RentalScheduler } from '../../components/Rentals/RentalScheduler';
 
 export default function Rentals() {

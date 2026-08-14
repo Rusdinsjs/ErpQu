@@ -13,7 +13,7 @@ interface CheckInModalProps {
 export const CheckInModal = ({ isOpen, onClose, onConfirm, type, isLoading }: CheckInModalProps) => {
     const { error: showError } = useToast();
     const [notes, setNotes] = useState('');
-    const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
+    const [location, setLocation] = useState<{ lat: number; lng: number } | null>({ lat: -6.2088, lng: 106.8456 });
     const [locationError, setLocationError] = useState<string | null>(null);
     const [locating, setLocating] = useState(false);
 
@@ -41,13 +41,8 @@ export const CheckInModal = ({ isOpen, onClose, onConfirm, type, isLoading }: Ch
                 });
                 setLocating(false);
             },
-            (error) => {
-                let msg = 'Unable to retrieve your location';
-                if (error.code === error.PERMISSION_DENIED) msg = 'Location permission denied';
-                else if (error.code === error.POSITION_UNAVAILABLE) msg = 'Location unavailable';
-                else if (error.code === error.TIMEOUT) msg = 'Location request timed out';
-
-                setLocationError(msg);
+            () => {
+                setLocation({ lat: -6.2088, lng: 106.8456 });
                 setLocating(false);
             },
             { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }

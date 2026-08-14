@@ -46,7 +46,7 @@ impl LeaveRepository {
             r#"
             SELECT l.*, e.name as employee_name, u.name as approver_name
             FROM hr.leave_requests l
-            JOIN hr.employees e ON l.employee_id = e.id
+            JOIN employees e ON l.employee_id = e.id
             LEFT JOIN public.users u ON l.approved_by = u.id
             WHERE l.id = $1
             "#,
@@ -86,7 +86,7 @@ impl LeaveRepository {
             r#"
             SELECT l.*, e.name as employee_name
             FROM hr.leave_requests l
-            JOIN hr.employees e ON l.employee_id = e.id
+            JOIN employees e ON l.employee_id = e.id
             WHERE l.employee_id = $1
             ORDER BY l.created_at DESC
             "#,
@@ -104,7 +104,7 @@ impl LeaveRepository {
             r#"
             SELECT l.*, e.name as employee_name
             FROM hr.leave_requests l
-            JOIN hr.employees e ON l.employee_id = e.id
+            JOIN employees e ON l.employee_id = e.id
             WHERE l.status = 'pending'
             ORDER BY l.created_at ASC
             "#,

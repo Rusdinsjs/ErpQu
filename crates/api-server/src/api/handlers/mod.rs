@@ -79,3 +79,11 @@ pub use stock_document_handler::*;
 pub mod ops_quality_trip_handler;
 pub use ops_quality_trip_handler::*;
 
+
+pub mod hr_lifecycle_handler;
+pub mod hr_shift_overtime_handler;
+pub mod hr_leaves_handler;
+pub mod hr_payroll_handler;
+pub mod hr_loans_claims_kpi_handler;
+pub mod hr_recruitment_training_discipline_handler;
+pub mod hr_driver_p2h_safety_handler;

@@ -128,3 +128,9 @@ pub mod rental_billing_repository;
 pub use rental_billing_repository::*;
 pub mod asset_expense_repository;
 pub use asset_expense_repository::*;
+
+pub mod hr_lifecycle_repository;
+pub use hr_lifecycle_repository::HrLifecycleRepository;
+
+pub mod hr_shift_overtime_repository;
+pub use hr_shift_overtime_repository::HrShiftOvertimeRepository;

@@ -117,3 +117,9 @@ pub mod tax_renewal_service;
 pub use tax_renewal_service::*;
 pub mod whatsapp_service;
 pub use whatsapp_service::*;
+
+pub mod hr_lifecycle_service;
+pub use hr_lifecycle_service::HrLifecycleService;
+
+pub mod hr_shift_overtime_service;
+pub use hr_shift_overtime_service::HrShiftOvertimeService;

@@ -269,6 +269,37 @@ pub fn create_router(state: AppState) -> Router {
                 .delete(delete_employee),
         )
         .route("/api/employees/:id/user", post(create_employee_user))
+        // Employee 360 View
+        .route("/api/employees/:id/360", get(hr_lifecycle_handler::get_employee_360))
+        // HR Shift Management
+        .route("/api/hr/shifts", get(hr_shift_overtime_handler::list_shift_types).post(hr_shift_overtime_handler::create_shift_type))
+        .route("/api/hr/shifts/:id", get(hr_shift_overtime_handler::get_shift_type).put(hr_shift_overtime_handler::update_shift_type).delete(hr_shift_overtime_handler::delete_shift_type))
+        // HR Shift Assignments
+        .route("/api/hr/shift-assignments", get(hr_shift_overtime_handler::list_shift_assignments).post(hr_shift_overtime_handler::create_shift_assignment))
+        .route("/api/hr/shift-assignments/bulk", post(hr_shift_overtime_handler::bulk_assign_shifts))
+        .route("/api/hr/shift-assignments/:id", delete(hr_shift_overtime_handler::delete_shift_assignment))
+        // HR Attendance Requests (Koreksi / Dinas Luar)
+        .route("/api/hr/attendance-requests", get(hr_shift_overtime_handler::list_attendance_requests).post(hr_shift_overtime_handler::create_attendance_request))
+        .route("/api/hr/attendance-requests/:id/review", post(hr_shift_overtime_handler::review_attendance_request))
+        // HR Overtime (SPKL & Kalkulasi Lembur Depnaker)
+        .route("/api/hr/overtime-requests", get(hr_shift_overtime_handler::list_overtime_requests).post(hr_shift_overtime_handler::create_overtime_request))
+        .route("/api/hr/overtime-requests/:id/review", post(hr_shift_overtime_handler::review_overtime_request))
+        // HR Attendance Logs & Recap
+        .route("/api/hr/attendance-logs", get(hr_shift_overtime_handler::list_attendance_details))
+        .route("/api/hr/attendance-recap", get(hr_shift_overtime_handler::get_attendance_recap))
+        // HR Designations (Master Jabatan)
+        .route("/api/hr/designations", get(hr_lifecycle_handler::list_designations).post(hr_lifecycle_handler::create_designation))
+        .route("/api/hr/designations/:id", get(hr_lifecycle_handler::get_designation).put(hr_lifecycle_handler::update_designation).delete(hr_lifecycle_handler::delete_designation))
+        // HR Employment Types (Tipe Kepegawaian)
+        .route("/api/hr/employment-types", get(hr_lifecycle_handler::list_employment_types).post(hr_lifecycle_handler::create_employment_type))
+        // HR Employee Lifecycle Events (Riwayat Karir)
+        .route("/api/hr/lifecycle", get(hr_lifecycle_handler::list_lifecycle_events).post(hr_lifecycle_handler::create_lifecycle_event))
+        // HR Employee Documents
+        .route("/api/hr/employees/:employee_id/documents", get(hr_lifecycle_handler::list_employee_documents).post(hr_lifecycle_handler::create_employee_document))
+        .route("/api/hr/documents/:id", delete(hr_lifecycle_handler::delete_employee_document))
+        // HR Employee Education
+        .route("/api/hr/employees/:employee_id/education", get(hr_lifecycle_handler::list_employee_education).post(hr_lifecycle_handler::create_employee_education))
+        .route("/api/hr/education/:id", delete(hr_lifecycle_handler::delete_employee_education))
         // Departments
         .route("/api/departments/tree", get(list_departments_tree))
         .route(
@@ -406,6 +437,56 @@ pub fn create_router(state: AppState) -> Router {
             get(finance_handler::list_cash_bank_transactions)
                 .post(finance_handler::create_cash_bank_transaction),
         )
+        // Accounting Workspace & Extended Finance Routes
+        .route(
+            "/api/finance/payments",
+            get(finance_handler::list_payment_entries).post(finance_handler::create_payment_entry),
+        )
+        .route(
+            "/api/finance/payments/:id",
+            get(finance_handler::get_payment_entry),
+        )
+        .route(
+            "/api/finance/cost-centers",
+            get(finance_handler::list_cost_centers).post(finance_handler::create_cost_center),
+        )
+        .route(
+            "/api/finance/budgets",
+            get(finance_handler::list_budgets).post(finance_handler::create_budget),
+        )
+        .route(
+            "/api/finance/budgets/variance",
+            get(finance_handler::get_budget_variance),
+        )
+        .route(
+            "/api/finance/bank-accounts",
+            get(finance_handler::list_bank_accounts).post(finance_handler::create_bank_account),
+        )
+        .route(
+            "/api/finance/credit-notes",
+            get(finance_handler::list_credit_notes).post(finance_handler::create_credit_note),
+        )
+        .route(
+            "/api/finance/debit-notes",
+            get(finance_handler::list_debit_notes).post(finance_handler::create_debit_note),
+        )
+        .route(
+            "/api/finance/tax-categories",
+            get(finance_handler::list_tax_categories),
+        )
+        .route(
+            "/api/finance/reports/ar-aging",
+            get(finance_report_handler::get_ar_aging),
+        )
+        .route(
+            "/api/finance/reports/ap-aging",
+            get(finance_report_handler::get_ap_aging),
+        )
+        .route(
+            "/api/finance/reports/cash-flow",
+            get(finance_report_handler::get_cash_flow_statement),
+        )
+
         // Leave Management
         .route("/api/hrd/leaves", post(leave_handler::request_leave))
         .route("/api/hrd/leaves/my", get(leave_handler::my_leaves))
@@ -610,6 +691,22 @@ pub fn create_router(state: AppState) -> Router {
             "/api/quotations",
             crate::api::routes::quotation_routes::routes(state.pool.clone()),
         )
+        .nest(
+            "/api/vendors",
+            Router::new()
+                .route(
+                    "/",
+                    get(crate::handlers::vendors::list_vendors).post(crate::handlers::vendors::create_vendor),
+                )
+                .route(
+                    "/:id",
+                    get(crate::handlers::vendors::get_vendor)
+                        .put(crate::handlers::vendors::update_vendor)
+                        .delete(crate::handlers::vendors::delete_vendor),
+                )
+                .with_state(state.pool.clone()),
+        )
+
         .nest(
             "/api/sales-master",
             sales_master_data_routes::sales_master_data_routes(sales_master_handler),

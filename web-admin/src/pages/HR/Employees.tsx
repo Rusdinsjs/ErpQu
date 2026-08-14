@@ -1,5 +1,6 @@
 // Employees Page - Pure Tailwind
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Plus, Edit, Trash2, Search, UserPlus, UserCheck, Eye, Camera, Loader2 } from 'lucide-react';
 import { employeeApi, type Employee, type EmploymentStatus } from '../../api/employee';
 import { usersApi } from '../../api/users';
@@ -78,6 +79,7 @@ const initialUserFormState = {
 };
 
 export default function Employees() {
+    const navigate = useNavigate();
     const [employees, setEmployees] = useState<Employee[]>([]);
     const [departments, setDepartments] = useState<Department[]>([]);
     const [loading, setLoading] = useState(false);
@@ -113,9 +115,11 @@ export default function Employees() {
     const fetchRoles = async () => {
         try {
             const data = await usersApi.listRoles();
-            setRoles(data);
+            const list = Array.isArray(data) ? data : ((data as any)?.data || []);
+            setRoles(list);
         } catch (error) {
             console.error('Failed to fetch roles:', error);
+            setRoles([]);
         }
     };
 
@@ -123,10 +127,12 @@ export default function Employees() {
         setLoading(true);
         try {
             const data = await employeeApi.list();
-            setEmployees(data);
+            const list = Array.isArray(data) ? data : ((data as any)?.data || []);
+            setEmployees(list);
         } catch (error) {
             console.error(error);
             showError('Failed to load employees', 'Error');
+            setEmployees([]);
         } finally {
             setLoading(false);
         }
@@ -134,10 +140,12 @@ export default function Employees() {
 
     const fetchDepartments = async () => {
         try {
-            const response = await api.get<Department[]>('/departments');
-            setDepartments(response.data);
+            const response = await api.get<any>('/departments');
+            const list = Array.isArray(response.data) ? response.data : (response.data?.data || []);
+            setDepartments(list);
         } catch (error) {
             console.error('Failed to fetch departments:', error);
+            setDepartments([]);
         }
     };
 
@@ -331,13 +339,13 @@ export default function Employees() {
         }
     };
 
-    const filteredEmployees = employees.filter(e =>
-        e.name.toLowerCase().includes(search.toLowerCase()) ||
-        e.nik.toLowerCase().includes(search.toLowerCase()) ||
-        e.email.toLowerCase().includes(search.toLowerCase())
+    const filteredEmployees = (Array.isArray(employees) ? employees : []).filter(e =>
+        (e?.name || '').toLowerCase().includes(search.toLowerCase()) ||
+        (e?.nik || '').toLowerCase().includes(search.toLowerCase()) ||
+        (e?.email || '').toLowerCase().includes(search.toLowerCase())
     );
 
-    const deptOptions = departments.map(d => ({ value: d.id, label: d.name }));
+    const deptOptions = (Array.isArray(departments) ? departments : []).map(d => ({ value: d.id, label: d.name }));
     const statusOptions = [
         { value: 'pkwt', label: 'PKWT' },
         { value: 'pkwtt', label: 'PKWTT' },
@@ -451,7 +459,7 @@ export default function Employees() {
                                     </TableTd>
                                     <TableTd align="center">
                                         <div className="flex items-center justify-center gap-1">
-                                            <ActionIcon onClick={() => openViewModal(employee)} title="Lihat Detail Pegawai">
+                                            <ActionIcon onClick={() => navigate(`/employees/${employee.id}/360`)} title="Lihat Detail Pegawai">
                                                 <Eye size={16} />
                                             </ActionIcon>
                                             <ActionIcon onClick={() => openEditModal(employee)} title="Edit Pegawai">

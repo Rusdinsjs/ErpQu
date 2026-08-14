@@ -118,7 +118,7 @@ export default function AccountingGenericView({ title, description, type }: Prop
                     <Button variant="outline" onClick={() => {}}>
                         <Download size={16} className="mr-2" /> Export
                     </Button>
-                    <Button variant="default" onClick={() => setCreateModalOpen(true)}>
+                    <Button variant="primary" onClick={() => setCreateModalOpen(true)}>
                         <Plus size={16} className="mr-2" /> Tambah Baru
                     </Button>
                 </div>

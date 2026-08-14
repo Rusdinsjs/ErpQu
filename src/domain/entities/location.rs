@@ -88,6 +88,27 @@ pub struct Location {
     #[sqlx(default)]
     pub qr_code: Option<String>,
 
+    #[sqlx(default)]
+    pub check_in_time: Option<chrono::NaiveTime>,
+    #[sqlx(default)]
+    pub check_out_time: Option<chrono::NaiveTime>,
+    #[sqlx(default)]
+    pub check_in_tolerance: Option<i32>,
+    #[sqlx(default)]
+    pub check_out_tolerance: Option<i32>,
+    #[sqlx(default)]
+    pub radius: Option<i32>,
+    #[sqlx(default)]
+    pub contact_person: Option<String>,
+    #[sqlx(default)]
+    pub contact_phone: Option<String>,
+    #[sqlx(default)]
+    pub contact_email: Option<String>,
+    #[sqlx(default)]
+    pub notes: Option<String>,
+    #[sqlx(default)]
+    pub is_active: Option<bool>,
+
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }

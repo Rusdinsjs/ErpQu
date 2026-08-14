@@ -34,7 +34,7 @@ export type MenuId =
     | 'budgets-view' | 'sales-tax-templates' | 'purchase-tax-templates-view' | 'tax-categories' | 'tax-rules'
     | 'credit-notes' | 'debit-notes' | 'dunnings' | 'balance-sheet' | 'profit-loss' | 'cash-flow' | 'trial-balance'
     | 'general-ledger-report' | 'ar-aging' | 'ap-aging'
-    | 'employees' | 'departments' | 'attendance' | 'leaves'
+    | 'employees' | 'departments' | 'attendance' | 'leaves' | 'designations' | 'employee-lifecycle' | 'employee-360' | 'shifts' | 'attendance-logs' | 'overtime' | 'attendance-requests' | 'salary-slips' | 'payroll-processing' | 'salary-assignments' | 'salary-structures'
     | 'approvals'
     | 'company' | 'branch' | 'email-account'
     | 'users' | 'roles' | 'approval-workflow-settings' | 'audit' | 'settings' | 'profile';
@@ -256,6 +256,17 @@ export const MENU_LABELS: Record<MenuId, string> = {
     'ar-aging': 'Accounts Receivable (AR) Aging',
     'ap-aging': 'Accounts Payable (AP) Aging',
     'employees': 'Employees',
+    'designations': 'Designations (Jabatan)',
+    'employee-lifecycle': 'Riwayat Karir',
+    'employee-360': 'Profil 360 Karyawan',
+    'shifts': 'Manajemen Shift',
+    'attendance-logs': 'Log Kehadiran & Rekap',
+    'overtime': 'Lembur (SPKL)',
+    'attendance-requests': 'Koreksi Absensi',
+    'salary-slips': 'Slip Gaji',
+    'payroll-processing': 'Proses Penggajian',
+    'salary-assignments': 'Penetapan Gaji',
+    'salary-structures': 'Struktur Gaji',
     'departments': 'Departments',
     'attendance': 'Attendance',
     'leaves': 'Leaves',
@@ -466,6 +477,26 @@ export const MENU_TO_RESOURCE: Record<MenuId, string> = {
     'ar-aging': 'financial_report',
     'ap-aging': 'financial_report',
     'employees': 'employee',
+    'designations': 'employee',
+    'employee-lifecycle': 'employee',
+    'employee-360': 'employee',
+    'shifts': 'attendance',
+    'attendance-logs': 'attendance',
+    'overtime': 'attendance',
+    'attendance-requests': 'attendance',
+    'salary-slips': 'employee',
+    'payroll-processing': 'employee',
+    'salary-assignments': 'employee',
+    'salary-structures': 'employee',
+    'employee-loans': 'employee',
+    'expense-claims': 'employee',
+    'appraisal': 'employee',
+    'recruitment': 'employee',
+    'training-certifications': 'employee',
+    'disciplinary-actions': 'employee',
+    'driver-assignments': 'employee',
+    'p2h-inspections': 'employee',
+    'driver-safety-incidents': 'employee',
     'departments': 'department',
     'attendance': 'attendance',
     'leaves': 'leave',
@@ -638,14 +669,21 @@ export const DEFAULT_LAUNCHPAD_CONFIG: LaunchpadConfig = {
         {
             id: 'hr',
             title: 'Human Resources',
-            subtitle: 'People & Attendance',
+            subtitle: 'People, Attendance & Payroll',
             icon: 'Users',
             gradient: 'from-pink-500/20 to-rose-500/20',
             iconBg: 'bg-gradient-to-br from-pink-500 to-rose-500',
             defaultRoute: '/employees',
             minLevel: 3,
-            features: ['Employees Directory', 'Attendance Records', 'Leave Requests'],
-            menuIds: ['employees', 'attendance', 'leaves'],
+            features: ['Employees', 'Attendance & Leaves', 'Shift & Overtime', 'Payroll & Slips'],
+            menuIds: [
+                'employees', 'designations', 'employee-lifecycle',
+                'attendance', 'leaves', 'shifts', 'attendance-logs', 'overtime', 'attendance-requests',
+                'salary-slips', 'payroll-processing', 'salary-assignments', 'salary-structures',
+                'employee-loans', 'expense-claims', 'appraisal',
+                'recruitment', 'training-certifications', 'disciplinary-actions',
+                'driver-assignments', 'p2h-inspections', 'driver-safety-incidents'
+            ],
             order: 11,
             enabled: true,
         },

@@ -16,7 +16,7 @@ impl EmployeeRepository {
     pub async fn create(&self, employee: &Employee) -> Result<Employee, AppError> {
         let employee = sqlx::query_as::<_, Employee>(
             r#"
-            INSERT INTO hr.employees (
+            INSERT INTO employees (
                 id, nik, name, email, phone, department_id, position, 
                 employment_status, user_id, is_active, photo_url,
                 ktp_number, place_of_birth, date_of_birth, gender, marital_status, religion, address,
@@ -78,8 +78,8 @@ impl EmployeeRepository {
         let employee = sqlx::query_as::<_, Employee>(
             r#"
             SELECT e.*, d.name as department_name
-            FROM hr.employees e
-            LEFT JOIN public.departments d ON e.department_id = d.id
+            FROM employees e
+            LEFT JOIN departments d ON e.department_id = d.id
             WHERE e.id = $1
             "#,
         )
@@ -97,7 +97,7 @@ impl EmployeeRepository {
     }
 
     pub async fn get_by_nik(&self, nik: &str) -> Result<Option<Employee>, AppError> {
-        let employee = sqlx::query_as::<_, Employee>("SELECT * FROM hr.employees WHERE nik = $1")
+        let employee = sqlx::query_as::<_, Employee>("SELECT * FROM employees WHERE nik = $1")
             .bind(nik)
             .fetch_optional(&self.pool)
             .await
@@ -107,7 +107,7 @@ impl EmployeeRepository {
     }
 
     pub async fn find_by_user_id(&self, user_id: Uuid) -> Result<Option<Employee>, AppError> {
-        let employee = sqlx::query_as::<_, Employee>("SELECT * FROM hr.employees WHERE user_id = $1")
+        let employee = sqlx::query_as::<_, Employee>("SELECT * FROM employees WHERE user_id = $1")
             .bind(user_id)
             .fetch_optional(&self.pool)
             .await
@@ -121,8 +121,8 @@ impl EmployeeRepository {
         let employees = sqlx::query_as::<_, Employee>(
             r#"
             SELECT e.*, d.name as department_name
-            FROM hr.employees e
-            LEFT JOIN public.departments d ON e.department_id = d.id
+            FROM employees e
+            LEFT JOIN departments d ON e.department_id = d.id
             ORDER BY e.name ASC
             LIMIT $1 OFFSET $2
             "#,
@@ -140,7 +140,7 @@ impl EmployeeRepository {
         let employee = sqlx::query_as::<_, Employee>(
             r#"
             WITH updated_emp AS (
-                UPDATE hr.employees
+                UPDATE employees
                 SET nik = $2, name = $3, email = $4, phone = $5, 
                     department_id = $6, position = $7, employment_status = $8, 
                     user_id = $9, is_active = $10, photo_url = $11,
@@ -214,7 +214,7 @@ impl EmployeeRepository {
     }
 
     pub async fn delete(&self, id: Uuid) -> Result<(), AppError> {
-        sqlx::query("DELETE FROM hr.employees WHERE id = $1")
+        sqlx::query("DELETE FROM employees WHERE id = $1")
             .bind(id)
             .execute(&self.pool)
             .await

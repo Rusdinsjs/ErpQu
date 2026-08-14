@@ -17,10 +17,11 @@ const StockOpname: React.FC = () => {
     const [globalNote, setGlobalNote] = useState('');
 
     // Fetch Inventory Items
-    const { data: items = [], isLoading } = useQuery({
+    const { data: rawItems = [], isLoading } = useQuery({
         queryKey: ['inventory-items'],
         queryFn: () => inventoryApi.listItems()
     });
+    const items: InventoryItem[] = (rawItems as any[]) || [];
 
     // Batch Adjustment Mutation
     const adjustMut = useMutation({
@@ -46,10 +47,10 @@ const StockOpname: React.FC = () => {
     };
 
     const changes = useMemo(() => {
-        return items.filter((item: InventoryItem) => {
+        return (items as InventoryItem[]).filter((item: InventoryItem) => {
             const physical = physicalCounts[item.id];
             return physical !== undefined && physical !== parseFloat(item.current_quantity.toString());
-        }).map((item: InventoryItem) => {
+        }).map((item: any) => {
             const physical = physicalCounts[item.id];
             const current = parseFloat(item.current_quantity.toString());
             return {
@@ -80,7 +81,7 @@ const StockOpname: React.FC = () => {
         }
     };
 
-    const filteredItems = items.filter((item: InventoryItem) =>
+    const filteredItems = (items as InventoryItem[]).filter((item: InventoryItem) =>
         item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         item.sku.toLowerCase().includes(searchTerm.toLowerCase())
     );
@@ -204,7 +205,7 @@ const StockOpname: React.FC = () => {
                                 </TableRow>
                             </TableHead>
                             <TableBody>
-                                {filteredItems.map((item: InventoryItem) => {
+                                {filteredItems.map((item: any) => {
                                     const current = parseFloat(item.current_quantity.toString());
                                     const physical = physicalCounts[item.id];
                                     const diff = physical !== undefined ? physical - current : 0;

@@ -94,13 +94,20 @@ export function calculateInvoiceTotalString(
 }
 
 /** Display-only formatter. It never converts the authoritative value to JS number. */
-export function formatCurrencyIDR(value: DecimalString): string {
-    const normalized = toDecimalString(value, 2);
-    const negative = normalized.startsWith('-');
-    const unsigned = negative ? normalized.slice(1) : normalized;
-    const [integer, fraction] = unsigned.split('.');
-    const grouped = integer.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-    return `${negative ? '-' : ''}Rp${grouped},${fraction}`;
+export function formatCurrencyIDR(value: DecimalString | number | null | undefined): string {
+    if (value === null || value === undefined || value === '') return 'Rp0,00';
+    let strVal = typeof value === 'number' ? value.toFixed(2) : String(value).trim();
+    if (isNaN(Number(strVal))) return 'Rp0,00';
+    try {
+        const normalized = toDecimalString(strVal, 2);
+        const negative = normalized.startsWith('-');
+        const unsigned = negative ? normalized.slice(1) : normalized;
+        const [integer, fraction] = unsigned.split('.');
+        const grouped = (integer || '0').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+        return `${negative ? '-' : ''}Rp${grouped},${fraction || '00'}`;
+    } catch {
+        return 'Rp0,00';
+    }
 }
 
 export interface InvoiceStateRepresentation {

@@ -199,3 +199,118 @@ pub async fn create_purchase_shipment(
         .await?;
     Ok(Json(json!({ "success": true, "data": shipment })))
 }
+
+
+// ─── EXTENDED ACCOUNTING HANDLERS ───────────────────────────────────────────
+
+pub async fn list_payment_entries(
+    State(state): State<AppState>,
+) -> ApiResult<Json<Vec<crate::domain::entities::PaymentEntry>>> {
+    let entries = state.finance_service.list_payment_entries().await?;
+    Ok(Json(entries))
+}
+
+pub async fn get_payment_entry(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+) -> ApiResult<Json<Option<crate::domain::entities::PaymentEntry>>> {
+    let entry = state.finance_service.get_payment_entry_by_id(id).await?;
+    Ok(Json(entry))
+}
+
+pub async fn create_payment_entry(
+    State(state): State<AppState>,
+    Json(payload): Json<crate::domain::entities::CreatePaymentEntryRequest>,
+) -> ApiResult<Json<crate::domain::entities::PaymentEntry>> {
+    let entry = state.finance_service.create_payment_entry(payload).await?;
+    Ok(Json(entry))
+}
+
+pub async fn list_cost_centers(
+    State(state): State<AppState>,
+) -> ApiResult<Json<Vec<crate::domain::entities::CostCenter>>> {
+    let list = state.finance_service.list_cost_centers().await?;
+    Ok(Json(list))
+}
+
+pub async fn create_cost_center(
+    State(state): State<AppState>,
+    Json(payload): Json<crate::domain::entities::CreateCostCenterRequest>,
+) -> ApiResult<Json<crate::domain::entities::CostCenter>> {
+    let item = state.finance_service.create_cost_center(payload).await?;
+    Ok(Json(item))
+}
+
+pub async fn list_budgets(
+    State(state): State<AppState>,
+) -> ApiResult<Json<Vec<crate::domain::entities::Budget>>> {
+    let list = state.finance_service.list_budgets().await?;
+    Ok(Json(list))
+}
+
+pub async fn create_budget(
+    State(state): State<AppState>,
+    Json(payload): Json<crate::domain::entities::CreateBudgetRequest>,
+) -> ApiResult<Json<crate::domain::entities::Budget>> {
+    let item = state.finance_service.create_budget(payload).await?;
+    Ok(Json(item))
+}
+
+pub async fn get_budget_variance(
+    State(state): State<AppState>,
+) -> ApiResult<Json<Vec<crate::domain::entities::BudgetVarianceReport>>> {
+    let report = state.finance_service.get_budget_variance().await?;
+    Ok(Json(report))
+}
+
+pub async fn list_bank_accounts(
+    State(state): State<AppState>,
+) -> ApiResult<Json<Vec<crate::domain::entities::BankAccount>>> {
+    let list = state.finance_service.list_bank_accounts().await?;
+    Ok(Json(list))
+}
+
+pub async fn create_bank_account(
+    State(state): State<AppState>,
+    Json(payload): Json<crate::domain::entities::CreateBankAccountRequest>,
+) -> ApiResult<Json<crate::domain::entities::BankAccount>> {
+    let item = state.finance_service.create_bank_account(payload).await?;
+    Ok(Json(item))
+}
+
+pub async fn list_credit_notes(
+    State(state): State<AppState>,
+) -> ApiResult<Json<Vec<crate::domain::entities::CreditNote>>> {
+    let list = state.finance_service.list_credit_notes().await?;
+    Ok(Json(list))
+}
+
+pub async fn create_credit_note(
+    State(state): State<AppState>,
+    Json(payload): Json<crate::domain::entities::CreateCreditNoteRequest>,
+) -> ApiResult<Json<crate::domain::entities::CreditNote>> {
+    let item = state.finance_service.create_credit_note(payload).await?;
+    Ok(Json(item))
+}
+
+pub async fn list_debit_notes(
+    State(state): State<AppState>,
+) -> ApiResult<Json<Vec<crate::domain::entities::DebitNote>>> {
+    let list = state.finance_service.list_debit_notes().await?;
+    Ok(Json(list))
+}
+
+pub async fn create_debit_note(
+    State(state): State<AppState>,
+    Json(payload): Json<crate::domain::entities::CreateDebitNoteRequest>,
+) -> ApiResult<Json<crate::domain::entities::DebitNote>> {
+    let item = state.finance_service.create_debit_note(payload).await?;
+    Ok(Json(item))
+}
+
+pub async fn list_tax_categories(
+    State(state): State<AppState>,
+) -> ApiResult<Json<Vec<crate::domain::entities::TaxCategory>>> {
+    let list = state.finance_service.list_tax_categories().await?;
+    Ok(Json(list))
+}

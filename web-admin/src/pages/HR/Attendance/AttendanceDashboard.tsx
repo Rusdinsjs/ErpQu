@@ -32,7 +32,7 @@ export default function AttendanceDashboard() {
     const { data: allToday, isLoading: allLoading } = useQuery({
         queryKey: ['attendance-all-today'],
         queryFn: attendanceApi.getAllToday,
-        enabled: user?.role === 'admin' || user?.role === 'manager', // Only fetch if admin/manager
+        enabled: ['admin', 'manager', 'super_admin'].includes(user?.role || ''), // Fetch if admin/manager/super_admin
     });
 
     // Mutations
@@ -115,11 +115,17 @@ export default function AttendanceDashboard() {
                             <Clock className={`h-16 w-16 mb-4 ${hasCheckedIn && !hasCheckedOut ? 'text-orange-500 animate-pulse' : 'text-muted-foreground'
                                 }`} />
 
+                            {!todayStatus?.data && (
+                                <div className="text-center text-xs text-muted-foreground mb-3 bg-muted/40 p-2.5 rounded-lg border border-border/40">
+                                    Akun administrator ini belum terhubung ke data Karyawan untuk absensi mandiri.
+                                </div>
+                            )}
+
                             {!hasCheckedIn && (
                                 <Button
                                     className="w-full h-12 text-lg"
                                     onClick={() => handleCheckAction('check-in')}
-                                    disabled={checkInMutation.isPending}
+                                    disabled={checkInMutation.isPending || !todayStatus?.data}
                                 >
                                     Check In
                                 </Button>
@@ -196,7 +202,7 @@ export default function AttendanceDashboard() {
             </div>
 
             {/* Admin View: Team Attendance */}
-            {(user?.role === 'admin' || user?.role === 'manager') && (
+            {['admin', 'manager', 'super_admin'].includes(user?.role || '') && (
                 <Card className="p-6 mt-6">
                     <div className="flex justify-between items-center mb-4">
                         <h2 className="text-lg font-semibold text-foreground">Team Status (Today)</h2>

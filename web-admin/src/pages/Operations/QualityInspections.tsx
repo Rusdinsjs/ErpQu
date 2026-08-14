@@ -30,10 +30,11 @@ const QualityInspectionsPage: React.FC = () => {
         queryFn: () => opsApi.listQualityInspections(DEFAULT_COMPANY_ID)
     });
 
-    const { data: items = [] } = useQuery({
-        queryKey: ['inventory-items'],
+    const { data: rawItems = [] } = useQuery({
+        queryKey: ['items'],
         queryFn: () => inventoryApi.listItems()
     });
+    const items: any[] = (rawItems as any[]) || [];
 
     // Mutations
     const createMut = useMutation({

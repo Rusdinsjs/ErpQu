@@ -104,3 +104,9 @@ pub use user::User;
 pub use user::*;
 pub use vendor::*;
 pub use work_order::*;
+
+pub mod hr_lifecycle;
+pub use hr_lifecycle::*;
+
+pub mod hr_shift_overtime;
+pub use hr_shift_overtime::*;

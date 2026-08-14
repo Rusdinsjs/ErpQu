@@ -13,7 +13,7 @@ export default function IoTSensorStream() {
     // Fetch Assets for dropdown
     const { data: assetsResponse } = useQuery({
         queryKey: ['assets-list-telemetry'],
-        queryFn: () => assetApi.list({ per_page: 50 })
+        queryFn: () => assetApi.list({ page: 1, per_page: 50 })
     });
     
     const assets = assetsResponse?.data || [];

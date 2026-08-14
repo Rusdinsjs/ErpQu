@@ -7,6 +7,7 @@ use utoipa::OpenApi;
 
 // use crate::api::middleware::security_headers::security_headers_middleware;
 use crate::api::routes::create_router;
+use crate::application::services::{HrLifecycleService, HrShiftOvertimeService};
 use crate::application::services::{
     AnalyticsService,
     ApprovalService,
@@ -62,6 +63,7 @@ use crate::application::services::{
 };
 use crate::infrastructure::bus::EventBus;
 use crate::infrastructure::cache::{CacheOperations, RedisCache, RedisConfig};
+use crate::infrastructure::repositories::{HrLifecycleRepository, HrShiftOvertimeRepository};
 use crate::infrastructure::repositories::{
     ApprovalRepository, AssetExpenseRepository, AssetRepository, AuditRepository,
     CategoryRepository, CategoryTemplateRepository, ClientRepository, ContractDocumentRepository,
@@ -127,6 +129,8 @@ pub struct AppState {
     pub analytics_service: AnalyticsService,
     pub depreciation_service: DepreciationService, // Added
     pub employee_service: EmployeeService,
+    pub hr_lifecycle_service: HrLifecycleService,
+    pub hr_shift_overtime_service: HrShiftOvertimeService,
     pub location_service: LocationService, // Added
     pub leave_service: crate::application::services::LeaveService,
     pub finance_service: FinanceService,   // Added
@@ -379,6 +383,11 @@ impl AppState {
             crate::infrastructure::repositories::LocationRepository::new(pool.clone());
         let location_service = LocationService::new(location_repo);
 
+        let hr_lifecycle_repo = HrLifecycleRepository::new(pool.clone());
+        let hr_lifecycle_service = HrLifecycleService::new(hr_lifecycle_repo, employee_repo.clone());
+        let hr_shift_overtime_repo = HrShiftOvertimeRepository::new(pool.clone());
+        let hr_shift_overtime_service = HrShiftOvertimeService::new(hr_shift_overtime_repo, employee_repo.clone());
+
         let leave_repo = crate::infrastructure::repositories::LeaveRepository::new(pool.clone());
         let leave_service =
             crate::application::services::LeaveService::new(leave_repo, employee_repo);
@@ -425,6 +434,8 @@ impl AppState {
             report_service,
             analytics_service,
             employee_service,
+            hr_lifecycle_service,
+            hr_shift_overtime_service,
             location_service,
             file_storage,
             contract_document_repo,

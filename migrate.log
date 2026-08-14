@@ -1,7 +1,6 @@
-Applied 20260808000001/migrate separate logical schemas (49.476495ms)
-Applied 20260808140000/migrate create company app frappe (10.914448ms)
-Applied 20260808150000/migrate add company deeds (9.557679ms)
-Applied 20260808190000/migrate create maintenance teams (12.503953ms)
-Applied 20260808200000/migrate fix company id assets (16.24594ms)
-Applied 20260808210000/migrate 1to1 module launchpads (8.128962ms)
-error: migration 20260809220000 was previously applied but has been modified
+Applied 20260808000001/migrate separate logical schemas (50.54167ms)
+Applied 20260808140000/migrate create company app frappe (13.094495ms)
+Applied 20260808150000/migrate add company deeds (11.175194ms)
+Applied 20260808190000/migrate create maintenance teams (11.007829ms)
+Applied 20260808200000/migrate fix company id assets (16.395705ms)
+Applied 20260808210000/migrate 1to1 module launchpads (7.439262ms)

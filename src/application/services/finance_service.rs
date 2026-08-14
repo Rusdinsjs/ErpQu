@@ -845,4 +845,101 @@ impl FinanceService {
 
         Ok(())
     }
+
+    // ─── EXTENDED ACCOUNTING METHODS ─────────────────────────────────────────
+
+    pub async fn list_payment_entries(&self) -> DomainResult<Vec<crate::domain::entities::PaymentEntry>> {
+        self.repo.list_payment_entries().await
+    }
+
+    pub async fn get_payment_entry_by_id(&self, id: Uuid) -> DomainResult<Option<crate::domain::entities::PaymentEntry>> {
+        self.repo.get_payment_entry_by_id(id).await
+    }
+
+    pub async fn create_payment_entry(
+        &self,
+        req: crate::domain::entities::CreatePaymentEntryRequest,
+    ) -> DomainResult<crate::domain::entities::PaymentEntry> {
+        self.repo.create_payment_entry(&req).await
+    }
+
+    pub async fn list_cost_centers(&self) -> DomainResult<Vec<crate::domain::entities::CostCenter>> {
+        self.repo.list_cost_centers().await
+    }
+
+    pub async fn create_cost_center(
+        &self,
+        req: crate::domain::entities::CreateCostCenterRequest,
+    ) -> DomainResult<crate::domain::entities::CostCenter> {
+        self.repo.create_cost_center(&req).await
+    }
+
+    pub async fn list_budgets(&self) -> DomainResult<Vec<crate::domain::entities::Budget>> {
+        self.repo.list_budgets().await
+    }
+
+    pub async fn create_budget(
+        &self,
+        req: crate::domain::entities::CreateBudgetRequest,
+    ) -> DomainResult<crate::domain::entities::Budget> {
+        self.repo.create_budget(&req).await
+    }
+
+    pub async fn get_budget_variance(&self) -> DomainResult<Vec<crate::domain::entities::BudgetVarianceReport>> {
+        self.repo.get_budget_variance().await
+    }
+
+    pub async fn get_ar_aging(&self) -> DomainResult<Vec<crate::domain::entities::AgingReportItem>> {
+        self.repo.get_ar_aging().await
+    }
+
+    pub async fn get_ap_aging(&self) -> DomainResult<Vec<crate::domain::entities::AgingReportItem>> {
+        self.repo.get_ap_aging().await
+    }
+
+    pub async fn list_bank_accounts(&self) -> DomainResult<Vec<crate::domain::entities::BankAccount>> {
+        self.repo.list_bank_accounts().await
+    }
+
+    pub async fn create_bank_account(
+        &self,
+        req: crate::domain::entities::CreateBankAccountRequest,
+    ) -> DomainResult<crate::domain::entities::BankAccount> {
+        self.repo.create_bank_account(&req).await
+    }
+
+    pub async fn list_credit_notes(&self) -> DomainResult<Vec<crate::domain::entities::CreditNote>> {
+        self.repo.list_credit_notes().await
+    }
+
+    pub async fn create_credit_note(
+        &self,
+        req: crate::domain::entities::CreateCreditNoteRequest,
+    ) -> DomainResult<crate::domain::entities::CreditNote> {
+        self.repo.create_credit_note(&req).await
+    }
+
+    pub async fn list_debit_notes(&self) -> DomainResult<Vec<crate::domain::entities::DebitNote>> {
+        self.repo.list_debit_notes().await
+    }
+
+    pub async fn create_debit_note(
+        &self,
+        req: crate::domain::entities::CreateDebitNoteRequest,
+    ) -> DomainResult<crate::domain::entities::DebitNote> {
+        self.repo.create_debit_note(&req).await
+    }
+
+    pub async fn list_tax_categories(&self) -> DomainResult<Vec<crate::domain::entities::TaxCategory>> {
+        self.repo.list_tax_categories().await
+    }
+
+    pub async fn create_tax_category(&self, title: &str, description: Option<&str>) -> DomainResult<crate::domain::entities::TaxCategory> {
+        self.repo.create_tax_category(title, description).await
+    }
+
+    pub async fn get_cash_flow_statement(&self) -> DomainResult<crate::domain::entities::CashFlowStatement> {
+        self.repo.get_cash_flow_statement().await
+    }
+
 }

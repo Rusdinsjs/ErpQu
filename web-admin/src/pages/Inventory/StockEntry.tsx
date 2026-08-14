@@ -44,10 +44,12 @@ const StockEntryPage: React.FC = () => {
         queryFn: () => inventoryApi.listWarehouses()
     });
 
-    const { data: items = [] } = useQuery({
+    const { data: rawItems = [] } = useQuery({
         queryKey: ['inventory-items'],
         queryFn: () => inventoryApi.listItems()
     });
+    const items: any[] = (rawItems as any[]) || [];
+    
 
     // Bins for form selection
     const { data: sourceBins = [] } = useQuery({

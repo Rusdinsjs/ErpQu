@@ -87,6 +87,13 @@ pub struct ServiceRegistry {
     pub employee_service: EmployeeService,
     pub location_service: LocationService,
     pub leave_service: LeaveService,
+    pub hr_lifecycle_service: management_system_hr::services::HrLifecycleService,
+    pub hr_shift_overtime_service: management_system_hr::services::HrShiftOvertimeService,
+    pub hr_leaves_service: management_system_hr::services::HrLeavesService,
+    pub hr_payroll_service: management_system_hr::services::HrPayrollService,
+    pub hr_loans_claims_kpi_service: management_system_hr::services::HrLoansClaimsKpiService,
+    pub hr_recruitment_training_discipline_service: management_system_hr::services::HrRecruitmentTrainingDisciplineService,
+    pub hr_driver_p2h_safety_service: management_system_hr::services::HrDriverP2hSafetyService,
     pub metadata_service: management_system_core::application::services::MetadataService,
     pub stock_document_service: management_system_inventory::StockDocumentService,
     pub quality_service: management_system_ops::QualityService,
@@ -358,6 +365,20 @@ impl AppState {
             );
         let location_service = LocationService::new(location_repo);
 
+        let hr_lifecycle_repo = management_system_hr::repositories::HrLifecycleRepository::new(pool.clone());
+        let hr_lifecycle_service = management_system_hr::services::HrLifecycleService::new(hr_lifecycle_repo, employee_repo.clone());
+        let hr_shift_overtime_repo = management_system_hr::repositories::HrShiftOvertimeRepository::new(pool.clone());
+        let hr_shift_overtime_service = management_system_hr::services::HrShiftOvertimeService::new(hr_shift_overtime_repo, employee_repo.clone());
+        let hr_leaves_repo = management_system_hr::repositories::HrLeavesRepository::new(pool.clone());
+        let hr_leaves_service = management_system_hr::services::HrLeavesService::new(hr_leaves_repo, employee_repo.clone());
+        let hr_payroll_repo = management_system_hr::repositories::HrPayrollRepository::new(pool.clone());
+        let hr_loans_claims_kpi_repo = management_system_hr::repositories::HrLoansClaimsKpiRepository::new(pool.clone());
+        let hr_payroll_service = management_system_hr::services::HrPayrollService::new(hr_payroll_repo, employee_repo.clone(), hr_loans_claims_kpi_repo.clone());
+        let hr_loans_claims_kpi_service = management_system_hr::services::HrLoansClaimsKpiService::new(hr_loans_claims_kpi_repo);
+        let hr_recruitment_repo = management_system_hr::repositories::HrRecruitmentTrainingDisciplineRepository::new(pool.clone());
+        let hr_recruitment_training_discipline_service = management_system_hr::services::HrRecruitmentTrainingDisciplineService::new(hr_recruitment_repo, employee_repo.clone());
+        let hr_driver_repo = management_system_hr::repositories::HrDriverP2hSafetyRepository::new(pool.clone());
+        let hr_driver_p2h_safety_service = management_system_hr::services::HrDriverP2hSafetyService::new(hr_driver_repo);
         let leave_service = LeaveService::new(leave_repo, employee_repo);
 
         let settings_service = SettingsService::new(settings_repo);
@@ -419,6 +440,13 @@ impl AppState {
             employee_service,
             location_service,
             leave_service,
+            hr_lifecycle_service,
+            hr_shift_overtime_service,
+            hr_leaves_service,
+            hr_payroll_service,
+            hr_loans_claims_kpi_service,
+            hr_recruitment_training_discipline_service,
+            hr_driver_p2h_safety_service,
             finance_service,
             fuel_service,
             journal_service,

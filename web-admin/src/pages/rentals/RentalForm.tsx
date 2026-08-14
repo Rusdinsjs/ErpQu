@@ -337,7 +337,7 @@ export default function RentalForm() {
                         };
                         const res = await clientApi.create(payload);
                         queryClient.invalidateQueries({ queryKey: ['clients-list'] });
-                        setHeaderData(p => ({ ...p, client_id: res.data.id }));
+                        setHeaderData(p => ({ ...p, client_id: (res.data as any)?.data?.id || (res.data as any)?.id }));
                     } catch (err) {
                         console.error('Failed to create customer:', err);
                     }

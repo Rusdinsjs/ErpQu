@@ -15,6 +15,7 @@ export default function MaintenanceTypesView() {
     const navigate = useNavigate();
     const queryClient = useQueryClient();
     const { success, error: showError } = useToast();
+    const [localTypes, setLocalTypes] = useState<any[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [categoryFilter, setCategoryFilter] = useState<string>('all');
 
@@ -126,7 +127,7 @@ export default function MaintenanceTypesView() {
     const filteredTypes = types.filter(t => {
         const matchesSearch = t.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             t.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            t.description.toLowerCase().includes(searchTerm.toLowerCase());
+            (t.description || "").toLowerCase().includes(searchTerm.toLowerCase());
         const matchesCat = categoryFilter === 'all' ? true : t.category === categoryFilter;
         return matchesSearch && matchesCat;
     });
@@ -185,7 +186,7 @@ export default function MaintenanceTypesView() {
                         <option value="Korektif / Darurat">Korektif / Darurat</option>
                         <option value="Inspeksi & Kalibrasi">Inspeksi & Kalibrasi</option>
                     </Select>
-                    <Button variant="outline" size="sm" onClick={() => { setTypes([...types]); success('Refreshed', 'Daftar tipe pemeliharaan diperbarui.'); }}>
+                    <Button variant="outline" size="sm" onClick={() => { setLocalTypes([...types]); success('Refreshed', 'Daftar tipe pemeliharaan diperbarui.'); }}>
                         <RefreshCw size={14} className="mr-1.5" /> Refresh
                     </Button>
                 </div>

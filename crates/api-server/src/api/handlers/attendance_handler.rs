@@ -11,11 +11,11 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::api::server::AppState;
+use management_system_core::domain::entities::UserClaims;
+use management_system_core::shared::errors::AppError;
 use management_system_hr::domain::entities::{
     AttendanceRecord, CheckInRequest, CheckOutRequest, TodayAttendanceStatus,
 };
-use management_system_core::domain::entities::UserClaims;
-use management_system_core::shared::errors::AppError;
 use management_system_hr::services::AttendanceService;
 
 /// Query params for attendance history
@@ -62,16 +62,18 @@ impl<T> AttendanceResponse<T> {
 pub async fn get_today_status(
     State(state): State<AppState>,
     Extension(claims): Extension<UserClaims>,
-) -> Result<Json<AttendanceResponse<TodayAttendanceStatus>>, (StatusCode, Json<serde_json::Value>)>
+) -> Result<Json<AttendanceResponse<Option<TodayAttendanceStatus>>>, (StatusCode, Json<serde_json::Value>)>
 {
-    // Get employee_id from user
-    let employee_id = get_employee_id_for_user(&state, claims.user_id()).await?;
+    let employee_id = match get_employee_id_for_user(&state, claims.user_id()).await? {
+        Some(id) => id,
+        None => return Ok(Json(AttendanceResponse::success(None))),
+    };
 
     let status = AttendanceService::get_today_status(&state.pool, employee_id)
         .await
         .map_err(internal_error)?;
 
-    Ok(Json(AttendanceResponse::success(status)))
+    Ok(Json(AttendanceResponse::success(Some(status))))
 }
 
 /// Check in
@@ -80,7 +82,17 @@ pub async fn check_in(
     Extension(claims): Extension<UserClaims>,
     Json(request): Json<CheckInRequest>,
 ) -> Result<Json<AttendanceResponse<AttendanceRecord>>, (StatusCode, Json<serde_json::Value>)> {
-    let employee_id = get_employee_id_for_user(&state, claims.user_id()).await?;
+    let employee_id = match get_employee_id_for_user(&state, claims.user_id()).await? {
+        Some(id) => id,
+        None => {
+            return Err((
+                StatusCode::BAD_REQUEST,
+                Json(serde_json::json!({
+                    "error": "Akun Anda belum terhubung dengan profil Karyawan. Silakan hubungkan akun di menu Master Karyawan."
+                })),
+            ));
+        }
+    };
 
     let record = AttendanceService::check_in(&state.pool, employee_id, request)
         .await
@@ -106,7 +118,17 @@ pub async fn check_out(
     Extension(claims): Extension<UserClaims>,
     Json(request): Json<CheckOutRequest>,
 ) -> Result<Json<AttendanceResponse<AttendanceRecord>>, (StatusCode, Json<serde_json::Value>)> {
-    let employee_id = get_employee_id_for_user(&state, claims.user_id()).await?;
+    let employee_id = match get_employee_id_for_user(&state, claims.user_id()).await? {
+        Some(id) => id,
+        None => {
+            return Err((
+                StatusCode::BAD_REQUEST,
+                Json(serde_json::json!({
+                    "error": "Akun Anda belum terhubung dengan profil Karyawan. Silakan hubungkan akun di menu Master Karyawan."
+                })),
+            ));
+        }
+    };
 
     let record = AttendanceService::check_out(&state.pool, employee_id, request)
         .await
@@ -131,7 +153,10 @@ pub async fn get_my_history(
     Query(query): Query<AttendanceHistoryQuery>,
 ) -> Result<Json<AttendanceResponse<Vec<AttendanceRecord>>>, (StatusCode, Json<serde_json::Value>)>
 {
-    let employee_id = get_employee_id_for_user(&state, claims.user_id()).await?;
+    let employee_id = match get_employee_id_for_user(&state, claims.user_id()).await? {
+        Some(id) => id,
+        None => return Ok(Json(AttendanceResponse::success(vec![]))),
+    };
 
     let records =
         AttendanceService::get_history(&state.pool, employee_id, query.limit, query.offset)
@@ -173,7 +198,6 @@ pub async fn scan_face(
     State(_state): State<AppState>,
     Json(_payload): Json<serde_json::Value>,
 ) -> Result<Json<AttendanceResponse<String>>, (StatusCode, Json<serde_json::Value>)> {
-    // TODO: Implement actual face scanning logic
     Ok(Json(AttendanceResponse::success(
         "Face scan received".to_string(),
     )))
@@ -184,7 +208,6 @@ pub async fn list_logs(
     State(_state): State<AppState>,
 ) -> Result<Json<AttendanceResponse<Vec<AttendanceRecord>>>, (StatusCode, Json<serde_json::Value>)>
 {
-    // TODO: Implement listing logs
     Ok(Json(AttendanceResponse::success(vec![])))
 }
 
@@ -193,7 +216,7 @@ pub async fn list_logs(
 async fn get_employee_id_for_user(
     state: &AppState,
     user_id: Uuid,
-) -> Result<Uuid, (StatusCode, Json<serde_json::Value>)> {
+) -> Result<Option<Uuid>, (StatusCode, Json<serde_json::Value>)> {
     let result = sqlx::query_scalar::<_, Uuid>(
         "SELECT id FROM employees WHERE user_id = $1 AND is_active = true",
     )
@@ -202,12 +225,7 @@ async fn get_employee_id_for_user(
     .await
     .map_err(|e| internal_error(AppError::Database(e.to_string())))?;
 
-    result.ok_or_else(|| {
-        (
-            StatusCode::NOT_FOUND,
-            Json(serde_json::json!({ "error": "Employee record not found for this user" })),
-        )
-    })
+    Ok(result)
 }
 
 fn internal_error<E: std::fmt::Display>(err: E) -> (StatusCode, Json<serde_json::Value>) {

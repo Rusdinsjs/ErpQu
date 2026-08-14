@@ -11,9 +11,15 @@ pub struct Department {
     pub id: Uuid,
     pub code: String,
     pub name: String,
+    #[sqlx(default)]
+    pub description: Option<String>,
+    #[sqlx(default)]
     pub parent_id: Option<Uuid>,
+    #[sqlx(default)]
     pub organization_id: Option<Uuid>,
+    #[sqlx(default)]
     pub manager_id: Option<Uuid>,
+    #[sqlx(default)]
     pub cost_center: Option<String>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
@@ -26,6 +32,7 @@ impl Department {
             id: Uuid::new_v4(),
             code,
             name,
+            description: None,
             parent_id: None,
             organization_id: None,
             manager_id: None,

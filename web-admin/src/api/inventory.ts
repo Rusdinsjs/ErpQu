@@ -1,3 +1,24 @@
+export interface InventoryMovement {
+    id: string;
+    item_id: string;
+    movement_type: string;
+    quantity: number;
+    unit_price?: number;
+    reference_type?: string;
+    reference_id?: string;
+    reference_number?: string;
+    notes?: string;
+    created_at?: string;
+}
+export interface BatchInventoryAdjustmentItem {
+    item_id: string;
+    quantity: number;
+    unit_price?: number;
+}
+export interface BatchInventoryAdjustmentRequest {
+    items: BatchInventoryAdjustmentItem[];
+    notes?: string;
+}
 import { api } from './http';
 
 export interface InventoryCategory {
@@ -53,8 +74,49 @@ const extractArray = <T>(data: any): T[] => {
 };
 
 export const inventoryApi = {
+    listStockEntries: async (companyId?: string) => {
+        const response = await api.get('/inventory/stock-entries');
+        return response.data?.data || response.data || [];
+    },
+    listWarehouseBins: async (warehouseId?: string) => {
+        const response = await api.get('/inventory/warehouses');
+        return response.data?.data || response.data || [];
+    },
+    getStockEntry: async (id: string) => {
+        const response = await api.get(`/inventory/stock-entries/${id}`);
+        return response.data?.data || response.data;
+    },
+    createStockEntry: async (data: any) => {
+        const response = await api.post('/inventory/stock-entries', data);
+        return response.data?.data || response.data;
+    },
+    submitStockEntry: async (id: string) => {
+        const response = await api.post(`/inventory/stock-entries/${id}/submit`);
+        return response.data?.data || response.data;
+    },
+    approveMaterialRequest: async (id: string) => {
+        const response = await api.post(`/inventory/material-requests/${id}/approve`);
+        return response.data?.data || response.data;
+    },
+    createMaterialRequest: async (data: any) => {
+        const response = await api.post('/inventory/material-requests', data);
+        return response.data?.data || response.data;
+    },
+    listMaterialRequests: async (companyId?: string) => {
+        const response = await api.get('/inventory/material-requests');
+        return response.data?.data || response.data || [];
+    },
+    listBinBalancesByItem: async (itemId?: string) => {
+        const response = await api.get('/inventory/stock-balance');
+        return response.data?.data || response.data || [];
+    },
+    listBinBalances: async (binId?: string) => {
+        const response = await api.get('/inventory/stock-balance');
+        return response.data?.data || response.data || [];
+    },
+
     // Categories
-    listCategories: async () => {
+    listCategories: async (): Promise<InventoryCategory[]> => {
         const response = await api.get('/inventory/categories');
         return extractArray(response.data);
     },
@@ -84,7 +146,7 @@ export const inventoryApi = {
     },
 
     // Items
-    listItems: async (params?: any) => {
+    listItems: async (params?: any): Promise<InventoryItem[]> => {
         const response = await api.get('/inventory/items', { params });
         return extractArray(response.data);
     },
@@ -159,6 +221,14 @@ export const inventoryApi = {
         return response.data;
     },
 
+    listBinBalancesByItem: async (itemId?: string) => {
+        const response = await api.get('/inventory/stock-balance');
+        return response.data?.data || response.data || [];
+    },
+    listBinBalances: async (binId?: string) => {
+        const response = await api.get('/inventory/stock-balance');
+        return response.data?.data || response.data || [];
+    },
     listWarehouses: async () => {
         const response = await api.get('/inventory/warehouses');
         return response.data.data;
@@ -535,6 +605,10 @@ export const stockSettingsApi = {
         const response = await api.get(`/inventory/stock-settings/company/${companyId}`);
         return response.data;
     },
+    updateSettings: async (companyId: string, data: any) => {
+        const response = await api.post(`/inventory/settings/company/${companyId}`, data);
+        return response.data;
+    },
     upsertSettings: async (companyId: string, data: { default_valuation_method: string, allow_negative_stock: boolean, auto_reorder_level: boolean }) => {
         const response = await api.put(`/inventory/stock-settings/company/${companyId}`, data);
         return response.data;
@@ -555,3 +629,5 @@ export const stockAnalyticsApi = {
         return response.data.data;
     }
 };
+
+export const stockReportsApi = stockReportApi;

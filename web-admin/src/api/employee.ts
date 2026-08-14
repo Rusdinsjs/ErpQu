@@ -58,12 +58,20 @@ export interface Employee {
 
 export const employeeApi = {
     list: async (params?: any) => {
-        const response = await api.get<Employee[]>('/employees', { params });
-        return response.data;
+        const response = await api.get<any>('/employees', { params });
+        if (Array.isArray(response.data)) return response.data;
+        if (response.data && Array.isArray(response.data.data)) return response.data.data;
+        return [];
+    },
+    getAll: async (params?: any) => {
+        const response = await api.get<any>('/employees', { params });
+        if (Array.isArray(response.data)) return response.data;
+        if (response.data && Array.isArray(response.data.data)) return response.data.data;
+        return [];
     },
     get: async (id: string) => {
-        const response = await api.get<Employee>(`/employees/${id}`);
-        return response.data;
+        const response = await api.get<any>(`/employees/${id}`);
+        return response.data?.data || response.data;
     },
     create: async (data: any) => {
         const response = await api.post<Employee>('/employees', data);

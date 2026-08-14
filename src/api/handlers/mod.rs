@@ -124,3 +124,9 @@ pub use leave_handler::*;
 pub mod asset_expense_handler;
 pub mod rental_billing_handler;
 pub use asset_expense_handler::*;
+
+pub mod hr_lifecycle_handler;
+pub use hr_lifecycle_handler::*;
+
+pub mod hr_shift_overtime_handler;
+pub use hr_shift_overtime_handler::*;

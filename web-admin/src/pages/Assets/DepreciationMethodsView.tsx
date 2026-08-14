@@ -26,6 +26,7 @@ export default function DepreciationMethodsView() {
     const navigate = useNavigate();
     const queryClient = useQueryClient();
     const { success, error: showError } = useToast();
+    const [localMethods, setLocalMethods] = useState<any[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
 
@@ -251,7 +252,7 @@ export default function DepreciationMethodsView() {
                     <Input
                         placeholder="Cari kode, nama metode, deskripsi..."
                         value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
+                        onChange={(e: any) => setSearchTerm(e?.target ? e.target.value : e)}
                         className="pl-10"
                     />
                 </div>
@@ -265,7 +266,7 @@ export default function DepreciationMethodsView() {
                         <option value="active">Aktif</option>
                         <option value="inactive">Non-Aktif</option>
                     </Select>
-                    <Button variant="outline" size="sm" onClick={() => { setMethods([...methods]); success('Refreshed', 'Daftar metode depresiasi ter-update.'); }}>
+                    <Button variant="outline" size="sm" onClick={() => { setLocalMethods([...methods]); success('Refreshed', 'Daftar metode depresiasi ter-update.'); }}>
                         <RefreshCw size={14} className="mr-1.5" /> Refresh
                     </Button>
                 </div>

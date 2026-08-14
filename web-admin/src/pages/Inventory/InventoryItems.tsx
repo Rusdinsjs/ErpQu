@@ -583,10 +583,10 @@ export default function InventoryItems() {
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y divide-slate-800/50">
-                                        {movements.map((m: InventoryMovement) => (
+                                        {(movements as any[]).map((m: any) => (
                                             <tr key={m.id} className="hover:bg-slate-800/20 transition-colors group">
                                                 <td className="px-6 py-4 text-sm text-muted-foreground">
-                                                    {format(new Date(m.created_at), 'dd MMM yyyy HH:mm')}
+                                                    {format(new Date(m.created_at || Date.now()), 'dd MMM yyyy HH:mm')}
                                                 </td>
                                                 {!selectedItemForHistory && (
                                                     <td className="px-6 py-4">

@@ -10,7 +10,8 @@ import {
     Calendar as CalendarIcon, ArrowLeftRight, TrendingUp,
     Wallet, ShoppingCart, Receipt, History, Wrench, Fuel, Shield, Layers,
     CheckSquare, Box, ShieldAlert,
-    Database, Mail, ShoppingBag, Tag, Download, RefreshCw, Lock, CheckCircle2, DollarSign, BarChart2, Activity, Factory
+    Briefcase, User, FileSpreadsheet,
+    Database, Mail, ShoppingBag, Tag, Download, RefreshCw, Lock, CheckCircle2, DollarSign, BarChart2, Activity, Factory, CreditCard, HandCoins, Award, UserPlus, GraduationCap, AlertOctagon
 } from 'lucide-react';
 import { getImageUrl } from '../utils/image';
 import { Logo } from '../components/ui';
@@ -63,8 +64,10 @@ type TabId =
     | 'loans'
     | 'fuel'
     | 'employees'
+    | 'designations' | 'employee-lifecycle' | 'employee-360' | 'shifts' | 'attendance-logs' | 'overtime' | 'attendance-requests'
     | 'attendance'
     | 'leaves'
+    | 'salary-slips' | 'payroll-processing' | 'salary-assignments' | 'salary-structures' | 'employee-loans' | 'expense-claims' | 'appraisal' | 'recruitment' | 'training-certifications' | 'disciplinary-actions' | 'driver-assignments' | 'p2h-inspections' | 'driver-safety-incidents'
     | 'conversions'
     | 'approvals'
     | 'reports'
@@ -408,9 +411,29 @@ const ALL_NAV_ITEMS: Record<string, NavItem> = {
     'ap-aging': { id: 'ap-aging', icon: Clock, label: 'AP Aging Report', minLevel: 2 },
 
     'employees': { id: 'employees', icon: Users, label: 'Employees', minLevel: 3 },
+    'designations': { id: 'designations', icon: Briefcase, label: 'Master Jabatan', minLevel: 3 },
+    'employee-lifecycle': { id: 'employee-lifecycle', icon: History, label: 'Riwayat Karir', minLevel: 3 },
+    'employee-360': { id: 'employee-360', icon: User, label: 'Profil 360', minLevel: 3 },
+    'shifts': { id: 'shifts', icon: Clock, label: 'Manajemen Shift', minLevel: 3 },
+    'attendance-logs': { id: 'attendance-logs', icon: Activity, label: 'Log Kehadiran & Rekap', minLevel: 3 },
+    'overtime': { id: 'overtime', icon: FileSpreadsheet, label: 'Lembur (SPKL)', minLevel: 3 },
+    'attendance-requests': { id: 'attendance-requests', icon: ClipboardCheck, label: 'Koreksi Absensi', minLevel: 3 },
     'departments': { id: 'departments', icon: Building2, label: 'Departments', minLevel: 3 },
     'attendance': { id: 'attendance', icon: Clock, label: 'Attendance', minLevel: 3 },
     'leaves': { id: 'leaves', icon: CalendarIcon, label: 'Leaves', minLevel: 3 },
+    'salary-slips': { id: 'salary-slips', icon: FileText, label: 'Slip Gaji', minLevel: 3 },
+    'payroll-processing': { id: 'payroll-processing', icon: DollarSign, label: 'Proses Penggajian', minLevel: 3 },
+    'salary-assignments': { id: 'salary-assignments', icon: CreditCard, label: 'Penetapan Gaji', minLevel: 3 },
+    'salary-structures': { id: 'salary-structures', icon: Layers, label: 'Struktur Gaji', minLevel: 3 },
+    'employee-loans': { id: 'employee-loans', icon: HandCoins, label: 'Pinjaman & Kasbon', minLevel: 3 },
+    'expense-claims': { id: 'expense-claims', icon: Receipt, label: 'Klaim Reimbursement', minLevel: 3 },
+    'appraisal': { id: 'appraisal', icon: Award, label: 'Evaluasi Kinerja (KPI)', minLevel: 3 },
+    'recruitment': { id: 'recruitment', icon: UserPlus, label: 'Rekrutmen & ATS', minLevel: 3 },
+    'training-certifications': { id: 'training-certifications', icon: GraduationCap, label: 'Pelatihan & Sertifikasi', minLevel: 3 },
+    'disciplinary-actions': { id: 'disciplinary-actions', icon: AlertOctagon, label: 'Surat Peringatan & Disiplin', minLevel: 3 },
+    'driver-assignments': { id: 'driver-assignments', icon: Truck, label: 'Penugasan Driver & Alat', minLevel: 3 },
+    'p2h-inspections': { id: 'p2h-inspections', icon: ClipboardCheck, label: 'Inspeksi Harian (P2H)', minLevel: 3 },
+    'driver-safety-incidents': { id: 'driver-safety-incidents', icon: ShieldAlert, label: 'Insiden & Pelanggaran Driver', minLevel: 3 },
 
     'approvals': { id: 'approvals', icon: CheckSquare, label: 'Approval Center', minLevel: 3, showBadge: true },
 
@@ -455,6 +478,7 @@ export default function AdminDashboard() {
     const [selectedInventoryId, setSelectedInventoryId] = useState<string | null>(null);
     const [assetViewMode, setAssetViewMode] = useState<'list' | 'lifecycle' | 'details'>('list');
     const [selectedRentalId, setSelectedRentalId] = useState<string | null>(null);
+    const [selectedEmployeeId, setSelectedEmployeeId] = useState<string | null>(null);
     const [selectedContractId] = useState<string | null>(null);
 
     const { user, logout, hasPermission } = useAuthStore();
@@ -591,6 +615,10 @@ export default function AdminDashboard() {
                         }
                         if (m.id === 'hr') {
                             const ids = m.menuIds || [];
+                            const hrModuleIds: MenuId[] = ['employees', 'attendance', 'leaves', 'salary-slips', 'payroll-processing', 'salary-assignments', 'salary-structures', 'designations', 'employee-lifecycle', 'shifts', 'attendance-logs', 'overtime', 'attendance-requests'];
+                            hrModuleIds.forEach(id => {
+                                if (!ids.includes(id)) ids.push(id);
+                            });
                             return { ...m, menuIds: ids.filter((id: string) => id !== 'departments') };
                         }
                         if (m.id === 'admin') {
@@ -695,6 +723,15 @@ export default function AdminDashboard() {
             setSelectedRentalId(rentalDetailMatch.params.id);
             setSelectedWorkOrderId(null);
             setSelectedAssetId(null);
+            return;
+        }
+
+        const employee360Match = matchPath('/employees/:id/360', path);
+        if (employee360Match?.params.id) {
+            setActiveTab('employee-360');
+            setSelectedEmployeeId(employee360Match.params.id);
+            setSelectedAssetId(null);
+            setSelectedWorkOrderId(null);
             return;
         }
 
@@ -824,12 +861,14 @@ export default function AdminDashboard() {
             setAssetViewMode('list');
             setSelectedWorkOrderId(null);
             setSelectedRentalId(null);
+            setSelectedEmployeeId(null);
         } else if (path === '/') {
             setActiveTab('dashboard');
             setSelectedAssetId(null);
             setAssetViewMode('list');
             setSelectedWorkOrderId(null);
             setSelectedRentalId(null);
+            setSelectedEmployeeId(null);
         }
     }, [location.pathname]);
 
@@ -1212,8 +1251,21 @@ export default function AdminDashboard() {
                 id: 'hr_group',
                 label: 'Human Resources',
                 icon: Users,
-                minLevel: 3,
-                children: getGroupItems(hrIds, ['employees', 'attendance', 'leaves'])
+                minLevel: 5,
+                children: [
+                    { type: 'header', label: 'Kepegawaian & Karir' },
+                    ...getGroupItems(hrIds, ['employees', 'designations', 'employee-lifecycle']),
+                    { type: 'header', label: 'Presensi & Cuti' },
+                    ...getGroupItems(hrIds, ['attendance', 'leaves', 'shifts', 'attendance-logs', 'overtime', 'attendance-requests']),
+                    { type: 'header', label: 'Penggajian (Payroll)' },
+                    ...getGroupItems(hrIds, ['salary-slips', 'payroll-processing', 'salary-assignments', 'salary-structures']),
+                    { type: 'header', label: 'Kesejahteraan & Kinerja' },
+                    ...getGroupItems(hrIds, ['employee-loans', 'expense-claims', 'appraisal']),
+                    { type: 'header', label: 'Talenta & Disiplin' },
+                    ...getGroupItems(hrIds, ['recruitment', 'training-certifications', 'disciplinary-actions', 'driver-assignments', 'p2h-inspections', 'driver-safety-incidents']),
+                    { type: 'header', label: 'Operasional Driver & P2H' },
+                    ...getGroupItems(hrIds, ['driver-assignments', 'p2h-inspections', 'driver-safety-incidents']),
+                ]
             },
             {
                 id: 'settings_group',
@@ -1392,6 +1444,10 @@ export default function AdminDashboard() {
             }
 
             if (activeModule && !visibleMenuIds.includes(menuId)) {
+                // Always allow HR sub-menus when in HR module
+                if (activeModule === 'hr' && ['salary-slips', 'payroll-processing', 'salary-assignments', 'salary-structures', 'employee-loans', 'expense-claims', 'appraisal', 'recruitment', 'training-certifications', 'disciplinary-actions', 'driver-assignments', 'p2h-inspections', 'driver-safety-incidents', 'designations', 'employee-lifecycle', 'shifts', 'attendance-logs', 'overtime', 'attendance-requests', 'leaves', 'attendance', 'employees'].includes(menuId)) {
+                    return true;
+                }
                 return false;
             }
 
@@ -1566,6 +1622,7 @@ export default function AdminDashboard() {
                         selectedInventoryId={selectedInventoryId}
                         selectedRentalId={selectedRentalId}
                         selectedContractId={selectedContractId}
+                        selectedEmployeeId={selectedEmployeeId}
                         hasPermission={hasPermission}
                         setActiveTab={(tab: string) => setActiveTab(tab as TabId)}
                         navigate={navigate}

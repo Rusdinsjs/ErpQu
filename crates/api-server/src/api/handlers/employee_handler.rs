@@ -7,6 +7,7 @@ use uuid::Uuid;
 
 use crate::api::server::AppState;
 use management_system_core::application::dto::{
+    CreateEmployeeUserRequest,
     ApiResponse, CreateEmployeeRequest, PaginationParams, UpdateEmployeeRequest,
 };
 use management_system_hr::domain::entities::Employee;
@@ -71,7 +72,7 @@ pub async fn delete_employee(
 pub async fn create_employee_user(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
-    Json(payload): Json<management_system_core::application::dto::CreateEmployeeUserRequest>,
+    Json(payload): Json<CreateEmployeeUserRequest>,
 ) -> Result<Json<ApiResponse<Employee>>, AppError> {
     let employee = state.employee_service.create_user(id, payload).await?;
     Ok(Json(ApiResponse::success_with_message(

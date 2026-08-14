@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-    Plus, Search, Filter, Download, ArrowLeft, RefreshCw, Package, CheckCircle2, Eye, Trash2, FileText
+    Plus, Search, Filter, Download, ArrowLeft, RefreshCw, Package, CheckCircle2, Eye,  FileText
 } from 'lucide-react';
 import { Button, Input } from '../../components/ui';
 import { DocTypeFormModal } from '../../components/Forms/DocTypeFormModal';
@@ -125,7 +125,7 @@ export default function SellingGenericView({ title, description, type }: Props) 
                     <Button variant="outline" onClick={() => {}}>
                         <Download size={16} className="mr-2" /> Export
                     </Button>
-                    <Button variant="default" onClick={() => setCreateModalOpen(true)}>
+                    <Button variant="primary" onClick={() => setCreateModalOpen(true)}>
                         <Plus size={16} className="mr-2" /> Tambah Baru
                     </Button>
                 </div>

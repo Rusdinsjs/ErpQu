@@ -58,3 +58,25 @@ pub async fn get_income_statement(State(state): State<AppState>) -> Result<Json<
         "data": i_s
     })))
 }
+
+
+pub async fn get_ar_aging(
+    State(state): State<AppState>,
+) -> ApiResult<Json<Vec<crate::domain::entities::AgingReportItem>>> {
+    let report = state.finance_service.get_ar_aging().await?;
+    Ok(Json(report))
+}
+
+pub async fn get_ap_aging(
+    State(state): State<AppState>,
+) -> ApiResult<Json<Vec<crate::domain::entities::AgingReportItem>>> {
+    let report = state.finance_service.get_ap_aging().await?;
+    Ok(Json(report))
+}
+
+pub async fn get_cash_flow_statement(
+    State(state): State<AppState>,
+) -> ApiResult<Json<crate::domain::entities::CashFlowStatement>> {
+    let report = state.finance_service.get_cash_flow_statement().await?;
+    Ok(Json(report))
+}

@@ -3,7 +3,7 @@ import { type ReactNode, type ButtonHTMLAttributes } from 'react';
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
     children: ReactNode;
-    variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'success' | 'warning' | 'cyan';
+    variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger' | 'success' | 'warning' | 'cyan' | 'default';
     size?: 'xs' | 'sm' | 'md' | 'lg';
     loading?: boolean;
     leftIcon?: ReactNode;
@@ -34,6 +34,7 @@ export function Button({
         success: 'bg-emerald-600 text-white hover:bg-emerald-500 shadow-md shadow-emerald-600/20 focus:ring-emerald-600',
         warning: 'bg-amber-500 text-slate-950 font-bold hover:bg-amber-400 shadow-md shadow-amber-500/20 focus:ring-amber-500',
         cyan: 'bg-cyan-500 text-slate-950 font-bold hover:bg-cyan-400 shadow-md shadow-cyan-500/25 focus:ring-cyan-500',
+        default: 'bg-primary text-primary-foreground hover:bg-primary/90 shadow-md shadow-primary/20 focus:ring-primary',
     };
 
     const sizes = {

@@ -356,6 +356,102 @@ pub fn create_router(state: AppState) -> Router {
                 .delete(delete_user.layer(axum_middleware::from_fn(admin_only_middleware))),
         )
         // Employees
+
+        // ============================================================
+        // HR LIFECYCLE & 360 (FASE 1)
+        // ============================================================
+        .route("/api/hr/designations", get(hr_lifecycle_handler::list_designations).post(hr_lifecycle_handler::create_designation))
+        .route("/api/hr/designations/:id", get(hr_lifecycle_handler::get_designation).put(hr_lifecycle_handler::update_designation).delete(hr_lifecycle_handler::delete_designation))
+        .route("/api/hr/employment-types", get(hr_lifecycle_handler::list_employment_types).post(hr_lifecycle_handler::create_employment_type))
+        .route("/api/hr/lifecycle-events", get(hr_lifecycle_handler::list_lifecycle_events).post(hr_lifecycle_handler::create_lifecycle_event))
+        .route("/api/hr/employees/:id/360", get(hr_lifecycle_handler::get_employee_360))
+        .route("/api/hr/employees/:id/documents", get(hr_lifecycle_handler::list_employee_documents).post(hr_lifecycle_handler::create_employee_document))
+        .route("/api/hr/documents/:id", delete(hr_lifecycle_handler::delete_employee_document))
+        .route("/api/hr/employees/:id/education", get(hr_lifecycle_handler::list_employee_education).post(hr_lifecycle_handler::create_employee_education))
+        .route("/api/hr/education/:id", delete(hr_lifecycle_handler::delete_employee_education))
+        // ============================================================
+        // HR SHIFT, OVERTIME & ATTENDANCE LOGS (FASE 2)
+        // ============================================================
+
+        // ============================================================
+        // HR LEAVES, HOLIDAYS & WORKFLOW ENGINE (FASE 3)
+        // ============================================================
+
+        // ============================================================
+
+        // ============================================================
+
+        // ============================================================
+
+        // ============================================================
+        // HR FLEET DRIVER, P2H INSPECTION & SAFETY (FASE 7)
+        // ============================================================
+        .route("/api/hr/driver-assignments", get(hr_driver_p2h_safety_handler::list_driver_assignments).post(hr_driver_p2h_safety_handler::create_driver_assignment))
+        .route("/api/hr/driver-assignments/:id/return", post(hr_driver_p2h_safety_handler::return_driver_assignment))
+        .route("/api/hr/p2h-inspections", get(hr_driver_p2h_safety_handler::list_p2h_inspections).post(hr_driver_p2h_safety_handler::submit_p2h_inspection))
+        .route("/api/hr/driver-safety-incidents", get(hr_driver_p2h_safety_handler::list_driver_safety_incidents).post(hr_driver_p2h_safety_handler::create_driver_safety_incident))
+        .route("/api/hr/vehicle-handovers", get(hr_driver_p2h_safety_handler::list_vehicle_handovers).post(hr_driver_p2h_safety_handler::create_vehicle_handover))
+
+                // HR RECRUITMENT ATS, TRAINING & DISCIPLINARY ACTIONS (FASE 6)
+        // ============================================================
+        .route("/api/hr/job-openings", get(hr_recruitment_training_discipline_handler::list_job_openings).post(hr_recruitment_training_discipline_handler::create_job_opening))
+        .route("/api/hr/job-applicants", get(hr_recruitment_training_discipline_handler::list_job_applicants).post(hr_recruitment_training_discipline_handler::create_job_applicant))
+        .route("/api/hr/job-applicants/:id/stage", post(hr_recruitment_training_discipline_handler::update_applicant_stage))
+        .route("/api/hr/job-applicants/:id/convert-to-employee", post(hr_recruitment_training_discipline_handler::convert_applicant_to_employee))
+        .route("/api/hr/training-programs", get(hr_recruitment_training_discipline_handler::list_training_programs).post(hr_recruitment_training_discipline_handler::create_training_program))
+        .route("/api/hr/training-events", get(hr_recruitment_training_discipline_handler::list_training_events).post(hr_recruitment_training_discipline_handler::create_training_event))
+        .route("/api/hr/training-events/:id/participants", get(hr_recruitment_training_discipline_handler::list_training_participants).post(hr_recruitment_training_discipline_handler::add_training_participant))
+        .route("/api/hr/employee-certifications", get(hr_recruitment_training_discipline_handler::list_employee_certifications).post(hr_recruitment_training_discipline_handler::create_employee_certification))
+        .route("/api/hr/disciplinary-actions", get(hr_recruitment_training_discipline_handler::list_disciplinary_actions).post(hr_recruitment_training_discipline_handler::issue_disciplinary_action))
+
+                // HR LOANS, EXPENSE CLAIMS & KPI APPRAISAL (FASE 5)
+        // ============================================================
+        .route("/api/hr/loan-types", get(hr_loans_claims_kpi_handler::list_loan_types))
+        .route("/api/hr/employee-loans", get(hr_loans_claims_kpi_handler::list_employee_loans).post(hr_loans_claims_kpi_handler::apply_loan))
+        .route("/api/hr/employee-loans/:id/review", post(hr_loans_claims_kpi_handler::review_loan))
+        .route("/api/hr/employee-loans/:id/schedules", get(hr_loans_claims_kpi_handler::list_repayment_schedules))
+        .route("/api/hr/expense-claim-types", get(hr_loans_claims_kpi_handler::list_expense_claim_types))
+        .route("/api/hr/expense-claims", get(hr_loans_claims_kpi_handler::list_expense_claims).post(hr_loans_claims_kpi_handler::create_expense_claim))
+        .route("/api/hr/expense-claims/:id/review", post(hr_loans_claims_kpi_handler::review_expense_claim))
+        .route("/api/hr/appraisal-templates", get(hr_loans_claims_kpi_handler::list_appraisal_templates))
+        .route("/api/hr/appraisal-templates/:id/items", get(hr_loans_claims_kpi_handler::list_template_items))
+        .route("/api/hr/employee-appraisals", get(hr_loans_claims_kpi_handler::list_employee_appraisals).post(hr_loans_claims_kpi_handler::submit_employee_appraisal))
+
+                // HR PAYROLL, BPJS & PPH 21 TER ENGINE (FASE 4)
+        // ============================================================
+        .route("/api/hr/salary-components", get(hr_payroll_handler::list_salary_components).post(hr_payroll_handler::create_salary_component))
+        .route("/api/hr/salary-components/:id", get(hr_payroll_handler::get_salary_component).put(hr_payroll_handler::update_salary_component).delete(hr_payroll_handler::delete_salary_component))
+        .route("/api/hr/salary-structures", get(hr_payroll_handler::list_salary_structures).post(hr_payroll_handler::create_salary_structure))
+        .route("/api/hr/salary-structures/:id", get(hr_payroll_handler::get_salary_structure).put(hr_payroll_handler::update_salary_structure).delete(hr_payroll_handler::delete_salary_structure))
+        .route("/api/hr/salary-assignments", get(hr_payroll_handler::list_salary_assignments).post(hr_payroll_handler::create_salary_assignment))
+        .route("/api/hr/payroll-entries", get(hr_payroll_handler::list_payroll_entries).post(hr_payroll_handler::run_payroll_entry))
+        .route("/api/hr/salary-slips", get(hr_payroll_handler::list_salary_slips))
+        .route("/api/hr/salary-slips/:id", get(hr_payroll_handler::get_salary_slip))
+
+        .route("/api/hr/leave-types", get(hr_leaves_handler::list_leave_types).post(hr_leaves_handler::create_leave_type))
+        .route("/api/hr/leave-types/:id", get(hr_leaves_handler::get_leave_type).put(hr_leaves_handler::update_leave_type).delete(hr_leaves_handler::delete_leave_type))
+        .route("/api/hr/leave-allocations", get(hr_leaves_handler::list_allocations).post(hr_leaves_handler::create_allocation))
+        .route("/api/hr/leave-allocations/bulk", post(hr_leaves_handler::bulk_allocate))
+        .route("/api/hr/employees/:id/leave-balance", get(hr_leaves_handler::get_leave_balance))
+        .route("/api/hr/leave-applications", get(hr_leaves_handler::list_applications).post(hr_leaves_handler::create_application))
+        .route("/api/hr/leave-applications/:id", get(hr_leaves_handler::get_application))
+        .route("/api/hr/leave-applications/:id/review", post(hr_leaves_handler::review_application))
+        .route("/api/hr/holiday-lists", get(hr_leaves_handler::list_holiday_lists))
+        .route("/api/hr/holiday-lists/:id/holidays", get(hr_leaves_handler::list_holidays).post(hr_leaves_handler::add_holiday))
+        .route("/api/hr/leave-block-lists", get(hr_leaves_handler::list_block_lists))
+
+        .route("/api/hr/shifts", get(hr_shift_overtime_handler::list_shift_types).post(hr_shift_overtime_handler::create_shift_type))
+        .route("/api/hr/shifts/:id", get(hr_shift_overtime_handler::get_shift_type).put(hr_shift_overtime_handler::update_shift_type).delete(hr_shift_overtime_handler::delete_shift_type))
+        .route("/api/hr/shift-assignments", get(hr_shift_overtime_handler::list_shift_assignments).post(hr_shift_overtime_handler::create_shift_assignment))
+        .route("/api/hr/shift-assignments/bulk", post(hr_shift_overtime_handler::bulk_assign_shifts))
+        .route("/api/hr/shift-assignments/:id", delete(hr_shift_overtime_handler::delete_shift_assignment))
+        .route("/api/hr/attendance-requests", get(hr_shift_overtime_handler::list_attendance_requests).post(hr_shift_overtime_handler::create_attendance_request))
+        .route("/api/hr/attendance-requests/:id/review", post(hr_shift_overtime_handler::review_attendance_request))
+        .route("/api/hr/overtime-requests", get(hr_shift_overtime_handler::list_overtime_requests).post(hr_shift_overtime_handler::create_overtime_request))
+        .route("/api/hr/overtime-requests/:id/review", post(hr_shift_overtime_handler::review_overtime_request))
+        .route("/api/hr/attendance-logs", get(hr_shift_overtime_handler::list_attendance_details))
+        .route("/api/hr/attendance-recap", get(hr_shift_overtime_handler::get_attendance_recap))
+    
         .route("/api/employees", get(list_employees).post(create_employee))
         .route(
             "/api/employees/:id",

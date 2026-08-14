@@ -406,3 +406,274 @@ pub struct CreateShipmentItemRequest {
     pub description: String,
     pub quantity_shipped: f64,
 }
+
+
+// ─── 1. PAYMENT ENTRY ────────────────────────────────────────────────────────
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct PaymentEntry {
+    pub id: Uuid,
+    pub company_id: Option<Uuid>,
+    pub entry_no: String,
+    pub payment_type: String, // 'Pay' (to Supplier/Vendor) or 'Receive' (from Customer/Client)
+    pub party_type: Option<String>, // 'Customer' | 'Supplier'
+    pub party_id: Option<Uuid>,
+    pub party_name: Option<String>,
+    pub posting_date: chrono::NaiveDate,
+    pub mode_of_payment: String, // 'Bank Transfer', 'Cash', 'Cheque'
+    pub paid_from_account_id: Option<Uuid>,
+    pub paid_to_account_id: Option<Uuid>,
+    pub paid_amount: rust_decimal::Decimal,
+    pub received_amount: rust_decimal::Decimal,
+    pub reference_no: Option<String>,
+    pub reference_date: Option<chrono::NaiveDate>,
+    pub status: String, // 'Draft', 'Submitted', 'Cancelled'
+    pub created_at: Option<DateTime<Utc>>,
+    pub updated_at: Option<DateTime<Utc>>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct PaymentEntryReference {
+    pub id: Uuid,
+    pub payment_entry_id: Uuid,
+    pub reference_doctype: String, // 'Sales Invoice' | 'Purchase Bill'
+    pub reference_id: Option<Uuid>,
+    pub reference_name: Option<String>,
+    pub total_amount: rust_decimal::Decimal,
+    pub allocated_amount: rust_decimal::Decimal,
+    pub outstanding_amount: rust_decimal::Decimal,
+    pub created_at: Option<DateTime<Utc>>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreatePaymentEntryRequest {
+    pub payment_type: String,
+    pub party_type: Option<String>,
+    pub party_id: Option<Uuid>,
+    pub party_name: Option<String>,
+    pub posting_date: chrono::NaiveDate,
+    pub mode_of_payment: Option<String>,
+    pub paid_from_account_id: Option<Uuid>,
+    pub paid_to_account_id: Option<Uuid>,
+    pub amount: f64,
+    pub reference_no: Option<String>,
+    pub reference_date: Option<chrono::NaiveDate>,
+    pub references: Option<Vec<CreatePaymentEntryReferenceRequest>>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreatePaymentEntryReferenceRequest {
+    pub reference_doctype: String,
+    pub reference_id: Uuid,
+    pub reference_name: Option<String>,
+    pub total_amount: f64,
+    pub allocated_amount: f64,
+    pub outstanding_amount: f64,
+}
+
+// ─── 2. COST CENTER & BUDGET ────────────────────────────────────────────────
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct CostCenter {
+    pub id: Uuid,
+    pub company_id: Option<Uuid>,
+    pub cost_center_name: String,
+    pub cost_center_number: Option<String>,
+    pub parent_cost_center_id: Option<Uuid>,
+    pub is_group: Option<bool>,
+    pub disabled: Option<bool>,
+    pub created_at: Option<DateTime<Utc>>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreateCostCenterRequest {
+    pub cost_center_name: String,
+    pub cost_center_number: Option<String>,
+    pub parent_cost_center_id: Option<Uuid>,
+    pub is_group: Option<bool>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct Budget {
+    pub id: Uuid,
+    pub company_id: Option<Uuid>,
+    pub cost_center_id: Option<Uuid>,
+    pub fiscal_year: String,
+    pub monthly_distribution: Option<String>,
+    pub action_if_accumulated_monthly_budget_exceeded: Option<String>,
+    pub action_if_annual_budget_exceeded: Option<String>,
+    pub created_at: Option<DateTime<Utc>>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct BudgetAccount {
+    pub id: Uuid,
+    pub budget_id: Uuid,
+    pub account_id: Option<Uuid>,
+    pub budget_amount: rust_decimal::Decimal,
+    pub created_at: Option<DateTime<Utc>>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreateBudgetRequest {
+    pub cost_center_id: Option<Uuid>,
+    pub fiscal_year: String,
+    pub action_if_annual_budget_exceeded: Option<String>,
+    pub accounts: Vec<CreateBudgetAccountItem>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreateBudgetAccountItem {
+    pub account_id: Uuid,
+    pub budget_amount: f64,
+}
+
+#[derive(Debug, Serialize)]
+pub struct BudgetVarianceReport {
+    pub budget_id: Uuid,
+    pub cost_center_name: String,
+    pub fiscal_year: String,
+    pub account_id: Option<Uuid>,
+    pub account_code: String,
+    pub account_name: String,
+    pub budget_amount: f64,
+    pub actual_spent: f64,
+    pub variance: f64,
+    pub utilization_percentage: f64,
+    pub status: String,
+}
+
+// ─── 3. AGING REPORTS (AR & AP) ─────────────────────────────────────────────
+#[derive(Debug, Serialize)]
+pub struct AgingReportItem {
+    pub party_id: Uuid,
+    pub party_name: String,
+    pub total_outstanding: f64,
+    pub current_not_due: f64,
+    pub days_1_30: f64,
+    pub days_31_60: f64,
+    pub days_61_90: f64,
+    pub days_over_90: f64,
+    pub invoice_count: i64,
+}
+
+// ─── 4. BANK ACCOUNT ────────────────────────────────────────────────────────
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct BankAccount {
+    pub id: Uuid,
+    pub company_id: Option<Uuid>,
+    pub account_name: String,
+    pub bank_name: String,
+    pub bank_account_no: String,
+    pub iban: Option<String>,
+    pub swift_code: Option<String>,
+    pub gl_account_id: Option<Uuid>,
+    pub is_default: Option<bool>,
+    pub created_at: Option<DateTime<Utc>>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreateBankAccountRequest {
+    pub account_name: String,
+    pub bank_name: String,
+    pub bank_account_no: String,
+    pub swift_code: Option<String>,
+    pub gl_account_id: Option<Uuid>,
+    pub is_default: Option<bool>,
+}
+
+// ─── 5. CREDIT & DEBIT NOTES ────────────────────────────────────────────────
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct CreditNote {
+    pub id: Uuid,
+    pub company_id: Option<Uuid>,
+    pub credit_note_no: String,
+    pub customer_id: Option<Uuid>,
+    pub posting_date: chrono::NaiveDate,
+    pub reason: Option<String>,
+    pub total_amount: rust_decimal::Decimal,
+    pub status: String,
+    pub created_at: Option<DateTime<Utc>>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreateCreditNoteRequest {
+    pub credit_note_no: Option<String>,
+    pub customer_id: Option<Uuid>,
+    pub posting_date: chrono::NaiveDate,
+    pub reason: Option<String>,
+    pub total_amount: f64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct DebitNote {
+    pub id: Uuid,
+    pub company_id: Option<Uuid>,
+    pub debit_note_no: String,
+    pub supplier_id: Option<Uuid>,
+    pub posting_date: chrono::NaiveDate,
+    pub reason: Option<String>,
+    pub total_amount: rust_decimal::Decimal,
+    pub status: String,
+    pub created_at: Option<DateTime<Utc>>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreateDebitNoteRequest {
+    pub debit_note_no: Option<String>,
+    pub supplier_id: Option<Uuid>,
+    pub posting_date: chrono::NaiveDate,
+    pub reason: Option<String>,
+    pub total_amount: f64,
+}
+
+// ─── 6. TAX TEMPLATES ───────────────────────────────────────────────────────
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct TaxCategory {
+    pub id: Uuid,
+    pub title: String,
+    pub description: Option<String>,
+    pub created_at: Option<DateTime<Utc>>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct TaxRule {
+    pub id: Uuid,
+    pub tax_type: String, // 'Sales' | 'Purchase'
+    pub tax_template_id: Option<Uuid>,
+    pub tax_category_id: Option<Uuid>,
+    pub priority: Option<i32>,
+    pub disabled: Option<bool>,
+    pub created_at: Option<DateTime<Utc>>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreateTaxRuleRequest {
+    pub tax_type: String,
+    pub title: String,
+    pub rate: f64,
+    pub description: Option<String>,
+}
+
+// ─── 7. CASH FLOW STATEMENT ─────────────────────────────────────────────────
+#[derive(Debug, Serialize)]
+pub struct CashFlowSection {
+    pub category: String,
+    pub total: f64,
+    pub items: Vec<CashFlowItem>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct CashFlowItem {
+    pub title: String,
+    pub amount: f64,
+}
+
+#[derive(Debug, Serialize)]
+pub struct CashFlowStatement {
+    pub period: String,
+    pub operating_activities: CashFlowSection,
+    pub investing_activities: CashFlowSection,
+    pub financing_activities: CashFlowSection,
+    pub net_cash_change: f64,
+    pub beginning_cash_balance: f64,
+    pub ending_cash_balance: f64,
+}
