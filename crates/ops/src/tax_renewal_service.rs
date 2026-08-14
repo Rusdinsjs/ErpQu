@@ -236,7 +236,7 @@ impl TaxRenewalService {
             attachment_url: renewal.invoice_attachment.clone(),
         };
 
-        let bill = self.finance_service.create_purchase_bill(bill_req).await?;
+        let bill = self.finance_service.create_purchase_bill(None, bill_req).await?;
 
         // Update Tax Renewal status to INVOICED and link bill
         self.repository
