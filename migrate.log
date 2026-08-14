@@ -1,6 +1,7 @@
-Applied 20260808000001/migrate separate logical schemas (128.657694ms)
-Applied 20260808140000/migrate create company app frappe (23.493846ms)
-Applied 20260808150000/migrate add company deeds (20.60477ms)
-Applied 20260808190000/migrate create maintenance teams (27.386524ms)
-Applied 20260808200000/migrate fix company id assets (53.469132ms)
-error: while executing migration 20260808210000: error returned from database: invalid input syntax for type json at line 657
+Applied 20260808000001/migrate separate logical schemas (49.476495ms)
+Applied 20260808140000/migrate create company app frappe (10.914448ms)
+Applied 20260808150000/migrate add company deeds (9.557679ms)
+Applied 20260808190000/migrate create maintenance teams (12.503953ms)
+Applied 20260808200000/migrate fix company id assets (16.24594ms)
+Applied 20260808210000/migrate 1to1 module launchpads (8.128962ms)
+error: migration 20260809220000 was previously applied but has been modified

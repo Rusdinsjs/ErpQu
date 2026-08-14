@@ -169,6 +169,8 @@ const StockEntryPage: React.FC = () => {
 
         const payload = {
             company_id: DEFAULT_COMPANY_ID,
+            posting_date: new Date().toISOString().split('T')[0],
+            voucher_no: `STE-${Date.now()}`,
             stock_entry_type: entryType,
             source_warehouse_id: entryType === 'MATERIAL_RECEIPT' ? null : sourceWarehouseId,
             target_warehouse_id: entryType === 'MATERIAL_ISSUE' ? null : targetWarehouseId,

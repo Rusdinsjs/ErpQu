@@ -5,69 +5,16 @@ import {
 } from 'lucide-react';
 import { Button, Input, Select, Textarea, Modal, useToast } from '../../components/ui';
 
-export interface MaintenanceType {
-    id: string;
-    code: string;
-    name: string;
-    category: 'Preventif Terencana' | 'Korektif / Darurat' | 'Inspeksi & Kalibrasi';
-    trigger_type: string;
-    interval_value: string;
-    estimated_cost: number;
-    is_active: boolean;
-    description: string;
-}
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { maintenanceTypeApi } from '../../api/maintenance-types';
+import type { MaintenanceType } from '../../api/maintenance-types';
 
-const INITIAL_TYPES: MaintenanceType[] = [
-    {
-        id: '1',
-        code: 'PM-RUTIN',
-        name: 'Servis Berkala PM 500 Jam',
-        category: 'Preventif Terencana',
-        trigger_type: 'Jam Kerja (Operating Hours)',
-        interval_value: '500 Jam / 5.000 KM',
-        estimated_cost: 1500000,
-        is_active: true,
-        description: 'Servis rutin berkala mencakup penggantian oli mesin, filter udara, filter solar, dan pembersihan komponen utama.'
-    },
-    {
-        id: '2',
-        code: 'CM-REPAIR',
-        name: 'Perbaikan Kerusakan (Corrective Repair)',
-        category: 'Korektif / Darurat',
-        trigger_type: 'On Breakdown',
-        interval_value: 'Insidental',
-        estimated_cost: 5000000,
-        is_active: true,
-        description: 'Perbaikan darurat akibat kompresor bermasalah, selang hidrolik bocor, atau kelistrikan mogok saat operasional.'
-    },
-    {
-        id: '3',
-        code: 'OVERHAUL',
-        name: 'Major Overhaul Mesin',
-        category: 'Preventif Terencana',
-        trigger_type: 'Waktu & Jam Kerja',
-        interval_value: '3.000 Jam / 3 Tahun',
-        estimated_cost: 25000000,
-        is_active: true,
-        description: 'Bongkar mesin total (turun mesin), rekondisi silinder piston, penggantian bearing utama & pengujian performa.'
-    },
-    {
-        id: '4',
-        code: 'CALIB-INSP',
-        name: 'Inspeksi & Kalibrasi Presisi',
-        category: 'Inspeksi & Kalibrasi',
-        trigger_type: 'Waktu (Hari/Bulan)',
-        interval_value: '6 Bulan',
-        estimated_cost: 750000,
-        is_active: true,
-        description: 'Pengujian akurasi timbangan industri, sensor tekanan hidrolik, dan Sertifikasi K3 Alat Berat oleh Lembaga Uji.'
-    }
-];
+
 
 export default function MaintenanceTypesView() {
     const navigate = useNavigate();
+    const queryClient = useQueryClient();
     const { success, error: showError } = useToast();
-    const [types, setTypes] = useState<MaintenanceType[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [categoryFilter, setCategoryFilter] = useState<string>('all');
 
@@ -88,24 +35,39 @@ export default function MaintenanceTypesView() {
         description: ''
     });
 
-    useEffect(() => {
-        const saved = localStorage.getItem('erp_maintenance_types');
-        if (saved) {
-            try {
-                setTypes(JSON.parse(saved));
-            } catch {
-                setTypes(INITIAL_TYPES);
-            }
-        } else {
-            setTypes(INITIAL_TYPES);
-            localStorage.setItem('erp_maintenance_types', JSON.stringify(INITIAL_TYPES));
-        }
-    }, []);
+    const { data: types = [], isLoading } = useQuery({
+        queryKey: ['maintenance-types'],
+        queryFn: () => maintenanceTypeApi.list()
+    });
 
-    const saveTypesToStorage = (updated: MaintenanceType[]) => {
-        setTypes(updated);
-        localStorage.setItem('erp_maintenance_types', JSON.stringify(updated));
-    };
+    const createMutation = useMutation({
+        mutationFn: (data: Partial<MaintenanceType>) => maintenanceTypeApi.create(data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['maintenance-types'] });
+            success('Tipe Pemeliharaan Ditambahkan', 'Berhasil dibuat.');
+            setIsFormModalOpen(false);
+        },
+        onError: () => showError('Gagal Menambahkan', 'Terjadi kesalahan saat menghubungi server.')
+    });
+
+    const updateMutation = useMutation({
+        mutationFn: (data: Partial<MaintenanceType>) => maintenanceTypeApi.update(data.id!, data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['maintenance-types'] });
+            success('Tipe Pemeliharaan Diperbarui', 'Berhasil diubah.');
+            setIsFormModalOpen(false);
+        },
+        onError: () => showError('Gagal Memperbarui', 'Terjadi kesalahan saat menghubungi server.')
+    });
+
+    const deleteMutation = useMutation({
+        mutationFn: (id: number) => maintenanceTypeApi.delete(id),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['maintenance-types'] });
+            success('Tipe Pemeliharaan Dihapus', 'Telah dihapus dari daftar.');
+        },
+        onError: () => showError('Gagal Menghapus', 'Terjadi kesalahan saat menghubungi server.')
+    });
 
     const handleOpenCreateModal = () => {
         setEditingType(null);
@@ -135,41 +97,30 @@ export default function MaintenanceTypesView() {
             return;
         }
 
+        const payload = {
+            ...formData,
+            code: formData.code!.toUpperCase(),
+            estimated_cost: Number(formData.estimated_cost) || 0,
+        };
+
         if (editingType) {
-            const updated = types.map(t => t.id === editingType.id ? { ...t, ...formData } as MaintenanceType : t);
-            saveTypesToStorage(updated);
-            success('Tipe Pemeliharaan Diperbarui', `Tipe ${formData.name} berhasil diubah.`);
+            updateMutation.mutate(payload);
         } else {
-            const newType: MaintenanceType = {
-                id: String(Date.now()),
-                code: formData.code!.toUpperCase(),
-                name: formData.name!,
-                category: formData.category || 'Preventif Terencana',
-                trigger_type: formData.trigger_type || 'Jam Kerja (Operating Hours)',
-                interval_value: formData.interval_value || '500 Jam',
-                estimated_cost: Number(formData.estimated_cost) || 0,
-                is_active: formData.is_active ?? true,
-                description: formData.description || ''
-            };
-            const updated = [newType, ...types];
-            saveTypesToStorage(updated);
-            success('Tipe Pemeliharaan Ditambahkan', `Tipe baru ${newType.name} berhasil dibuat.`);
+            createMutation.mutate(payload);
         }
-        setIsFormModalOpen(false);
     };
 
-    const handleDelete = (id: string, name: string) => {
+    const handleDelete = (id: number, name: string) => {
         if (window.confirm(`Apakah Anda yakin ingin menghapus tipe pemeliharaan "${name}"?`)) {
-            const updated = types.filter(t => t.id !== id);
-            saveTypesToStorage(updated);
-            success('Tipe Pemeliharaan Dihapus', `Tipe ${name} telah dihapus dari daftar.`);
+            deleteMutation.mutate(id);
         }
     };
 
-    const handleToggleStatus = (id: string) => {
-        const updated = types.map(t => t.id === id ? { ...t, is_active: !t.is_active } : t);
-        saveTypesToStorage(updated);
-        success('Status Diperbarui', 'Status keaktifan tipe pemeliharaan berhasil diubah.');
+    const handleToggleStatus = (id: number) => {
+        const item = types.find(t => t.id === id);
+        if (item) {
+            updateMutation.mutate({ ...item, is_active: !item.is_active });
+        }
     };
 
     const filteredTypes = types.filter(t => {

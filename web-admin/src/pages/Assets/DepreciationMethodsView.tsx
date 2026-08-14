@@ -5,59 +5,12 @@ import {
 } from 'lucide-react';
 import { Button, Input, Select, Textarea, Modal, Badge, useToast, MultiSelect } from '../../components/ui';
 
-export interface DepreciationMethod {
-    id: string;
-    code: string;
-    method_name: string;
-    annual_rate: string;
-    frequency_months: string;
-    linked_categories: string[];
-    is_active: boolean;
-    description: string;
-}
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { depreciationApi } from '../../api/depreciation';
+import type { DepreciationMethod } from '../../api/depreciation';
 
-const INITIAL_METHODS: DepreciationMethod[] = [
-    {
-        id: '1',
-        code: 'SLM',
-        method_name: 'Garis Lurus (Straight Line)',
-        annual_rate: '5% - 25%',
-        frequency_months: '12 Bulan (Bulanan)',
-        linked_categories: ['Bangunan & Infrastruktur', 'Mesin & Peralatan Pabrik', 'Furniture & Peralatan Kantor'],
-        is_active: true,
-        description: 'Penyusutan nilai tetap seragam per bulan sesuai estimasi umur ekonomis kategori aset.'
-    },
-    {
-        id: '2',
-        code: 'DBM',
-        method_name: 'Saldo Menurun (Declining Balance)',
-        annual_rate: '25% - 40%',
-        frequency_months: '12 Bulan (Bulanan)',
-        linked_categories: ['Kendaraan Operasional', 'Alat Berat & Excavator'],
-        is_active: true,
-        description: 'Penyusutan lebih besar pada tahun-tahun awal pemakaian sesuai tingkat keausan mesin.'
-    },
-    {
-        id: '3',
-        code: 'SYD',
-        method_name: 'Jumlah Angka Tahun (Sum of Years Digits)',
-        annual_rate: '33.3%',
-        frequency_months: '12 Bulan (Tahunan)',
-        linked_categories: ['Perangkat Komputer & IT'],
-        is_active: true,
-        description: 'Penyusutan dipercepat berdasarkan rasio sisa umur terhadap total penjumlahan tahun.'
-    },
-    {
-        id: '4',
-        code: 'MANUAL',
-        method_name: 'Manual / Non-Depresiasi',
-        annual_rate: '0%',
-        frequency_months: 'Tidak Ada',
-        linked_categories: ['Aset Tanah (Land)'],
-        is_active: true,
-        description: 'Aset tidak mengalami penyusutan berkala (contoh: Tanah) atau disusutkan manual via jurnal.'
-    }
-];
+// Note: linked_categories was local mock data. We map it temporarily.
+
 
 const CATEGORY_OPTIONS = [
     { value: 'Bangunan & Infrastruktur', label: 'Bangunan & Infrastruktur' },
@@ -71,8 +24,8 @@ const CATEGORY_OPTIONS = [
 
 export default function DepreciationMethodsView() {
     const navigate = useNavigate();
+    const queryClient = useQueryClient();
     const { success, error: showError } = useToast();
-    const [methods, setMethods] = useState<DepreciationMethod[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
 
@@ -153,34 +106,49 @@ export default function DepreciationMethodsView() {
         return getDynamicRateForMethod(formData);
     }, [formData.linked_categories, formData.code]);
 
-    // Load from localStorage or initial seed
-    useEffect(() => {
-        const loadData = () => {
-            const saved = localStorage.getItem('erp_depreciation_methods');
-            if (saved) {
-                try {
-                    setMethods(JSON.parse(saved));
-                } catch {
-                    setMethods(INITIAL_METHODS);
-                }
-            } else {
-                setMethods(INITIAL_METHODS);
-                localStorage.setItem('erp_depreciation_methods', JSON.stringify(INITIAL_METHODS));
-            }
-        };
+    // Fetch from Backend
+    const { data: serverMethods = [], isLoading } = useQuery({
+        queryKey: ['depreciation-methods'],
+        queryFn: () => depreciationApi.list()
+    });
 
-        loadData();
+    const methods = serverMethods.map(m => ({
+        ...m,
+        annual_rate: m.annual_rate || '',
+        frequency_months: m.frequency_months || '',
+        description: m.description || '',
+        linked_categories: [] // Future improvement: fetch linked categories from categories API
+    }));
 
-        // Listen to updates from Asset Settings (AssetSettingsView)
-        const handleSync = () => loadData();
-        window.addEventListener('erp_settings_updated', handleSync);
-        return () => window.removeEventListener('erp_settings_updated', handleSync);
-    }, []);
+    // Mutations
+    const createMutation = useMutation({
+        mutationFn: (data: Partial<DepreciationMethod>) => depreciationApi.create(data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['depreciation-methods'] });
+            success('Metode Depresiasi Ditambahkan', 'Berhasil dibuat.');
+            setIsFormModalOpen(false);
+        },
+        onError: () => showError('Gagal Menambahkan', 'Terjadi kesalahan saat menghubungi server.')
+    });
 
-    const saveMethodsToStorage = (updated: DepreciationMethod[]) => {
-        setMethods(updated);
-        localStorage.setItem('erp_depreciation_methods', JSON.stringify(updated));
-    };
+    const updateMutation = useMutation({
+        mutationFn: (data: Partial<DepreciationMethod>) => depreciationApi.update(data.id!, data),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['depreciation-methods'] });
+            success('Metode Depresiasi Diperbarui', 'Berhasil diubah.');
+            setIsFormModalOpen(false);
+        },
+        onError: () => showError('Gagal Memperbarui', 'Terjadi kesalahan saat menghubungi server.')
+    });
+
+    const deleteMutation = useMutation({
+        mutationFn: (id: string) => depreciationApi.delete(id),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['depreciation-methods'] });
+            success('Metode Dihapus', 'Berhasil dihapus dari daftar.');
+        },
+        onError: () => showError('Gagal Menghapus', 'Terjadi kesalahan saat menghubungi server.')
+    });
 
     const handleOpenCreateModal = () => {
         setEditingMethod(null);
@@ -211,44 +179,32 @@ export default function DepreciationMethodsView() {
 
         const computedRate = getDynamicRateForMethod(formData);
 
+        const payload = {
+            ...formData,
+            code: formData.code!.toUpperCase(),
+            annual_rate: computedRate,
+            frequency_months: formData.frequency_months || '12 Bulan (Bulanan)',
+            is_active: formData.is_active ?? true,
+        };
+
         if (editingMethod) {
-            const updated = methods.map(m => m.id === editingMethod.id ? {
-                ...m,
-                ...formData,
-                annual_rate: computedRate
-            } as DepreciationMethod : m);
-            saveMethodsToStorage(updated);
-            success('Metode Depresiasi Diperbarui', `Metode ${formData.method_name} berhasil diubah.`);
+            updateMutation.mutate(payload);
         } else {
-            const newMethod: DepreciationMethod = {
-                id: String(Date.now()),
-                code: formData.code!.toUpperCase(),
-                method_name: formData.method_name!,
-                annual_rate: computedRate,
-                frequency_months: formData.frequency_months || '12 Bulan (Bulanan)',
-                linked_categories: formData.linked_categories || [],
-                is_active: formData.is_active ?? true,
-                description: formData.description || ''
-            };
-            const updated = [newMethod, ...methods];
-            saveMethodsToStorage(updated);
-            success('Metode Depresiasi Ditambahkan', `Metode baru ${newMethod.method_name} berhasil dibuat.`);
+            createMutation.mutate(payload);
         }
-        setIsFormModalOpen(false);
     };
 
     const handleDelete = (id: string, name: string) => {
         if (window.confirm(`Apakah Anda yakin ingin menghapus metode depresiasi "${name}"?`)) {
-            const updated = methods.filter(m => m.id !== id);
-            saveMethodsToStorage(updated);
-            success('Metode Dihapus', `Metode ${name} telah dihapus dari daftar.`);
+            deleteMutation.mutate(id);
         }
     };
 
     const handleToggleStatus = (id: string) => {
-        const updated = methods.map(m => m.id === id ? { ...m, is_active: !m.is_active } : m);
-        saveMethodsToStorage(updated);
-        success('Status Diperbarui', 'Status keaktifan metode depresiasi berhasil diubah.');
+        const method = methods.find(m => m.id === id);
+        if (method) {
+            updateMutation.mutate({ ...method, is_active: !method.is_active });
+        }
     };
 
     // Filtered methods

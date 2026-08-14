@@ -1,8 +1,9 @@
-import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
     Package, ArrowUpRight, BarChart2, Layers
 } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { inventoryApi } from '../../api/inventory';
 
 interface SubmenuLink {
     label: string;
@@ -17,11 +18,34 @@ interface SectionCard {
 export default function StockWorkspace() {
     const navigate = useNavigate();
 
+    // Default company ID
+    const companyId = '75d1be11-9669-42b7-a39f-26ec0398f6d6';
+
+    const { data: dashboardKpi } = useQuery({
+        queryKey: ['inventory', 'dashboard-kpi', companyId],
+        queryFn: () => inventoryApi.getStockDashboardKpi(companyId)
+    });
+
     // Top KPIs
     const kpis = [
-        { label: 'Total Stock Valuation', value: 'Rp 0,00', change: 'Realtime inventory value', icon: Package },
-        { label: 'Total Warehouses', value: '0', change: 'Active locations & bins', icon: Layers },
-        { label: 'Low Stock Items', value: '0 Items', change: 'Reorder point alerts', icon: BarChart2 },
+        { 
+            label: 'Total Stock Valuation', 
+            value: new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(dashboardKpi?.total_stock_valuation || 0), 
+            change: 'Realtime inventory value', 
+            icon: Package 
+        },
+        { 
+            label: 'Total Warehouses', 
+            value: (dashboardKpi?.total_warehouses || 0).toString(), 
+            change: 'Active locations & bins', 
+            icon: Layers 
+        },
+        { 
+            label: 'Low Stock Items', 
+            value: `${dashboardKpi?.low_stock_items || 0} Items`, 
+            change: 'Reorder point alerts', 
+            icon: BarChart2 
+        },
     ];
 
     // 6 ERPNext Stock Section Cards

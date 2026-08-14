@@ -34,15 +34,31 @@ use crate::application::services::{
     MaintenanceService,
     MaintenanceTemplateService,
     NotificationService,
+    OutboundLogisticsService,
     RbacService,
     RentalService,
     ReportService,
     SchedulerService,
     SensorService,
     SettingsService,
+    StockEntryService,
+    TimesheetService,
+    UomService,
     UserService,
+    VendorService,
+    WarehouseService,
+    ItemTrackingService,
+    MasterDataExtendedService,
+    MaterialRequestService,
+    PurchaseReceiptService,
+    QualityInspectionService,
+    LandedCostVoucherService,
+    StockReportService,
+    StockAnalyticsService,
     WhatsAppService,
     WorkOrderService,
+    DepreciationMethodService,
+    MaintenanceTypeService,
 };
 use crate::infrastructure::bus::EventBus;
 use crate::infrastructure::cache::{CacheOperations, RedisCache, RedisConfig};
@@ -54,6 +70,12 @@ use crate::infrastructure::repositories::{
     MaintenanceRepository, MaintenanceTemplateRepository, NotificationRepository, RbacRepository,
     RentalRepository, SensorRepository, SettingsRepository, TaxRenewalRepository,
     TimesheetRepository, UserRepository, VendorRepository, WorkOrderRepository,
+    MaintenanceTypeRepository, WarehouseRepository, StockEntryRepository, MaterialRequestRepository, PurchaseReceiptRepository,
+    UomRepository, ItemTrackingRepository, master_data_extended_repository::MasterDataExtendedRepository,
+    OutboundLogisticsRepository, quality_inspection_repository::QualityInspectionRepository,
+    landed_cost_voucher_repository::LandedCostVoucherRepository, stock_report_repository::StockReportRepository,
+    stock_analytics_repository::StockAnalyticsRepository,
+    stock_settings_repository::StockSettingsRepository,
 };
 use crate::infrastructure::storage::FileStorage;
 use crate::shared::utils::jwt::JwtConfig;
@@ -77,8 +99,21 @@ pub struct AppState {
     pub lifecycle_service: LifecycleService,
     pub inventory_service: InventoryService,
     pub loan_service: LoanService,
-    pub maintenance_service: MaintenanceService,
-    pub maintenance_template_service: MaintenanceTemplateService,
+    pub depreciation_method_service: Arc<DepreciationMethodService>,
+    pub maintenance_type_service: Arc<MaintenanceTypeService>,
+    pub warehouse_service: Arc<WarehouseService>,
+    pub stock_entry_service: Arc<StockEntryService>,
+    pub material_request_service: Arc<MaterialRequestService>,
+    pub purchase_receipt_service: Arc<PurchaseReceiptService>,
+    pub outbound_logistics_service: Arc<OutboundLogisticsService>,
+    pub uom_service: Arc<UomService>,
+    pub item_tracking_service: Arc<ItemTrackingService>,
+    pub master_data_extended_service: Arc<MasterDataExtendedService>,
+    pub quality_inspection_service: Arc<QualityInspectionService>,
+    pub landed_cost_voucher_service: Arc<LandedCostVoucherService>,
+    pub stock_report_service: Arc<StockReportService>,
+    pub stock_analytics_service: Arc<StockAnalyticsService>,
+    pub stock_settings_repo: Arc<StockSettingsRepository>,
     pub work_order_service: WorkOrderService,
     pub notification_service: NotificationService,
     pub rbac_service: RbacService,
@@ -127,6 +162,21 @@ impl AppState {
         let loan_repo = LoanRepository::new(pool.clone());
         let maintenance_repo = MaintenanceRepository::new(pool.clone());
         let maintenance_template_repo = MaintenanceTemplateRepository::new(pool.clone());
+        let maintenance_type_repo = MaintenanceTypeRepository::new(pool.clone());
+        let warehouse_repo = WarehouseRepository::new(pool.clone());
+        let stock_entry_repo = StockEntryRepository::new(pool.clone());
+        let material_request_repo = MaterialRequestRepository::new(pool.clone());
+        let purchase_receipt_repo = PurchaseReceiptRepository::new(pool.clone());
+        let outbound_logistics_repo = OutboundLogisticsRepository::new(pool.clone());
+        let uom_repo = UomRepository::new(pool.clone());
+        let item_tracking_repo = ItemTrackingRepository::new(pool.clone());
+        let master_data_extended_repo = MasterDataExtendedRepository::new(pool.clone());
+        let quality_inspection_repo = QualityInspectionRepository::new(pool.clone());
+        let landed_cost_voucher_repo = LandedCostVoucherRepository::new(pool.clone());
+        let stock_report_repo = StockReportRepository::new(pool.clone());
+        let stock_analytics_repo = StockAnalyticsRepository::new(pool.clone());
+        let stock_settings_repo = Arc::new(StockSettingsRepository::new(pool.clone()));
+        let depreciation_method_repo = crate::infrastructure::repositories::DepreciationMethodRepository::new(pool.clone());
         let work_order_repo = WorkOrderRepository::new(pool.clone());
         let employee_repo = EmployeeRepository::new(pool.clone());
         let notification_repo = NotificationRepository::new(pool.clone());
@@ -233,6 +283,20 @@ impl AppState {
             category_repo.clone(),
             journal_service.clone(),
         );
+        let depreciation_method_service = Arc::new(DepreciationMethodService::new(depreciation_method_repo));
+        let maintenance_type_service = Arc::new(MaintenanceTypeService::new(maintenance_type_repo));
+        let warehouse_service = Arc::new(WarehouseService::new(warehouse_repo));
+        let stock_entry_service = Arc::new(StockEntryService::new(stock_entry_repo));
+        let material_request_service = Arc::new(MaterialRequestService::new(material_request_repo));
+        let purchase_receipt_service = Arc::new(PurchaseReceiptService::new(purchase_receipt_repo));
+        let outbound_logistics_service = Arc::new(OutboundLogisticsService::new(outbound_logistics_repo));
+        let uom_service = Arc::new(UomService::new(uom_repo));
+        let item_tracking_service = Arc::new(ItemTrackingService::new(item_tracking_repo));
+        let master_data_extended_service = Arc::new(MasterDataExtendedService::new(master_data_extended_repo));
+        let quality_inspection_service = Arc::new(QualityInspectionService::new(quality_inspection_repo));
+        let landed_cost_voucher_service = Arc::new(LandedCostVoucherService::new(landed_cost_voucher_repo));
+        let stock_report_service = Arc::new(StockReportService::new(stock_report_repo));
+        let stock_analytics_service = Arc::new(StockAnalyticsService::new(stock_analytics_repo));
 
         let inventory_service = InventoryService::new(
             inventory_repo,
@@ -339,6 +403,7 @@ impl AppState {
             conversion_service,
             lifecycle_service,
             inventory_service,
+            stock_settings_repo,
             loan_service,
             maintenance_service,
             maintenance_template_service,
@@ -372,7 +437,21 @@ impl AppState {
             settings_service,
             tax_renewal_service,
             whatsapp_service,
-            depreciation_service, // Added & Moved to end
+            depreciation_service,
+            depreciation_method_service,
+            maintenance_type_service,
+            warehouse_service,
+            stock_entry_service,
+            material_request_service,
+            purchase_receipt_service,
+            outbound_logistics_service,
+            uom_service,
+            item_tracking_service,
+            master_data_extended_service,
+            quality_inspection_service,
+            landed_cost_voucher_service,
+            stock_report_service,
+            stock_analytics_service,
             jwt_config: jwt_config.clone(),
             event_bus,
         }

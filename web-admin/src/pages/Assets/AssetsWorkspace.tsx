@@ -1,9 +1,7 @@
-import React from 'react';
+
 import { useNavigate } from 'react-router-dom';
 import {
-    Box, Wrench, ShieldAlert, TrendingUp, DollarSign, ArrowUpRight,
-    MapPin, Layers, FileText, CheckSquare, Compass, Settings, Users,
-    RefreshCw, Clock, Navigation, AlertTriangle
+    Box, Wrench, ShieldAlert, ArrowUpRight,
 } from 'lucide-react';
 
 interface SectionLink {
@@ -81,6 +79,14 @@ export default function AssetsWorkspace() {
                 { label: 'Maintenance Team Performance', route: '/assets/reports/team-performance' },
                 { label: 'Tax Renewal Expiry Schedule', route: '/assets/reports/tax-expiry' },
                 { label: 'Asset Maintenance Cost Analysis', route: '/assets/reports/cost-analysis' },
+            ]
+        },
+        {
+            title: 'Telemetry & IoT',
+            links: [
+                { label: 'IoT Sensor Stream', route: '/iot-sensor-stream' },
+                { label: 'Asset Health Telemetry', route: '/asset-health-telemetry' },
+                { label: 'Threshold Alert Engine', route: '/threshold-alerts' }
             ]
         }
     ];

@@ -80,11 +80,8 @@ export default function Warehouses() {
     });
 
     // Fetch Bins for selected warehouse
-    const { data: bins = [], isLoading: binsLoading } = useQuery({
-        queryKey: ['warehouse-bins', selectedWarehouse?.id],
-        queryFn: () => inventoryApi.listWarehouseBins(selectedWarehouse.id),
-        enabled: !!selectedWarehouse?.id
-    });
+    const bins = warehouses.filter((wh: any) => wh.parent_id === selectedWarehouse?.id && !wh.is_group);
+    const binsLoading = whsLoading;
 
     // Fetch Balances for selected bin
     const { data: balances = [], isLoading: balancesLoading } = useQuery({
@@ -95,13 +92,13 @@ export default function Warehouses() {
 
     // Create Bin Mutation
     const createBinMutation = useMutation({
-        mutationFn: inventoryApi.createWarehouseBin,
+        mutationFn: inventoryApi.createWarehouse,
         onSuccess: () => {
             success('Bin location created successfully');
             setBinCode('');
             setBinDescription('');
             setBinModalOpen(false);
-            queryClient.invalidateQueries({ queryKey: ['warehouse-bins', selectedWarehouse?.id] });
+            queryClient.invalidateQueries({ queryKey: ['warehouses'] });
         },
         onError: (err: any) => {
             showError(err.response?.data?.message || 'Failed to create bin location');
@@ -110,10 +107,10 @@ export default function Warehouses() {
 
     // Delete Bin Mutation
     const deleteBinMutation = useMutation({
-        mutationFn: inventoryApi.deleteWarehouseBin,
+        mutationFn: inventoryApi.deleteWarehouse,
         onSuccess: () => {
             success('Bin location deleted successfully');
-            queryClient.invalidateQueries({ queryKey: ['warehouse-bins', selectedWarehouse?.id] });
+            queryClient.invalidateQueries({ queryKey: ['warehouses'] });
         },
         onError: (err: any) => {
             showError(err.response?.data?.message || 'Failed to delete bin location');
@@ -137,9 +134,13 @@ export default function Warehouses() {
         e.preventDefault();
         if (!binCode.trim()) return;
         createBinMutation.mutate({
-            warehouse_id: selectedWarehouse.id,
-            bin_code: binCode,
-            description: binDescription || null
+            company_id: selectedWarehouse.company_id,
+            parent_id: selectedWarehouse.id,
+            code: binCode,
+            name: binDescription || binCode,
+            is_group: false,
+            warehouse_type: 'BIN',
+            is_active: true
         });
     };
 
@@ -355,8 +356,8 @@ export default function Warehouses() {
                                                 <div className="flex items-center space-x-2">
                                                     <Box className="h-4 w-4 text-muted-foreground" />
                                                     <div>
-                                                        <span className="font-semibold text-sm block">{bin.bin_code}</span>
-                                                        {bin.description && <span className="text-[10px] text-muted-foreground block truncate max-w-[120px]">{bin.description}</span>}
+                                                        <span className="font-semibold text-sm block">{bin.code}</span>
+                                                        {bin.name && bin.name !== bin.code && <span className="text-[10px] text-muted-foreground block truncate max-w-[120px]">{bin.name}</span>}
                                                     </div>
                                                 </div>
                                                 <button
@@ -383,7 +384,7 @@ export default function Warehouses() {
                                 <div className="flex items-center space-x-2">
                                     <Box className="h-5 w-5 text-primary" />
                                     <div>
-                                        <h4 className="font-semibold text-sm">Bin Stock: {selectedBin.bin_code}</h4>
+                                        <h4 className="font-semibold text-sm">Bin Stock: {selectedBin.code}</h4>
                                         <p className="text-xs text-muted-foreground">Current items located at this rack space</p>
                                     </div>
                                 </div>

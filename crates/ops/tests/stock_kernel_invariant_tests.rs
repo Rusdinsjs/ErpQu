@@ -63,6 +63,7 @@ fn test_qstk_009_transfer_atomicity_instruction_building() {
         lines: vec![
             StockPostingLineItem {
                 warehouse_id: source_wh,
+                warehouse_bin_id: None,
                 item_id,
                 actual_qty_delta: -transfer_qty,
                 unit_cost: Some(dec!(5000.00)),
@@ -73,6 +74,7 @@ fn test_qstk_009_transfer_atomicity_instruction_building() {
             },
             StockPostingLineItem {
                 warehouse_id: dest_wh,
+                warehouse_bin_id: None,
                 item_id,
                 actual_qty_delta: transfer_qty,
                 unit_cost: Some(dec!(5000.00)),

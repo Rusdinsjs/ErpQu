@@ -1,19 +1,19 @@
 // Admin Dashboard - Main Container with Dark Theme
-import { useState, lazy, Suspense, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useLocation, matchPath } from 'react-router-dom';
 import { useAuthStore } from '../store/useAuthStore';
 import { useNavigationStore } from '../store/useNavigationStore';
 import {
     LayoutDashboard, Package, FolderTree, Users, LogOut, Menu, X,
-    FileText, Settings, Bell, ChevronDown, ChevronRight, ClipboardCheck,
+    FileText, Settings, ChevronDown, ChevronRight, ClipboardCheck,
     Truck, HandMetal, Building2, MapPin, Scan, UserCircle, Clock,
     Calendar as CalendarIcon, ArrowLeftRight, TrendingUp,
     Wallet, ShoppingCart, Receipt, History, Wrench, Fuel, Shield, Layers,
-    CheckSquare, Box, Sun, Moon, ShieldAlert,
-    Database, Mail, ShoppingBag, Tag, Download, RefreshCw, Lock, CheckCircle2, DollarSign, BarChart2
+    CheckSquare, Box, ShieldAlert,
+    Database, Mail, ShoppingBag, Tag, Download, RefreshCw, Lock, CheckCircle2, DollarSign, BarChart2, Activity, Factory
 } from 'lucide-react';
 import { getImageUrl } from '../utils/image';
-import { PageLoading, Logo } from '../components/ui';
+import { Logo } from '../components/ui';
 import { useQuery } from '@tanstack/react-query';
 import { settingsApi } from '../api/settings';
 import { useTheme } from '../contexts/ThemeContext';
@@ -21,12 +21,17 @@ import { AIChatWidget } from '../components/AI/AIChatWidget';
 import { AdminContentRouter } from '../components/Admin/AdminContentRouter';
 import { AdminHeaderBar } from '../components/Admin/AdminHeaderBar';
 import type { MenuId, LaunchpadConfig } from '../config/launchpadConfig';
-import { MENU_TO_RESOURCE, MENU_LABELS, DEFAULT_LAUNCHPAD_CONFIG } from '../config/launchpadConfig';
+import { MENU_TO_RESOURCE, DEFAULT_LAUNCHPAD_CONFIG } from '../config/launchpadConfig';
 
+// Define the available tabs
 // Define the available tabs
 type TabId =
     | 'dashboard'
+    | 'assets-workspace' | 'buying-workspace' | 'selling-workspace' | 'stock-workspace' | 'accounting-workspace'
     | 'assets'
+    | 'asset-settings' | 'depreciation-methods' | 'maintenance-types'
+    | 'depreciation-ledger' | 'roi-trends' | 'condition-distribution' | 'workorder-summary' | 'fuel-consumption' | 'custody-history' | 'team-performance' | 'tax-expiry' | 'cost-analysis'
+    | 'iot-sensor-stream' | 'asset-health-telemetry' | 'threshold-alerts'
     | 'categories'
     | 'inventory-categories' // New
     | 'inventory-items'      // New
@@ -39,7 +44,7 @@ type TabId =
     | 'delivery-trip'
     | 'stock-workspace' | 'delivery-notes' | 'pick-lists' | 'landed-cost-vouchers' | 'stock-product-bundles'
     | 'item-alternatives' | 'item-manufacturers' | 'manufacturers' | 'serial-numbers' | 'batches' | 'installation-notes'
-    | 'stock-settings' | 'brands' | 'item-attributes' | 'uoms' | 'uom-conversions' | 'stock-tax-templates'
+    | 'stock-settings' | 'brands' | 'item-attributes' | 'uoms' | 'uom-conversions' | 'item-tax-templates' | 'item-manufacturers'
     | 'stock-ledger' | 'stock-balance' | 'stock-summary' | 'stock-ageing' | 'stock-projected-qty' | 'stock-analytics'
     | 'batch-wise-balance' | 'serial-no-status' | 'item-shortage-report'
     | 'accounting-workspace' | 'chart-of-accounts' | 'journal-entries-view' | 'payment-entries' | 'payment-reconciliation'
@@ -141,7 +146,8 @@ type TabId =
     | 'purchase-bills'
     | 'buying-workspace' | 'material-requests' | 'rfqs' | 'supplier-quotations'
     | 'buying-item-prices' | 'buying-price-lists' | 'buying-product-bundles' | 'buying-item-groups' | 'buying-promotional-schemes' | 'buying-pricing-rules'
-    | 'buying-settings' | 'purchase-tax-templates' | 'buying-terms-templates'
+    | 'buying-settings'    | 'quality-inspection' | 'delivery-note' | 'pick-list' | 'installation-note'
+    | 'supplier-quotations' | 'rfqs'
     | 'suppliers' | 'supplier-groups' | 'supplier-contacts' | 'supplier-addresses'
     | 'supplier-scorecards' | 'scorecard-variables' | 'scorecard-criteria' | 'scorecard-standings'
     | 'purchase-analytics' | 'po-analysis' | 'item-consumption' | 'items-to-order-receive' | 'po-trends' | 'procurement-tracker'
@@ -204,81 +210,99 @@ const ALL_NAV_ITEMS: Record<string, NavItem> = {
 
     'assets-workspace': { id: 'assets-workspace', icon: Box, label: 'Assets Workspace', path: '/assets-workspace', minLevel: 5 },
     'assets': { id: 'assets', icon: Box, label: 'All Assets', minLevel: 5 },
-    'asset-lifecycle': { id: 'asset-lifecycle', icon: History, label: 'Asset Lifecycle', minLevel: 4 },
-    'categories': { id: 'categories', icon: FolderTree, label: 'Asset Categories', minLevel: 4 },
-    'locations': { id: 'locations', icon: MapPin, label: 'Locations', minLevel: 4 },
-    'asset-audit': { id: 'asset-audit', icon: Scan, label: 'Asset Audit', minLevel: 4 },
+    'asset-lifecycle': { id: 'asset-lifecycle', icon: History, label: 'Asset Lifecycle & Tracking', minLevel: 4 },
+    'categories': { id: 'categories', icon: FolderTree, label: 'Asset Category', minLevel: 4 },
+    'locations': { id: 'locations', icon: MapPin, label: 'Locations & Geolocation Map', minLevel: 4 },
+    'asset-audit': { id: 'asset-audit', icon: Scan, label: 'Asset Audit Sessions', minLevel: 4 },
 
-    'inventory-items': { id: 'inventory-items', icon: Package, label: 'Items', minLevel: 4 },
-    'inventory-categories': { id: 'inventory-categories', icon: FolderTree, label: 'Inventory Categories', minLevel: 4 },
-    'warehouses': { id: 'warehouses', icon: Database, label: 'Warehouses', minLevel: 3 },
-    'stock-opname': { id: 'stock-opname', icon: Scan, label: 'Stock Opname', minLevel: 3 },
+    'inventory-items': { id: 'inventory-items', icon: Package, label: 'Item', minLevel: 4 },
+    'inventory-categories': { id: 'inventory-categories', icon: FolderTree, label: 'Item Group', minLevel: 4 },
+    'warehouses': { id: 'warehouses', icon: Database, label: 'Warehouse', minLevel: 3 },
+    'stock-opname': { id: 'stock-opname', icon: Scan, label: 'Stock Reconciliation', minLevel: 3 },
     'stock-entry': { id: 'stock-entry', icon: ClipboardCheck, label: 'Stock Entry', minLevel: 3 },
     'material-request': { id: 'material-request', icon: FileText, label: 'Material Request', minLevel: 3 },
     'purchase-receipt': { id: 'purchase-receipt', icon: ClipboardCheck, label: 'Purchase Receipt', minLevel: 3 },
-    'quality-inspection': { id: 'quality-inspection', icon: Scan, label: 'Quality Inspection', minLevel: 3 },
+    'delivery-notes': { id: 'delivery-notes', icon: Truck, label: 'Delivery Note', minLevel: 3 },
+    'pick-lists': { id: 'pick-lists', icon: ClipboardCheck, label: 'Pick List', minLevel: 3 },
     'delivery-trip': { id: 'delivery-trip', icon: Truck, label: 'Delivery Trip', minLevel: 3 },
-    'conversions': { id: 'conversions', icon: ArrowLeftRight, label: 'Conversions', minLevel: 3 },
+    'installation-note': { id: 'installation-note', icon: Wrench, label: 'Installation Note', minLevel: 3 },
+    'quality-inspection': { id: 'quality-inspection', icon: Scan, label: 'Quality Inspection', minLevel: 3 },
+    'conversions': { id: 'conversions', icon: ArrowLeftRight, label: 'Asset Conversion Requests', minLevel: 3 },
 
     'purchase-bills': { id: 'purchase-bills', icon: FileText, label: 'Purchase Invoice', path: '/buying/purchase-bills', minLevel: 3 },
-    'purchase-orders': { id: 'purchase-orders', icon: ShoppingCart, label: 'Purchase Orders', path: '/buying/purchase-orders', minLevel: 4 },
+    'purchase-orders': { id: 'purchase-orders', icon: ShoppingCart, label: 'Purchase Order', path: '/buying/purchase-orders', minLevel: 4 },
 
     'work-orders': { id: 'work-orders', icon: ClipboardCheck, label: 'Work Orders', minLevel: 4 },
-    'maintenance-schedules': { id: 'maintenance-schedules', icon: CalendarIcon, label: 'PM Schedules', minLevel: 3 },
-    'maintenance-templates': { id: 'maintenance-templates', icon: FileText, label: 'Maintenance SOP', minLevel: 3 },
+    'maintenance-schedules': { id: 'maintenance-schedules', icon: CalendarIcon, label: 'Preventive Maintenance Schedules', minLevel: 3 },
+    'maintenance-templates': { id: 'maintenance-templates', icon: FileText, label: 'Maintenance SOP Templates', minLevel: 3 },
     'maintenance-teams': { id: 'maintenance-teams', icon: Users, label: 'Maintenance Teams', minLevel: 3 },
-    'fuel': { id: 'fuel', icon: Fuel, label: 'Fuel Management', minLevel: 4 },
-    'tax-renewals': { id: 'tax-renewals', icon: Receipt, label: 'Tax & Documents', minLevel: 3 },
+    'fuel': { id: 'fuel', icon: Fuel, label: 'Fuel Management & Logs', minLevel: 4 },
+    'tax-renewals': { id: 'tax-renewals', icon: Receipt, label: 'Tax & Document Renewals', minLevel: 3 },
+    'asset-settings': { id: 'asset-settings', icon: Settings, label: 'Asset Settings', path: '/assets/settings', minLevel: 3 },
+    'depreciation-methods': { id: 'depreciation-methods', icon: TrendingUp, label: 'Depreciation Methods', path: '/assets/depreciation-methods', minLevel: 3 },
+    'maintenance-types': { id: 'maintenance-types', icon: Wrench, label: 'Maintenance Types', path: '/assets/maintenance-types', minLevel: 3 },
+    'depreciation-ledger': { id: 'depreciation-ledger', icon: FileText, label: 'Asset Depreciation Ledger', path: '/assets/reports/depreciation-ledger', minLevel: 3 },
+    'roi-trends': { id: 'roi-trends', icon: TrendingUp, label: 'Asset ROI & Cost Trends', path: '/assets/reports/roi-trends', minLevel: 3 },
+    'condition-distribution': { id: 'condition-distribution', icon: BarChart2, label: 'Asset Condition Distribution', path: '/assets/reports/condition-distribution', minLevel: 3 },
+    'workorder-summary': { id: 'workorder-summary', icon: ClipboardCheck, label: 'Work Order Maintenance Summary', path: '/assets/reports/workorder-summary', minLevel: 3 },
+    'fuel-consumption': { id: 'fuel-consumption', icon: Fuel, label: 'Fuel Consumption Report', path: '/assets/reports/fuel-consumption', minLevel: 3 },
+    'custody-history': { id: 'custody-history', icon: History, label: 'Asset Custody & Transfer History', path: '/assets/reports/custody-history', minLevel: 3 },
+    'team-performance': { id: 'team-performance', icon: Users, label: 'Maintenance Team Performance', path: '/assets/reports/team-performance', minLevel: 3 },
+    'tax-expiry': { id: 'tax-expiry', icon: CalendarIcon, label: 'Tax Renewal Expiry Schedule', path: '/assets/reports/tax-expiry', minLevel: 3 },
+    'cost-analysis': { id: 'cost-analysis', icon: DollarSign, label: 'Asset Maintenance Cost Analysis', path: '/assets/reports/cost-analysis', minLevel: 3 },
+    'iot-sensor-stream': { id: 'iot-sensor-stream', icon: Activity, label: 'IoT Sensor Stream', minLevel: 4 },
+    'asset-health-telemetry': { id: 'asset-health-telemetry', icon: TrendingUp, label: 'Asset Health Telemetry', minLevel: 4 },
+    'threshold-alerts': { id: 'threshold-alerts', icon: ShieldAlert, label: 'Threshold Alert Engine', minLevel: 4 },
 
     'rentals': { id: 'rentals', icon: Truck, label: 'Rental Orders', minLevel: 4 },
     'contracts': { id: 'contracts', icon: FileText, label: 'Contracts', minLevel: 4 },
     'contract-templates': { id: 'contract-templates', icon: Settings, label: 'Templates', minLevel: 3 },
-    'loans': { id: 'loans', icon: HandMetal, label: 'Internal Loans', minLevel: 5 },
+    'loans': { id: 'loans', icon: HandMetal, label: 'Internal Asset Loans', minLevel: 5 },
 
-    'sales-invoices': { id: 'sales-invoices', icon: FileText, label: 'Sales Invoices', minLevel: 3 },
+    'sales-invoices': { id: 'sales-invoices', icon: FileText, label: 'Sales Invoice', minLevel: 3 },
     'selling-workspace': { id: 'selling-workspace', icon: ShoppingBag, label: 'Selling Workspace', minLevel: 4 },
-    'customers': { id: 'customers', icon: Users, label: 'Customers', minLevel: 4 },
-    'quotations': { id: 'quotations', icon: FileText, label: 'Quotations', minLevel: 4 },
-    'sales-orders': { id: 'sales-orders', icon: ShoppingCart, label: 'Sales Orders', minLevel: 4 },
-    'blanket-orders': { id: 'blanket-orders', icon: FileText, label: 'Blanket Orders', minLevel: 3 },
-    'sales-partners': { id: 'sales-partners', icon: Users, label: 'Sales Partners', minLevel: 3 },
-    'sales-persons': { id: 'sales-persons', icon: Users, label: 'Sales Persons', minLevel: 3 },
-    'pos-profiles': { id: 'pos-profiles', icon: Receipt, label: 'POS Profiles', minLevel: 3 },
+    'customers': { id: 'customers', icon: Users, label: 'Customer', minLevel: 4 },
+    'quotations': { id: 'quotations', icon: FileText, label: 'Quotation', minLevel: 4 },
+    'sales-orders': { id: 'sales-orders', icon: ShoppingCart, label: 'Sales Order', minLevel: 4 },
+    'blanket-orders': { id: 'blanket-orders', icon: FileText, label: 'Blanket Order', minLevel: 3 },
+    'sales-partners': { id: 'sales-partners', icon: Users, label: 'Sales Partner', minLevel: 3 },
+    'sales-persons': { id: 'sales-persons', icon: Users, label: 'Sales Person', minLevel: 3 },
+    'pos-profiles': { id: 'pos-profiles', icon: Receipt, label: 'Point-of-Sale Profile', minLevel: 3 },
     'pos-settings': { id: 'pos-settings', icon: Settings, label: 'POS Settings', minLevel: 2 },
     'pos-opening': { id: 'pos-opening', icon: Receipt, label: 'POS Opening Entry', minLevel: 4 },
     'pos-closing': { id: 'pos-closing', icon: Receipt, label: 'POS Closing Entry', minLevel: 4 },
-    'loyalty-programs': { id: 'loyalty-programs', icon: Tag, label: 'Loyalty Programs', minLevel: 3 },
-    'loyalty-points': { id: 'loyalty-points', icon: Tag, label: 'Loyalty Points Entry', minLevel: 4 },
-    'items': { id: 'items', icon: Package, label: 'Items', minLevel: 4 },
-    'item-prices': { id: 'item-prices', icon: Tag, label: 'Item Prices', minLevel: 3 },
-    'price-lists': { id: 'price-lists', icon: Tag, label: 'Price Lists', minLevel: 3 },
-    'item-groups': { id: 'item-groups', icon: FolderTree, label: 'Item Groups', minLevel: 4 },
-    'product-bundles': { id: 'product-bundles', icon: Package, label: 'Product Bundles', minLevel: 3 },
-    'promotional-schemes': { id: 'promotional-schemes', icon: Tag, label: 'Promotional Schemes', minLevel: 3 },
-    'pricing-rules': { id: 'pricing-rules', icon: Tag, label: 'Pricing Rules', minLevel: 3 },
-    'shipping-rules': { id: 'shipping-rules', icon: Truck, label: 'Shipping Rules', minLevel: 3 },
-    'coupon-codes': { id: 'coupon-codes', icon: Tag, label: 'Coupon Codes', minLevel: 3 },
+    'loyalty-programs': { id: 'loyalty-programs', icon: Tag, label: 'Loyalty Program', minLevel: 3 },
+    'loyalty-points': { id: 'loyalty-points', icon: Tag, label: 'Loyalty Point Entry', minLevel: 4 },
+    'items': { id: 'items', icon: Package, label: 'Item', minLevel: 4 },
+    'item-prices': { id: 'item-prices', icon: Tag, label: 'Item Price', minLevel: 3 },
+    'price-lists': { id: 'price-lists', icon: Tag, label: 'Price List', minLevel: 3 },
+    'item-groups': { id: 'item-groups', icon: FolderTree, label: 'Item Group', minLevel: 4 },
+    'product-bundles': { id: 'product-bundles', icon: Package, label: 'Product Bundle', minLevel: 3 },
+    'promotional-schemes': { id: 'promotional-schemes', icon: Tag, label: 'Promotional Scheme', minLevel: 3 },
+    'pricing-rules': { id: 'pricing-rules', icon: Tag, label: 'Pricing Rule', minLevel: 3 },
+    'shipping-rules': { id: 'shipping-rules', icon: Truck, label: 'Shipping Rule', minLevel: 3 },
+    'coupon-codes': { id: 'coupon-codes', icon: Tag, label: 'Coupon Code', minLevel: 3 },
     'selling-settings': { id: 'selling-settings', icon: Settings, label: 'Selling Settings', minLevel: 2 },
-    'terms-templates': { id: 'terms-templates', icon: FileText, label: 'Terms & Conditions', minLevel: 3 },
-    'tax-templates': { id: 'tax-templates', icon: Receipt, label: 'Sales Taxes Templates', minLevel: 3 },
-    'utm-sources': { id: 'utm-sources', icon: Tag, label: 'UTM Sources', minLevel: 3 },
-    'customer-groups': { id: 'customer-groups', icon: Users, label: 'Customer Groups', minLevel: 3 },
-    'contacts': { id: 'contacts', icon: Users, label: 'Contacts', minLevel: 4 },
-    'addresses': { id: 'addresses', icon: MapPin, label: 'Addresses', minLevel: 4 },
-    'territories': { id: 'territories', icon: MapPin, label: 'Territories', minLevel: 3 },
-    'campaigns': { id: 'campaigns', icon: Tag, label: 'Campaigns', minLevel: 3 },
+    'terms-templates': { id: 'terms-templates', icon: FileText, label: 'Terms and Conditions Template', minLevel: 3 },
+    'tax-templates': { id: 'tax-templates', icon: Receipt, label: 'Sales Taxes and Charges Template', minLevel: 3 },
+    'utm-sources': { id: 'utm-sources', icon: Tag, label: 'UTM Source', minLevel: 3 },
+    'customer-groups': { id: 'customer-groups', icon: Users, label: 'Customer Group', minLevel: 3 },
+    'contacts': { id: 'contacts', icon: Users, label: 'Contact', minLevel: 4 },
+    'addresses': { id: 'addresses', icon: MapPin, label: 'Address', minLevel: 4 },
+    'territories': { id: 'territories', icon: MapPin, label: 'Territory', minLevel: 3 },
+    'campaigns': { id: 'campaigns', icon: Tag, label: 'Campaign', minLevel: 3 },
     'sales-analytics': { id: 'sales-analytics', icon: TrendingUp, label: 'Sales Analytics', minLevel: 3 },
     'so-analysis': { id: 'so-analysis', icon: TrendingUp, label: 'Sales Order Analysis', minLevel: 3 },
     'sales-funnel': { id: 'sales-funnel', icon: TrendingUp, label: 'Sales Funnel', minLevel: 3 },
     'so-trends': { id: 'so-trends', icon: TrendingUp, label: 'Sales Order Trends', minLevel: 3 },
     'quotation-trends': { id: 'quotation-trends', icon: TrendingUp, label: 'Quotation Trends', minLevel: 3 },
-    'customer-acquisition': { id: 'customer-acquisition', icon: TrendingUp, label: 'Customer Acquisition & Loyalty', minLevel: 3 },
+    'customer-acquisition': { id: 'customer-acquisition', icon: TrendingUp, label: 'Customer Acquisition and Loyalty', minLevel: 3 },
     'inactive-customers': { id: 'inactive-customers', icon: Users, label: 'Inactive Customers', minLevel: 3 },
-    'salesperson-summary': { id: 'salesperson-summary', icon: FileText, label: 'Sales Person Summary', minLevel: 3 },
-    'item-sales-history': { id: 'item-sales-history', icon: History, label: 'Item Sales History', minLevel: 3 },
-    'customer-directory': { id: 'customer-directory', icon: Users, label: 'Customer Directory', minLevel: 3 },
-    'packing-stock': { id: 'packing-stock', icon: Package, label: 'Available Stock for Packing', minLevel: 3 },
-    'pending-so-pr': { id: 'pending-so-pr', icon: ShoppingCart, label: 'Pending SO Items for PR', minLevel: 3 },
+    'salesperson-summary': { id: 'salesperson-summary', icon: FileText, label: 'Sales Person-wise Transaction Summary', minLevel: 3 },
+    'item-sales-history': { id: 'item-sales-history', icon: History, label: 'Item-wise Sales History', minLevel: 3 },
+    'customer-directory': { id: 'customer-directory', icon: Users, label: 'Customer Addresses And Contacts', minLevel: 3 },
+    'packing-stock': { id: 'packing-stock', icon: Package, label: 'Available Stock for Packing Items', minLevel: 3 },
+    'pending-so-pr': { id: 'pending-so-pr', icon: ShoppingCart, label: 'Pending SO Items For Purchase Request', minLevel: 3 },
     'delivery-trends': { id: 'delivery-trends', icon: Truck, label: 'Delivery Note Trends', minLevel: 3 },
     'invoice-trends': { id: 'invoice-trends', icon: Receipt, label: 'Sales Invoice Trends', minLevel: 3 },
     'customer-credit-balance': { id: 'customer-credit-balance', icon: Receipt, label: 'Customer Credit Balance', minLevel: 3 },
@@ -289,26 +313,24 @@ const ALL_NAV_ITEMS: Record<string, NavItem> = {
     'partner-target-variance': { id: 'partner-target-variance', icon: TrendingUp, label: 'Sales Partner Target Variance', minLevel: 3 },
 
     'buying-workspace': { id: 'buying-workspace', icon: ShoppingBag, label: 'Buying Workspace', minLevel: 4 },
-    'material-requests': { id: 'material-requests', icon: Package, label: 'Material Requests', minLevel: 4 },
-    'rfqs': { id: 'rfqs', icon: FileText, label: 'Requests for Quotation (RFQ)', minLevel: 4 },
-    'supplier-quotations': { id: 'supplier-quotations', icon: FileText, label: 'Supplier Quotations', minLevel: 4 },
-    'buying-item-prices': { id: 'buying-item-prices', icon: Tag, label: 'Item Prices (Buying)', minLevel: 3 },
-    'buying-price-lists': { id: 'buying-price-lists', icon: Tag, label: 'Price Lists (Buying)', minLevel: 3 },
-    'buying-product-bundles': { id: 'buying-product-bundles', icon: Package, label: 'Product Bundles', minLevel: 3 },
-    'buying-item-groups': { id: 'buying-item-groups', icon: FolderTree, label: 'Item Groups', minLevel: 3 },
-    'buying-promotional-schemes': { id: 'buying-promotional-schemes', icon: Tag, label: 'Promotional Schemes', minLevel: 3 },
-    'buying-pricing-rules': { id: 'buying-pricing-rules', icon: Tag, label: 'Pricing Rules', minLevel: 3 },
+    'material-requests': { id: 'material-requests', icon: Package, label: 'Material Request', minLevel: 4 },
+    'rfqs': { id: 'rfqs', icon: FileText, label: 'Request for Quotation', minLevel: 4 },
+    'supplier-quotations': { id: 'supplier-quotations', icon: FileText, label: 'Supplier Quotation', minLevel: 4 },
+    'buying-item-prices': { id: 'buying-item-prices', icon: Tag, label: 'Item Price', minLevel: 3 },
+    'buying-price-lists': { id: 'buying-price-lists', icon: Tag, label: 'Price List', minLevel: 3 },
+    'buying-product-bundles': { id: 'buying-product-bundles', icon: Package, label: 'Product Bundle', minLevel: 3 },
+    'buying-item-groups': { id: 'buying-item-groups', icon: FolderTree, label: 'Item Group', minLevel: 3 },
+    'buying-promotional-schemes': { id: 'buying-promotional-schemes', icon: Tag, label: 'Promotional Scheme', minLevel: 3 },
+    'buying-pricing-rules': { id: 'buying-pricing-rules', icon: Tag, label: 'Pricing Rule', minLevel: 3 },
     'buying-settings': { id: 'buying-settings', icon: Settings, label: 'Buying Settings', minLevel: 2 },
-    'purchase-tax-templates': { id: 'purchase-tax-templates', icon: Receipt, label: 'Purchase Taxes Templates', minLevel: 3 },
-    'buying-terms-templates': { id: 'buying-terms-templates', icon: FileText, label: 'Terms & Conditions', minLevel: 3 },
-    'suppliers': { id: 'suppliers', icon: Users, label: 'Suppliers (Vendors)', minLevel: 4 },
-    'supplier-groups': { id: 'supplier-groups', icon: Users, label: 'Supplier Groups', minLevel: 3 },
-    'supplier-contacts': { id: 'supplier-contacts', icon: Users, label: 'Supplier Contacts', minLevel: 4 },
-    'supplier-addresses': { id: 'supplier-addresses', icon: MapPin, label: 'Supplier Addresses', minLevel: 4 },
+    'suppliers': { id: 'suppliers', icon: Users, label: 'Supplier', minLevel: 4 },
+    'supplier-groups': { id: 'supplier-groups', icon: Users, label: 'Supplier Group', minLevel: 3 },
+    'supplier-contacts': { id: 'supplier-contacts', icon: Users, label: 'Contact', minLevel: 4 },
+    'supplier-addresses': { id: 'supplier-addresses', icon: MapPin, label: 'Address', minLevel: 4 },
     'supplier-scorecards': { id: 'supplier-scorecards', icon: ShieldAlert, label: 'Supplier Scorecard', minLevel: 3 },
-    'scorecard-variables': { id: 'scorecard-variables', icon: ShieldAlert, label: 'Scorecard Variables', minLevel: 3 },
-    'scorecard-criteria': { id: 'scorecard-criteria', icon: ShieldAlert, label: 'Scorecard Criteria', minLevel: 3 },
-    'scorecard-standings': { id: 'scorecard-standings', icon: ShieldAlert, label: 'Scorecard Standings', minLevel: 3 },
+    'scorecard-variables': { id: 'scorecard-variables', icon: ShieldAlert, label: 'Supplier Scorecard Variable', minLevel: 3 },
+    'scorecard-criteria': { id: 'scorecard-criteria', icon: ShieldAlert, label: 'Supplier Scorecard Criteria', minLevel: 3 },
+    'scorecard-standings': { id: 'scorecard-standings', icon: ShieldAlert, label: 'Supplier Scorecard Standing', minLevel: 3 },
     'purchase-analytics': { id: 'purchase-analytics', icon: TrendingUp, label: 'Purchase Analytics', minLevel: 3 },
     'po-analysis': { id: 'po-analysis', icon: TrendingUp, label: 'Purchase Order Analysis', minLevel: 3 },
     'item-consumption': { id: 'item-consumption', icon: TrendingUp, label: 'Item Wise Consumption', minLevel: 3 },
@@ -319,30 +341,29 @@ const ALL_NAV_ITEMS: Record<string, NavItem> = {
     'item-purchase-history': { id: 'item-purchase-history', icon: History, label: 'Item-wise Purchase History', minLevel: 3 },
     'purchase-receipt-trends': { id: 'purchase-receipt-trends', icon: TrendingUp, label: 'Purchase Receipt Trends', minLevel: 3 },
     'purchase-invoice-trends': { id: 'purchase-invoice-trends', icon: Receipt, label: 'Purchase Invoice Trends', minLevel: 3 },
-    'subcontract-materials': { id: 'subcontract-materials', icon: Package, label: 'Subcontracted Raw Materials', minLevel: 3 },
+    'subcontract-materials': { id: 'subcontract-materials', icon: Package, label: 'Subcontracted Raw Materials To Be Transferred', minLevel: 3 },
     'subcontract-received': { id: 'subcontract-received', icon: Package, label: 'Subcontracted Item To Be Received', minLevel: 3 },
     'rfq-comparison': { id: 'rfq-comparison', icon: FileText, label: 'Supplier Quotation Comparison', minLevel: 3 },
-    'pr-to-rfq': { id: 'pr-to-rfq', icon: FileText, label: 'Material Requests for Quote', minLevel: 3 },
-    'supplier-directory': { id: 'supplier-directory', icon: Users, label: 'Supplier Addresses & Contacts', minLevel: 3 },
+    'pr-to-rfq': { id: 'pr-to-rfq', icon: FileText, label: 'Material Requests for which Supplier Quotation Created', minLevel: 3 },
+    'supplier-directory': { id: 'supplier-directory', icon: Users, label: 'Supplier Addresses And Contacts', minLevel: 3 },
     'import-supplier-invoice': { id: 'import-supplier-invoice', icon: Download, label: 'Import Supplier Invoice', minLevel: 3 },
 
     'stock-workspace': { id: 'stock-workspace', icon: Package, label: 'Stock Workspace', minLevel: 3 },
-    'delivery-notes': { id: 'delivery-notes', icon: Truck, label: 'Delivery Notes (Surat Jalan)', minLevel: 4 },
-    'pick-lists': { id: 'pick-lists', icon: FileText, label: 'Pick Lists', minLevel: 3 },
-    'landed-cost-vouchers': { id: 'landed-cost-vouchers', icon: Receipt, label: 'Landed Cost Vouchers', minLevel: 3 },
-    'stock-product-bundles': { id: 'stock-product-bundles', icon: Package, label: 'Product Bundles', minLevel: 3 },
-    'item-alternatives': { id: 'item-alternatives', icon: Package, label: 'Item Alternatives', minLevel: 3 },
-    'item-manufacturers': { id: 'item-manufacturers', icon: Package, label: 'Item Manufacturers', minLevel: 3 },
-    'manufacturers': { id: 'manufacturers', icon: Building2, label: 'Manufacturers', minLevel: 3 },
-    'serial-numbers': { id: 'serial-numbers', icon: Tag, label: 'Serial Numbers', minLevel: 3 },
-    'batches': { id: 'batches', icon: Tag, label: 'Batches', minLevel: 3 },
-    'installation-notes': { id: 'installation-notes', icon: FileText, label: 'Installation Notes', minLevel: 3 },
+    'landed-cost-vouchers': { id: 'landed-cost-vouchers', icon: Receipt, label: 'Landed Cost Voucher', minLevel: 3 },
+    'stock-product-bundles': { id: 'stock-product-bundles', icon: Package, label: 'Product Bundle', minLevel: 3 },
+    'item-alternatives': { id: 'item-alternatives', icon: Package, label: 'Item Alternative', minLevel: 3 },
+    'item-manufacturers': { id: 'item-manufacturers', icon: Package, label: 'Item Manufacturer', minLevel: 3 },
+    'manufacturers': { id: 'manufacturers', icon: Building2, label: 'Manufacturer', minLevel: 3 },
+    'serial-numbers': { id: 'serial-numbers', icon: Tag, label: 'Serial No', minLevel: 3 },
+    'batches': { id: 'batches', icon: Tag, label: 'Batch', minLevel: 3 },
+    'installation-notes': { id: 'installation-notes', icon: FileText, label: 'Installation Note', minLevel: 3 },
     'stock-settings': { id: 'stock-settings', icon: Settings, label: 'Stock Settings', minLevel: 2 },
-    'brands': { id: 'brands', icon: Tag, label: 'Brands', minLevel: 3 },
-    'item-attributes': { id: 'item-attributes', icon: FolderTree, label: 'Item Attributes', minLevel: 3 },
-    'uoms': { id: 'uoms', icon: Package, label: 'Units of Measure (UOM)', minLevel: 3 },
-    'uom-conversions': { id: 'uom-conversions', icon: Package, label: 'UOM Conversion Factors', minLevel: 3 },
-    'stock-tax-templates': { id: 'stock-tax-templates', icon: Receipt, label: 'Item Tax Templates', minLevel: 3 },
+    'brands': { id: 'brands', icon: Tag, label: 'Brand', minLevel: 3 },
+    'item-attributes': { id: 'item-attributes', icon: FolderTree, label: 'Item Attribute', minLevel: 3 },
+    'uoms': { id: 'uoms', icon: Package, label: 'UOM', minLevel: 3 },
+    'uom-conversions': { id: 'uom-conversions', icon: Package, label: 'UOM Conversion Factor', minLevel: 3 },
+    'item-tax-templates': { id: 'item-tax-templates', icon: Receipt, label: 'Item Tax Template', minLevel: 3 },
+    'item-manufacturers': { id: 'item-manufacturers', icon: Factory, label: 'Item Manufacturers', minLevel: 3 },
     'stock-ledger': { id: 'stock-ledger', icon: History, label: 'Stock Ledger', minLevel: 3 },
     'stock-balance': { id: 'stock-balance', icon: Package, label: 'Stock Balance', minLevel: 3 },
     'stock-summary': { id: 'stock-summary', icon: TrendingUp, label: 'Stock Summary', minLevel: 3 },
@@ -364,27 +385,27 @@ const ALL_NAV_ITEMS: Record<string, NavItem> = {
     'journal-entries-view': { id: 'journal-entries-view', icon: FileText, label: 'Journal Entry', minLevel: 2 },
     'payment-entries': { id: 'payment-entries', icon: Receipt, label: 'Payment Entry', minLevel: 2 },
     'payment-reconciliation': { id: 'payment-reconciliation', icon: RefreshCw, label: 'Payment Reconciliation', minLevel: 2 },
-    'bank-accounts': { id: 'bank-accounts', icon: Wallet, label: 'Bank Accounts', minLevel: 2 },
-    'bank-transactions': { id: 'bank-transactions', icon: TrendingUp, label: 'Bank Transactions', minLevel: 2 },
+    'bank-accounts': { id: 'bank-accounts', icon: Wallet, label: 'Bank Account', minLevel: 2 },
+    'bank-transactions': { id: 'bank-transactions', icon: TrendingUp, label: 'Bank Transaction', minLevel: 2 },
     'bank-clearance': { id: 'bank-clearance', icon: CheckCircle2, label: 'Bank Clearance', minLevel: 2 },
     'cashier-closing': { id: 'cashier-closing', icon: Lock, label: 'Cashier Closing Entry', minLevel: 2 },
     'cost-centers': { id: 'cost-centers', icon: Building2, label: 'Cost Center', minLevel: 2 },
     'accounting-dimensions': { id: 'accounting-dimensions', icon: Layers, label: 'Accounting Dimension', minLevel: 2 },
     'budgets-view': { id: 'budgets-view', icon: DollarSign, label: 'Budget', minLevel: 2 },
-    'sales-tax-templates': { id: 'sales-tax-templates', icon: Receipt, label: 'Sales Taxes and Charges Template', minLevel: 2 },
-    'purchase-tax-templates-view': { id: 'purchase-tax-templates-view', icon: Receipt, label: 'Purchase Taxes and Charges Template', minLevel: 2 },
-    'tax-categories': { id: 'tax-categories', icon: Tag, label: 'Tax Category', minLevel: 2 },
+    'sales-tax-templates': { id: 'sales-tax-templates', icon: Receipt, label: 'Sales Tax Template', minLevel: 2 },
+    'purchase-tax-templates-view': { id: 'purchase-tax-templates-view', icon: Receipt, label: 'Purchase Tax Template', minLevel: 2 },
+    'tax-categories': { id: 'tax-categories', icon: Tag, label: 'Tax Category & Rules', minLevel: 2 },
     'tax-rules': { id: 'tax-rules', icon: Settings, label: 'Tax Rule', minLevel: 2 },
     'credit-notes': { id: 'credit-notes', icon: FileText, label: 'Credit Note', minLevel: 2 },
     'debit-notes': { id: 'debit-notes', icon: FileText, label: 'Debit Note', minLevel: 2 },
-    'dunnings': { id: 'dunnings', icon: ShieldAlert, label: 'Dunning', minLevel: 2 },
+    'dunnings': { id: 'dunnings', icon: ShieldAlert, label: 'Dunning (Surat Tagihan)', minLevel: 2 },
     'balance-sheet': { id: 'balance-sheet', icon: BarChart2, label: 'Balance Sheet (Neraca)', minLevel: 2 },
-    'profit-loss': { id: 'profit-loss', icon: TrendingUp, label: 'Profit and Loss Statement', minLevel: 2 },
-    'cash-flow': { id: 'cash-flow', icon: Wallet, label: 'Cash Flow Statement', minLevel: 2 },
-    'trial-balance': { id: 'trial-balance', icon: FileText, label: 'Trial Balance', minLevel: 2 },
+    'profit-loss': { id: 'profit-loss', icon: TrendingUp, label: 'Profit and Loss Statement (Laba Rugi)', minLevel: 2 },
+    'cash-flow': { id: 'cash-flow', icon: Wallet, label: 'Cash Flow Statement (Arus Kas)', minLevel: 2 },
+    'trial-balance': { id: 'trial-balance', icon: FileText, label: 'Trial Balance (Neraca Saldo)', minLevel: 2 },
     'general-ledger-report': { id: 'general-ledger-report', icon: History, label: 'General Ledger Report', minLevel: 2 },
-    'ar-aging': { id: 'ar-aging', icon: Clock, label: 'Accounts Receivable (AR) Aging', minLevel: 2 },
-    'ap-aging': { id: 'ap-aging', icon: Clock, label: 'Accounts Payable (AP) Aging', minLevel: 2 },
+    'ar-aging': { id: 'ar-aging', icon: Clock, label: 'AR Aging Report', minLevel: 2 },
+    'ap-aging': { id: 'ap-aging', icon: Clock, label: 'AP Aging Report', minLevel: 2 },
 
     'employees': { id: 'employees', icon: Users, label: 'Employees', minLevel: 3 },
     'departments': { id: 'departments', icon: Building2, label: 'Departments', minLevel: 3 },
@@ -426,7 +447,6 @@ export default function AdminDashboard() {
         inventory_group: false,
         settings_group: false
     });
-    const [notifOpen, setNotifOpen] = useState(false);
     const [logoutModalOpen, setLogoutModalOpen] = useState(false);
 
     // For sub-views that need parameters
@@ -471,10 +491,18 @@ export default function AdminDashboard() {
                     backendConfig.modules = backendConfig.modules.map((m: any) => {
                         if (m.id === 'asset-management') {
                             const ids = (m.menuIds || []).filter((id: string) => id !== 'maintenance-templates');
-                            if (!ids.includes('assets-workspace')) ids.unshift('assets-workspace');
-                            if (!ids.includes('conversions')) ids.push('conversions');
-                            if (!ids.includes('categories')) ids.push('categories');
-                            if (!ids.includes('locations')) ids.push('locations');
+                            const assetIds: MenuId[] = [
+                                'assets-workspace', 'assets', 'categories', 'locations', 'asset-lifecycle', 'asset-audit', 'conversions',
+                                'work-orders', 'maintenance-schedules', 'maintenance-templates', 'maintenance-teams',
+                                'tax-renewals', 'fuel', 'loans',
+                                'asset-settings', 'depreciation-methods', 'maintenance-types',
+                                'depreciation-ledger', 'roi-trends', 'condition-distribution', 'workorder-summary', 'fuel-consumption',
+                                'custody-history', 'team-performance', 'tax-expiry', 'cost-analysis', 
+                                'iot-sensor-stream', 'asset-health-telemetry', 'threshold-alerts'
+                            ];
+                            assetIds.forEach(id => {
+                                if (!ids.includes(id)) ids.push(id);
+                            });
                             return { ...m, menuIds: ids, defaultRoute: '/assets-workspace' };
                         }
                         if (m.id === 'commercial') {
@@ -502,9 +530,9 @@ export default function AdminDashboard() {
                             const buyingIds: MenuId[] = [
                                 'buying-workspace', 'material-requests', 'purchase-orders', 'purchase-bills',
                                 'rfqs', 'supplier-quotations', 'items', 'buying-item-prices', 'buying-price-lists',
-                                'buying-product-bundles', 'buying-item-groups', 'buying-promotional-schemes',
-                                'buying-pricing-rules', 'buying-settings', 'purchase-tax-templates',
-                                'buying-terms-templates', 'suppliers', 'supplier-groups', 'supplier-contacts',
+                                'buying-product-bundles', 'buying-item-groups', 'buying-promotional-schemes', 'buying-pricing-rules',
+                                'buying-settings', 'purchase-tax-templates-view', 'terms-templates',
+                                'suppliers', 'supplier-groups', 'supplier-contacts',
                                 'supplier-addresses', 'supplier-scorecards', 'scorecard-variables',
                                 'scorecard-criteria', 'scorecard-standings', 'purchase-analytics', 'po-analysis',
                                 'item-consumption', 'items-to-order-receive', 'po-trends', 'procurement-tracker',
@@ -533,7 +561,7 @@ export default function AdminDashboard() {
                                 'stock-product-bundles', 'item-alternatives', 'item-manufacturers',
                                 'manufacturers', 'serial-numbers', 'batches', 'installation-notes',
                                 'stock-settings', 'warehouses', 'brands', 'item-attributes', 'uoms',
-                                'uom-conversions', 'stock-tax-templates', 'stock-ledger', 'stock-balance',
+                                'uom-conversions', 'item-tax-templates', 'item-manufacturers', 'stock-tax-templates', 'stock-ledger', 'stock-balance',
                                 'stock-summary', 'stock-ageing', 'stock-projected-qty', 'stock-analytics',
                                 'batch-wise-balance', 'serial-no-status', 'item-shortage-report',
                                 'quality-inspection'
@@ -554,7 +582,7 @@ export default function AdminDashboard() {
                                 'credit-notes', 'debit-notes', 'dunnings', 'balance-sheet',
                                 'profit-loss', 'cash-flow', 'trial-balance', 'general-ledger-report',
                                 'ar-aging', 'ap-aging', 'finance', 'cash-bank', 'expenses', 'journal-entries',
-                                'financial-reports'
+                                'financial-reports', 'sales-invoices', 'purchase-bills'
                             ];
                             accIds.forEach(id => {
                                 if (!ids.includes(id)) ids.push(id);
@@ -567,15 +595,17 @@ export default function AdminDashboard() {
                         }
                         if (m.id === 'admin') {
                             const ids = m.menuIds || [];
-                            return { ...m, menuIds: ids.filter((id: string) => 
-                                id !== 'locations' &&
-                                id !== 'approval-workflow-settings' &&
-                                id !== 'users' &&
-                                id !== 'roles' &&
-                                id !== 'inventory-categories' &&
-                                id !== 'categories' &&
-                                id !== 'maintenance-templates'
-                            ) };
+                            return {
+                                ...m, menuIds: ids.filter((id: string) =>
+                                    id !== 'locations' &&
+                                    id !== 'approval-workflow-settings' &&
+                                    id !== 'users' &&
+                                    id !== 'roles' &&
+                                    id !== 'inventory-categories' &&
+                                    id !== 'categories' &&
+                                    id !== 'maintenance-templates'
+                                )
+                            };
                         }
                         if (m.id === 'organization') {
                             const ids = m.menuIds || [];
@@ -778,7 +808,7 @@ export default function AdminDashboard() {
                     setOpenGroups(prev => ({ ...prev, [foundGroup.id]: true }));
                 } else if (['assets-workspace', 'assets', 'categories', 'locations', 'asset-lifecycle', 'asset-audit'].includes(foundTab)) {
                     setOpenGroups(prev => ({ ...prev, asset_operations: true }));
-                } else if (['accounting-workspace', 'chart-of-accounts', 'cash-bank', 'journal-entries', 'payment-entries', 'payment-reconciliation', 'sales-invoices', 'purchase-bills', 'credit-notes', 'debit-notes', 'dunnings', 'bank-accounts', 'bank-transactions', 'cost-centers', 'accounting-dimensions', 'budgets', 'sales-tax-templates', 'purchase-tax-templates', 'tax-categories', 'tax-rules', 'balance-sheet', 'profit-loss', 'cash-flow', 'trial-balance', 'general-ledger-report', 'ar-aging', 'ap-aging'].includes(foundTab)) {
+                } else if (['accounting-workspace', 'chart-of-accounts', 'cash-bank', 'journal-entries', 'payment-entries', 'payment-reconciliation', 'sales-invoices', 'purchase-bills', 'credit-notes', 'debit-notes', 'dunnings', 'bank-accounts', 'bank-transactions', 'cost-centers', 'accounting-dimensions', 'budgets', 'sales-tax-templates', 'purchase-tax-templates-view', 'tax-categories', 'tax-rules', 'balance-sheet', 'profit-loss', 'cash-flow', 'trial-balance', 'general-ledger-report', 'ar-aging', 'ap-aging'].includes(foundTab)) {
                     setOpenGroups(prev => ({ ...prev, finance_group: true }));
                 } else if (foundTab === 'work-orders') {
                     // Explicit fallback for work-orders to ensure group opens
@@ -831,6 +861,28 @@ export default function AdminDashboard() {
         }
     }, [activeTab, activeModule, launchpadConfig, setActiveModule]);
 
+    // Auto-open primary sidebar group when switching modules
+    useEffect(() => {
+        if (activeModule) {
+            const groupMapping: Record<string, string> = {
+                'organization': 'organization_group',
+                'asset-management': 'asset_management_group',
+                'supply-chain': 'inventory_group',
+                'rental': 'rental_module',
+                'procurement': 'procurement_group',
+                'commercial': 'commercial_group',
+                'finance': 'finance_group',
+                'hr': 'hr_group',
+                'admin': 'settings_group'
+            };
+
+            const groupId = groupMapping[activeModule];
+            if (groupId) {
+                setOpenGroups(prev => ({ ...prev, [groupId]: true }));
+            }
+        }
+    }, [activeModule]);
+
     // Dynamically construct navItems structure based on launchpadConfig
     const navItems: NavEntry[] = useMemo(() => {
         const getModuleMenuIds = (moduleId: string): string[] => {
@@ -852,7 +904,7 @@ export default function AdminDashboard() {
         const insightsIds = getModuleMenuIds('insights');
         const organizationIds = getModuleMenuIds('organization');
 
-        const getGroupItems = (moduleIds: string[], preferredOrder: string[], allowedFilter?: string[]) => {
+        const getGroupItems = (_moduleIds: string[], preferredOrder: string[], allowedFilter?: string[]) => {
             const result: NavItem[] = [];
             const filterList = allowedFilter || preferredOrder;
 
@@ -868,8 +920,13 @@ export default function AdminDashboard() {
 
         return [
             ALL_NAV_ITEMS['dashboard'],
-            ...(insightsIds.length === 0 || insightsIds.includes('analytics') ? [ALL_NAV_ITEMS['analytics']] : []),
-            ...(insightsIds.length === 0 || insightsIds.includes('reports') ? [ALL_NAV_ITEMS['reports']] : []),
+            ALL_NAV_ITEMS['assets-workspace'],
+            ALL_NAV_ITEMS['stock-workspace'],
+            ALL_NAV_ITEMS['buying-workspace'],
+            ALL_NAV_ITEMS['selling-workspace'],
+            ALL_NAV_ITEMS['accounting-workspace'],
+            ...(activeModule === 'insights' && (insightsIds.length === 0 || insightsIds.includes('analytics')) ? [ALL_NAV_ITEMS['analytics']] : []),
+            ...(activeModule === 'insights' && (insightsIds.length === 0 || insightsIds.includes('reports')) ? [ALL_NAV_ITEMS['reports']] : []),
             {
                 id: 'organization_group',
                 label: 'Organization',
@@ -881,11 +938,61 @@ export default function AdminDashboard() {
                 ],
             },
             {
-                id: 'asset_operations',
-                label: 'Assets',
+                id: 'asset_management_group',
+                label: 'Asset Management',
                 icon: Box,
                 minLevel: 5,
-                children: getGroupItems(assetIds, ['assets-workspace', 'assets', 'categories', 'locations', 'asset-lifecycle', 'asset-audit'], ['assets-workspace', 'assets', 'categories', 'locations', 'asset-lifecycle', 'asset-audit'])
+                children: [
+                    {
+                        id: 'asset_operations_subgroup',
+                        label: 'Asset Operations',
+                        icon: Box,
+                        minLevel: 5,
+                        children: getGroupItems(assetIds, ['assets', 'categories', 'locations', 'asset-lifecycle', 'asset-audit', 'conversions'])
+                    },
+                    {
+                        id: 'maintenance_field_ops_subgroup',
+                        label: 'Maintenance & Field Ops',
+                        icon: Wrench,
+                        minLevel: 5,
+                        children: getGroupItems(assetIds, ['work-orders', 'maintenance-schedules', 'maintenance-templates', 'maintenance-teams'])
+                    },
+                    {
+                        id: 'compliance_utilities_subgroup',
+                        label: 'Compliance & Utilities',
+                        icon: ShieldAlert,
+                        minLevel: 5,
+                        children: getGroupItems(assetIds, ['tax-renewals', 'fuel', 'loans'])
+                    },
+                    {
+                        id: 'asset_settings_subgroup',
+                        label: 'Settings & Setup',
+                        icon: Settings,
+                        minLevel: 5,
+                        children: getGroupItems(assetIds, ['asset-settings', 'depreciation-methods', 'maintenance-types'])
+                    },
+                    {
+                        id: 'asset_key_reports_subgroup',
+                        label: 'Key Reports',
+                        icon: FileText,
+                        minLevel: 5,
+                        children: getGroupItems(assetIds, ['depreciation-ledger', 'roi-trends', 'condition-distribution', 'workorder-summary', 'fuel-consumption'])
+                    },
+                    {
+                        id: 'asset_other_reports_subgroup',
+                        label: 'Other Reports',
+                        icon: History,
+                        minLevel: 5,
+                        children: getGroupItems(assetIds, ['custody-history', 'team-performance', 'tax-expiry', 'cost-analysis'])
+                    },
+                    {
+                        id: 'asset_telemetry_subgroup',
+                        label: 'Telemetry & IoT',
+                        icon: Activity,
+                        minLevel: 5,
+                        children: getGroupItems(assetIds, ['iot-sensor-stream', 'asset-health-telemetry', 'threshold-alerts'])
+                    }
+                ]
             },
             {
                 id: 'inventory_group',
@@ -893,57 +1000,56 @@ export default function AdminDashboard() {
                 icon: Package,
                 minLevel: 4,
                 children: [
-                    ...getGroupItems(supplyChainIds, [
-                        'stock-workspace', 'stock-entry', 'delivery-notes', 'purchase-receipt',
-                        'material-request', 'pick-lists', 'delivery-trip', 'stock-opname',
-                        'landed-cost-vouchers', 'inventory-items', 'inventory-categories'
-                    ]),
+                    {
+                        id: 'stock_operations_subgroup',
+                        label: 'Stock Operations',
+                        icon: ClipboardCheck,
+                        minLevel: 4,
+                        children: getGroupItems(supplyChainIds, ['stock-entry', 'delivery-notes', 'purchase-receipt', 'material-request', 'pick-lists', 'delivery-trip', 'stock-opname', 'landed-cost-vouchers'])
+                    },
+                    {
+                        id: 'products_pricing_subgroup',
+                        label: 'Products',
+                        icon: Package,
+                        minLevel: 4,
+                        children: getGroupItems(supplyChainIds, ['inventory-items', 'inventory-categories', 'stock-product-bundles', 'item-alternatives', 'item-manufacturers', 'manufacturers'])
+                    },
                     {
                         id: 'serial_batch_subgroup',
                         label: 'Serial No and Batch',
                         icon: Tag,
                         minLevel: 3,
-                        children: getGroupItems(supplyChainIds, [
-                            'serial-numbers', 'batches', 'installation-notes'
-                        ])
+                        children: getGroupItems(supplyChainIds, ['serial-numbers', 'batches', 'installation-note'])
                     },
                     {
                         id: 'stock_setup_subgroup',
-                        label: 'Setup',
+                        label: 'Settings',
                         icon: Settings,
                         minLevel: 3,
-                        children: getGroupItems(supplyChainIds, [
-                            'stock-settings', 'warehouses', 'brands', 'item-attributes',
-                            'uoms', 'uom-conversions', 'stock-tax-templates', 'stock-product-bundles',
-                            'item-alternatives', 'item-manufacturers', 'manufacturers', 'quality-inspection'
-                        ])
+                        children: getGroupItems(supplyChainIds, ['stock-settings', 'warehouses', 'brands', 'item-attributes', 'uoms', 'uom-conversions', 'item-tax-templates', 'item-manufacturers', 'quality-inspection'])
                     },
                     {
-                        id: 'stock_reports_subgroup',
-                        label: 'Reports',
+                        id: 'stock_key_reports_subgroup',
+                        label: 'Key Reports',
                         icon: FileText,
                         minLevel: 3,
-                        children: getGroupItems(supplyChainIds, [
-                            'stock-ledger', 'stock-balance', 'stock-summary', 'stock-ageing',
-                            'stock-projected-qty', 'stock-analytics', 'batch-wise-balance',
-                            'serial-no-status', 'item-shortage-report'
-                        ])
+                        children: getGroupItems(supplyChainIds, ['stock-ledger', 'stock-balance', 'stock-summary', 'stock-ageing', 'stock-projected-qty'])
+                    },
+                    {
+                        id: 'stock_other_reports_subgroup',
+                        label: 'Other Reports',
+                        icon: FileText,
+                        minLevel: 3,
+                        children: getGroupItems(supplyChainIds, ['stock-analytics', 'batch-wise-balance', 'serial-no-status', 'item-shortage-report'])
                     }
                 ]
-            },
-            {
-                id: 'maintenance_group',
-                label: 'Field Operations',
-                icon: Wrench,
-                minLevel: 5,
-                children: getGroupItems(fieldOpsIds, ['work-orders', 'maintenance-schedules', 'maintenance-templates', 'maintenance-teams', 'fuel', 'tax-renewals', 'loans'], ['work-orders', 'maintenance-schedules', 'maintenance-templates', 'maintenance-teams', 'fuel', 'tax-renewals', 'loans'])
             },
             {
                 id: 'rental_module',
                 label: 'Rental & Contracts',
                 icon: Truck,
                 minLevel: 4,
-                children: getGroupItems(rentalIds, ['rentals', 'contracts', 'contract-templates'], ['rentals', 'contracts', 'contract-templates'])
+                children: getGroupItems(rentalIds, ['rentals', 'contracts', 'contract-templates'])
             },
             {
                 id: 'procurement_group',
@@ -951,35 +1057,54 @@ export default function AdminDashboard() {
                 icon: ShoppingCart,
                 minLevel: 3,
                 children: [
-                    ...getGroupItems(procurementIds, [
-                        'buying-workspace', 'material-requests', 'purchase-orders', 'purchase-bills',
-                        'rfqs', 'supplier-quotations'
-                    ]),
                     {
-                        id: 'buying_setup_subgroup',
-                        label: 'Setup',
-                        icon: Settings,
+                        id: 'procurement_orders_subgroup',
+                        label: 'Buying',
+                        icon: ShoppingCart,
                         minLevel: 3,
-                        children: getGroupItems(procurementIds, [
-                            'suppliers', 'supplier-groups', 'supplier-contacts', 'supplier-addresses',
-                            'buying-item-prices', 'buying-price-lists', 'buying-product-bundles',
-                            'buying-item-groups', 'buying-promotional-schemes', 'buying-pricing-rules',
-                            'buying-settings', 'purchase-tax-templates', 'buying-terms-templates',
-                            'supplier-scorecards', 'scorecard-variables', 'scorecard-criteria', 'scorecard-standings'
-                        ])
+                        children: getGroupItems(procurementIds, ['material-requests', 'purchase-orders', 'purchase-bills', 'rfqs', 'supplier-quotations'])
                     },
                     {
-                        id: 'buying_reports_subgroup',
-                        label: 'Reports',
+                        id: 'buying_items_pricing_subgroup',
+                        label: 'Items & Pricing',
+                        icon: Tag,
+                        minLevel: 3,
+                        children: getGroupItems(procurementIds, ['items', 'buying-item-prices', 'buying-price-lists', 'buying-product-bundles', 'buying-item-groups', 'buying-promotional-schemes', 'buying-pricing-rules'])
+                    },
+                    {
+                        id: 'buying_supplier_subgroup',
+                        label: 'Supplier',
+                        icon: Users,
+                        minLevel: 3,
+                        children: getGroupItems(procurementIds, ['suppliers', 'supplier-groups', 'supplier-contacts', 'supplier-addresses'])
+                    },
+                    {
+                        id: 'buying_scorecard_subgroup',
+                        label: 'Supplier Scorecard',
+                        icon: Shield,
+                        minLevel: 3,
+                        children: getGroupItems(procurementIds, ['supplier-scorecards', 'scorecard-variables', 'scorecard-criteria', 'scorecard-standings'])
+                    },
+                    {
+                        id: 'buying_setup_subgroup',
+                        label: 'Settings',
+                        icon: Settings,
+                        minLevel: 3,
+                        children: getGroupItems(procurementIds, ['buying-settings', 'purchase-tax-templates-view', 'terms-templates'])
+                    },
+                    {
+                        id: 'buying_key_reports_subgroup',
+                        label: 'Key Reports',
                         icon: FileText,
                         minLevel: 3,
-                        children: getGroupItems(procurementIds, [
-                            'purchase-analytics', 'po-analysis', 'item-consumption', 'items-to-order-receive',
-                            'po-trends', 'procurement-tracker', 'items-to-request', 'item-purchase-history',
-                            'purchase-receipt-trends', 'purchase-invoice-trends', 'subcontract-materials',
-                            'subcontract-received', 'rfq-comparison', 'pr-to-rfq', 'supplier-directory',
-                            'import-supplier-invoice', 'purchase-receipt'
-                        ])
+                        children: getGroupItems(procurementIds, ['purchase-analytics', 'po-analysis', 'item-consumption', 'items-to-order-receive', 'po-trends', 'procurement-tracker'])
+                    },
+                    {
+                        id: 'buying_other_reports_subgroup',
+                        label: 'Other Reports',
+                        icon: FileText,
+                        minLevel: 3,
+                        children: getGroupItems(procurementIds, ['items-to-request', 'item-purchase-history', 'purchase-receipt-trends', 'purchase-invoice-trends', 'subcontract-materials', 'subcontract-received', 'rfq-comparison', 'pr-to-rfq', 'supplier-directory', 'import-supplier-invoice', 'purchase-receipt'])
                     }
                 ]
             },
@@ -989,51 +1114,47 @@ export default function AdminDashboard() {
                 icon: TrendingUp,
                 minLevel: 3,
                 children: [
-                    ...getGroupItems(commercialIds, [
-                        'selling-workspace', 'customers', 'quotations', 'sales-orders', 'sales-invoices',
-                        'blanket-orders', 'sales-partners', 'sales-persons'
-                    ]),
+                    {
+                        id: 'selling_orders_subgroup',
+                        label: 'Selling',
+                        icon: TrendingUp,
+                        minLevel: 3,
+                        children: getGroupItems(commercialIds, ['customers', 'quotations', 'sales-orders', 'sales-invoices', 'blanket-orders', 'sales-partners', 'sales-persons'])
+                    },
                     {
                         id: 'pos_subgroup',
-                        label: 'POS',
+                        label: 'Point of Sale',
                         icon: ShoppingBag,
                         minLevel: 3,
-                        children: getGroupItems(commercialIds, [
-                            'pos-profiles', 'pos-settings', 'pos-opening', 'pos-closing', 'loyalty-programs', 'loyalty-points'
-                        ])
+                        children: getGroupItems(commercialIds, ['pos-profiles', 'pos-settings', 'pos-opening', 'pos-closing', 'loyalty-programs', 'loyalty-points'])
                     },
                     {
-                        id: 'items_pricing_subgroup',
-                        label: 'Items & Pricing',
+                        id: 'selling_items_pricing_subgroup',
+                        label: 'Items and Pricing',
                         icon: Tag,
                         minLevel: 3,
-                        children: getGroupItems(commercialIds, [
-                            'items', 'item-prices', 'price-lists', 'item-groups', 'product-bundles',
-                            'promotional-schemes', 'pricing-rules', 'shipping-rules', 'coupon-codes'
-                        ])
+                        children: getGroupItems(commercialIds, ['items', 'item-prices', 'price-lists', 'item-groups', 'product-bundles', 'promotional-schemes', 'pricing-rules', 'shipping-rules', 'coupon-codes'])
                     },
                     {
-                        id: 'setup_subgroup',
-                        label: 'Setup',
+                        id: 'selling_setup_subgroup',
+                        label: 'Settings',
                         icon: Settings,
                         minLevel: 3,
-                        children: getGroupItems(commercialIds, [
-                            'selling-settings', 'terms-templates', 'tax-templates', 'utm-sources',
-                            'customer-groups', 'contacts', 'addresses', 'territories', 'campaigns'
-                        ])
+                        children: getGroupItems(commercialIds, ['selling-settings', 'terms-templates', 'tax-templates', 'utm-sources', 'customer-groups', 'contacts', 'addresses', 'territories', 'campaigns'])
                     },
                     {
-                        id: 'reports_subgroup',
-                        label: 'Reports',
+                        id: 'selling_key_reports_subgroup',
+                        label: 'Key Reports',
                         icon: FileText,
                         minLevel: 3,
-                        children: getGroupItems(commercialIds, [
-                            'sales-analytics', 'so-analysis', 'sales-funnel', 'so-trends', 'quotation-trends',
-                            'customer-acquisition', 'inactive-customers', 'salesperson-summary', 'item-sales-history',
-                            'customer-directory', 'packing-stock', 'pending-so-pr', 'delivery-trends', 'invoice-trends',
-                            'customer-credit-balance', 'dormant-customers', 'partner-commissions',
-                            'territory-target-variance', 'salesperson-target-variance', 'partner-target-variance'
-                        ])
+                        children: getGroupItems(commercialIds, ['sales-analytics', 'so-analysis', 'sales-funnel', 'so-trends', 'quotation-trends', 'customer-acquisition', 'inactive-customers', 'salesperson-summary', 'item-sales-history'])
+                    },
+                    {
+                        id: 'selling_other_reports_subgroup',
+                        label: 'Other Reports',
+                        icon: FileText,
+                        minLevel: 3,
+                        children: getGroupItems(commercialIds, ['customer-directory', 'packing-stock', 'pending-so-pr', 'delivery-trends', 'invoice-trends', 'customer-credit-balance', 'dormant-customers', 'partner-commissions', 'territory-target-variance', 'salesperson-target-variance', 'partner-target-variance'])
                     }
                 ]
             },
@@ -1043,38 +1164,47 @@ export default function AdminDashboard() {
                 icon: Wallet,
                 minLevel: 2,
                 children: [
-                    ...getGroupItems(financeIds, [
-                        'accounting-workspace', 'chart-of-accounts', 'journal-entries-view',
-                        'payment-entries', 'payment-reconciliation', 'credit-notes', 'debit-notes', 'dunnings'
-                    ]),
                     {
-                        id: 'cash_bank_subgroup',
-                        label: 'Cash & Bank',
+                        id: 'general_ledger_subgroup',
+                        label: 'General Ledger & Entries',
+                        icon: FileText,
+                        minLevel: 2,
+                        children: getGroupItems(financeIds, ['finance', 'journal-entries-view', 'payment-entries', 'payment-reconciliation'])
+                    },
+                    {
+                        id: 'ar_subgroup',
+                        label: 'Accounts Receivable',
+                        icon: DollarSign,
+                        minLevel: 2,
+                        children: getGroupItems(financeIds, ['sales-invoices', 'credit-notes', 'dunnings', 'ar-aging'])
+                    },
+                    {
+                        id: 'ap_subgroup',
+                        label: 'Accounts Payable',
                         icon: Wallet,
                         minLevel: 2,
-                        children: getGroupItems(financeIds, [
-                            'bank-accounts', 'bank-transactions', 'bank-clearance', 'cashier-closing', 'cash-bank', 'expenses'
-                        ])
+                        children: getGroupItems(financeIds, ['purchase-bills', 'debit-notes', 'ap-aging'])
+                    },
+                    {
+                        id: 'cash_bank_subgroup',
+                        label: 'Cash & Bank Operations',
+                        icon: Wallet,
+                        minLevel: 2,
+                        children: getGroupItems(financeIds, ['bank-accounts', 'bank-transactions', 'bank-clearance', 'cashier-closing'])
                     },
                     {
                         id: 'acc_setup_subgroup',
-                        label: 'Setup & Taxes',
+                        label: 'Cost Centers & Taxes',
                         icon: Settings,
                         minLevel: 2,
-                        children: getGroupItems(financeIds, [
-                            'cost-centers', 'accounting-dimensions', 'budgets-view', 'sales-tax-templates',
-                            'purchase-tax-templates-view', 'tax-categories', 'tax-rules'
-                        ])
+                        children: getGroupItems(financeIds, ['cost-centers', 'accounting-dimensions', 'budgets-view', 'sales-tax-templates', 'purchase-tax-templates-view', 'tax-categories', 'tax-rules'])
                     },
                     {
                         id: 'fin_reports_subgroup',
-                        label: 'Financial Statements',
+                        label: 'Financial Statements & Reports',
                         icon: FileText,
                         minLevel: 2,
-                        children: getGroupItems(financeIds, [
-                            'balance-sheet', 'profit-loss', 'cash-flow', 'trial-balance',
-                            'general-ledger-report', 'ar-aging', 'ap-aging', 'financial-reports'
-                        ])
+                        children: getGroupItems(financeIds, ['balance-sheet', 'profit-loss', 'cash-flow', 'trial-balance', 'general-ledger-report'])
                     }
                 ]
             },
@@ -1108,6 +1238,21 @@ export default function AdminDashboard() {
         // No module selected → show all menus (fallback)
         if (!activeModule) return navItems;
 
+        const moduleToGroupId: Record<string, string[]> = {
+            'organization': ['dashboard', 'analytics', 'reports', 'organization_group'],
+            'asset-management': ['assets-workspace', 'analytics', 'reports', 'asset_management_group'],
+            'supply-chain': ['stock-workspace', 'analytics', 'reports', 'inventory_group'],
+            'rental': ['dashboard', 'analytics', 'reports', 'rental_module'],
+            'procurement': ['buying-workspace', 'analytics', 'reports', 'procurement_group'],
+            'commercial': ['selling-workspace', 'analytics', 'reports', 'commercial_group'],
+            'finance': ['accounting-workspace', 'analytics', 'reports', 'finance_group'],
+            'hr': ['dashboard', 'analytics', 'reports', 'hr_group'],
+            'admin': ['dashboard', 'analytics', 'reports', 'settings_group']
+        };
+
+        const allowedGroupIds = moduleToGroupId[activeModule] || [];
+        const moduleFilteredItems = navItems.filter(item => isNavHeader(item) || allowedGroupIds.includes((item as any).id));
+
         // Helper: collect all leaf menu IDs from a nav entry
         const getLeafIds = (entry: NavEntry): string[] => {
             if (isNavHeader(entry)) return [];
@@ -1118,7 +1263,7 @@ export default function AdminDashboard() {
         };
 
         // Filter: keep items/groups that have at least one visible menu ID
-        return navItems.filter(item => {
+        return moduleFilteredItems.filter(item => {
             if (isNavHeader(item)) {
                 // Show header if the next non-header item would be visible
                 // (handled by rendering — headers without following content are harmless)
@@ -1403,7 +1548,7 @@ export default function AdminDashboard() {
                     sidebarOpen={sidebarOpen}
                     setSidebarOpen={setSidebarOpen}
                     activeTab={activeTab}
-                    setActiveTab={setActiveTab}
+                    setActiveTab={(tab: string) => setActiveTab(tab as TabId)}
                     setActiveModule={setActiveModule}
                     theme={theme}
                     toggleTheme={toggleTheme}
@@ -1422,7 +1567,7 @@ export default function AdminDashboard() {
                         selectedRentalId={selectedRentalId}
                         selectedContractId={selectedContractId}
                         hasPermission={hasPermission}
-                        setActiveTab={setActiveTab}
+                        setActiveTab={(tab: string) => setActiveTab(tab as TabId)}
                         navigate={navigate}
                     />
                 </main>

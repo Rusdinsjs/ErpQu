@@ -122,7 +122,25 @@ export default function Launchpad() {
                     : JSON.stringify(publicSettings.launchpad_config);
                 const backendConfig = JSON.parse(backendConfigStr);
                 if (backendConfig && Array.isArray(backendConfig.modules)) {
-                    baseConfig = backendConfig;
+                    // Merge backend config with default config to ensure static UI fields (like defaultRoute) are always up to date
+                    const mergedModules = backendConfig.modules
+                        .filter((backendMod: any) => DEFAULT_LAUNCHPAD_CONFIG.modules.some(m => m.id === backendMod.id))
+                        .map((backendMod: any) => {
+                            const defaultMod = DEFAULT_LAUNCHPAD_CONFIG.modules.find(m => m.id === backendMod.id)!;
+                            return {
+                                ...backendMod,
+                                // Force static UI fields from the latest code to prevent stale DB configs
+                                title: defaultMod.title,
+                                subtitle: defaultMod.subtitle,
+                                icon: defaultMod.icon,
+                                gradient: defaultMod.gradient,
+                                iconBg: defaultMod.iconBg,
+                                defaultRoute: defaultMod.defaultRoute,
+                                features: defaultMod.features,
+                                menuIds: defaultMod.menuIds
+                            };
+                        });
+                    baseConfig = { ...backendConfig, modules: mergedModules };
                 }
             } catch {
                 console.warn('Invalid launchpad_config in settings, using defaults');

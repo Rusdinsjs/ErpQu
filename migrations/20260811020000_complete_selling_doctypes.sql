@@ -3,6 +3,11 @@
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
+DROP TABLE IF EXISTS marketing_campaigns CASCADE;
+DROP TABLE IF EXISTS customer_contacts CASCADE;
+DROP TABLE IF EXISTS customer_addresses CASCADE;
+DROP TABLE IF EXISTS blanket_orders CASCADE;
+
 -- 1. Marketing Campaigns
 CREATE TABLE IF NOT EXISTS marketing_campaigns (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

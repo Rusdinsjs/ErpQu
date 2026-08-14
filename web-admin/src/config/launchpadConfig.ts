@@ -8,7 +8,7 @@ export type MenuId =
     | 'dashboard' | 'analytics' | 'reports'
     | 'assets-workspace' | 'assets' | 'asset-lifecycle' | 'categories' | 'locations' | 'asset-audit'
     | 'work-orders' | 'conversions' | 'maintenance-schedules' | 'maintenance-templates' | 'maintenance-teams'
-    | 'fuel' | 'loans' | 'tax-renewals'
+    | 'fuel' | 'loans' | 'tax-renewals' | 'asset-settings' | 'depreciation-methods' | 'maintenance-types' | 'depreciation-ledger' | 'roi-trends' | 'condition-distribution' | 'workorder-summary' | 'fuel-consumption' | 'custody-history' | 'team-performance' | 'tax-expiry' | 'cost-analysis' | 'iot-sensor-stream' | 'asset-health-telemetry' | 'threshold-alerts'
     | 'rentals' | 'contracts' | 'contract-templates'
     | 'sales-invoices' | 'selling-workspace' | 'customers' | 'quotations' | 'sales-orders' | 'blanket-orders' | 'sales-partners' | 'sales-persons'
     | 'pos-profiles' | 'pos-settings' | 'pos-opening' | 'pos-closing' | 'loyalty-programs' | 'loyalty-points'
@@ -80,6 +80,21 @@ export const MENU_LABELS: Record<MenuId, string> = {
     'fuel': 'Fuel Management',
     'loans': 'Internal Loans',
     'tax-renewals': 'Tax & Documents',
+    'asset-settings': 'Asset Settings',
+    'depreciation-methods': 'Depreciation Methods',
+    'maintenance-types': 'Maintenance Types',
+    'depreciation-ledger': 'Asset Depreciation Ledger',
+    'roi-trends': 'Asset ROI & Cost Trends',
+    'condition-distribution': 'Asset Condition Distribution',
+    'workorder-summary': 'Work Order Maintenance Summary',
+    'fuel-consumption': 'Fuel Consumption Report',
+    'custody-history': 'Asset Custody & Transfer History',
+    'team-performance': 'Maintenance Team Performance',
+    'tax-expiry': 'Tax Renewal Expiry Schedule',
+    'cost-analysis': 'Asset Maintenance Cost Analysis',
+    'iot-sensor-stream': 'IoT Sensor Stream',
+    'asset-health-telemetry': 'Asset Health Telemetry',
+    'threshold-alerts': 'Threshold Alert Engine',
     'rentals': 'Rental Orders',
     'contracts': 'Contracts',
     'contract-templates': 'Contract Templates',
@@ -275,6 +290,21 @@ export const MENU_TO_RESOURCE: Record<MenuId, string> = {
     'fuel': 'fuel',
     'loans': 'loan',
     'tax-renewals': 'tax_document',
+    'asset-settings': 'asset',
+    'depreciation-methods': 'asset',
+    'maintenance-types': 'asset',
+    'depreciation-ledger': 'asset',
+    'roi-trends': 'asset',
+    'condition-distribution': 'asset',
+    'workorder-summary': 'work_order',
+    'fuel-consumption': 'fuel',
+    'custody-history': 'asset',
+    'team-performance': 'work_order',
+    'tax-expiry': 'tax_document',
+    'cost-analysis': 'asset',
+    'iot-sensor-stream': 'telemetry',
+    'asset-health-telemetry': 'telemetry',
+    'threshold-alerts': 'telemetry',
     'rentals': 'rental',
     'contracts': 'contract',
     'contract-templates': 'contract_template',
@@ -479,23 +509,15 @@ export const DEFAULT_LAUNCHPAD_CONFIG: LaunchpadConfig = {
             iconBg: 'bg-gradient-to-br from-emerald-500 to-teal-500',
             defaultRoute: '/assets-workspace',
             minLevel: 5,
-            features: ['Asset Workspace', 'Asset Registry', 'Asset Categories', 'Locations', 'Lifecycle Tracking', 'Asset Audit'],
-            menuIds: ['assets-workspace', 'assets', 'categories', 'locations', 'asset-lifecycle', 'asset-audit', 'conversions'],
+            features: ['Asset Registry & Lifecycle', 'Work Orders & Maintenance', 'IoT Sensors & Telemetry'],
+            menuIds: [
+                'assets-workspace', 'assets', 'categories', 'locations', 'asset-lifecycle', 'asset-audit', 'conversions',
+                'work-orders', 'maintenance-schedules', 'maintenance-templates', 'maintenance-teams',
+                'tax-renewals', 'fuel', 'loans', 'asset-settings', 'depreciation-methods', 'maintenance-types',
+                'depreciation-ledger', 'roi-trends', 'condition-distribution', 'workorder-summary', 'fuel-consumption',
+                'custody-history', 'team-performance', 'tax-expiry', 'cost-analysis', 'analytics'
+            ],
             order: 3,
-            enabled: true,
-        },
-        {
-            id: 'field-operations',
-            title: 'Field Operations',
-            subtitle: 'Maintenance & Services',
-            icon: 'Wrench',
-            gradient: 'from-amber-500/20 to-orange-500/20',
-            iconBg: 'bg-gradient-to-br from-amber-500 to-orange-500',
-            defaultRoute: '/work-orders',
-            minLevel: 5,
-            features: ['Work Orders & Teams', 'PM Schedules', 'Maintenance SOP', 'Fuel & Tax', 'Internal Loans'],
-            menuIds: ['work-orders', 'maintenance-schedules', 'maintenance-templates', 'maintenance-teams', 'fuel', 'tax-renewals', 'loans'],
-            order: 4,
             enabled: true,
         },
         {
@@ -505,7 +527,7 @@ export const DEFAULT_LAUNCHPAD_CONFIG: LaunchpadConfig = {
             icon: 'TrendingUp',
             gradient: 'from-violet-500/20 to-purple-500/20',
             iconBg: 'bg-gradient-to-br from-violet-500 to-purple-500',
-            defaultRoute: '/sales-invoices',
+            defaultRoute: '/selling-workspace',
             minLevel: 4,
             features: ['Client Management', 'Sales Invoices', 'Partner Directory'],
             menuIds: [
@@ -531,7 +553,7 @@ export const DEFAULT_LAUNCHPAD_CONFIG: LaunchpadConfig = {
             icon: 'ShoppingBag',
             gradient: 'from-amber-600/20 to-yellow-600/20',
             iconBg: 'bg-gradient-to-br from-amber-600 to-yellow-600',
-            defaultRoute: '/purchase-bills',
+            defaultRoute: '/buying-workspace',
             minLevel: 4,
             features: ['Purchase Invoice', 'Purchase Orders', 'Supplier Procurement'],
             menuIds: [
@@ -565,20 +587,7 @@ export const DEFAULT_LAUNCHPAD_CONFIG: LaunchpadConfig = {
             order: 7,
             enabled: true,
         },
-        {
-            id: 'telemetry',
-            title: 'Telemetry & IoT Stream',
-            subtitle: 'Live Asset Sensors & Alerts',
-            icon: 'Activity',
-            gradient: 'from-rose-500/20 to-red-500/20',
-            iconBg: 'bg-gradient-to-br from-rose-500 to-red-500',
-            defaultRoute: '/dashboard',
-            minLevel: 4,
-            features: ['IoT Sensor Stream', 'Threshold Alert Engine', 'Asset Health Telemetry'],
-            menuIds: ['analytics'],
-            order: 8,
-            enabled: true,
-        },
+
         {
             id: 'supply-chain',
             title: 'Supply Chain & Inventory',
@@ -586,7 +595,7 @@ export const DEFAULT_LAUNCHPAD_CONFIG: LaunchpadConfig = {
             icon: 'Package',
             gradient: 'from-orange-500/20 to-red-500/20',
             iconBg: 'bg-gradient-to-br from-orange-500 to-red-400',
-            defaultRoute: '/inventory-items',
+            defaultRoute: '/stock-workspace',
             minLevel: 3,
             menuIds: [
                 'stock-workspace', 'stock-entry', 'delivery-notes', 'purchase-receipt',

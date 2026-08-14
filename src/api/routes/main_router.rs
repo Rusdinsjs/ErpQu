@@ -9,6 +9,7 @@ use axum::{
 };
 
 use crate::api::handlers::finance_handler;
+use crate::api::handlers::purchase_receipt_handler;
 use crate::api::handlers::*;
 use crate::api::middleware::{
     auth_middleware,
@@ -372,6 +373,22 @@ pub fn create_router(state: AppState) -> Router {
             get(finance_handler::list_purchase_orders).post(finance_handler::create_purchase_order),
         )
         .route(
+            "/api/finance/purchase-receipts",
+            post(purchase_receipt_handler::create_purchase_receipt),
+        )
+        .route(
+            "/api/finance/purchase-receipts/company/:company_id",
+            get(purchase_receipt_handler::list_purchase_receipts),
+        )
+        .route(
+            "/api/finance/purchase-receipts/:id",
+            get(purchase_receipt_handler::get_purchase_receipt),
+        )
+        .route(
+            "/api/finance/purchase-receipts/:id/submit",
+            post(purchase_receipt_handler::submit_purchase_receipt),
+        )
+        .route(
             "/api/finance/purchase/shipments",
             get(finance_handler::list_purchase_shipments)
                 .post(finance_handler::create_purchase_shipment),
@@ -452,6 +469,47 @@ pub fn create_router(state: AppState) -> Router {
         .route(
             "/api/reports/finance/capex-opex",
             get(report_handler::get_capex_opex_analysis),
+        )
+        // Lookups (Will map old lookup to new routes soon, but keeping old for backwards compatibility temporarily)
+        .route(
+            "/api/lookups/maintenance-types",
+            get(crate::api::handlers::maintenance_type_handler::list_maintenance_types),
+        )
+
+        // Depreciation Methods CRUD
+        .route(
+            "/api/depreciation-methods",
+            get(crate::api::handlers::depreciation_method_handler::list_depreciation_methods)
+            .post(crate::api::handlers::depreciation_method_handler::create_depreciation_method),
+        )
+        .route(
+            "/api/depreciation-methods/:id",
+            get(crate::api::handlers::depreciation_method_handler::get_depreciation_method)
+            .put(crate::api::handlers::depreciation_method_handler::update_depreciation_method)
+            .delete(crate::api::handlers::depreciation_method_handler::delete_depreciation_method),
+        )
+
+        // Maintenance Types CRUD
+        .route(
+            "/api/maintenance-types",
+            get(crate::api::handlers::maintenance_type_handler::list_maintenance_types)
+            .post(crate::api::handlers::maintenance_type_handler::create_maintenance_type),
+        )
+        .route(
+            "/api/maintenance-types/:id",
+            get(crate::api::handlers::maintenance_type_handler::get_maintenance_type)
+            .put(crate::api::handlers::maintenance_type_handler::update_maintenance_type)
+            .delete(crate::api::handlers::maintenance_type_handler::delete_maintenance_type),
+        )
+
+        // Analytics
+        .route(
+            "/api/analytics/asset-roi/:id",
+            get(crate::api::handlers::analytics_handler::get_asset_roi),
+        )
+        .route(
+            "/api/analytics/condition-distribution",
+            get(analytics_handler::get_asset_condition_distribution),
         )
         // Analytics
         .route(

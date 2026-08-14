@@ -109,6 +109,8 @@ const MaterialRequestPage: React.FC = () => {
 
         const payload = {
             company_id: DEFAULT_COMPANY_ID,
+            transaction_date: new Date().toISOString().split('T')[0],
+            voucher_no: `MR-${Date.now()}`,
             material_request_type: requestType,
             required_by_date: requiredByDate || null,
             remarks: remarks || null,

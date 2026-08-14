@@ -12,6 +12,8 @@ pub struct MaintenanceType {
     pub code: String,
     pub name: String,
     pub is_preventive: bool,
+    pub description: Option<String>,
+    pub is_active: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema)]

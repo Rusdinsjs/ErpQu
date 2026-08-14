@@ -3,6 +3,12 @@
 
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
+DROP TABLE IF EXISTS stock_reconciliations CASCADE;
+DROP TABLE IF EXISTS delivery_trips CASCADE;
+DROP TABLE IF EXISTS product_bundles CASCADE;
+DROP TABLE IF EXISTS warehouse_bins CASCADE;
+DROP TABLE IF EXISTS item_bin_balances CASCADE;
+
 -- 1. Stock Reconciliations (Stock Opname)
 CREATE TABLE IF NOT EXISTS stock_reconciliations (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

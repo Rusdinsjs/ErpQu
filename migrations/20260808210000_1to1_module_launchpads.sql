@@ -137,7 +137,7 @@ SET value = '{
             "subtitle": "People & Attendance",
             "icon": "Users",
             "gradient": "from-pink-500/20 to-rose-500/20",
-            iconBg: "bg-gradient-to-br from-pink-500 to-rose-500",
+            "iconBg": "bg-gradient-to-br from-pink-500 to-rose-500",
             "defaultRoute": "/employees",
             "minLevel": 3,
             "features": ["Employees Directory", "Attendance Records", "Leave Requests"],
