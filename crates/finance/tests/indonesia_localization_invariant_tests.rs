@@ -86,8 +86,8 @@ fn test_qidn_004_pph23_withholding_certificate_math() {
 fn test_qidn_009_pph21_ter_calculator() {
     use management_system_finance::domain::indonesia_localization::Pph21TerCalculator;
 
-    // Monthly gross 6.000.000 IDR under TER Category A -> 0.50%
+    // Monthly gross 6.000.000 IDR under TER Category A -> 0.75%
     let gross = dec!(6000000.00);
     let pph21_amount = Pph21TerCalculator::calculate_monthly_pph21("A", gross);
-    assert_eq!(pph21_amount, dec!(30000.00)); // 6.000.000 * 0.50% = 30.000
+    assert_eq!(pph21_amount, dec!(45000.00)); // 6.000.000 * 0.75% = 45.000
 }
