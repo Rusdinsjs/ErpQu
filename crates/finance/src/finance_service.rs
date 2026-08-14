@@ -695,7 +695,7 @@ impl FinanceService {
 
     pub async fn delete_sales_invoice(&self, id: Uuid) -> DomainResult<()> {
         let invoice = self.get_sales_invoice_detail(id).await?;
-        let status = invoice.status.to_lowercase();
+        let status = invoice.invoice.status.to_lowercase();
         if status == "posted" || status == "submitted" {
             return Err(DomainError::business_rule(
                 "ImmutablePostedDocument",
