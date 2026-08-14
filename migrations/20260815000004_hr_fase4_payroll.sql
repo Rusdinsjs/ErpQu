@@ -3,6 +3,20 @@
 -- MIGRATION: 20260815000004 - HR Fase 4: Indonesian Payroll, BPJS & PPh 21 TER
 -- ============================================================
 
+-- 0. SEED HARDCODED EMPLOYEES TO PREVENT FK VIOLATIONS
+INSERT INTO employees (id, nik, name, email) VALUES
+    ('e0000000-0000-0000-0000-000000000001', 'DUMMY001', 'Admin User', 'dummy001@example.com'),
+    ('e0000000-0000-0000-0000-000000000002', 'DUMMY002', 'Budi Santoso', 'dummy002@example.com'),
+    ('e0000000-0000-0000-0000-000000000003', 'DUMMY003', 'Siti Rahmawati', 'dummy003@example.com'),
+    ('e0000000-0000-0000-0000-000000000004', 'DUMMY004', 'Ahmad Fauzi', 'dummy004@example.com'),
+    ('e0000000-0000-0000-0000-000000000005', 'DUMMY005', 'Dewi Lestari', 'dummy005@example.com'),
+    ('e0000000-0000-0000-0000-000000000006', 'DUMMY006', 'Eko Prasetyo', 'dummy006@example.com'),
+    ('e0000000-0000-0000-0000-000000000007', 'DUMMY007', 'Rina Wulandari', 'dummy007@example.com'),
+    ('e0000000-0000-0000-0000-000000000008', 'DUMMY008', 'Hendra Wijaya', 'dummy008@example.com'),
+    ('e0000000-0000-0000-0000-000000000009', 'DUMMY009', 'Maya Putri', 'dummy009@example.com'),
+    ('e0000000-0000-0000-0000-000000000010', 'DUMMY010', 'Doni Kusuma', 'dummy010@example.com')
+ON CONFLICT DO NOTHING;
+
 -- 1. SALARY COMPONENTS
 CREATE TABLE IF NOT EXISTS hr_salary_components (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),

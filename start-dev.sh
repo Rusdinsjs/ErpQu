@@ -57,7 +57,7 @@ export SQLX_OFFLINE=false
 
 # Fix: Hapus entry migration yang checksumnya tidak cocok (akibat file migration yang dimodifikasi)
 docker exec -e PGPASSWORD=${POSTGRES_PASSWORD:-postgres} mgmt-db psql -U ${POSTGRES_USER:-postgres} -d ${DB_NAME:-management_system} -c "
-  DELETE FROM _sqlx_migrations WHERE version IN (20260808000001, 20260808140000, 20260808150000, 20260808190000, 20260808200000, 20260808210000);
+  DELETE FROM _sqlx_migrations WHERE version IN (20260808000001, 20260808140000, 20260808150000, 20260808190000, 20260808200000, 20260808210000, 20260809220000);
 " > /dev/null 2>&1 || true
 
 cargo sqlx migrate run > migrate.log 2>&1 || true
@@ -75,7 +75,7 @@ cd ..
 
 # 5. Jalankan Backend (Rust) di background
 echo -e "${GREEN}5. Menjalankan Backend (Rust)...${NC}"
-SQLX_OFFLINE=false cargo run > backend.log 2>&1 &
+SQLX_OFFLINE=false cargo run --jobs 1 > backend.log 2>&1 &
 BACKEND_PID=$!
 
 sleep 5

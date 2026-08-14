@@ -1,7 +1,11 @@
 /target
+# Log outputs & Database dumps
 *.log
 backend.log
 web-admin/frontend.log
+*.sql.bak
+erpqu_backup*.sql
+clippy_output.txt
 web-admin/node_modules
 web-admin/dist
 .obsidian/

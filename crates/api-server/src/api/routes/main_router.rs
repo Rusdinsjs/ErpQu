@@ -9,6 +9,7 @@ use axum::{
 };
 
 use crate::api::handlers::finance_handler;
+use crate::api::handlers::lifecycle_handler;
 use crate::api::handlers::*;
 use crate::api::middleware::{
     auth_middleware,
@@ -37,93 +38,11 @@ pub fn create_router(state: AppState) -> Router {
 
     // Transactional & Finance Routes (Strict Authorization)
     let transactional_routes = Router::new()
-        // Journal Entries
         .route(
-            "/api/finance/journals",
-            get(journal_handler::list_journals).post(journal_handler::create_journal),
-        )
-        .route(
-            "/api/finance/journals/:id",
-            get(journal_handler::get_journal_details),
-        )
-        // Operational Finance (Invoices, Bills, etc)
-        .route(
-            "/api/finance/sales/invoices",
-            get(finance_handler::list_sales_invoices).post(finance_handler::create_sales_invoice),
-        )
-        .route(
-            "/api/finance/sales/invoices/:id",
-            get(finance_handler::get_sales_invoice)
-                .put(finance_handler::update_sales_invoice)
-                .delete(finance_handler::delete_sales_invoice),
-        )
-        .route(
-            "/api/finance/sales/quotes",
-            get(finance_handler::list_sales_quotes).post(finance_handler::create_sales_quote),
-        )
-        .route(
-            "/api/finance/sales/orders",
-            get(finance_handler::list_sales_orders).post(finance_handler::create_sales_order),
-        )
-        .route(
-            "/api/finance/sales/shipments",
-            get(finance_handler::list_sales_shipments).post(finance_handler::create_sales_shipment),
-        )
-        .route(
-            "/api/finance/sales/shipments/:id/submit",
-            post(finance_handler::submit_sales_shipment),
-        )
-        .route(
-            "/api/finance/purchase/receipts/company/:company_id",
-            get(finance_handler::list_purchase_receipts),
-        )
-        .route(
-            "/api/finance/purchase/receipts",
-            post(finance_handler::create_purchase_receipt),
-        )
-        .route(
-            "/api/finance/purchase/receipts/:id",
-            get(finance_handler::get_purchase_receipt),
-        )
-        .route(
-            "/api/finance/purchase/receipts/:id/submit",
-            post(finance_handler::submit_purchase_receipt),
-        )
-        .route(
-            "/api/finance/purchase/quotes",
-            get(finance_handler::list_purchase_quotes).post(finance_handler::create_purchase_quote),
-        )
-        .route(
-            "/api/finance/purchase/orders",
-            get(finance_handler::list_purchase_orders).post(finance_handler::create_purchase_order),
-        )
-        .route(
-            "/api/finance/purchase/shipments",
-            get(finance_handler::list_purchase_shipments)
-                .post(finance_handler::create_purchase_shipment),
-        )
-        .route(
-            "/api/finance/purchase/bills",
-            get(finance_handler::list_purchase_bills).post(finance_handler::create_purchase_bill),
-        )
-        .route(
-            "/api/finance/expenses",
-            get(finance_handler::list_expenses).post(finance_handler::create_expense),
-        )
-        .route(
-            "/api/finance/cash-bank",
-            get(finance_handler::list_cash_bank_transactions)
-                .post(finance_handler::create_cash_bank_transaction),
-        )
-        .layer(axum_middleware::from_fn(require_permission("finance.transaction")));
-    let lookup_routes = Router::new()
-        .route("/api/lookups/currencies", get(list_currencies))
-        .route("/api/lookups/units", get(list_units))
-        .route("/api/lookups/conditions", get(list_conditions))
-        .route(
-            "/api/lookups/maintenance-types",
-            get(list_maintenance_types),
+            "/api/placeholder_tx",
+            get(list_currencies),
         );
+
 
     // Protected routes (QSEC-006: Private file uploads & access)
     let protected_routes = Router::new()
@@ -134,69 +53,9 @@ pub fn create_router(state: AppState) -> Router {
             )),
         )
         .route("/api/uploads/*path", get(upload_handler::get_private_file))
-        // Assets
-        .route(
-            "/api/assets/expiring",
-            get(get_expiring_assets
-                .layer(axum_middleware::from_fn(require_permission("asset.view")))),
-        )
-        .route(
+        .nest(
             "/api/assets",
-            get(list_assets.layer(axum_middleware::from_fn(require_permission("asset.view"))))
-                .post(
-                    create_asset
-                        .layer(axum_middleware::from_fn(require_permission("asset.create"))),
-                ),
-        )
-        .route(
-            "/api/assets/bulk",
-            post(
-                bulk_create_assets
-                    .layer(axum_middleware::from_fn(require_permission("asset.create"))),
-            )
-            .layer(tower_http::limit::RequestBodyLimitLayer::new(
-                10 * 1024 * 1024,
-            )),
-        )
-        .route(
-            "/api/assets/bulk-update",
-            post(
-                bulk_update_assets
-                    .layer(axum_middleware::from_fn(require_permission("asset.edit"))),
-            )
-            .layer(tower_http::limit::RequestBodyLimitLayer::new(
-                10 * 1024 * 1024,
-            )),
-        )
-        .route(
-            "/api/assets/search",
-            get(search_assets.layer(axum_middleware::from_fn(require_permission("asset.view")))),
-        )
-        .route(
-            "/api/assets/:id",
-            get(get_asset.layer(axum_middleware::from_fn(require_permission("asset.view"))))
-                .put(update_asset.layer(axum_middleware::from_fn(require_permission("asset.edit"))))
-                .delete(
-                    delete_asset
-                        .layer(axum_middleware::from_fn(require_permission("asset.delete"))),
-                ),
-        )
-        .route(
-            "/api/assets/:id/sell",
-            post(sell_asset.layer(axum_middleware::from_fn(require_permission("asset.edit")))),
-        )
-        .route(
-            "/api/assets/export",
-            get(export_assets.layer(axum_middleware::from_fn(require_permission("asset.view")))),
-        )
-        .route(
-            "/api/assets/:id/documents",
-            get(get_asset_documents
-                .layer(axum_middleware::from_fn(require_permission("asset.view"))))
-            .post(
-                add_document_to_asset
-                    .layer(axum_middleware::from_fn(require_permission("asset.edit"))),
-            ),
+            crate::api::routes::asset_routes::asset_routes(),
         )
         // Maintenance - Merged below
         // Work Orders
@@ -357,100 +216,10 @@ pub fn create_router(state: AppState) -> Router {
         )
         // Employees
 
-        // ============================================================
-        // HR LIFECYCLE & 360 (FASE 1)
-        // ============================================================
-        .route("/api/hr/designations", get(hr_lifecycle_handler::list_designations).post(hr_lifecycle_handler::create_designation))
-        .route("/api/hr/designations/:id", get(hr_lifecycle_handler::get_designation).put(hr_lifecycle_handler::update_designation).delete(hr_lifecycle_handler::delete_designation))
-        .route("/api/hr/employment-types", get(hr_lifecycle_handler::list_employment_types).post(hr_lifecycle_handler::create_employment_type))
-        .route("/api/hr/lifecycle-events", get(hr_lifecycle_handler::list_lifecycle_events).post(hr_lifecycle_handler::create_lifecycle_event))
-        .route("/api/hr/employees/:id/360", get(hr_lifecycle_handler::get_employee_360))
-        .route("/api/hr/employees/:id/documents", get(hr_lifecycle_handler::list_employee_documents).post(hr_lifecycle_handler::create_employee_document))
-        .route("/api/hr/documents/:id", delete(hr_lifecycle_handler::delete_employee_document))
-        .route("/api/hr/employees/:id/education", get(hr_lifecycle_handler::list_employee_education).post(hr_lifecycle_handler::create_employee_education))
-        .route("/api/hr/education/:id", delete(hr_lifecycle_handler::delete_employee_education))
-        // ============================================================
-        // HR SHIFT, OVERTIME & ATTENDANCE LOGS (FASE 2)
-        // ============================================================
-
-        // ============================================================
-        // HR LEAVES, HOLIDAYS & WORKFLOW ENGINE (FASE 3)
-        // ============================================================
-
-        // ============================================================
-
-        // ============================================================
-
-        // ============================================================
-
-        // ============================================================
-        // HR FLEET DRIVER, P2H INSPECTION & SAFETY (FASE 7)
-        // ============================================================
-        .route("/api/hr/driver-assignments", get(hr_driver_p2h_safety_handler::list_driver_assignments).post(hr_driver_p2h_safety_handler::create_driver_assignment))
-        .route("/api/hr/driver-assignments/:id/return", post(hr_driver_p2h_safety_handler::return_driver_assignment))
-        .route("/api/hr/p2h-inspections", get(hr_driver_p2h_safety_handler::list_p2h_inspections).post(hr_driver_p2h_safety_handler::submit_p2h_inspection))
-        .route("/api/hr/driver-safety-incidents", get(hr_driver_p2h_safety_handler::list_driver_safety_incidents).post(hr_driver_p2h_safety_handler::create_driver_safety_incident))
-        .route("/api/hr/vehicle-handovers", get(hr_driver_p2h_safety_handler::list_vehicle_handovers).post(hr_driver_p2h_safety_handler::create_vehicle_handover))
-
-                // HR RECRUITMENT ATS, TRAINING & DISCIPLINARY ACTIONS (FASE 6)
-        // ============================================================
-        .route("/api/hr/job-openings", get(hr_recruitment_training_discipline_handler::list_job_openings).post(hr_recruitment_training_discipline_handler::create_job_opening))
-        .route("/api/hr/job-applicants", get(hr_recruitment_training_discipline_handler::list_job_applicants).post(hr_recruitment_training_discipline_handler::create_job_applicant))
-        .route("/api/hr/job-applicants/:id/stage", post(hr_recruitment_training_discipline_handler::update_applicant_stage))
-        .route("/api/hr/job-applicants/:id/convert-to-employee", post(hr_recruitment_training_discipline_handler::convert_applicant_to_employee))
-        .route("/api/hr/training-programs", get(hr_recruitment_training_discipline_handler::list_training_programs).post(hr_recruitment_training_discipline_handler::create_training_program))
-        .route("/api/hr/training-events", get(hr_recruitment_training_discipline_handler::list_training_events).post(hr_recruitment_training_discipline_handler::create_training_event))
-        .route("/api/hr/training-events/:id/participants", get(hr_recruitment_training_discipline_handler::list_training_participants).post(hr_recruitment_training_discipline_handler::add_training_participant))
-        .route("/api/hr/employee-certifications", get(hr_recruitment_training_discipline_handler::list_employee_certifications).post(hr_recruitment_training_discipline_handler::create_employee_certification))
-        .route("/api/hr/disciplinary-actions", get(hr_recruitment_training_discipline_handler::list_disciplinary_actions).post(hr_recruitment_training_discipline_handler::issue_disciplinary_action))
-
-                // HR LOANS, EXPENSE CLAIMS & KPI APPRAISAL (FASE 5)
-        // ============================================================
-        .route("/api/hr/loan-types", get(hr_loans_claims_kpi_handler::list_loan_types))
-        .route("/api/hr/employee-loans", get(hr_loans_claims_kpi_handler::list_employee_loans).post(hr_loans_claims_kpi_handler::apply_loan))
-        .route("/api/hr/employee-loans/:id/review", post(hr_loans_claims_kpi_handler::review_loan))
-        .route("/api/hr/employee-loans/:id/schedules", get(hr_loans_claims_kpi_handler::list_repayment_schedules))
-        .route("/api/hr/expense-claim-types", get(hr_loans_claims_kpi_handler::list_expense_claim_types))
-        .route("/api/hr/expense-claims", get(hr_loans_claims_kpi_handler::list_expense_claims).post(hr_loans_claims_kpi_handler::create_expense_claim))
-        .route("/api/hr/expense-claims/:id/review", post(hr_loans_claims_kpi_handler::review_expense_claim))
-        .route("/api/hr/appraisal-templates", get(hr_loans_claims_kpi_handler::list_appraisal_templates))
-        .route("/api/hr/appraisal-templates/:id/items", get(hr_loans_claims_kpi_handler::list_template_items))
-        .route("/api/hr/employee-appraisals", get(hr_loans_claims_kpi_handler::list_employee_appraisals).post(hr_loans_claims_kpi_handler::submit_employee_appraisal))
-
-                // HR PAYROLL, BPJS & PPH 21 TER ENGINE (FASE 4)
-        // ============================================================
-        .route("/api/hr/salary-components", get(hr_payroll_handler::list_salary_components).post(hr_payroll_handler::create_salary_component))
-        .route("/api/hr/salary-components/:id", get(hr_payroll_handler::get_salary_component).put(hr_payroll_handler::update_salary_component).delete(hr_payroll_handler::delete_salary_component))
-        .route("/api/hr/salary-structures", get(hr_payroll_handler::list_salary_structures).post(hr_payroll_handler::create_salary_structure))
-        .route("/api/hr/salary-structures/:id", get(hr_payroll_handler::get_salary_structure).put(hr_payroll_handler::update_salary_structure).delete(hr_payroll_handler::delete_salary_structure))
-        .route("/api/hr/salary-assignments", get(hr_payroll_handler::list_salary_assignments).post(hr_payroll_handler::create_salary_assignment))
-        .route("/api/hr/payroll-entries", get(hr_payroll_handler::list_payroll_entries).post(hr_payroll_handler::run_payroll_entry))
-        .route("/api/hr/salary-slips", get(hr_payroll_handler::list_salary_slips))
-        .route("/api/hr/salary-slips/:id", get(hr_payroll_handler::get_salary_slip))
-
-        .route("/api/hr/leave-types", get(hr_leaves_handler::list_leave_types).post(hr_leaves_handler::create_leave_type))
-        .route("/api/hr/leave-types/:id", get(hr_leaves_handler::get_leave_type).put(hr_leaves_handler::update_leave_type).delete(hr_leaves_handler::delete_leave_type))
-        .route("/api/hr/leave-allocations", get(hr_leaves_handler::list_allocations).post(hr_leaves_handler::create_allocation))
-        .route("/api/hr/leave-allocations/bulk", post(hr_leaves_handler::bulk_allocate))
-        .route("/api/hr/employees/:id/leave-balance", get(hr_leaves_handler::get_leave_balance))
-        .route("/api/hr/leave-applications", get(hr_leaves_handler::list_applications).post(hr_leaves_handler::create_application))
-        .route("/api/hr/leave-applications/:id", get(hr_leaves_handler::get_application))
-        .route("/api/hr/leave-applications/:id/review", post(hr_leaves_handler::review_application))
-        .route("/api/hr/holiday-lists", get(hr_leaves_handler::list_holiday_lists))
-        .route("/api/hr/holiday-lists/:id/holidays", get(hr_leaves_handler::list_holidays).post(hr_leaves_handler::add_holiday))
-        .route("/api/hr/leave-block-lists", get(hr_leaves_handler::list_block_lists))
-
-        .route("/api/hr/shifts", get(hr_shift_overtime_handler::list_shift_types).post(hr_shift_overtime_handler::create_shift_type))
-        .route("/api/hr/shifts/:id", get(hr_shift_overtime_handler::get_shift_type).put(hr_shift_overtime_handler::update_shift_type).delete(hr_shift_overtime_handler::delete_shift_type))
-        .route("/api/hr/shift-assignments", get(hr_shift_overtime_handler::list_shift_assignments).post(hr_shift_overtime_handler::create_shift_assignment))
-        .route("/api/hr/shift-assignments/bulk", post(hr_shift_overtime_handler::bulk_assign_shifts))
-        .route("/api/hr/shift-assignments/:id", delete(hr_shift_overtime_handler::delete_shift_assignment))
-        .route("/api/hr/attendance-requests", get(hr_shift_overtime_handler::list_attendance_requests).post(hr_shift_overtime_handler::create_attendance_request))
-        .route("/api/hr/attendance-requests/:id/review", post(hr_shift_overtime_handler::review_attendance_request))
-        .route("/api/hr/overtime-requests", get(hr_shift_overtime_handler::list_overtime_requests).post(hr_shift_overtime_handler::create_overtime_request))
-        .route("/api/hr/overtime-requests/:id/review", post(hr_shift_overtime_handler::review_overtime_request))
-        .route("/api/hr/attendance-logs", get(hr_shift_overtime_handler::list_attendance_details))
-        .route("/api/hr/attendance-recap", get(hr_shift_overtime_handler::get_attendance_recap))
+        .nest(
+            "/api/hr",
+            crate::api::routes::hr_routes::hr_routes(),
+        )
     
         .route("/api/employees", get(list_employees).post(create_employee))
         .route(
@@ -499,35 +268,9 @@ pub fn create_router(state: AppState) -> Router {
         )
         .route("/api/attendance/scan", post(attendance_handler::scan_face))
         .route("/api/attendance/logs", get(attendance_handler::list_logs))
-        // Finance Routes (Master Data & Reports only)
-        .route(
-            "/api/finance/accounts",
-            get(finance_handler::list_accounts).post(finance_handler::create_account),
-        )
-        .route(
-            "/api/finance/accounts/tree",
-            get(finance_handler::list_accounts_tree),
-        )
-        .route(
-            "/api/finance/accounts/:id",
-            put(finance_handler::update_account),
-        )
-        // Finance Reports
-        .route(
-            "/api/finance/reports/ledger/:account_id",
-            get(finance_report_handler::get_general_ledger),
-        )
-        .route(
-            "/api/finance/reports/trial-balance",
-            get(finance_report_handler::get_trial_balance),
-        )
-        .route(
-            "/api/finance/reports/balance-sheet",
-            get(finance_report_handler::get_balance_sheet),
-        )
-        .route(
-            "/api/finance/reports/income-statement",
-            get(finance_report_handler::get_income_statement),
+        .nest(
+            "/api/finance",
+            crate::api::routes::finance_routes::finance_routes(),
         )
         // Leave Management
         .route("/api/hrd/leaves", post(leave_handler::request_leave))
@@ -650,19 +393,7 @@ pub fn create_router(state: AppState) -> Router {
             "/api/data-imports/:id/map-columns",
             put(crate::api::handlers::data_import_handler::map_data_import_columns),
         )
-        // Sensors
-        .route(
-            "/api/assets/:asset_id/sensors/readings",
-            post(record_reading).get(get_latest_readings),
-        )
-        .route(
-            "/api/assets/:asset_id/sensors/readings/range",
-            get(get_readings_in_range),
-        )
-        .route(
-            "/api/assets/:asset_id/sensors/thresholds",
-            post(set_threshold),
-        )
+        // Sensors (Moved to asset_routes)
         .route("/api/sensors/alerts", get(list_active_alerts))
         .route(
             "/api/sensors/alerts/:id/acknowledge",
@@ -743,31 +474,7 @@ pub fn create_router(state: AppState) -> Router {
             get(audit_handler::get_audit_progress),
         )
         .route("/api/audit-logs", get(audit_handler::get_audit_logs))
-        // Lifecycle routes
-        .route(
-            "/api/assets/:id/lifecycle/transition",
-            post(lifecycle_handler::transition_asset),
-        )
-        .route(
-            "/api/assets/:id/lifecycle/request-transition",
-            post(lifecycle_handler::request_transition),
-        )
-        .route(
-            "/api/assets/:id/lifecycle/history",
-            get(lifecycle_handler::get_lifecycle_history),
-        )
-        .route(
-            "/api/assets/:id/lifecycle/valid-transitions",
-            get(lifecycle_handler::get_valid_transitions),
-        )
-        .route(
-            "/api/assets/:id/lifecycle/valid-transitions-with-approval",
-            get(lifecycle_handler::get_valid_transitions_with_approval),
-        )
-        .route(
-            "/api/assets/:id/lifecycle/status",
-            get(lifecycle_handler::get_current_status),
-        )
+        // Lifecycle routes (Moved to asset_routes)
         .route(
             "/api/lifecycle/states",
             get(lifecycle_handler::get_all_states),

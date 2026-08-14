@@ -34,7 +34,7 @@ export type MenuId =
     | 'budgets-view' | 'sales-tax-templates' | 'purchase-tax-templates-view' | 'tax-categories' | 'tax-rules'
     | 'credit-notes' | 'debit-notes' | 'dunnings' | 'balance-sheet' | 'profit-loss' | 'cash-flow' | 'trial-balance'
     | 'general-ledger-report' | 'ar-aging' | 'ap-aging'
-    | 'employees' | 'departments' | 'attendance' | 'leaves' | 'designations' | 'employee-lifecycle' | 'employee-360' | 'shifts' | 'attendance-logs' | 'overtime' | 'attendance-requests' | 'salary-slips' | 'payroll-processing' | 'salary-assignments' | 'salary-structures'
+    | 'employees' | 'departments' | 'hr-workspace' | 'attendance' | 'leaves' | 'designations' | 'employee-lifecycle' | 'employee-360' | 'shifts' | 'attendance-logs' | 'overtime' | 'attendance-requests' | 'salary-slips' | 'payroll-processing' | 'salary-assignments' | 'salary-structures'
     | 'approvals'
     | 'company' | 'branch' | 'email-account'
     | 'users' | 'roles' | 'approval-workflow-settings' | 'audit' | 'settings' | 'profile';
@@ -256,6 +256,7 @@ export const MENU_LABELS: Record<MenuId, string> = {
     'ar-aging': 'Accounts Receivable (AR) Aging',
     'ap-aging': 'Accounts Payable (AP) Aging',
     'employees': 'Employees',
+    'hr-workspace': 'HR Workspace',
     'designations': 'Designations (Jabatan)',
     'employee-lifecycle': 'Riwayat Karir',
     'employee-360': 'Profil 360 Karyawan',
@@ -477,6 +478,7 @@ export const MENU_TO_RESOURCE: Record<MenuId, string> = {
     'ar-aging': 'financial_report',
     'ap-aging': 'financial_report',
     'employees': 'employee',
+    'hr-workspace': 'employee',
     'designations': 'employee',
     'employee-lifecycle': 'employee',
     'employee-360': 'employee',
@@ -673,11 +675,11 @@ export const DEFAULT_LAUNCHPAD_CONFIG: LaunchpadConfig = {
             icon: 'Users',
             gradient: 'from-pink-500/20 to-rose-500/20',
             iconBg: 'bg-gradient-to-br from-pink-500 to-rose-500',
-            defaultRoute: '/employees',
+            defaultRoute: '/hr-workspace',
             minLevel: 3,
             features: ['Employees', 'Attendance & Leaves', 'Shift & Overtime', 'Payroll & Slips'],
             menuIds: [
-                'employees', 'designations', 'employee-lifecycle',
+                'hr-workspace', 'employees', 'designations', 'employee-lifecycle',
                 'attendance', 'leaves', 'shifts', 'attendance-logs', 'overtime', 'attendance-requests',
                 'salary-slips', 'payroll-processing', 'salary-assignments', 'salary-structures',
                 'employee-loans', 'expense-claims', 'appraisal',
@@ -743,6 +745,9 @@ export function getAllMenuIds(config: LaunchpadConfig): MenuId[] {
     if (!allIds.includes('accounting-workspace')) {
         allIds.unshift('accounting-workspace');
     }
+    if (!allIds.includes('hr-workspace')) {
+        allIds.unshift('hr-workspace');
+    }
     return [...new Set([...allIds, ...(config?.globalMenuIds || [])])];
 }
 
@@ -754,6 +759,9 @@ export function findModuleForMenu(config: LaunchpadConfig, menuId: MenuId): Laun
     }
     if (!found && menuId === 'accounting-workspace') {
         return config?.modules?.find(m => m.id === 'finance');
+    }
+    if (!found && menuId === 'hr-workspace') {
+        return config?.modules?.find(m => m.id === 'hr');
     }
     return found;
 }

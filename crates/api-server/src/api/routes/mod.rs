@@ -22,3 +22,6 @@ pub mod tax_renewal_routes;
 pub mod metadata_routes;
 pub mod company_routes;
 pub mod ops_quality_trip_routes;
+pub mod hr_routes;
+pub mod finance_routes;
+pub mod asset_routes;

@@ -44,9 +44,15 @@ impl HrDriverP2hSafetyRepository {
     pub async fn create_driver_assignment(&self, req: CreateDriverAssignmentRequest) -> Result<HrDriverAssignment, AppError> {
         sqlx::query_as::<_, HrDriverAssignment>(
             r#"
-            INSERT INTO hr_driver_assignments (id, employee_id, asset_id, assigned_date, start_odometer, sim_sio_verified, status, notes)
-            VALUES (uuid_generate_v4(), $1, $2, $3, $4, TRUE, 'active', $5)
-            RETURNING *, NULL::text as employee_name, NULL::text as employee_nik, NULL::text as asset_name, NULL::text as asset_code
+            WITH inserted AS (
+                INSERT INTO hr_driver_assignments (id, employee_id, asset_id, assigned_date, start_odometer, sim_sio_verified, status, notes)
+                VALUES (uuid_generate_v4(), $1, $2, $3, $4, TRUE, 'active', $5)
+                RETURNING *
+            )
+            SELECT ins.*, emp.name as employee_name, emp.nik as employee_nik, ast.name as asset_name, ast.asset_code as asset_code
+            FROM inserted ins
+            LEFT JOIN employees emp ON ins.employee_id = emp.id
+            LEFT JOIN assets ast ON ins.asset_id = ast.id
             "#,
         )
         .bind(req.employee_id)
@@ -62,10 +68,16 @@ impl HrDriverP2hSafetyRepository {
     pub async fn return_driver_assignment(&self, id: Uuid, req: ReturnDriverAssignmentRequest) -> Result<HrDriverAssignment, AppError> {
         sqlx::query_as::<_, HrDriverAssignment>(
             r#"
-            UPDATE hr_driver_assignments
-            SET return_date = $2, end_odometer = $3, status = 'returned', notes = COALESCE($4, notes), updated_at = NOW()
-            WHERE id = $1
-            RETURNING *, NULL::text as employee_name, NULL::text as employee_nik, NULL::text as asset_name, NULL::text as asset_code
+            WITH updated AS (
+                UPDATE hr_driver_assignments
+                SET return_date = $2, end_odometer = $3, status = 'returned', notes = COALESCE($4, notes), updated_at = NOW()
+                WHERE id = $1
+                RETURNING *
+            )
+            SELECT up.*, emp.name as employee_name, emp.nik as employee_nik, ast.name as asset_name, ast.asset_code as asset_code
+            FROM updated up
+            LEFT JOIN employees emp ON up.employee_id = emp.id
+            LEFT JOIN assets ast ON up.asset_id = ast.id
             "#,
         )
         .bind(id)

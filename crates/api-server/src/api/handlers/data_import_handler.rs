@@ -365,7 +365,7 @@ pub async fn validate_data_import(
             "UPDATE data_import_logs SET status = $1, messages = $2 WHERE id = $3"
         )
         .bind(status)
-        .bind(serde_json::to_value(&errors).unwrap())
+        .bind(serde_json::to_value(&errors).unwrap_or_default())
         .bind(log.id)
         .execute(&state.pool)
         .await
@@ -431,7 +431,7 @@ pub async fn start_data_import(
         let d = &log.row_data;
         let old_code = d.get("ID_Aset_Lama").or_else(|| d.get("id_aset_lama")).and_then(|v| v.as_str());
         let code = d.get("kode_aset").or_else(|| d.get("asset_code")).and_then(|v| v.as_str()).unwrap_or("");
-        let target_code = if is_update && old_code.is_some() { old_code.unwrap() } else { code };
+        let target_code = if is_update && old_code.is_some() { old_code.unwrap_or("") } else { code };
 
         let name = d.get("nama_aset").or_else(|| d.get("name")).and_then(|v| v.as_str()).unwrap_or("");
         let cat_str = d.get("kategori").or_else(|| d.get("category")).and_then(|v| v.as_str()).unwrap_or("");

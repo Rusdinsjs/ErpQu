@@ -49,11 +49,7 @@ const AttendanceRequestsView = lazy(() => import('../../pages/HR/AttendanceReque
 const DepartmentsView = lazy(() => import('../../pages/HR/Departments'));
 const AttendanceView = lazy(() => import('../../pages/HR/Attendance/AttendanceDashboard'));
 
-// HR Fase 4 - Payroll
-
-// HR Fase 5 - Loans, Claims & KPI
-
-// HR Fase 6 - Recruitment ATS, Training & Disciplinary Actions
+const HrWorkspaceView = lazy(() => import('../../pages/HR/HrWorkspace'));
 
 // HR Fase 7 - Driver Ops, P2H & Safety Incidents
 const DriverAssignmentsView = lazy(() => import('../../pages/HR/DriverOps/DriverAssignmentsView'));
@@ -68,6 +64,7 @@ const EmployeeLoansView = lazy(() => import('../../pages/HR/Loans/EmployeeLoansV
 const ExpenseClaimsView = lazy(() => import('../../pages/HR/Claims/ExpenseClaimsView'));
 const AppraisalView = lazy(() => import('../../pages/HR/Appraisal/AppraisalView'));
 
+// HR Fase 4 - Payroll
 const SalarySlipsView = lazy(() => import('../../pages/HR/Payroll/SalarySlipsView'));
 const PayrollProcessingView = lazy(() => import('../../pages/HR/Payroll/PayrollProcessingView'));
 const SalaryAssignmentsView = lazy(() => import('../../pages/HR/Payroll/SalaryAssignmentsView'));
@@ -253,287 +250,269 @@ export function AdminContentRouter({
         return <Suspense fallback={<PageLoading />}><WorkOrderDetailsView workOrderId={selectedWorkOrderId} /></Suspense>;
     }
 
+    const VIEW_MAP: Record<string, () => React.ReactNode> = {
+        'dashboard': () => <DashboardView />,
+        'assets-workspace': () => <AssetsWorkspaceView />,
+        'assets': () => <AssetsView />,
+        'categories': () => <CategoriesView />,
+        'asset-audit': () => <AuditModeView />,
+        'asset-lifecycle': () => <AssetLifecycleView assetId="" />,
+        'fuel': () => <FuelView />,
+        'loans': () => <LoansView />,
+        'asset-settings': () => <AssetSettingsView />,
+        'depreciation-methods': () => <DepreciationMethodsView />,
+        'maintenance-types': () => <MaintenanceTypesView />,
+        'depreciation-ledger': () => <AssetReportsContainer reportId="depreciation-ledger" />,
+        'roi-trends': () => <AssetReportsContainer reportId="roi-trends" />,
+        'condition-distribution': () => <AssetReportsContainer reportId="condition-distribution" />,
+        'workorder-summary': () => <AssetReportsContainer reportId="workorder-summary" />,
+        'fuel-consumption': () => <AssetReportsContainer reportId="fuel-consumption" />,
+        'custody-history': () => <AssetReportsContainer reportId="custody-history" />,
+        'team-performance': () => <AssetReportsContainer reportId="team-performance" />,
+        'tax-expiry': () => <AssetReportsContainer reportId="tax-expiry" />,
+        'cost-analysis': () => <AssetReportsContainer reportId="cost-analysis" />,
+        'iot-sensor-stream': () => <IoTSensorStreamView />,
+        'asset-health-telemetry': () => <AssetHealthTelemetryView />,
+        'threshold-alerts': () => <ThresholdAlertsView />,
+        'inventory-categories': () => <InventoryCategoriesView />,
+        'warehouses': () => <WarehousesView />,
+        'inventory-items': () => selectedInventoryId ? <InventoryDetailView itemId={selectedInventoryId} /> : <InventoryItemsView />,
+        'stock-opname': () => <StockOpnameView />,
+        'stock-entry': () => <StockEntryView />,
+        'material-request': () => <MaterialRequestView />,
+        'purchase-receipt': () => <PurchaseReceiptsView />,
+        'delivery-note': () => <DeliveryNotesView />,
+        'pick-list': () => <PickListsView />,
+        'installation-note': () => <InstallationNotesView />,
+        'quality-inspection': () => <QualityInspectionsView />,
+        'delivery-trip': () => <DeliveryTripsView />,
+        'locations': () => <LocationsView />,
+        'work-orders': () => <WorkOrdersView />,
+        'conversions': () => <ConversionsView />,
+        'rentals': () => selectedRentalId ? <RentalDetailView rentalId={selectedRentalId} /> : <RentalsView />,
+        'rental-form': () => <RentalFormView />,
+        'contracts': () => selectedContractId ? <ContractDetailView /> : <ContractListView />,
+        'approval-workflow-settings': () => <WorkflowBuilderView />,
+        'contract-detail': () => <ContractDetailView />,
+        'contract-analytics': () => <ContractAnalyticsView />,
+        'contract-templates': () => <ContractTemplatesView />,
+        'employees': () => <EmployeesView />,
+        'designations': () => <DesignationsView />,
+        'employee-lifecycle': () => <EmployeeLifecycleView />,
+        'employee-360': () => <Employee360View employeeId={selectedEmployeeId || undefined} />,
+        'shifts': () => <ShiftManagementView />,
+        'attendance-logs': () => <AttendanceLogsView />,
+        'overtime': () => <OvertimeManagementView />,
+        'attendance-requests': () => <AttendanceRequestsView />,
+        'attendance': () => <AttendanceView />,
+        'leaves': () => <LeaveDashboardView />,
+        'hr-workspace': () => <HrWorkspaceView />,
+
+        // HR Fase 4 - Payroll
+        'salary-slips': () => <SalarySlipsView />,
+        'payroll-processing': () => <PayrollProcessingView />,
+        'salary-assignments': () => <SalaryAssignmentsView />,
+        'salary-structures': () => <SalaryStructuresView />,
+
+        // HR Fase 5 - Loans, Claims & KPI
+        'employee-loans': () => <EmployeeLoansView />,
+        'expense-claims': () => <ExpenseClaimsView />,
+        'appraisal': () => <AppraisalView />,
+
+        // HR Fase 6 - Recruitment ATS, Training & Disciplinary Actions
+        'recruitment': () => <RecruitmentAtsView />,
+        'training-certifications': () => <TrainingCertificationsView />,
+        'disciplinary-actions': () => <DisciplinaryActionsView />,
+
+        // HR Fase 7 - Driver Ops, P2H & Safety Incidents
+        'driver-assignments': () => <DriverAssignmentsView />,
+        'p2h-inspections': () => <P2hInspectionView />,
+        'driver-safety-incidents': () => <DriverSafetyIncidentsView />,
+
+        'approvals': () => <ApprovalCenterView />,
+        'reports': () => <ReportsView />,
+        'users': () => <UsersView />,
+        'roles': () => <RolesView />,
+        'departments': () => <DepartmentsView />,
+        'companies': () => <CompanyManagementView />,
+        'company': () => <CompanyManagementView />,
+        'branch': () => <BranchView />,
+        'email-account': () => <EmailAccountView />,
+        'audit': () => <AuditLogsView />,
+        'system-audit': () => <AuditLogsView />,
+        'finance': () => <ChartOfAccountsView />,
+        'journal-entries': () => <JournalEntriesView />,
+        'journal-form': () => <JournalEntryFormView />,
+        'general-ledger': () => <GeneralLedgerView />,
+        'trial-balance': () => <TrialBalanceView />,
+        'financial-reports': () => <FinancialReportsView />,
+        'cash-bank': () => <CashBankView />,
+        'expenses': () => <ExpensesView />,
+        'sales': () => <SalesOverviewView />,
+        'sales-overview': () => <SalesOverviewView />,
+        'sales-quotes': () => <SalesQuotesView />,
+        'sales-orders': () => <SalesOrdersView />,
+        'sales-shipments': () => <SalesShipmentsView />,
+        'sales-invoices': () => <SalesInvoicesView />,
+        'selling-workspace': () => <SellingWorkspaceView />,
+        'customers': () => <CustomersView />,
+        'quotations': () => <SalesQuotesView />,
+        'blanket-orders': () => <BlanketOrdersView />,
+        'sales-partners': () => <SalesTeamView />,
+        'sales-persons': () => <SalesTeamView />,
+        'pos-profiles': () => <PointOfSaleView />,
+        'pos-settings': () => <PointOfSaleView />,
+        'pos-opening': () => <PointOfSaleView />,
+        'pos-closing': () => <PointOfSaleView />,
+        'loyalty-programs': () => <PointOfSaleView />,
+        'loyalty-points': () => <PointOfSaleView />,
+        'items': () => <InventoryItemsView />,
+        'item-prices': () => <SellingGenericView title="Item Price" description="Harga khusus produk per price list" type="table" />,
+        'price-lists': () => <SellingGenericView title="Price List" description="Daftar harga standar penjualan & pembelian" type="table" />,
+        'item-groups': () => <InventoryCategoriesView />,
+        'product-bundles': () => <SellingGenericView title="Product Bundle" description="Paket bundling produk & komponen" type="table" />,
+        'promotional-schemes': () => <SalesPricingView />,
+        'pricing-rules': () => <SalesPricingView />,
+        'shipping-rules': () => <SalesPricingView />,
+        'coupon-codes': () => <SalesPricingView />,
+        'selling-settings': () => <SellingGenericView title="Selling Settings" description="Pengaturan umum modul penjualan" type="settings" />,
+        'terms-templates': () => <SellingGenericView title="Terms & Conditions Template" description="Template syarat & ketentuan legal" type="table" />,
+        'tax-templates': () => <TaxTemplatesView />,
+        'utm-sources': () => <SalesMasterExtendedView />,
+        'customer-groups': () => <SalesMasterExtendedView />,
+        'contacts': () => <CustomersView />,
+        'addresses': () => <CustomersView />,
+        'territories': () => <SalesMasterExtendedView />,
+        'campaigns': () => <SalesMasterExtendedView />,
+        'sales-analytics': () => <SalesReportsView />,
+        'so-analysis': () => <SalesReportsView />,
+        'sales-funnel': () => <SalesReportsView />,
+        'so-trends': () => <SalesReportsView />,
+        'quotation-trends': () => <SalesReportsView />,
+        'customer-acquisition': () => <SalesReportsView />,
+        'inactive-customers': () => <SalesReportsView />,
+        'salesperson-summary': () => <SalesReportsView />,
+        'item-sales-history': () => <SalesReportsView />,
+        'customer-directory': () => <CustomersView />,
+        'packing-stock': () => <SalesReportsView />,
+        'pending-so-pr': () => <SalesReportsView />,
+        'delivery-trends': () => <SalesReportsView />,
+        'invoice-trends': () => <SalesReportsView />,
+        'customer-credit-balance': () => <SalesReportsView />,
+        'dormant-customers': () => <SalesReportsView />,
+        'partner-commissions': () => <SalesTeamView />,
+        'territory-target-variance': () => <SellingGenericView title="Territory Target Variance" description="Varian target wilayah vs realisasi" type="report" />,
+        'salesperson-target-variance': () => <SellingGenericView title="Sales Person Target Variance" description="Varian target sales vs realisasi" type="report" />,
+        'partner-target-variance': () => <SellingGenericView title="Sales Partner Target Variance" description="Varian target mitra vs realisasi" type="report" />,
+        'purchase-overview': () => <PurchaseOverviewView />,
+        'purchase-quotes': () => <PurchaseQuotesView />,
+        'purchase-orders': () => <PurchaseOrdersView />,
+        'purchase-shipments': () => <PurchaseShipmentsView />,
+        'purchase-bills': () => <PurchaseBillsView />,
+        'buying-workspace': () => <BuyingWorkspaceView />,
+        'material-requests': () => <MaterialRequestView />,
+        'rfqs': () => <RequestsForQuotationView />,
+        'supplier-quotations': () => <SupplierQuotationsView />,
+        'buying-item-prices': () => <BuyingGenericView title="Item Price (Buying)" description="Harga beli khusus barang per supplier" type="table" />,
+        'buying-price-lists': () => <BuyingGenericView title="Price List (Buying)" description="Master daftar harga beli" type="table" />,
+        'buying-product-bundles': () => <BuyingGenericView title="Product Bundle" description="Paket bundling komponen pembelian" type="table" />,
+        'buying-item-groups': () => <InventoryCategoriesView />,
+        'buying-promotional-schemes': () => <BuyingGenericView title="Promotional Scheme (Buying)" description="Skema diskon & promosi supplier" type="table" />,
+        'buying-pricing-rules': () => <BuyingGenericView title="Pricing Rule (Buying)" description="Aturan otomatisasi harga beli" type="table" />,
+        'buying-settings': () => <BuyingGenericView title="Buying Settings" description="Pengaturan umum modul pembelian" type="settings" />,
+        'purchase-tax-templates': () => <TaxTemplatesView />,
+        'buying-terms-templates': () => <BuyingGenericView title="Terms & Conditions (Buying)" description="Template syarat & ketentuan pembelian" type="table" />,
+        'suppliers': () => <SuppliersView />,
+        'supplier-groups': () => <SupplierMasterExtendedView />,
+        'supplier-contacts': () => <SupplierMasterExtendedView />,
+        'supplier-addresses': () => <SupplierMasterExtendedView />,
+        'supplier-scorecards': () => <SupplierScorecardView />,
+        'scorecard-variables': () => <SupplierScorecardView />,
+        'scorecard-criteria': () => <SupplierScorecardView />,
+        'scorecard-standings': () => <SupplierScorecardView />,
+        'purchase-analytics': () => <PurchaseReportsView />,
+        'po-analysis': () => <PurchaseReportsView />,
+        'item-consumption': () => <PurchaseReportsView />,
+        'items-to-order-receive': () => <PurchaseReportsView />,
+        'po-trends': () => <PurchaseReportsView />,
+        'procurement-tracker': () => <PurchaseReportsView />,
+        'items-to-request': () => <PurchaseReportsView />,
+        'item-purchase-history': () => <PurchaseReportsView />,
+        'purchase-receipt-trends': () => <PurchaseReportsView />,
+        'purchase-invoice-trends': () => <PurchaseReportsView />,
+        'subcontract-materials': () => <BuyingGenericView title="Subcontract Material Order" description="Order bahan baku ke subkontraktor" type="table" />,
+        'subcontract-received': () => <BuyingGenericView title="Subcontract Material Received" description="Penerimaan hasil subkontrak" type="table" />,
+        'rfq-comparison': () => <SupplierQuotationsView />,
+        'pr-to-rfq': () => <RequestsForQuotationView />,
+        'supplier-directory': () => <SuppliersView />,
+        'import-supplier-invoice': () => <BuyingGenericView title="Import Supplier Invoice" description="Impor massal faktur supplier" type="settings" />,
+        'stock-workspace': () => <StockWorkspaceView />,
+        'delivery-notes': () => <DeliveryNotesView />,
+        'pick-lists': () => <PickListsView />,
+        'delivery-trip': () => <DeliveryTripsView />,
+        'landed-cost-vouchers': () => <LandedCostVouchers />,
+        'stock-product-bundles': () => <ProductBundles />,
+        'item-alternatives': () => <ItemAlternatives />,
+        'item-manufacturers': () => <ItemManufacturers />,
+        'manufacturers': () => <Manufacturers />,
+        'serial-numbers': () => <SerialNumbers />,
+        'batches': () => <Batches />,
+        'quality-inspection': () => <QualityInspections />,
+        'stock-ledger': () => <StockLedgerReport />,
+        'stock-balance': () => <StockBalanceReport />,
+        'stock-ageing': () => <StockAgeingReport />,
+        'stock-projected-qty': () => <StockProjectedQtyReport />,
+        'installation-notes': () => <InstallationNotesView />,
+        'stock-settings': () => <StockSettings />,
+        'brands': () => <Brands />,
+        'item-attributes': () => <ItemAttributes />,
+        'uoms': () => <Uoms />,
+        'uom-conversions': () => <UomConversions />,
+        'item-tax-templates': () => <ItemTaxTemplates />,
+        'warehouses': () => <WarehousesView />,
+        'stock-summary': () => <StockSummaryReport />,
+        'stock-analytics': () => <StockAnalytics />,
+        'batch-wise-balance': () => <BatchBalanceReport />,
+        'serial-no-status': () => <SerialNoStatusReport />,
+        'item-shortage-report': () => <ItemShortageReport />,
+        'accounting-workspace': () => <AccountingWorkspaceView />,
+        'journal-entries-view': () => <JournalEntriesView />,
+        'payment-entries': () => <PaymentEntriesView />,
+        'payment-reconciliation': () => <PaymentEntriesView />,
+        'bank-accounts': () => <BankAccountsView />,
+        'bank-transactions': () => <CashBankView />,
+        'bank-clearance': () => <BankAccountsView />,
+        'cashier-closing': () => <CashBankView />,
+        'cost-centers': () => <CostCentersView />,
+        'accounting-dimensions': () => <CostCentersView />,
+        'budgets-view': () => <BudgetsView />,
+        'budgets': () => <BudgetsView />,
+        'sales-tax-templates': () => <TaxTemplatesView />,
+        'purchase-tax-templates-view': () => <TaxTemplatesView />,
+        'tax-categories': () => <TaxTemplatesView />,
+        'tax-rules': () => <TaxTemplatesView />,
+        'credit-notes': () => <CreditDebitNotesView />,
+        'debit-notes': () => <CreditDebitNotesView />,
+        'dunnings': () => <AgingReportsView />,
+        'balance-sheet': () => <FinancialReportsView />,
+        'profit-loss': () => <FinancialReportsView />,
+        'cash-flow': () => <CashFlowReportView />,
+        'general-ledger-report': () => <GeneralLedgerView />,
+        'ar-aging': () => <AgingReportsView />,
+        'ap-aging': () => <AgingReportsView />,
+        'maintenance-templates': () => <MaintenanceTemplatesView />,
+        'maintenance-schedules': () => <MaintenanceSchedulesView />,
+        'maintenance-teams': () => <MaintenanceTeamsView />,
+        'analytics': () => <AnalyticsDashboardView />,
+        'metadata-editor': () => <MetadataEditorView />,
+        'tax-renewals': () => <TaxRenewalsView />,
+        'settings': () => <SettingsView />,
+        'profile': () => <ProfileView />,
+    };
+
     const renderActiveView = () => {
-        switch (activeTab) {
-            case 'dashboard': return <DashboardView />;
-            case 'assets-workspace': return <AssetsWorkspaceView />;
-            case 'assets': return <AssetsView />;
-            case 'categories': return <CategoriesView />;
-            case 'asset-audit': return <AssetsGenericView title="Asset Audit Session" description="Sesi audit & stok opname aset fisik" type="table" />;
-            case 'asset-lifecycle': return <AssetLifecycleView assetId="" />;
-            case 'fuel': return <FuelView />;
-            case 'loans': return <AssetsGenericView title="Internal Asset Loans" description="Peminjaman aset antar unit internal" type="table" />;
-            case 'asset-settings': return <AssetSettingsView />;
-            case 'depreciation-methods': return <DepreciationMethodsView />;
-            case 'maintenance-types': return <MaintenanceTypesView />;
-            case 'depreciation-ledger': return <AssetReportsContainer reportId="depreciation-ledger" />;
-            case 'roi-trends': return <AssetReportsContainer reportId="roi-trends" />;
-            case 'condition-distribution': return <AssetReportsContainer reportId="condition-distribution" />;
-            case 'workorder-summary': return <AssetReportsContainer reportId="workorder-summary" />;
-            case 'fuel-consumption': return <AssetReportsContainer reportId="fuel-consumption" />;
-            case 'custody-history': return <AssetReportsContainer reportId="custody-history" />;
-            case 'team-performance': return <AssetReportsContainer reportId="team-performance" />;
-            case 'tax-expiry': return <AssetReportsContainer reportId="tax-expiry" />;
-            case 'cost-analysis': return <AssetReportsContainer reportId="cost-analysis" />;
-            case 'iot-sensor-stream': return <IoTSensorStreamView />;
-            case 'asset-health-telemetry': return <AssetHealthTelemetryView />;
-            case 'threshold-alerts': return <ThresholdAlertsView />;
-            case 'inventory-categories': return <InventoryCategoriesView />;
-            case 'warehouses': return <WarehousesView />;
-            case 'inventory-items':
-                if (selectedInventoryId) return <InventoryDetailView itemId={selectedInventoryId} />;
-                return <InventoryItemsView />;
-            case 'stock-opname': return <StockOpnameView />;
-            case 'stock-entry': return <StockEntryView />;
-            case 'material-request': return <MaterialRequestView />;
-            case 'purchase-receipt': return <PurchaseReceiptsView />;
-            case 'delivery-note': return <DeliveryNotesView />;
-            case 'pick-list': return <PickListsView />;
-            case 'installation-note': return <InstallationNotesView />;
-            case 'quality-inspection': return <QualityInspectionsView />;
-            case 'delivery-trip': return <DeliveryTripsView />;
-            case 'locations': return <LocationsView />;
-            case 'work-orders': return <WorkOrdersView />;
-            case 'conversions': return <ConversionsView />;
-            case 'rentals':
-                if (selectedRentalId) return <RentalDetailView rentalId={selectedRentalId} />;
-                return <RentalsView />;
-            case 'rental-form':
-                return <RentalFormView />;
-            case 'contracts':
-                if (selectedContractId) return <ContractDetailView />;
-                return <ContractListView />;
-            case 'approval-workflow-settings':
-                return <WorkflowBuilderView />;
-            case 'contract-detail':
-                return <ContractDetailView />;
-            case 'contract-analytics':
-                return <ContractAnalyticsView />;
-            case 'contract-templates':
-                return <ContractTemplatesView />;
-            case 'loans': return <LoansView />;
-            case 'fuel': return <FuelView />;
-            case 'employees': return <EmployeesView />;
-            case 'designations': return <DesignationsView />;
-            case 'employee-lifecycle': return <EmployeeLifecycleView />;
-            case 'employee-360': return <Employee360View employeeId={selectedEmployeeId || undefined} />;
-            case 'shifts': return <ShiftManagementView />;
-            case 'attendance-logs': return <AttendanceLogsView />;
-            case 'overtime': return <OvertimeManagementView />;
-            case 'attendance-requests': return <AttendanceRequestsView />;
-            case 'attendance': return <AttendanceView />;
-            case 'leaves': return <LeaveDashboardView />;
-
-            // HR Fase 4 - Payroll
-            case 'salary-slips': return <SalarySlipsView />;
-            case 'payroll-processing': return <PayrollProcessingView />;
-            case 'salary-assignments': return <SalaryAssignmentsView />;
-            case 'salary-structures': return <SalaryStructuresView />;
-
-            // HR Fase 5 - Loans, Claims & KPI
-            case 'employee-loans': return <EmployeeLoansView />;
-            case 'expense-claims': return <ExpenseClaimsView />;
-            case 'appraisal': return <AppraisalView />;
-
-            // HR Fase 6 - Recruitment ATS, Training & Disciplinary Actions
-            case 'recruitment': return <RecruitmentAtsView />;
-            case 'training-certifications': return <TrainingCertificationsView />;
-            case 'disciplinary-actions': return <DisciplinaryActionsView />;
-
-            // HR Fase 7 - Driver Ops, P2H & Safety Incidents
-            case 'driver-assignments': return <DriverAssignmentsView />;
-            case 'p2h-inspections': return <P2hInspectionView />;
-            case 'driver-safety-incidents': return <DriverSafetyIncidentsView />;
-
-
-
-
-            case 'approvals': return <ApprovalCenterView />;
-            case 'reports': return <ReportsView />;
-            case 'users': return <UsersView />;
-            case 'roles': return <RolesView />;
-            case 'departments': return <DepartmentsView />;
-            case 'companies': return <CompanyManagementView />;
-            case 'company': return <CompanyManagementView />;
-            case 'branch': return <BranchView />;
-            case 'email-account': return <EmailAccountView />;
-            case 'audit': return <AuditLogsView />;
-            case 'asset-audit': return <AuditModeView />;
-            case 'system-audit': return <AuditLogsView />;
-            case 'finance': return <ChartOfAccountsView />;
-            case 'journal-entries': return <JournalEntriesView />;
-            case 'journal-form': return <JournalEntryFormView />;
-            case 'general-ledger': return <GeneralLedgerView />;
-            case 'trial-balance': return <TrialBalanceView />;
-            case 'financial-reports': return <FinancialReportsView />;
-            case 'cash-bank': return <CashBankView />;
-            case 'expenses': return <ExpensesView />;
-            case 'sales': return <SalesOverviewView />;
-            case 'sales-overview': return <SalesOverviewView />;
-            case 'sales-quotes': return <SalesQuotesView />;
-            case 'sales-orders': return <SalesOrdersView />;
-            case 'sales-shipments': return <SalesShipmentsView />;
-            case 'sales-invoices': return <SalesInvoicesView />;
-            case 'selling-workspace': return <SellingWorkspaceView />;
-            case 'customers': return <CustomersView />;
-            case 'quotations': return <SalesQuotesView />;
-            case 'blanket-orders': return <BlanketOrdersView />;
-            case 'sales-partners': return <SalesTeamView />;
-            case 'sales-persons': return <SalesTeamView />;
-            case 'pos-profiles': return <PointOfSaleView />;
-            case 'pos-settings': return <PointOfSaleView />;
-            case 'pos-opening': return <PointOfSaleView />;
-            case 'pos-closing': return <PointOfSaleView />;
-            case 'loyalty-programs': return <PointOfSaleView />;
-            case 'loyalty-points': return <PointOfSaleView />;
-            case 'items': return <InventoryItemsView />;
-            case 'item-prices': return <SellingGenericView title="Item Price" description="Harga khusus produk per price list" type="table" />;
-            case 'price-lists': return <SellingGenericView title="Price List" description="Daftar harga standar penjualan & pembelian" type="table" />;
-            case 'item-groups': return <InventoryCategoriesView />;
-            case 'product-bundles': return <SellingGenericView title="Product Bundle" description="Paket bundling produk & komponen" type="table" />;
-            case 'promotional-schemes': return <SalesPricingView />;
-            case 'pricing-rules': return <SalesPricingView />;
-            case 'shipping-rules': return <SalesPricingView />;
-            case 'coupon-codes': return <SalesPricingView />;
-            case 'selling-settings': return <SellingGenericView title="Selling Settings" description="Pengaturan umum modul penjualan" type="settings" />;
-            case 'terms-templates': return <SellingGenericView title="Terms & Conditions Template" description="Template syarat & ketentuan legal" type="table" />;
-            case 'tax-templates': return <TaxTemplatesView />;
-            case 'utm-sources': return <SalesMasterExtendedView />;
-            case 'customer-groups': return <SalesMasterExtendedView />;
-            case 'contacts': return <CustomersView />;
-            case 'addresses': return <CustomersView />;
-            case 'territories': return <SalesMasterExtendedView />;
-            case 'campaigns': return <SalesMasterExtendedView />;
-            case 'sales-analytics': return <SalesReportsView />;
-            case 'so-analysis': return <SalesReportsView />;
-            case 'sales-funnel': return <SalesReportsView />;
-            case 'so-trends': return <SalesReportsView />;
-            case 'quotation-trends': return <SalesReportsView />;
-            case 'customer-acquisition': return <SalesReportsView />;
-            case 'inactive-customers': return <SalesReportsView />;
-            case 'salesperson-summary': return <SalesReportsView />;
-            case 'item-sales-history': return <SalesReportsView />;
-            case 'customer-directory': return <CustomersView />;
-            case 'packing-stock': return <SalesReportsView />;
-            case 'pending-so-pr': return <SalesReportsView />;
-            case 'delivery-trends': return <SalesReportsView />;
-            case 'invoice-trends': return <SalesReportsView />;
-            case 'customer-credit-balance': return <SalesReportsView />;
-            case 'dormant-customers': return <SalesReportsView />;
-            case 'partner-commissions': return <SalesTeamView />;
-            case 'territory-target-variance': return <SellingGenericView title="Territory Target Variance" description="Varian target wilayah vs realisasi" type="report" />;
-            case 'salesperson-target-variance': return <SellingGenericView title="Sales Person Target Variance" description="Varian target sales vs realisasi" type="report" />;
-            case 'partner-target-variance': return <SellingGenericView title="Sales Partner Target Variance" description="Varian target mitra vs realisasi" type="report" />;
-            case 'purchase-overview': return <PurchaseOverviewView />;
-            case 'purchase-quotes': return <PurchaseQuotesView />;
-            case 'purchase-orders': return <PurchaseOrdersView />;
-            case 'purchase-shipments': return <PurchaseShipmentsView />;
-            case 'purchase-bills': return <PurchaseBillsView />;
-            case 'buying-workspace': return <BuyingWorkspaceView />;
-            case 'material-requests': return <MaterialRequestView />;
-            case 'rfqs': return <RequestsForQuotationView />;
-            case 'supplier-quotations': return <SupplierQuotationsView />;
-            case 'buying-item-prices': return <BuyingGenericView title="Item Price (Buying)" description="Harga beli khusus barang per supplier" type="table" />;
-            case 'buying-price-lists': return <BuyingGenericView title="Price List (Buying)" description="Master daftar harga beli" type="table" />;
-            case 'buying-product-bundles': return <BuyingGenericView title="Product Bundle" description="Paket bundling komponen pembelian" type="table" />;
-            case 'buying-item-groups': return <InventoryCategoriesView />;
-            case 'buying-promotional-schemes': return <BuyingGenericView title="Promotional Scheme (Buying)" description="Skema diskon & promosi supplier" type="table" />;
-            case 'buying-pricing-rules': return <BuyingGenericView title="Pricing Rule (Buying)" description="Aturan otomatisasi harga beli" type="table" />;
-            case 'buying-settings': return <BuyingGenericView title="Buying Settings" description="Pengaturan umum modul pembelian" type="settings" />;
-            case 'purchase-tax-templates': return <TaxTemplatesView />;
-            case 'buying-terms-templates': return <BuyingGenericView title="Terms & Conditions (Buying)" description="Template syarat & ketentuan pembelian" type="table" />;
-            case 'suppliers': return <SuppliersView />;
-            case 'supplier-groups': return <SupplierMasterExtendedView />;
-            case 'supplier-contacts': return <SupplierMasterExtendedView />;
-            case 'supplier-addresses': return <SupplierMasterExtendedView />;
-            case 'supplier-scorecards': return <SupplierScorecardView />;
-            case 'scorecard-variables': return <SupplierScorecardView />;
-            case 'scorecard-criteria': return <SupplierScorecardView />;
-            case 'scorecard-standings': return <SupplierScorecardView />;
-            case 'purchase-analytics': return <PurchaseReportsView />;
-            case 'po-analysis': return <PurchaseReportsView />;
-            case 'item-consumption': return <PurchaseReportsView />;
-            case 'items-to-order-receive': return <PurchaseReportsView />;
-            case 'po-trends': return <PurchaseReportsView />;
-            case 'procurement-tracker': return <PurchaseReportsView />;
-            case 'items-to-request': return <PurchaseReportsView />;
-            case 'item-purchase-history': return <PurchaseReportsView />;
-            case 'purchase-receipt-trends': return <PurchaseReportsView />;
-            case 'purchase-invoice-trends': return <PurchaseReportsView />;
-            case 'subcontract-materials': return <BuyingGenericView title="Subcontract Material Order" description="Order bahan baku ke subkontraktor" type="table" />;
-            case 'subcontract-received': return <BuyingGenericView title="Subcontract Material Received" description="Penerimaan hasil subkontrak" type="table" />;
-            case 'rfq-comparison': return <SupplierQuotationsView />;
-            case 'pr-to-rfq': return <RequestsForQuotationView />;
-            case 'supplier-directory': return <SuppliersView />;
-            case 'import-supplier-invoice': return <BuyingGenericView title="Import Supplier Invoice" description="Impor massal faktur supplier" type="settings" />;
-            case 'stock-workspace': return <StockWorkspaceView />;
-            case 'delivery-notes': return <DeliveryNotesView />;
-            case 'pick-lists': return <PickListsView />;
-            case 'delivery-trip': return <DeliveryTripsView />;
-            case 'landed-cost-vouchers': return <StockGenericView title="Landed Cost Voucher" description="Alokasi biaya tambahan ke harga barang" type="table" />;
-            case 'stock-product-bundles': return <ProductBundles />;
-            case 'item-alternatives': return <ItemAlternatives />;
-            case 'item-manufacturers': return <StockGenericView title="Item Manufacturer" description="Produsen & pabrikan item" type="table" />;
-            case 'manufacturers': return <Manufacturers />;
-            case 'serial-numbers': return <SerialNumbers />;
-            case 'batches': return <Batches />;
-            case 'quality-inspection': return <QualityInspections />;
-            case 'landed-cost-vouchers': return <LandedCostVouchers />;
-            case 'stock-ledger': return <StockLedgerReport />;
-            case 'stock-balance': return <StockBalanceReport />;
-            case 'stock-ageing': return <StockAgeingReport />;
-            case 'stock-projected-qty': return <StockProjectedQtyReport />;
-            case 'installation-notes': return <InstallationNotesView />;
-            case 'stock-settings': return <StockSettings />;
-            case 'brands': return <Brands />;
-            case 'item-attributes': return <ItemAttributes />;
-            case 'uoms': return <Uoms />;
-            case 'uom-conversions': return <UomConversions />;
-            case 'item-tax-templates': return <ItemTaxTemplates />;
-            case 'item-manufacturers': return <ItemManufacturers />;
-            case 'warehouses': return <Warehouses />;
-            case 'stock-summary': return <StockSummaryReport />;
-            case 'stock-ageing': return <StockGenericView title="Stock Ageing" description="Laporan umur barang & stok mati" type="report" />;
-            case 'stock-projected-qty': return <StockGenericView title="Stock Projected Qty" description="Proyeksi kebutuhan & kecukupan persediaan" type="report" />;
-            case 'stock-analytics': return <StockAnalytics />;
-            case 'batch-wise-balance': return <BatchBalanceReport />;
-            case 'serial-no-status': return <SerialNoStatusReport />;
-            case 'item-shortage-report': return <ItemShortageReport />;
-            case 'accounting-workspace': return <AccountingWorkspaceView />;
-            case 'journal-entries-view': return <JournalEntriesView />;
-            case 'payment-entries': return <PaymentEntriesView />;
-            case 'payment-reconciliation': return <PaymentEntriesView />;
-            case 'bank-accounts': return <BankAccountsView />;
-            case 'bank-transactions': return <CashBankView />;
-            case 'bank-clearance': return <BankAccountsView />;
-            case 'cashier-closing': return <CashBankView />;
-            case 'cost-centers': return <CostCentersView />;
-            case 'accounting-dimensions': return <CostCentersView />;
-            case 'budgets-view': return <BudgetsView />;
-            case 'budgets': return <BudgetsView />;
-            case 'sales-tax-templates': return <TaxTemplatesView />;
-            case 'purchase-tax-templates-view': return <TaxTemplatesView />;
-            case 'tax-categories': return <TaxTemplatesView />;
-            case 'tax-rules': return <TaxTemplatesView />;
-            case 'credit-notes': return <CreditDebitNotesView />;
-            case 'debit-notes': return <CreditDebitNotesView />;
-            case 'dunnings': return <AgingReportsView />;
-            case 'balance-sheet': return <FinancialReportsView />;
-            case 'profit-loss': return <FinancialReportsView />;
-            case 'cash-flow': return <CashFlowReportView />;
-            case 'general-ledger-report': return <GeneralLedgerView />;
-            case 'ar-aging': return <AgingReportsView />;
-            case 'ap-aging': return <AgingReportsView />;
-            case 'maintenance-templates': return <MaintenanceTemplatesView />;
-            case 'maintenance-schedules': return <MaintenanceSchedulesView />;
-            case 'maintenance-teams': return <MaintenanceTeamsView />;
-            case 'analytics': return <AnalyticsDashboardView />;
-            case 'metadata-editor': return <MetadataEditorView />;
-            case 'tax-renewals': return <TaxRenewalsView />;
-            case 'settings': return <SettingsView />;
-            case 'profile': return <ProfileView />;
-            default: return <DashboardView />;
-        }
+        const renderFn = VIEW_MAP[activeTab];
+        return renderFn ? renderFn() : <DashboardView />;
     };
 
     return (

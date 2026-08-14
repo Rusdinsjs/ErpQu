@@ -25,17 +25,22 @@ pub async fn auth_middleware(
     let token = if let Some(header_value) = auth_header {
         header_value.strip_prefix("Bearer ").unwrap_or(header_value)
     } else {
-        // Fallback to query parameter (e.g., for <img> tags)
-        let query = request.uri().query().unwrap_or("");
-        let mut query_token = None;
-        for pair in query.split('&') {
-            let mut parts = pair.split('=');
-            if let (Some("token"), Some(val)) = (parts.next(), parts.next()) {
-                query_token = Some(val);
-                break;
+        // Fallback to query parameter only for file viewing/report routes (e.g., <img> tags or pdf preview)
+        let path = request.uri().path();
+        if path.starts_with("/api/uploads/") || path.starts_with("/api/reports/") {
+            let query = request.uri().query().unwrap_or("");
+            let mut query_token = None;
+            for pair in query.split('&') {
+                let mut parts = pair.split('=');
+                if let (Some("token"), Some(val)) = (parts.next(), parts.next()) {
+                    query_token = Some(val);
+                    break;
+                }
             }
+            query_token.ok_or(StatusCode::UNAUTHORIZED)?
+        } else {
+            return Err(StatusCode::UNAUTHORIZED);
         }
-        query_token.ok_or(StatusCode::UNAUTHORIZED)?
     };
 
     let config = &state.jwt_config;

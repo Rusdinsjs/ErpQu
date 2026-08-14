@@ -1,6 +1,6 @@
 use axum::{
     extract::{Multipart, Path, State},
-    http::{header, HeaderMap},
+    http::{header, HeaderMap, HeaderValue},
     response::IntoResponse,
     Extension, Json,
 };
@@ -165,10 +165,14 @@ pub async fn get_private_file(
         .to_string();
 
     let mut headers = HeaderMap::new();
-    headers.insert(header::CONTENT_TYPE, mime_type.parse().unwrap());
+    if let Ok(val) = HeaderValue::from_str(&mime_type) {
+        headers.insert(header::CONTENT_TYPE, val);
+    } else {
+        headers.insert(header::CONTENT_TYPE, HeaderValue::from_static("application/octet-stream"));
+    }
     headers.insert(
         header::CACHE_CONTROL,
-        "private, max-age=3600".parse().unwrap(),
+        HeaderValue::from_static("private, max-age=3600"),
     );
 
     Ok((headers, contents))

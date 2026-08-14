@@ -368,9 +368,9 @@ pub async fn get_company(
             .await
             .unwrap_or_default();
 
-            let mut company_json = serde_json::to_value(&c).unwrap();
+            let mut company_json = serde_json::to_value(&c).map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
             if let Some(obj) = company_json.as_object_mut() {
-                obj.insert("amendment_deeds".to_string(), serde_json::to_value(amendment_deeds).unwrap());
+                obj.insert("amendment_deeds".to_string(), serde_json::to_value(amendment_deeds).unwrap_or_default());
             }
 
             Ok(Json(serde_json::json!({ "data": company_json })))
@@ -385,7 +385,7 @@ pub async fn create_company(
     Json(payload): Json<CreateCompanyPayload>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, String)> {
     let pool = &state.pool;
-    let tenant_id = Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap();
+    let tenant_id = Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap_or_default();
 
     let new_id = Uuid::new_v4();
     let base_currency = payload.base_currency.unwrap_or_else(|| "IDR".to_string());

@@ -149,36 +149,7 @@ export default function AssetLifecycle({ assetId: propAssetId }: AssetLifecycleP
         return approvalPolicies.find(p => p.action_type === actionType && p.is_active) ?? null;
     }, [approvalPolicies]);
 
-    // Submit approval request and block direct execution
-    const submitApprovalRequest = useCallback(async (
-        actionType: string,
-        policy: ApprovalPolicy,
-        extraData?: Record<string, unknown>
-    ) => {
-        try {
-            const result = await approvalApi.create({
-                resource_type: 'Asset',
-                resource_id: assetId!,
-                action_type: actionType,
-                data_snapshot: { asset: assetData, policy, ...extraData },
-            });
-            setPendingApprovalInfo({
-                action_type: actionType,
-                policy,
-                request_id: (result as any)?.data?.id,
-                requested_at: new Date().toISOString(),
-            });
-            info(
-                `Permintaan ${actionType} telah diajukan. Menunggu persetujuan ${policy.approval_levels === 2 ? '2 level' : 'manajer'}.`,
-                '⏳ Approval Diperlukan'
-            );
-            // Invalidate queries to refresh lifecycle state
-            queryClient.invalidateQueries({ queryKey: ['current-status', assetId] });
-            queryClient.invalidateQueries({ queryKey: ['valid-transitions-with-approval', assetId] });
-        } catch (err: any) {
-            showError(err?.message || 'Gagal membuat permintaan approval.', 'Error');
-        }
-    }, [assetId, assetData, info, showError, queryClient]);
+
 
     // Get user permissions
     const { user, hasRoleLevel } = useAuthStore();
@@ -223,6 +194,37 @@ export default function AssetLifecycle({ assetId: propAssetId }: AssetLifecycleP
         queryFn: () => lifecycleApi.getHistory(assetId!),
         enabled: !!assetId,
     });
+
+    // Submit approval request and block direct execution
+    const submitApprovalRequest = useCallback(async (
+        actionType: string,
+        policy: ApprovalPolicy,
+        extraData?: Record<string, unknown>
+    ) => {
+        try {
+            const result = await approvalApi.create({
+                resource_type: 'Asset',
+                resource_id: assetId!,
+                action_type: actionType,
+                data_snapshot: { asset: assetData, policy, ...extraData },
+            });
+            setPendingApprovalInfo({
+                action_type: actionType,
+                policy,
+                request_id: (result as any)?.data?.id,
+                requested_at: new Date().toISOString(),
+            });
+            info(
+                `Permintaan ${actionType} telah diajukan. Menunggu persetujuan ${policy.approval_levels === 2 ? '2 level' : 'manajer'}.`,
+                '⏳ Approval Diperlukan'
+            );
+            // Invalidate queries to refresh lifecycle state
+            queryClient.invalidateQueries({ queryKey: ['current-status', assetId] });
+            queryClient.invalidateQueries({ queryKey: ['valid-transitions-with-approval', assetId] });
+        } catch (err: any) {
+            showError(err?.message || 'Gagal membuat permintaan approval.', 'Error');
+        }
+    }, [assetId, assetData, info, showError, queryClient]);
 
     // Transition mutation
     const transitionMutation = useMutation({

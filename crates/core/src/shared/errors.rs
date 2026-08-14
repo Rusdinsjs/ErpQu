@@ -91,7 +91,14 @@ impl IntoResponse for AppError {
                 "SERVICE_ERROR",
                 format!("{}: {}", service, message),
             ),
-            Self::Database(msg) => (StatusCode::INTERNAL_SERVER_ERROR, "DATABASE_ERROR", msg),
+            Self::Database(msg) => {
+                tracing::error!("Database Error: {}", msg);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "DATABASE_ERROR",
+                    "Database error occurred. Please try again or contact support.".to_string(),
+                )
+            }
             Self::Unauthorized(msg) => (StatusCode::UNAUTHORIZED, "UNAUTHORIZED", msg),
             Self::Forbidden(msg) => (StatusCode::FORBIDDEN, "FORBIDDEN", msg),
             Self::BadRequest(msg) => (StatusCode::BAD_REQUEST, "BAD_REQUEST", msg),
@@ -101,7 +108,12 @@ impl IntoResponse for AppError {
                 (StatusCode::INTERNAL_SERVER_ERROR, "INTERNAL_ERROR", message)
             }
             Self::Domain(DomainError::Database(message)) => {
-                (StatusCode::INTERNAL_SERVER_ERROR, "DATABASE_ERROR", message)
+                tracing::error!("Domain Database Error: {}", message);
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "DATABASE_ERROR",
+                    "Database error occurred. Please try again or contact support.".to_string(),
+                )
             }
             Self::Domain(DomainError::Storage { message }) => {
                 (StatusCode::INTERNAL_SERVER_ERROR, "STORAGE_ERROR", message)
