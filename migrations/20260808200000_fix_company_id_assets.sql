@@ -2,8 +2,13 @@
 -- This migration is idempotent and safe to apply multiple times
 
 -- Add company_id to assets table (the column that was supposed to be added by 20260806000003)
-ALTER TABLE public.assets ADD COLUMN IF NOT EXISTS company_id UUID;
-CREATE INDEX IF NOT EXISTS idx_assets_company_id ON public.assets(company_id);
+DO $$
+BEGIN
+    IF EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'assets') THEN
+        EXECUTE 'ALTER TABLE public.assets ADD COLUMN IF NOT EXISTS company_id UUID';
+        EXECUTE 'CREATE INDEX IF NOT EXISTS idx_assets_company_id ON public.assets(company_id)';
+    END IF;
+END $$;
 
 -- Add company_id to maintenance_work_orders if missing
 DO $$
