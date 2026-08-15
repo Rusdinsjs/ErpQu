@@ -5,12 +5,12 @@ use async_trait::async_trait;
 use chrono::Utc;
 use uuid::Uuid;
 
-use management_system_assets::{AssetHistory, AssetRepository};
 use crate::conversion_dto::{CreateConversionRequest, ExecuteConversionRequest};
-use management_system_core::application::services::approval_service::ModuleApprovalCallback;
-use management_system_core::domain::errors::{DomainError, DomainResult};
 use crate::domain::entities::AssetConversion;
 use crate::repositories::ConversionRepository;
+use management_system_assets::{AssetHistory, AssetRepository};
+use management_system_core::application::services::approval_service::ModuleApprovalCallback;
+use management_system_core::domain::errors::{DomainError, DomainResult};
 
 #[derive(Clone)]
 pub struct ConversionService {
@@ -126,10 +126,7 @@ impl ConversionService {
     }
 
     /// Reject a conversion request
-    pub async fn reject_request(
-        &self,
-        id: Uuid,
-    ) -> DomainResult<AssetConversion> {
+    pub async fn reject_request(&self, id: Uuid) -> DomainResult<AssetConversion> {
         let mut conversion = self
             .conversion_repo
             .find_by_id(id)

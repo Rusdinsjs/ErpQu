@@ -1,7 +1,7 @@
-pub mod vendor;
 pub mod client;
 pub mod company;
+pub mod vendor;
 
-pub use vendor::*;
 pub use client::*;
 pub use company::*;
+pub use vendor::*;

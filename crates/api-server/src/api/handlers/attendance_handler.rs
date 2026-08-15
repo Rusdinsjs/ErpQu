@@ -62,8 +62,10 @@ impl<T> AttendanceResponse<T> {
 pub async fn get_today_status(
     State(state): State<AppState>,
     Extension(claims): Extension<UserClaims>,
-) -> Result<Json<AttendanceResponse<Option<TodayAttendanceStatus>>>, (StatusCode, Json<serde_json::Value>)>
-{
+) -> Result<
+    Json<AttendanceResponse<Option<TodayAttendanceStatus>>>,
+    (StatusCode, Json<serde_json::Value>),
+> {
     let employee_id = match get_employee_id_for_user(&state, claims.user_id()).await? {
         Some(id) => id,
         None => return Ok(Json(AttendanceResponse::success(None))),

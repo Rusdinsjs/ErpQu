@@ -208,10 +208,7 @@ impl RentalRepository {
     // ==================== RENTAL ITEM OPERATIONS ====================
 
     /// Create a new rental item
-    pub async fn create_rental_item(
-        &self,
-        item: &RentalItem,
-    ) -> Result<RentalItem, sqlx::Error> {
+    pub async fn create_rental_item(&self, item: &RentalItem) -> Result<RentalItem, sqlx::Error> {
         let rec = sqlx::query_as::<sqlx::Postgres, RentalItem>(
             r#"INSERT INTO rental_items (
                 id, rental_id, asset_id, rental_rate_id,
@@ -254,10 +251,7 @@ impl RentalRepository {
     }
 
     /// Update rental item
-    pub async fn update_rental_item(
-        &self,
-        item: &RentalItem,
-    ) -> Result<RentalItem, sqlx::Error> {
+    pub async fn update_rental_item(&self, item: &RentalItem) -> Result<RentalItem, sqlx::Error> {
         let now = Utc::now();
         let rec = sqlx::query_as::<sqlx::Postgres, RentalItem>(
             r#"UPDATE rental_items SET
@@ -349,7 +343,8 @@ impl RentalRepository {
         &self,
         start: NaiveDate,
         end: NaiveDate,
-    ) -> Result<Vec<management_system_core::application::dto::RentalScheduleItem>, sqlx::Error> {
+    ) -> Result<Vec<management_system_core::application::dto::RentalScheduleItem>, sqlx::Error>
+    {
         sqlx::query_as::<sqlx::Postgres, management_system_core::application::dto::RentalScheduleItem>(
             r#"SELECT
                 r.id as rental_id,
@@ -404,11 +399,7 @@ impl RentalRepository {
         Ok(())
     }
 
-    pub async fn reject_rental(
-        &self,
-        id: Uuid,
-        reason: Option<String>,
-    ) -> Result<(), sqlx::Error> {
+    pub async fn reject_rental(&self, id: Uuid, reason: Option<String>) -> Result<(), sqlx::Error> {
         sqlx::query(
             r#"UPDATE rentals SET status = 'rejected', rejection_reason = $1 WHERE id = $2"#,
         )
@@ -419,11 +410,7 @@ impl RentalRepository {
         Ok(())
     }
 
-    pub async fn return_item(
-        &self,
-        item_id: Uuid,
-        returned_by: Uuid,
-    ) -> Result<(), sqlx::Error> {
+    pub async fn return_item(&self, item_id: Uuid, returned_by: Uuid) -> Result<(), sqlx::Error> {
         sqlx::query(
             r#"UPDATE rental_items SET returned_by = $1, returned_at = NOW(), actual_end_date = CURRENT_DATE WHERE id = $2"#,
         )

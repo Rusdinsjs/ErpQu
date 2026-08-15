@@ -406,7 +406,9 @@ struct PurchaseReceiptItemRow {
     pub serial_no: Option<String>,
 }
 
-impl From<PurchaseReceiptItemRow> for crate::domain::entities::commercial_graph::PurchaseReceiptItem {
+impl From<PurchaseReceiptItemRow>
+    for crate::domain::entities::commercial_graph::PurchaseReceiptItem
+{
     fn from(r: PurchaseReceiptItemRow) -> Self {
         Self {
             id: r.id,
@@ -1302,7 +1304,11 @@ impl FinanceRepository {
         shipment: &SalesShipment,
         items: &[SalesShipmentItem],
     ) -> DomainResult<SalesShipment> {
-        let mut tx = self.pool.begin().await.map_err(|e| DomainError::Database(e.to_string()))?;
+        let mut tx = self
+            .pool
+            .begin()
+            .await
+            .map_err(|e| DomainError::Database(e.to_string()))?;
 
         let row = sqlx::query_as::<_, SalesShipmentRow>(
             r#"
@@ -1343,24 +1349,27 @@ impl FinanceRepository {
             .map_err(|e| DomainError::Database(e.to_string()))?;
         }
 
-        tx.commit().await.map_err(|e| DomainError::Database(e.to_string()))?;
+        tx.commit()
+            .await
+            .map_err(|e| DomainError::Database(e.to_string()))?;
 
         Ok(row.into())
     }
 
     pub async fn update_sales_shipment_status(&self, id: Uuid, status: &str) -> DomainResult<()> {
-        sqlx::query(
-            "UPDATE sales_shipments SET status = $2, updated_at = NOW() WHERE id = $1"
-        )
-        .bind(id)
-        .bind(status)
-        .execute(&self.pool)
-        .await
-        .map_err(|e| DomainError::Database(e.to_string()))?;
+        sqlx::query("UPDATE sales_shipments SET status = $2, updated_at = NOW() WHERE id = $1")
+            .bind(id)
+            .bind(status)
+            .execute(&self.pool)
+            .await
+            .map_err(|e| DomainError::Database(e.to_string()))?;
         Ok(())
     }
 
-    pub async fn get_sales_shipment_items(&self, shipment_id: Uuid) -> DomainResult<Vec<SalesShipmentItem>> {
+    pub async fn get_sales_shipment_items(
+        &self,
+        shipment_id: Uuid,
+    ) -> DomainResult<Vec<SalesShipmentItem>> {
         let rows = sqlx::query_as::<_, SalesShipmentItemRow>(
             r#"
             SELECT id, shipment_id, order_item_id, description, quantity_shipped, item_id
@@ -1507,7 +1516,10 @@ impl FinanceRepository {
         Ok(row.into())
     }
 
-    pub async fn list_purchase_receipts(&self, company_id: Uuid) -> DomainResult<Vec<crate::domain::entities::commercial_graph::PurchaseReceipt>> {
+    pub async fn list_purchase_receipts(
+        &self,
+        company_id: Uuid,
+    ) -> DomainResult<Vec<crate::domain::entities::commercial_graph::PurchaseReceipt>> {
         let rows = sqlx::query_as::<_, PurchaseReceiptRow>(
             r#"
             SELECT id, company_id, receipt_number, purchase_order_id, vendor_id, warehouse_id, posting_date, status, notes, created_at, created_by
@@ -1523,7 +1535,10 @@ impl FinanceRepository {
         Ok(rows.into_iter().map(Into::into).collect())
     }
 
-    pub async fn get_purchase_receipt(&self, id: Uuid) -> DomainResult<Option<crate::domain::entities::commercial_graph::PurchaseReceipt>> {
+    pub async fn get_purchase_receipt(
+        &self,
+        id: Uuid,
+    ) -> DomainResult<Option<crate::domain::entities::commercial_graph::PurchaseReceipt>> {
         let row = sqlx::query_as::<_, PurchaseReceiptRow>(
             r#"
             SELECT id, company_id, receipt_number, purchase_order_id, vendor_id, warehouse_id, posting_date, status, notes, created_at, created_by
@@ -1543,7 +1558,11 @@ impl FinanceRepository {
         receipt: &crate::domain::entities::commercial_graph::PurchaseReceipt,
         items: &[crate::domain::entities::commercial_graph::PurchaseReceiptItem],
     ) -> DomainResult<crate::domain::entities::commercial_graph::PurchaseReceipt> {
-        let mut tx = self.pool.begin().await.map_err(|e| DomainError::Database(e.to_string()))?;
+        let mut tx = self
+            .pool
+            .begin()
+            .await
+            .map_err(|e| DomainError::Database(e.to_string()))?;
 
         sqlx::query(
             r#"
@@ -1587,24 +1606,27 @@ impl FinanceRepository {
             .map_err(|e| DomainError::Database(e.to_string()))?;
         }
 
-        tx.commit().await.map_err(|e| DomainError::Database(e.to_string()))?;
+        tx.commit()
+            .await
+            .map_err(|e| DomainError::Database(e.to_string()))?;
 
         Ok(receipt.clone())
     }
 
     pub async fn update_purchase_receipt_status(&self, id: Uuid, status: &str) -> DomainResult<()> {
-        sqlx::query(
-            "UPDATE purchase_receipts SET status = $2 WHERE id = $1"
-        )
-        .bind(id)
-        .bind(status)
-        .execute(&self.pool)
-        .await
-        .map_err(|e| DomainError::Database(e.to_string()))?;
+        sqlx::query("UPDATE purchase_receipts SET status = $2 WHERE id = $1")
+            .bind(id)
+            .bind(status)
+            .execute(&self.pool)
+            .await
+            .map_err(|e| DomainError::Database(e.to_string()))?;
         Ok(())
     }
 
-    pub async fn get_purchase_receipt_items(&self, receipt_id: Uuid) -> DomainResult<Vec<crate::domain::entities::commercial_graph::PurchaseReceiptItem>> {
+    pub async fn get_purchase_receipt_items(
+        &self,
+        receipt_id: Uuid,
+    ) -> DomainResult<Vec<crate::domain::entities::commercial_graph::PurchaseReceiptItem>> {
         let rows = sqlx::query_as::<_, PurchaseReceiptItemRow>(
             r#"
             SELECT id, receipt_id, item_id, qty_received, unit_cost, total_amount, po_line_id, batch_no, serial_no
@@ -1649,14 +1671,16 @@ impl FinanceRepository {
         .await
         .map_err(|e| DomainError::Database(e.to_string()))?;
 
-        Ok(crate::domain::entities::commercial_graph::CommercialDocumentLink {
-            id,
-            source_type: source_type.to_string(),
-            source_id,
-            target_type: target_type.to_string(),
-            target_id,
-            created_at,
-        })
+        Ok(
+            crate::domain::entities::commercial_graph::CommercialDocumentLink {
+                id,
+                source_type: source_type.to_string(),
+                source_id,
+                target_type: target_type.to_string(),
+                target_id,
+                created_at,
+            },
+        )
     }
 
     pub async fn get_commercial_document_links(
@@ -1690,14 +1714,16 @@ impl FinanceRepository {
 
         Ok(rows
             .into_iter()
-            .map(|r| crate::domain::entities::commercial_graph::CommercialDocumentLink {
-                id: r.id,
-                source_type: r.source_type,
-                source_id: r.source_id,
-                target_type: r.target_type,
-                target_id: r.target_id,
-                created_at: r.created_at,
-            })
+            .map(
+                |r| crate::domain::entities::commercial_graph::CommercialDocumentLink {
+                    id: r.id,
+                    source_type: r.source_type,
+                    source_id: r.source_id,
+                    target_type: r.target_type,
+                    target_id: r.target_id,
+                    created_at: r.created_at,
+                },
+            )
             .collect())
     }
 }

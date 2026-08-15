@@ -3,21 +3,19 @@ use axum::{
     http::HeaderMap,
     Extension, Json,
 };
-use serde_json::{json, Value};
-use uuid::Uuid;
 use management_system_core::domain::entities::UserClaims as Claims;
 use management_system_core::domain::tenant::TenantContext;
+use serde_json::{json, Value};
+use uuid::Uuid;
 
 use crate::api::server::AppState;
 use management_system_core::shared::errors::AppError;
+use management_system_finance::domain::entities::commercial_graph::CreatePurchaseReceiptRequest;
 use management_system_finance::domain::entities::finance::{
     CreateAccountRequest, CreateCashBankTransactionRequest, CreateExpenseRequest,
     CreatePurchaseBillRequest, CreatePurchaseOrderRequest, CreatePurchaseQuoteRequest,
     CreatePurchaseShipmentRequest, CreateSalesInvoiceRequest, CreateSalesOrderRequest,
     CreateSalesQuoteRequest, CreateSalesShipmentRequest, UpdateAccountRequest,
-};
-use management_system_finance::domain::entities::commercial_graph::{
-    CreatePurchaseReceiptRequest,
 };
 
 /// Create a new account
@@ -105,20 +103,25 @@ pub async fn create_sales_invoice(
         .ok_or_else(|| AppError::BadRequest("Idempotency-Key header is required".to_string()))?
         .to_string();
 
-    let company_id = tenant_ctx.company_id.or_else(|| {
-        claims.org.as_deref().and_then(|id| Uuid::parse_str(id).ok())
-    }).ok_or_else(|| AppError::BadRequest("Company ID / Tenant Context is required for sales invoice".to_string()))?;
+    let company_id = tenant_ctx
+        .company_id
+        .or_else(|| {
+            claims
+                .org
+                .as_deref()
+                .and_then(|id| Uuid::parse_str(id).ok())
+        })
+        .ok_or_else(|| {
+            AppError::BadRequest(
+                "Company ID / Tenant Context is required for sales invoice".to_string(),
+            )
+        })?;
 
     let actor_id = claims.user_id();
 
     let invoice = state
         .finance_service
-        .create_sales_invoice(
-            actor_id,
-            company_id,
-            idempotency_key,
-            payload,
-        )
+        .create_sales_invoice(actor_id, company_id, idempotency_key, payload)
         .await?;
     Ok(Json(json!({ "success": true, "data": invoice })))
 }
@@ -146,21 +149,25 @@ pub async fn update_sales_invoice(
         .ok_or_else(|| AppError::BadRequest("Idempotency-Key header is required".to_string()))?
         .to_string();
 
-    let company_id = tenant_ctx.company_id.or_else(|| {
-        claims.org.as_deref().and_then(|id| Uuid::parse_str(id).ok())
-    }).ok_or_else(|| AppError::BadRequest("Company ID / Tenant Context is required for sales invoice".to_string()))?;
+    let company_id = tenant_ctx
+        .company_id
+        .or_else(|| {
+            claims
+                .org
+                .as_deref()
+                .and_then(|id| Uuid::parse_str(id).ok())
+        })
+        .ok_or_else(|| {
+            AppError::BadRequest(
+                "Company ID / Tenant Context is required for sales invoice".to_string(),
+            )
+        })?;
 
     let actor_id = claims.user_id();
 
     let invoice = state
         .finance_service
-        .update_sales_invoice(
-            actor_id,
-            company_id,
-            idempotency_key,
-            id,
-            payload,
-        )
+        .update_sales_invoice(actor_id, company_id, idempotency_key, id, payload)
         .await?;
     Ok(Json(json!({ "success": true, "data": invoice })))
 }
@@ -180,7 +187,10 @@ pub async fn create_purchase_bill(
     Extension(claims): Extension<Claims>,
     Json(payload): Json<CreatePurchaseBillRequest>,
 ) -> Result<Json<Value>, AppError> {
-    let bill = state.finance_service.create_purchase_bill(Some(claims.user_id()), payload).await?;
+    let bill = state
+        .finance_service
+        .create_purchase_bill(Some(claims.user_id()), payload)
+        .await?;
     Ok(Json(json!({ "success": true, "data": bill })))
 }
 
@@ -189,7 +199,10 @@ pub async fn create_expense(
     Extension(claims): Extension<Claims>,
     Json(payload): Json<CreateExpenseRequest>,
 ) -> Result<Json<Value>, AppError> {
-    let expense = state.finance_service.create_expense(Some(claims.user_id()), payload).await?;
+    let expense = state
+        .finance_service
+        .create_expense(Some(claims.user_id()), payload)
+        .await?;
     Ok(Json(json!({ "success": true, "data": expense })))
 }
 
@@ -294,7 +307,10 @@ pub async fn list_purchase_receipts(
     State(state): State<AppState>,
     Path(company_id): Path<Uuid>,
 ) -> Result<Json<Value>, AppError> {
-    let receipts = state.finance_service.list_purchase_receipts(company_id).await?;
+    let receipts = state
+        .finance_service
+        .list_purchase_receipts(company_id)
+        .await?;
     Ok(Json(json!({ "success": true, "data": receipts })))
 }
 
@@ -311,7 +327,10 @@ pub async fn create_purchase_receipt(
     Extension(claims): Extension<Claims>,
     Json(payload): Json<CreatePurchaseReceiptRequest>,
 ) -> Result<Json<Value>, AppError> {
-    let receipt = state.finance_service.create_purchase_receipt(payload, Some(claims.user_id())).await?;
+    let receipt = state
+        .finance_service
+        .create_purchase_receipt(payload, Some(claims.user_id()))
+        .await?;
     Ok(Json(json!({ "success": true, "data": receipt })))
 }
 
@@ -320,7 +339,10 @@ pub async fn submit_purchase_receipt(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Result<Json<Value>, AppError> {
-    state.stock_document_service.submit_purchase_receipt(id, Some(claims.user_id())).await?;
+    state
+        .stock_document_service
+        .submit_purchase_receipt(id, Some(claims.user_id()))
+        .await?;
     Ok(Json(json!({ "success": true })))
 }
 
@@ -329,6 +351,9 @@ pub async fn submit_sales_shipment(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Result<Json<Value>, AppError> {
-    state.stock_document_service.submit_sales_shipment(id, Some(claims.user_id())).await?;
+    state
+        .stock_document_service
+        .submit_sales_shipment(id, Some(claims.user_id()))
+        .await?;
     Ok(Json(json!({ "success": true })))
 }

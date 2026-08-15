@@ -172,8 +172,12 @@ fn map_company_row(r: &sqlx::postgres::PgRow) -> CompanyRow {
         name: r.get("name"),
         legal_name: r.try_get("legal_name").ok(),
         tax_id: r.try_get("tax_id").ok(),
-        base_currency: r.try_get("base_currency").unwrap_or_else(|_| "IDR".to_string()),
-        country: r.try_get("country").unwrap_or_else(|_| "Indonesia".to_string()),
+        base_currency: r
+            .try_get("base_currency")
+            .unwrap_or_else(|_| "IDR".to_string()),
+        country: r
+            .try_get("country")
+            .unwrap_or_else(|_| "Indonesia".to_string()),
         address: r.try_get("address").ok(),
         phone: r.try_get("phone").ok(),
         email: r.try_get("email").ok(),
@@ -197,8 +201,12 @@ fn map_company_row(r: &sqlx::postgres::PgRow) -> CompanyRow {
         fiscal_year_start_month: r.try_get("fiscal_year_start_month").ok(),
         is_group: r.try_get("is_group").unwrap_or(false),
         status: r.try_get("status").unwrap_or_else(|_| "ACTIVE".to_string()),
-        created_at: r.try_get("created_at").unwrap_or_else(|_| chrono::Utc::now()),
-        updated_at: r.try_get("updated_at").unwrap_or_else(|_| chrono::Utc::now()),
+        created_at: r
+            .try_get("created_at")
+            .unwrap_or_else(|_| chrono::Utc::now()),
+        updated_at: r
+            .try_get("updated_at")
+            .unwrap_or_else(|_| chrono::Utc::now()),
     }
 }
 
@@ -254,11 +262,12 @@ pub async fn list_companies(
 
     builder.push(" ORDER BY c.is_group DESC, c.name ASC");
 
-    let raw_rows = builder
-        .build()
-        .fetch_all(pool)
-        .await
-        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("Database error: {}", e)))?;
+    let raw_rows = builder.build().fetch_all(pool).await.map_err(|e| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("Database error: {}", e),
+        )
+    })?;
 
     let rows: Vec<CompanyRow> = raw_rows.iter().map(map_company_row).collect();
 
@@ -299,8 +308,11 @@ pub async fn get_company_tree(
     let rows: Vec<CompanyRow> = raw_rows.iter().map(map_company_row).collect();
 
     // Build hierarchy tree
-    let root_nodes: Vec<&CompanyRow> = rows.iter().filter(|r| r.parent_company_id.is_none()).collect();
-    
+    let root_nodes: Vec<&CompanyRow> = rows
+        .iter()
+        .filter(|r| r.parent_company_id.is_none())
+        .collect();
+
     fn build_node(parent: &CompanyRow, all_rows: &[CompanyRow]) -> CompanyTreeNode {
         let children = all_rows
             .iter()
@@ -320,7 +332,10 @@ pub async fn get_company_tree(
         }
     }
 
-    let tree: Vec<CompanyTreeNode> = root_nodes.into_iter().map(|r| build_node(r, &rows)).collect();
+    let tree: Vec<CompanyTreeNode> = root_nodes
+        .into_iter()
+        .map(|r| build_node(r, &rows))
+        .collect();
 
     Ok(Json(serde_json::json!({
         "data": tree
@@ -373,9 +388,13 @@ pub async fn get_company(
             .await
             .unwrap_or_default();
 
-            let mut company_json = serde_json::to_value(&c).map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+            let mut company_json = serde_json::to_value(&c)
+                .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
             if let Some(obj) = company_json.as_object_mut() {
-                obj.insert("amendment_deeds".to_string(), serde_json::to_value(amendment_deeds).unwrap_or_default());
+                obj.insert(
+                    "amendment_deeds".to_string(),
+                    serde_json::to_value(amendment_deeds).unwrap_or_default(),
+                );
             }
 
             Ok(Json(serde_json::json!({ "data": company_json })))
@@ -472,7 +491,12 @@ pub async fn create_company(
             .bind(&deed.description)
             .execute(pool)
             .await
-            .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("Failed to save amendment deed: {}", e)))?;
+            .map_err(|e| {
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    format!("Failed to save amendment deed: {}", e),
+                )
+            })?;
         }
     }
 
@@ -562,7 +586,12 @@ pub async fn update_company(
     .bind(id)
     .execute(pool)
     .await
-    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("Failed to update company: {}", e)))?;
+    .map_err(|e| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("Failed to update company: {}", e),
+        )
+    })?;
 
     if res.rows_affected() == 0 {
         return Err((StatusCode::NOT_FOUND, "Company not found".to_string()));
@@ -575,7 +604,12 @@ pub async fn update_company(
             .bind(id)
             .execute(pool)
             .await
-            .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("Failed to clear old deeds: {}", e)))?;
+            .map_err(|e| {
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    format!("Failed to clear old deeds: {}", e),
+                )
+            })?;
 
         for deed in deeds {
             sqlx::query(
@@ -594,7 +628,12 @@ pub async fn update_company(
             .bind(&deed.description)
             .execute(pool)
             .await
-            .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("Failed to update amendment deed: {}", e)))?;
+            .map_err(|e| {
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    format!("Failed to update amendment deed: {}", e),
+                )
+            })?;
         }
     }
 

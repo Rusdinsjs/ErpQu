@@ -11,9 +11,7 @@ use chrono::NaiveDate;
 use rust_decimal_macros::dec;
 use uuid::Uuid;
 
-use management_system_finance::domain::entities::gl_entry::{
-    PostingInstruction, PostingLineItem,
-};
+use management_system_finance::domain::entities::gl_entry::{PostingInstruction, PostingLineItem};
 
 #[test]
 fn test_qacc_004_debit_must_equal_credit_in_posting_instruction() {

@@ -3,8 +3,8 @@
 //! Enforces explicit transfer document requirement for cross-company stock/asset/GL operations.
 //! Silent cross-company writes are strictly prohibited.
 
-use management_system_core::domain::errors::{DomainError, DomainResult};
 use chrono::{DateTime, Utc};
+use management_system_core::domain::errors::{DomainError, DomainResult};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 

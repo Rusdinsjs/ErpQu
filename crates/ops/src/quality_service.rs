@@ -1,10 +1,10 @@
 use crate::domain::manufacturing_pos::QualityInspection;
 use crate::repositories::quality_repository::QualityRepository;
+use chrono::Utc;
 use management_system_core::domain::errors::DomainError;
+use rust_decimal::Decimal;
 use std::sync::Arc;
 use uuid::Uuid;
-use chrono::Utc;
-use rust_decimal::Decimal;
 
 pub type DomainResult<T> = Result<T, DomainError>;
 
@@ -33,7 +33,11 @@ impl QualityService {
         &self,
         req: CreateQualityInspectionRequest,
     ) -> DomainResult<QualityInspection> {
-        let inspection_num = format!("QI-{}-{}", Utc::now().format("%Y%m%d"), Uuid::new_v4().to_string()[..8].to_uppercase());
+        let inspection_num = format!(
+            "QI-{}-{}",
+            Utc::now().format("%Y%m%d"),
+            Uuid::new_v4().to_string()[..8].to_uppercase()
+        );
 
         let inspection = QualityInspection {
             id: Uuid::new_v4(),
@@ -54,14 +58,20 @@ impl QualityService {
             .map_err(|e| DomainError::Database(e.to_string()))
     }
 
-    pub async fn get_quality_inspection(&self, id: Uuid) -> DomainResult<Option<QualityInspection>> {
+    pub async fn get_quality_inspection(
+        &self,
+        id: Uuid,
+    ) -> DomainResult<Option<QualityInspection>> {
         self.repository
             .get_quality_inspection(id)
             .await
             .map_err(|e| DomainError::Database(e.to_string()))
     }
 
-    pub async fn list_quality_inspections(&self, company_id: Uuid) -> DomainResult<Vec<QualityInspection>> {
+    pub async fn list_quality_inspections(
+        &self,
+        company_id: Uuid,
+    ) -> DomainResult<Vec<QualityInspection>> {
         self.repository
             .list_quality_inspections(company_id)
             .await
@@ -84,7 +94,8 @@ impl QualityService {
         item_id: Uuid,
         batch_no: Option<&str>,
     ) -> DomainResult<bool> {
-        let latest = self.repository
+        let latest = self
+            .repository
             .get_latest_inspection_for_item_and_batch(item_id, batch_no)
             .await
             .map_err(|e| DomainError::Database(e.to_string()))?;

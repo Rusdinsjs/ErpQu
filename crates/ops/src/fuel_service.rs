@@ -5,11 +5,11 @@ use chrono::Utc;
 use rust_decimal::Decimal;
 use uuid::Uuid;
 
-use management_system_core::application::services::approval_service::ModuleApprovalCallback;
 use crate::domain::entities::{FuelLog, FuelRequestType};
+use crate::repositories::{FuelAnalyticsData, FuelRepository};
+use management_system_core::application::services::approval_service::ModuleApprovalCallback;
 use management_system_core::domain::errors::DomainResult;
 use management_system_core::infrastructure::bus::EventBus;
-use crate::repositories::{FuelAnalyticsData, FuelRepository};
 
 #[derive(Debug, serde::Deserialize)]
 pub struct FuelRequest {

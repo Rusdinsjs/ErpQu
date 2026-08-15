@@ -22,14 +22,19 @@ impl HrLoansClaimsKpiRepository {
 
     // ---- LOAN TYPES ----
     pub async fn list_loan_types(&self) -> Result<Vec<HrLoanType>, AppError> {
-        sqlx::query_as::<_, HrLoanType>("SELECT * FROM hr_loan_types WHERE is_active = TRUE ORDER BY name ASC")
-            .fetch_all(&self.pool)
-            .await
-            .map_err(|e| AppError::Database(e.to_string()))
+        sqlx::query_as::<_, HrLoanType>(
+            "SELECT * FROM hr_loan_types WHERE is_active = TRUE ORDER BY name ASC",
+        )
+        .fetch_all(&self.pool)
+        .await
+        .map_err(|e| AppError::Database(e.to_string()))
     }
 
     // ---- EMPLOYEE LOANS ----
-    pub async fn list_employee_loans(&self, employee_id: Option<Uuid>) -> Result<Vec<HrEmployeeLoan>, AppError> {
+    pub async fn list_employee_loans(
+        &self,
+        employee_id: Option<Uuid>,
+    ) -> Result<Vec<HrEmployeeLoan>, AppError> {
         sqlx::query_as::<_, HrEmployeeLoan>(
             r#"
             SELECT l.*, e.name as employee_name, e.nik as employee_nik, lt.name as loan_type_name
@@ -63,7 +68,11 @@ impl HrLoansClaimsKpiRepository {
         .ok_or_else(|| AppError::NotFound("Pinjaman tidak ditemukan".into()))
     }
 
-    pub async fn create_employee_loan(&self, req: CreateLoanRequest, monthly_installment: Decimal) -> Result<HrEmployeeLoan, AppError> {
+    pub async fn create_employee_loan(
+        &self,
+        req: CreateLoanRequest,
+        monthly_installment: Decimal,
+    ) -> Result<HrEmployeeLoan, AppError> {
         sqlx::query_as::<_, HrEmployeeLoan>(
             r#"
             INSERT INTO hr_employee_loans (
@@ -121,7 +130,13 @@ impl HrLoansClaimsKpiRepository {
         .map_err(|e| AppError::Database(e.to_string()))
     }
 
-    pub async fn create_repayment_schedule(&self, loan_id: Uuid, installment_no: i32, due_date: NaiveDate, amount: Decimal) -> Result<(), AppError> {
+    pub async fn create_repayment_schedule(
+        &self,
+        loan_id: Uuid,
+        installment_no: i32,
+        due_date: NaiveDate,
+        amount: Decimal,
+    ) -> Result<(), AppError> {
         sqlx::query(
             r#"
             INSERT INTO hr_loan_repayment_schedules (id, loan_id, installment_no, due_date, installment_amount, status)
@@ -139,7 +154,10 @@ impl HrLoansClaimsKpiRepository {
         Ok(())
     }
 
-    pub async fn list_repayment_schedules(&self, loan_id: Uuid) -> Result<Vec<HrLoanRepaymentSchedule>, AppError> {
+    pub async fn list_repayment_schedules(
+        &self,
+        loan_id: Uuid,
+    ) -> Result<Vec<HrLoanRepaymentSchedule>, AppError> {
         sqlx::query_as::<_, HrLoanRepaymentSchedule>(
             "SELECT * FROM hr_loan_repayment_schedules WHERE loan_id = $1 ORDER BY installment_no ASC",
         )
@@ -149,7 +167,11 @@ impl HrLoansClaimsKpiRepository {
         .map_err(|e| AppError::Database(e.to_string()))
     }
 
-    pub async fn get_due_loan_installment(&self, employee_id: Uuid, period_end: NaiveDate) -> Result<Option<(Uuid, Decimal, Uuid)>, AppError> {
+    pub async fn get_due_loan_installment(
+        &self,
+        employee_id: Uuid,
+        period_end: NaiveDate,
+    ) -> Result<Option<(Uuid, Decimal, Uuid)>, AppError> {
         // Returns (schedule_id, installment_amount, loan_id)
         let row = sqlx::query_as::<_, (Uuid, Decimal, Uuid)>(
             r#"
@@ -172,7 +194,13 @@ impl HrLoansClaimsKpiRepository {
         Ok(row)
     }
 
-    pub async fn mark_schedule_paid_by_payroll(&self, schedule_id: Uuid, loan_id: Uuid, paid_amount: Decimal, payroll_entry_id: Uuid) -> Result<(), AppError> {
+    pub async fn mark_schedule_paid_by_payroll(
+        &self,
+        schedule_id: Uuid,
+        loan_id: Uuid,
+        paid_amount: Decimal,
+        payroll_entry_id: Uuid,
+    ) -> Result<(), AppError> {
         sqlx::query(
             r#"
             UPDATE hr_loan_repayment_schedules
@@ -208,14 +236,19 @@ impl HrLoansClaimsKpiRepository {
 
     // ---- EXPENSE CLAIM TYPES ----
     pub async fn list_expense_claim_types(&self) -> Result<Vec<HrExpenseClaimType>, AppError> {
-        sqlx::query_as::<_, HrExpenseClaimType>("SELECT * FROM hr_expense_claim_types WHERE is_active = TRUE ORDER BY name ASC")
-            .fetch_all(&self.pool)
-            .await
-            .map_err(|e| AppError::Database(e.to_string()))
+        sqlx::query_as::<_, HrExpenseClaimType>(
+            "SELECT * FROM hr_expense_claim_types WHERE is_active = TRUE ORDER BY name ASC",
+        )
+        .fetch_all(&self.pool)
+        .await
+        .map_err(|e| AppError::Database(e.to_string()))
     }
 
     // ---- EXPENSE CLAIMS ----
-    pub async fn list_expense_claims(&self, employee_id: Option<Uuid>) -> Result<Vec<HrExpenseClaim>, AppError> {
+    pub async fn list_expense_claims(
+        &self,
+        employee_id: Option<Uuid>,
+    ) -> Result<Vec<HrExpenseClaim>, AppError> {
         sqlx::query_as::<_, HrExpenseClaim>(
             r#"
             SELECT c.*, e.name as employee_name, e.nik as employee_nik, ct.name as claim_type_name
@@ -232,7 +265,10 @@ impl HrLoansClaimsKpiRepository {
         .map_err(|e| AppError::Database(e.to_string()))
     }
 
-    pub async fn create_expense_claim(&self, req: CreateExpenseClaimRequest) -> Result<HrExpenseClaim, AppError> {
+    pub async fn create_expense_claim(
+        &self,
+        req: CreateExpenseClaimRequest,
+    ) -> Result<HrExpenseClaim, AppError> {
         sqlx::query_as::<_, HrExpenseClaim>(
             r#"
             INSERT INTO hr_expense_claims (
@@ -255,7 +291,13 @@ impl HrLoansClaimsKpiRepository {
         .map_err(|e| AppError::Database(e.to_string()))
     }
 
-    pub async fn update_claim_status(&self, id: Uuid, status: &str, approved_by: Option<Uuid>, rejection_reason: Option<&str>) -> Result<HrExpenseClaim, AppError> {
+    pub async fn update_claim_status(
+        &self,
+        id: Uuid,
+        status: &str,
+        approved_by: Option<Uuid>,
+        rejection_reason: Option<&str>,
+    ) -> Result<HrExpenseClaim, AppError> {
         sqlx::query_as::<_, HrExpenseClaim>(
             r#"
             UPDATE hr_expense_claims
@@ -294,15 +336,23 @@ impl HrLoansClaimsKpiRepository {
         .map_err(|e| AppError::Database(e.to_string()))
     }
 
-    pub async fn list_template_items(&self, template_id: Uuid) -> Result<Vec<HrAppraisalTemplateItem>, AppError> {
-        sqlx::query_as::<_, HrAppraisalTemplateItem>("SELECT * FROM hr_appraisal_template_items WHERE template_id = $1")
-            .bind(template_id)
-            .fetch_all(&self.pool)
-            .await
-            .map_err(|e| AppError::Database(e.to_string()))
+    pub async fn list_template_items(
+        &self,
+        template_id: Uuid,
+    ) -> Result<Vec<HrAppraisalTemplateItem>, AppError> {
+        sqlx::query_as::<_, HrAppraisalTemplateItem>(
+            "SELECT * FROM hr_appraisal_template_items WHERE template_id = $1",
+        )
+        .bind(template_id)
+        .fetch_all(&self.pool)
+        .await
+        .map_err(|e| AppError::Database(e.to_string()))
     }
 
-    pub async fn list_employee_appraisals(&self, employee_id: Option<Uuid>) -> Result<Vec<HrEmployeeAppraisal>, AppError> {
+    pub async fn list_employee_appraisals(
+        &self,
+        employee_id: Option<Uuid>,
+    ) -> Result<Vec<HrEmployeeAppraisal>, AppError> {
         sqlx::query_as::<_, HrEmployeeAppraisal>(
             r#"
             SELECT a.*, e.name as employee_name, e.nik as employee_nik, t.title as template_title
@@ -319,7 +369,13 @@ impl HrLoansClaimsKpiRepository {
         .map_err(|e| AppError::Database(e.to_string()))
     }
 
-    pub async fn create_employee_appraisal(&self, req: CreateAppraisalRequest, evaluator_id: Option<Uuid>, final_score: Decimal, final_rating: &str) -> Result<HrEmployeeAppraisal, AppError> {
+    pub async fn create_employee_appraisal(
+        &self,
+        req: CreateAppraisalRequest,
+        evaluator_id: Option<Uuid>,
+        final_score: Decimal,
+        final_rating: &str,
+    ) -> Result<HrEmployeeAppraisal, AppError> {
         sqlx::query_as::<_, HrEmployeeAppraisal>(
             r#"
             INSERT INTO hr_employee_appraisals (

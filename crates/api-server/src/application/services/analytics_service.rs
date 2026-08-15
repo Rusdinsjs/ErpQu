@@ -2,10 +2,10 @@ use rust_decimal::Decimal;
 use sqlx::{PgPool, Row};
 use uuid::Uuid;
 
+use management_system_assets::AssetState;
 use management_system_core::application::dto::analytics_dto::{
     AssetRoiResponse, ConditionDistribution, MonthlyTrend,
 };
-use management_system_assets::AssetState;
 use management_system_core::domain::errors::{DomainError, DomainResult};
 
 #[derive(Clone)]
@@ -44,7 +44,9 @@ impl AnalyticsService {
             .into_iter()
             .map(|r| MonthlyTrend {
                 month: r.try_get::<String, _>("month").unwrap_or_default(),
-                total_cost: r.try_get::<Decimal, _>("total_cost").unwrap_or(Decimal::ZERO),
+                total_cost: r
+                    .try_get::<Decimal, _>("total_cost")
+                    .unwrap_or(Decimal::ZERO),
                 count: r.try_get::<i64, _>("count").unwrap_or(0),
             })
             .collect())
@@ -76,9 +78,13 @@ impl AnalyticsService {
         Ok(rows
             .into_iter()
             .map(|r| ConditionDistribution {
-                condition: r.try_get::<String, _>("condition_name").unwrap_or_else(|_| "Unknown".to_string()),
+                condition: r
+                    .try_get::<String, _>("condition_name")
+                    .unwrap_or_else(|_| "Unknown".to_string()),
                 count: r.try_get::<i64, _>("count").unwrap_or(0),
-                total_value: r.try_get::<Decimal, _>("total_value").unwrap_or(Decimal::ZERO),
+                total_value: r
+                    .try_get::<Decimal, _>("total_value")
+                    .unwrap_or(Decimal::ZERO),
             })
             .collect())
     }
@@ -108,7 +114,9 @@ impl AnalyticsService {
             std::collections::HashMap::new();
 
         for row in rows {
-            let raw_status: String = row.try_get("status").unwrap_or_else(|_| "Unknown".to_string());
+            let raw_status: String = row
+                .try_get("status")
+                .unwrap_or_else(|_| "Unknown".to_string());
             let count: i64 = row.try_get("count").unwrap_or(0);
             let value: Decimal = row.try_get("total_value").unwrap_or(Decimal::ZERO);
 
@@ -193,11 +201,19 @@ impl AnalyticsService {
         })?;
 
         let purchase_price: Decimal = asset_row.try_get("purchase_price").unwrap_or(Decimal::ZERO);
-        let total_revenue: Decimal = revenue_row.try_get("total_revenue").unwrap_or(Decimal::ZERO);
-        let total_labor: Decimal = maintenance_row.try_get("total_labor").unwrap_or(Decimal::ZERO);
-        let total_parts: Decimal = maintenance_row.try_get("total_parts").unwrap_or(Decimal::ZERO);
+        let total_revenue: Decimal = revenue_row
+            .try_get("total_revenue")
+            .unwrap_or(Decimal::ZERO);
+        let total_labor: Decimal = maintenance_row
+            .try_get("total_labor")
+            .unwrap_or(Decimal::ZERO);
+        let total_parts: Decimal = maintenance_row
+            .try_get("total_parts")
+            .unwrap_or(Decimal::ZERO);
         let m_cost = total_labor + total_parts;
-        let accum_dep: Decimal = asset_row.try_get("accumulated_depreciation").unwrap_or(Decimal::ZERO);
+        let accum_dep: Decimal = asset_row
+            .try_get("accumulated_depreciation")
+            .unwrap_or(Decimal::ZERO);
 
         let net_profit = total_revenue - (m_cost + accum_dep);
 
@@ -214,9 +230,7 @@ impl AnalyticsService {
             asset_name: asset_row.get("name"),
             asset_code: asset_row.get("asset_code"),
             purchase_price,
-            purchase_date: purchase_date
-                .map(|d| d.to_string())
-                .unwrap_or_default(),
+            purchase_date: purchase_date.map(|d| d.to_string()).unwrap_or_default(),
             book_value: asset_row.try_get("book_value").unwrap_or(Decimal::ZERO),
             accumulated_depreciation: accum_dep,
             total_rental_revenue: total_revenue,

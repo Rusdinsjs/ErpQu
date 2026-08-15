@@ -1,7 +1,7 @@
 use crate::domain::operational_erp::{DeliveryTrip, DeliveryTripStop};
+use chrono::{DateTime, Utc};
 use sqlx::PgPool;
 use uuid::Uuid;
-use chrono::{DateTime, Utc};
 
 #[derive(Clone)]
 pub struct DeliveryTripRepository {
@@ -58,26 +58,30 @@ impl DeliveryTripRepository {
     }
 
     pub async fn get_delivery_trip(&self, id: Uuid) -> Result<Option<DeliveryTrip>, sqlx::Error> {
-        sqlx::query_as::<_, DeliveryTrip>(
-            "SELECT * FROM public.delivery_trips WHERE id = $1"
-        )
-        .bind(id)
-        .fetch_optional(&self.pool)
-        .await
+        sqlx::query_as::<_, DeliveryTrip>("SELECT * FROM public.delivery_trips WHERE id = $1")
+            .bind(id)
+            .fetch_optional(&self.pool)
+            .await
     }
 
-    pub async fn get_delivery_trip_stops(&self, trip_id: Uuid) -> Result<Vec<DeliveryTripStop>, sqlx::Error> {
+    pub async fn get_delivery_trip_stops(
+        &self,
+        trip_id: Uuid,
+    ) -> Result<Vec<DeliveryTripStop>, sqlx::Error> {
         sqlx::query_as::<_, DeliveryTripStop>(
-            "SELECT * FROM public.delivery_trip_stops WHERE trip_id = $1 ORDER BY stop_order"
+            "SELECT * FROM public.delivery_trip_stops WHERE trip_id = $1 ORDER BY stop_order",
         )
         .bind(trip_id)
         .fetch_all(&self.pool)
         .await
     }
 
-    pub async fn list_delivery_trips(&self, company_id: Uuid) -> Result<Vec<DeliveryTrip>, sqlx::Error> {
+    pub async fn list_delivery_trips(
+        &self,
+        company_id: Uuid,
+    ) -> Result<Vec<DeliveryTrip>, sqlx::Error> {
         sqlx::query_as::<_, DeliveryTrip>(
-            "SELECT * FROM public.delivery_trips WHERE company_id = $1 ORDER BY created_at DESC"
+            "SELECT * FROM public.delivery_trips WHERE company_id = $1 ORDER BY created_at DESC",
         )
         .bind(company_id)
         .fetch_all(&self.pool)
@@ -96,7 +100,7 @@ impl DeliveryTripRepository {
              SET status = $2,
                  departure_time = COALESCE($3, departure_time),
                  arrival_time = COALESCE($4, arrival_time)
-             WHERE id = $1 RETURNING *"
+             WHERE id = $1 RETURNING *",
         )
         .bind(id)
         .bind(status)
@@ -112,7 +116,7 @@ impl DeliveryTripRepository {
         status: &str,
     ) -> Result<DeliveryTripStop, sqlx::Error> {
         sqlx::query_as::<_, DeliveryTripStop>(
-            "UPDATE public.delivery_trip_stops SET status = $2 WHERE id = $1 RETURNING *"
+            "UPDATE public.delivery_trip_stops SET status = $2 WHERE id = $1 RETURNING *",
         )
         .bind(stop_id)
         .bind(status)

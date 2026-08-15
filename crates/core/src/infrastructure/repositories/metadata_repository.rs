@@ -14,7 +14,10 @@ impl MetadataRepository {
 
     // --- Entity Types ---
 
-    pub async fn create_entity_type(&self, entity_type: &EntityType) -> Result<EntityType, sqlx::Error> {
+    pub async fn create_entity_type(
+        &self,
+        entity_type: &EntityType,
+    ) -> Result<EntityType, sqlx::Error> {
         let rec = sqlx::query_as::<_, EntityType>(
             r#"
             INSERT INTO entity_types (id, name, module, storage_strategy, is_custom, version, created_at, updated_at)
@@ -36,7 +39,10 @@ impl MetadataRepository {
         Ok(rec)
     }
 
-    pub async fn find_entity_type_by_name(&self, name: &str) -> Result<Option<EntityType>, sqlx::Error> {
+    pub async fn find_entity_type_by_name(
+        &self,
+        name: &str,
+    ) -> Result<Option<EntityType>, sqlx::Error> {
         let rec = sqlx::query_as::<_, EntityType>(
             r#"
             SELECT id, name, module, storage_strategy, is_custom, version, created_at, updated_at
@@ -51,7 +57,10 @@ impl MetadataRepository {
         Ok(rec)
     }
 
-    pub async fn find_entity_type_by_id(&self, id: Uuid) -> Result<Option<EntityType>, sqlx::Error> {
+    pub async fn find_entity_type_by_id(
+        &self,
+        id: Uuid,
+    ) -> Result<Option<EntityType>, sqlx::Error> {
         let rec = sqlx::query_as::<_, EntityType>(
             r#"
             SELECT id, name, module, storage_strategy, is_custom, version, created_at, updated_at
@@ -82,7 +91,10 @@ impl MetadataRepository {
 
     // --- Field Definitions ---
 
-    pub async fn create_field_definition(&self, field: &FieldDefinition) -> Result<FieldDefinition, sqlx::Error> {
+    pub async fn create_field_definition(
+        &self,
+        field: &FieldDefinition,
+    ) -> Result<FieldDefinition, sqlx::Error> {
         let rec = sqlx::query_as::<_, FieldDefinition>(
             r#"
             INSERT INTO field_definitions (id, entity_type_id, field_name, label, data_type, is_required, is_readonly, default_value, options_json)
@@ -105,7 +117,10 @@ impl MetadataRepository {
         Ok(rec)
     }
 
-    pub async fn find_fields_by_entity_type(&self, entity_type_id: Uuid) -> Result<Vec<FieldDefinition>, sqlx::Error> {
+    pub async fn find_fields_by_entity_type(
+        &self,
+        entity_type_id: Uuid,
+    ) -> Result<Vec<FieldDefinition>, sqlx::Error> {
         let recs = sqlx::query_as::<_, FieldDefinition>(
             r#"
             SELECT id, entity_type_id, field_name, label, data_type, is_required, is_readonly, default_value, options_json
@@ -136,7 +151,10 @@ impl MetadataRepository {
 
     // --- Layout Definitions ---
 
-    pub async fn save_layout_definition(&self, layout: &LayoutDefinition) -> Result<LayoutDefinition, sqlx::Error> {
+    pub async fn save_layout_definition(
+        &self,
+        layout: &LayoutDefinition,
+    ) -> Result<LayoutDefinition, sqlx::Error> {
         let rec = sqlx::query_as::<_, LayoutDefinition>(
             r#"
             INSERT INTO layout_definitions (id, entity_type_id, layout_name, layout_json)
@@ -156,7 +174,11 @@ impl MetadataRepository {
         Ok(rec)
     }
 
-    pub async fn get_layout(&self, entity_type_id: Uuid, layout_name: &str) -> Result<Option<LayoutDefinition>, sqlx::Error> {
+    pub async fn get_layout(
+        &self,
+        entity_type_id: Uuid,
+        layout_name: &str,
+    ) -> Result<Option<LayoutDefinition>, sqlx::Error> {
         let rec = sqlx::query_as::<_, LayoutDefinition>(
             r#"
             SELECT id, entity_type_id, layout_name, layout_json

@@ -7,8 +7,8 @@ use tracing::{error, info};
 
 use management_system_assets::AssetService;
 use management_system_core::application::services::NotificationService;
-use management_system_ops::MaintenanceService;
 use management_system_finance::DepreciationService;
+use management_system_ops::MaintenanceService;
 use management_system_ops::{LoanService, TaxRenewalService, WorkOrderService};
 
 /// Scheduler service

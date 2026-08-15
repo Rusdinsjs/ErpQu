@@ -1,21 +1,21 @@
-use chrono::Utc;
-use uuid::Uuid;
-use rust_decimal::Decimal;
-use std::sync::Arc;
-use management_system_core::domain::errors::DomainError;
-use management_system_core::application::services::NotificationService;
-use crate::repositories::InventoryRepository;
-use management_system_finance::JournalService;
-use management_system_finance::domain::entities::journal::{
-    CreateJournalEntryRequest, CreateJournalLineRequest,
-};
 use crate::domain::entities::inventory::{
     InventoryCategory, InventoryItem, InventoryMovement, InventoryMovementType,
 };
+use crate::repositories::InventoryRepository;
+use chrono::Utc;
 use management_system_core::application::dto::{
-    CreateInventoryCategoryRequest, CreateInventoryItemRequest, InventoryAdjustmentRequest,
-    UpdateInventoryCategoryRequest, UpdateInventoryItemRequest, CreateWarehouseRequest,
+    CreateInventoryCategoryRequest, CreateInventoryItemRequest, CreateWarehouseRequest,
+    InventoryAdjustmentRequest, UpdateInventoryCategoryRequest, UpdateInventoryItemRequest,
 };
+use management_system_core::application::services::NotificationService;
+use management_system_core::domain::errors::DomainError;
+use management_system_finance::domain::entities::journal::{
+    CreateJournalEntryRequest, CreateJournalLineRequest,
+};
+use management_system_finance::JournalService;
+use rust_decimal::Decimal;
+use std::sync::Arc;
+use uuid::Uuid;
 
 #[derive(Debug, Clone, serde::Deserialize)]
 pub struct CreateProductBundleRequest {
@@ -30,7 +30,7 @@ pub struct CreateProductBundleItemRequest {
     pub qty: Decimal,
 }
 
-use crate::domain::entities::stock_entry::{WarehouseBin, ItemBinBalance};
+use crate::domain::entities::stock_entry::{ItemBinBalance, WarehouseBin};
 
 #[derive(Debug, Clone, serde::Deserialize)]
 pub struct CreateWarehouseBinRequest {
@@ -592,8 +592,15 @@ impl InventoryService {
     pub async fn create_product_bundle(
         &self,
         req: CreateProductBundleRequest,
-    ) -> DomainResult<(crate::domain::entities::inventory::ProductBundle, Vec<crate::domain::entities::inventory::ProductBundleItem>)> {
-        let mut tx = self.repository.pool().begin().await
+    ) -> DomainResult<(
+        crate::domain::entities::inventory::ProductBundle,
+        Vec<crate::domain::entities::inventory::ProductBundleItem>,
+    )> {
+        let mut tx = self
+            .repository
+            .pool()
+            .begin()
+            .await
             .map_err(|e| DomainError::Database(e.to_string()))?;
 
         let bundle_id = Uuid::new_v4();
@@ -604,7 +611,10 @@ impl InventoryService {
             created_at: Utc::now(),
         };
 
-        let saved_bundle = self.repository.create_product_bundle(&mut tx, &bundle).await
+        let saved_bundle = self
+            .repository
+            .create_product_bundle(&mut tx, &bundle)
+            .await
             .map_err(|e| DomainError::Database(e.to_string()))?;
 
         let mut saved_items = Vec::new();
@@ -615,23 +625,41 @@ impl InventoryService {
                 item_id: item_req.item_id,
                 qty: item_req.qty,
             };
-            let saved_item = self.repository.add_product_bundle_item(&mut tx, &bundle_item).await
+            let saved_item = self
+                .repository
+                .add_product_bundle_item(&mut tx, &bundle_item)
+                .await
                 .map_err(|e| DomainError::Database(e.to_string()))?;
             saved_items.push(saved_item);
         }
 
-        tx.commit().await
+        tx.commit()
+            .await
             .map_err(|e| DomainError::Database(e.to_string()))?;
 
         Ok((saved_bundle, saved_items))
     }
 
-    pub async fn get_product_bundle(&self, parent_item_id: Uuid) -> DomainResult<Option<(crate::domain::entities::inventory::ProductBundle, Vec<crate::domain::entities::inventory::ProductBundleItem>)>> {
-        let bundle = self.repository.get_product_bundle(parent_item_id).await
+    pub async fn get_product_bundle(
+        &self,
+        parent_item_id: Uuid,
+    ) -> DomainResult<
+        Option<(
+            crate::domain::entities::inventory::ProductBundle,
+            Vec<crate::domain::entities::inventory::ProductBundleItem>,
+        )>,
+    > {
+        let bundle = self
+            .repository
+            .get_product_bundle(parent_item_id)
+            .await
             .map_err(|e| DomainError::Database(e.to_string()))?;
 
         if let Some(bundle) = bundle {
-            let items = self.repository.get_product_bundle_items(bundle.id).await
+            let items = self
+                .repository
+                .get_product_bundle_items(bundle.id)
+                .await
                 .map_err(|e| DomainError::Database(e.to_string()))?;
             Ok(Some((bundle, items)))
         } else {
@@ -639,7 +667,10 @@ impl InventoryService {
         }
     }
 
-    pub async fn add_item_alternative(&self, req: AddItemAlternativeRequest) -> DomainResult<crate::domain::entities::inventory::ItemAlternative> {
+    pub async fn add_item_alternative(
+        &self,
+        req: AddItemAlternativeRequest,
+    ) -> DomainResult<crate::domain::entities::inventory::ItemAlternative> {
         let alt = crate::domain::entities::inventory::ItemAlternative {
             id: Uuid::new_v4(),
             item_id: req.item_id,
@@ -647,18 +678,28 @@ impl InventoryService {
             created_at: Utc::now(),
         };
 
-        self.repository.add_item_alternative(&alt).await
+        self.repository
+            .add_item_alternative(&alt)
+            .await
             .map_err(|e| DomainError::Database(e.to_string()))
     }
 
-    pub async fn get_item_alternatives(&self, item_id: Uuid) -> DomainResult<Vec<crate::domain::entities::inventory::ItemAlternative>> {
-        self.repository.get_item_alternatives(item_id).await
+    pub async fn get_item_alternatives(
+        &self,
+        item_id: Uuid,
+    ) -> DomainResult<Vec<crate::domain::entities::inventory::ItemAlternative>> {
+        self.repository
+            .get_item_alternatives(item_id)
+            .await
             .map_err(|e| DomainError::Database(e.to_string()))
     }
 
     // --- Warehouse Bins & Location Ledger ---
 
-    pub async fn create_warehouse_bin(&self, req: CreateWarehouseBinRequest) -> DomainResult<WarehouseBin> {
+    pub async fn create_warehouse_bin(
+        &self,
+        req: CreateWarehouseBinRequest,
+    ) -> DomainResult<WarehouseBin> {
         let bin = WarehouseBin {
             id: Uuid::new_v4(),
             warehouse_id: req.warehouse_id,
@@ -666,33 +707,51 @@ impl InventoryService {
             description: req.description,
             created_at: Utc::now(),
         };
-        self.repository.create_warehouse_bin(&bin).await
+        self.repository
+            .create_warehouse_bin(&bin)
+            .await
             .map_err(|e| DomainError::Database(e.to_string()))
     }
 
     pub async fn get_warehouse_bin(&self, id: Uuid) -> DomainResult<Option<WarehouseBin>> {
-        self.repository.get_warehouse_bin(id).await
+        self.repository
+            .get_warehouse_bin(id)
+            .await
             .map_err(|e| DomainError::Database(e.to_string()))
     }
 
     pub async fn list_warehouse_bins(&self, warehouse_id: Uuid) -> DomainResult<Vec<WarehouseBin>> {
-        self.repository.list_warehouse_bins(warehouse_id).await
+        self.repository
+            .list_warehouse_bins(warehouse_id)
+            .await
             .map_err(|e| DomainError::Database(e.to_string()))
     }
 
     pub async fn delete_warehouse_bin(&self, id: Uuid) -> DomainResult<bool> {
-        self.repository.delete_warehouse_bin(id).await
+        self.repository
+            .delete_warehouse_bin(id)
+            .await
             .map_err(|e| DomainError::Database(e.to_string()))?;
         Ok(true)
     }
 
-    pub async fn list_bin_balances(&self, warehouse_bin_id: Uuid) -> DomainResult<Vec<ItemBinBalance>> {
-        self.repository.get_item_bin_balances(warehouse_bin_id).await
+    pub async fn list_bin_balances(
+        &self,
+        warehouse_bin_id: Uuid,
+    ) -> DomainResult<Vec<ItemBinBalance>> {
+        self.repository
+            .get_item_bin_balances(warehouse_bin_id)
+            .await
             .map_err(|e| DomainError::Database(e.to_string()))
     }
 
-    pub async fn list_bin_balances_by_item(&self, item_id: Uuid) -> DomainResult<Vec<ItemBinBalance>> {
-        self.repository.list_bin_balances_by_item(item_id).await
+    pub async fn list_bin_balances_by_item(
+        &self,
+        item_id: Uuid,
+    ) -> DomainResult<Vec<ItemBinBalance>> {
+        self.repository
+            .list_bin_balances_by_item(item_id)
+            .await
             .map_err(|e| DomainError::Database(e.to_string()))
     }
 }

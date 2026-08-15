@@ -17,8 +17,8 @@ use management_system_core::application::dto::{
 };
 
 use axum::{extract::Extension, response::IntoResponse};
-use management_system_core::domain::entities::user::UserClaims;
 use management_system_assets::{Asset, AssetDetail, AssetSummary};
+use management_system_core::domain::entities::user::UserClaims;
 use management_system_core::shared::errors::AppError;
 
 #[utoipa::path(

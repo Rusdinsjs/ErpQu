@@ -7,13 +7,13 @@ use chrono::Utc;
 use rust_decimal::Decimal;
 use uuid::Uuid;
 
+use crate::domain::entities::{RentalBillingPeriod, TierConfig};
+use crate::repositories::{RentalRepository, TimesheetRepository};
 use management_system_core::application::dto::{
     ApproveBillingRequest, BillingSummaryResponse, CalculateBillingRequest,
     CreateBillingPeriodRequest, GenerateInvoiceRequest, UpdateBillingRequest,
 };
-use crate::domain::entities::{RentalBillingPeriod, TierConfig};
 use management_system_core::domain::errors::{DomainError, DomainResult};
-use crate::repositories::{RentalRepository, TimesheetRepository};
 
 #[derive(Clone)]
 pub struct BillingService {
@@ -104,16 +104,14 @@ impl BillingService {
         // Get rate configuration
         let rate_id = if let Some(item_id) = billing.rental_item_id {
             // Fetch item to get rate_id
-            let item_opt = sqlx::query(
-                "SELECT rental_rate_id FROM rental_items WHERE id = $1"
-            )
-            .bind(item_id)
-            .fetch_optional(self.rental_repo.pool())
-            .await
-            .map_err(|e| DomainError::ExternalServiceError {
-                service: "db".to_string(),
-                message: e.to_string(),
-            })?;
+            let item_opt = sqlx::query("SELECT rental_rate_id FROM rental_items WHERE id = $1")
+                .bind(item_id)
+                .fetch_optional(self.rental_repo.pool())
+                .await
+                .map_err(|e| DomainError::ExternalServiceError {
+                    service: "db".to_string(),
+                    message: e.to_string(),
+                })?;
 
             if let Some(item) = item_opt {
                 use sqlx::Row;
@@ -166,17 +164,17 @@ impl BillingService {
 
             // Fuel Logic
             let is_fuel_included = if let Some(item_id) = billing.rental_item_id {
-                let item_res = sqlx::query(
-                    "SELECT is_fuel_included FROM rental_items WHERE id = $1"
-                )
-                .bind(item_id)
-                .fetch_optional(self.rental_repo.pool())
-                .await
-                .unwrap_or(None);
+                let item_res =
+                    sqlx::query("SELECT is_fuel_included FROM rental_items WHERE id = $1")
+                        .bind(item_id)
+                        .fetch_optional(self.rental_repo.pool())
+                        .await
+                        .unwrap_or(None);
 
                 if let Some(row) = item_res {
                     use sqlx::Row;
-                    row.get::<Option<bool>, _>("is_fuel_included").unwrap_or(false)
+                    row.get::<Option<bool>, _>("is_fuel_included")
+                        .unwrap_or(false)
                 } else {
                     false
                 }
@@ -429,7 +427,7 @@ impl BillingService {
                 JOIN rentals r ON ri.rental_id = r.id
                 JOIN assets a ON ri.asset_id = a.id
                 JOIN clients c ON r.client_id = c.id
-                WHERE ri.id = $1"#
+                WHERE ri.id = $1"#,
             )
             .bind(item_id)
             .fetch_one(self.rental_repo.pool())

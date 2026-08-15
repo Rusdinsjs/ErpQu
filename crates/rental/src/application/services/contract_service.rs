@@ -4,18 +4,18 @@ use sqlx::PgPool;
 use std::sync::Arc;
 use uuid::Uuid;
 
+use crate::domain::entities::{ContractApproval, ContractRenewal, RentalContract};
+use crate::repositories::{
+    ContractApprovalRepository, ContractDocumentRepository, ContractRenewalRepository,
+    ContractRepository, RentalRepository,
+};
 use management_system_core::application::dto::contract_dto::{
     ContractDetailResponse, ContractPerformanceResponse, ContractResponse, CreateContractRequest,
     DelegateApprovalRequest, RenewalOptionsResponse, RenewalRequest, RenewalResponse,
     UpdateContractRequest,
 };
 use management_system_core::application::services::approval_service::ModuleApprovalCallback;
-use crate::domain::entities::{ContractApproval, ContractRenewal, RentalContract};
 use management_system_core::domain::errors::{DomainError, DomainResult};
-use crate::repositories::{
-    ContractApprovalRepository, ContractDocumentRepository, ContractRenewalRepository,
-    ContractRepository, RentalRepository,
-};
 
 #[derive(Clone)]
 pub struct ContractService {
@@ -26,7 +26,8 @@ pub struct ContractService {
     rental_repo: Arc<RentalRepository>,
     notification_service: management_system_core::application::services::NotificationService,
     email_service: management_system_core::application::services::EmailService,
-    approval_workflow_service: management_system_core::application::services::ApprovalWorkflowService,
+    approval_workflow_service:
+        management_system_core::application::services::ApprovalWorkflowService,
 }
 
 impl ContractService {
@@ -652,7 +653,8 @@ impl ContractService {
     pub async fn get_approval_history(
         &self,
         contract_id: Uuid,
-    ) -> DomainResult<Vec<management_system_core::application::dto::contract_dto::ApprovalResponse>> {
+    ) -> DomainResult<Vec<management_system_core::application::dto::contract_dto::ApprovalResponse>>
+    {
         self.approval_repo
             .find_by_contract_with_names(contract_id)
             .await

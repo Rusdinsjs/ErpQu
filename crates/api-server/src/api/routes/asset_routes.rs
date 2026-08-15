@@ -2,12 +2,12 @@
 
 use axum::{
     handler::Handler,
-    routing::{get, post, put, delete},
+    routing::{delete, get, post, put},
     Router,
 };
 
-use crate::api::handlers::*;
 use crate::api::handlers::lifecycle_handler;
+use crate::api::handlers::*;
 use crate::api::middleware::rbac::require_permission;
 use crate::api::server::AppState;
 use axum::middleware as axum_middleware;
@@ -87,10 +87,7 @@ pub fn asset_routes() -> Router<AppState> {
             "/:asset_id/sensors/readings/range",
             get(get_readings_in_range),
         )
-        .route(
-            "/:asset_id/sensors/thresholds",
-            post(set_threshold),
-        )
+        .route("/:asset_id/sensors/thresholds", post(set_threshold))
         // Lifecycle Tracking
         .route(
             "/:id/lifecycle/transition",

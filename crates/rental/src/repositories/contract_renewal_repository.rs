@@ -41,17 +41,16 @@ impl ContractRenewalRepository {
     }
 
     pub async fn get_by_id(&self, id: Uuid) -> Result<ContractRenewal, DomainError> {
-        let renewal =
-            sqlx::query_as::<sqlx::Postgres, ContractRenewal>("SELECT * FROM contract_renewals WHERE id = $1")
-                .bind(id)
-                .fetch_one(&self.pool)
-                .await
-                .map_err(|e| match e {
-                    sqlx::Error::RowNotFound => {
-                        DomainError::not_found("Contract renewal", id.to_string())
-                    }
-                    _ => DomainError::Database(e.to_string()),
-                })?;
+        let renewal = sqlx::query_as::<sqlx::Postgres, ContractRenewal>(
+            "SELECT * FROM contract_renewals WHERE id = $1",
+        )
+        .bind(id)
+        .fetch_one(&self.pool)
+        .await
+        .map_err(|e| match e {
+            sqlx::Error::RowNotFound => DomainError::not_found("Contract renewal", id.to_string()),
+            _ => DomainError::Database(e.to_string()),
+        })?;
 
         Ok(renewal)
     }

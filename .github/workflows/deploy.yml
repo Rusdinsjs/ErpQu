@@ -37,7 +37,9 @@ jobs:
           context: .
           file: Dockerfile
           push: true
-          tags: ghcr.io/${{ steps.prep.outputs.owner }}/erp-backend:latest
+          tags: |
+            ghcr.io/${{ steps.prep.outputs.owner }}/erp-backend:${{ github.sha }}
+            ghcr.io/${{ steps.prep.outputs.owner }}/erp-backend:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -47,7 +49,9 @@ jobs:
           context: ./web-admin
           file: ./web-admin/Dockerfile
           push: true
-          tags: ghcr.io/${{ steps.prep.outputs.owner }}/erp-frontend:latest
+          tags: |
+            ghcr.io/${{ steps.prep.outputs.owner }}/erp-frontend:${{ github.sha }}
+            ghcr.io/${{ steps.prep.outputs.owner }}/erp-frontend:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -123,9 +127,17 @@ jobs:
               "CREATE DATABASE ${DB_NAME} OWNER ${DB_USER};"
             echo ">> Database OK!"
 
-            # ── 6. Pull image pre-built dari GHCR (Super Cepat!) ──────────────
+            # ── 6. Pull image pre-built dari GHCR ──────────────────────────────
             echo ">> Pull image terbaru dari GHCR..."
             sudo docker compose pull backend frontend
+
+            # ── 6b. Jalankan Migrasi Database Terpisah (Fail-Closed) ───────────
+            echo ">> Menjalankan migrasi database..."
+            sudo docker compose run --rm -e RUN_MIGRATIONS_ON_STARTUP=true backend /usr/local/bin/management-system --check-migration || {
+                echo "CRITICAL: Database migration failed. Halting deployment (Fail-Closed)!"
+                exit 1
+            }
+            echo ">> Migrasi database berhasil diterapkan." 
 
             # ── 7. Start semua layanan ─────────────────────────────────────────
             echo ">> Start semua layanan..."

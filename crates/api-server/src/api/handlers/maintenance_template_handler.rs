@@ -6,10 +6,8 @@ use axum::{
     Extension, Json,
 };
 use management_system_core::domain::entities::UserClaims as Claims;
-use management_system_ops::{
-    MaintenanceTemplate, MaintenanceTemplateWithTasks, TemplateTask,
-};
 use management_system_core::shared::errors::AppError;
+use management_system_ops::{MaintenanceTemplate, MaintenanceTemplateWithTasks, TemplateTask};
 use serde::Deserialize;
 use uuid::Uuid;
 

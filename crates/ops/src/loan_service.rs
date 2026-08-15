@@ -72,8 +72,8 @@ impl LoanService {
                 })?;
 
         // Publish Event
-        self.event_bus
-            .publish(management_system_core::domain::events::SystemEvent::BusinessEvent {
+        self.event_bus.publish(
+            management_system_core::domain::events::SystemEvent::BusinessEvent {
                 event_name: "LoanRequested".to_string(),
                 payload: serde_json::json!({
                     "loan_id": created_loan.id,
@@ -81,7 +81,8 @@ impl LoanService {
                     "asset_name": asset.name,
                     "borrower_id": Some(created_loan.borrower_id)
                 }),
-            });
+            },
+        );
 
         Ok(created_loan)
     }
@@ -172,8 +173,8 @@ impl LoanService {
             .unwrap_or_else(|| "Unknown Asset".to_string());
 
         // Publish Event
-        self.event_bus
-            .publish(management_system_core::domain::events::SystemEvent::BusinessEvent {
+        self.event_bus.publish(
+            management_system_core::domain::events::SystemEvent::BusinessEvent {
                 event_name: "LoanApproved".to_string(),
                 payload: serde_json::json!({
                     "loan_id": updated_loan.id,
@@ -181,7 +182,8 @@ impl LoanService {
                     "asset_name": asset_name,
                     "borrower_id": updated_loan.borrower_id,
                 }),
-            });
+            },
+        );
 
         Ok(updated_loan)
     }
@@ -219,8 +221,8 @@ impl LoanService {
             .unwrap_or_else(|| "Unknown Asset".to_string());
 
         // Publish Event
-        self.event_bus
-            .publish(management_system_core::domain::events::SystemEvent::BusinessEvent {
+        self.event_bus.publish(
+            management_system_core::domain::events::SystemEvent::BusinessEvent {
                 event_name: "LoanRejected".to_string(),
                 payload: serde_json::json!({
                     "loan_id": updated_loan.id,
@@ -229,7 +231,8 @@ impl LoanService {
                     "borrower_id": updated_loan.borrower_id,
                     "reason": reason,
                 }),
-            });
+            },
+        );
 
         Ok(updated_loan)
     }
@@ -264,15 +267,16 @@ impl LoanService {
         let updated_loan = self.get_by_id(id).await?;
 
         // Publish Event
-        self.event_bus
-            .publish(management_system_core::domain::events::SystemEvent::BusinessEvent {
+        self.event_bus.publish(
+            management_system_core::domain::events::SystemEvent::BusinessEvent {
                 event_name: "LoanCheckedOut".to_string(),
                 payload: serde_json::json!({
                     "loan_id": updated_loan.id,
                     "asset_id": updated_loan.asset_id,
                     "borrower_id": updated_loan.borrower_id,
                 }),
-            });
+            },
+        );
 
         Ok(updated_loan)
     }
@@ -311,15 +315,16 @@ impl LoanService {
         let updated_loan = self.get_by_id(id).await?;
 
         // Publish Event
-        self.event_bus
-            .publish(management_system_core::domain::events::SystemEvent::BusinessEvent {
+        self.event_bus.publish(
+            management_system_core::domain::events::SystemEvent::BusinessEvent {
                 event_name: "LoanReturned".to_string(),
                 payload: serde_json::json!({
                     "loan_id": updated_loan.id,
                     "asset_id": updated_loan.asset_id,
                     "borrower_id": updated_loan.borrower_id,
                 }),
-            });
+            },
+        );
 
         Ok(updated_loan)
     }
@@ -362,8 +367,8 @@ impl LoanService {
                 let days_overdue = (now - loan.expected_return_date).num_days();
 
                 if days_overdue > 0 {
-                    self.event_bus
-                        .publish(management_system_core::domain::events::SystemEvent::BusinessEvent {
+                    self.event_bus.publish(
+                        management_system_core::domain::events::SystemEvent::BusinessEvent {
                             event_name: "LoanOverdue".to_string(),
                             payload: serde_json::json!({
                                 "loan_id": loan.id,
@@ -371,7 +376,8 @@ impl LoanService {
                                 "asset_name": asset_name,
                                 "days_overdue": days_overdue,
                             }),
-                        });
+                        },
+                    );
                 }
             }
         }

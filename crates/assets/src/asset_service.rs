@@ -4,16 +4,16 @@ use chrono::Utc;
 use serde::Serialize;
 use uuid::Uuid;
 
-use management_system_core::application::dto::{
-    AssetSearchParams, BulkCreateAssetRequest, BulkUpdateAssetRequest, CreateAssetDocumentRequest,
-    CreateAssetRequest, PaginatedResponse, SellAssetRequest, UpdateAssetRequest,
-};
-use management_system_core::domain::errors::{DomainError, DomainResult};
 use crate::domain::entities::asset_details::*;
 use crate::domain::entities::{
     Asset, AssetDetail, AssetDocument, AssetHistory, AssetState, AssetSummary,
 };
 use crate::repositories::AssetRepository;
+use management_system_core::application::dto::{
+    AssetSearchParams, BulkCreateAssetRequest, BulkUpdateAssetRequest, CreateAssetDocumentRequest,
+    CreateAssetRequest, PaginatedResponse, SellAssetRequest, UpdateAssetRequest,
+};
+use management_system_core::domain::errors::{DomainError, DomainResult};
 
 use management_system_core::infrastructure::cache::{CacheJson, CacheKey, CacheOperations};
 use std::sync::Arc;
@@ -202,10 +202,7 @@ impl AssetService {
     }
 
     /// Get expiring vehicles for UI
-    pub async fn get_upcoming_expiries(
-        &self,
-        days: i64,
-    ) -> DomainResult<Vec<AssetDetail>> {
+    pub async fn get_upcoming_expiries(&self, days: i64) -> DomainResult<Vec<AssetDetail>> {
         let expiring_vehicles =
             self.repository
                 .find_expiring_vehicles(days)
@@ -217,38 +214,33 @@ impl AssetService {
 
         let mut results = Vec::new();
         for (asset, details) in expiring_vehicles {
-            results.push(
-                AssetDetail {
-                    asset,
-                    category_name: None, // Could fetch if needed, but for dashboard maybe not essential or can join in repo
-                    location_name: None,
-                    department_name: None,
-                    company_name: None,
-                    department_manager_name: None,
-                    assigned_to_name: None,
-                    vendor_name: None,
-                    condition_name: None,
-                    vehicle_details: Some(details),
-                    land_details: None,
-                    building_details: None,
-                    heavy_equipment_details: None,
-                    machine_details: None,
-                    inventory_details: None,
-                    furniture_details: None,
-                    total_maintenance_cost: None,
-                    total_rental_income: None,
-                },
-            );
+            results.push(AssetDetail {
+                asset,
+                category_name: None, // Could fetch if needed, but for dashboard maybe not essential or can join in repo
+                location_name: None,
+                department_name: None,
+                company_name: None,
+                department_manager_name: None,
+                assigned_to_name: None,
+                vendor_name: None,
+                condition_name: None,
+                vehicle_details: Some(details),
+                land_details: None,
+                building_details: None,
+                heavy_equipment_details: None,
+                machine_details: None,
+                inventory_details: None,
+                furniture_details: None,
+                total_maintenance_cost: None,
+                total_rental_income: None,
+            });
         }
 
         Ok(results)
     }
 
     /// Get asset detail by ID (with joins)
-    pub async fn get_detail_by_id(
-        &self,
-        id: Uuid,
-    ) -> DomainResult<AssetDetail> {
+    pub async fn get_detail_by_id(&self, id: Uuid) -> DomainResult<AssetDetail> {
         self.repository
             .find_detail_by_id(id)
             .await
@@ -437,11 +429,16 @@ impl AssetService {
         }
 
         tracing::info!("AssetService: Code unique. Inserting...");
-        
+
         // --- Metadata Engine Validation ---
         let custom_data = request.custom_data.unwrap_or_else(|| serde_json::json!({}));
-        self.metadata_service.validate_entity_data("ASSET", &custom_data).await
-            .map_err(|e| DomainError::ValidationError { field: "custom_data".to_string(), message: e })?;
+        self.metadata_service
+            .validate_entity_data("ASSET", &custom_data)
+            .await
+            .map_err(|e| DomainError::ValidationError {
+                field: "custom_data".to_string(),
+                message: e,
+            })?;
 
         let mut asset = Asset::new(request.asset_code, request.name, request.category_id);
         asset.specifications = Some(custom_data);
@@ -639,15 +636,15 @@ impl AssetService {
         // Handle Furniture Details
         if let Some(d) = request.furniture_details {
             let details = FurnitureDetails {
-                    asset_id: created_asset.id,
-                    furniture_type: d.furniture_type,
-                    material: d.material,
-                    dimensions: d.dimensions,
-                    color: d.color,
-                    capacity: d.capacity,
-                    created_at: Utc::now(),
-                    updated_at: Utc::now(),
-                };
+                asset_id: created_asset.id,
+                furniture_type: d.furniture_type,
+                material: d.material,
+                dimensions: d.dimensions,
+                color: d.color,
+                capacity: d.capacity,
+                created_at: Utc::now(),
+                updated_at: Utc::now(),
+            };
             self.repository
                 .upsert_furniture_details_with_executor(executor, &details)
                 .await
@@ -820,11 +817,16 @@ impl AssetService {
         if let Some(n) = request.notes {
             asset.notes = Some(n);
         }
-        
+
         // --- Metadata Engine Validation ---
         if let Some(cd) = request.custom_data {
-            self.metadata_service.validate_entity_data("ASSET", &cd).await
-                .map_err(|e| DomainError::ValidationError { field: "custom_data".to_string(), message: e })?;
+            self.metadata_service
+                .validate_entity_data("ASSET", &cd)
+                .await
+                .map_err(|e| DomainError::ValidationError {
+                    field: "custom_data".to_string(),
+                    message: e,
+                })?;
             asset.specifications = Some(cd);
         }
 
@@ -1011,15 +1013,15 @@ impl AssetService {
         // Handle Furniture Details
         if let Some(d) = request.furniture_details {
             let details = FurnitureDetails {
-                    asset_id: asset.id,
-                    furniture_type: d.furniture_type,
-                    material: d.material,
-                    dimensions: d.dimensions,
-                    color: d.color,
-                    capacity: d.capacity,
-                    created_at: asset.created_at,
-                    updated_at: Utc::now(),
-                };
+                asset_id: asset.id,
+                furniture_type: d.furniture_type,
+                material: d.material,
+                dimensions: d.dimensions,
+                color: d.color,
+                capacity: d.capacity,
+                created_at: asset.created_at,
+                updated_at: Utc::now(),
+            };
             self.repository
                 .upsert_furniture_details_with_executor(&mut tx, &details)
                 .await

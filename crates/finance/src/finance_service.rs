@@ -8,6 +8,7 @@ use crate::repositories::{FinanceRepository, JournalRepository};
 use crate::AssetExpenseService;
 use crate::JournalService;
 
+use management_system_assets::AssetRepository;
 use management_system_core::domain::audit_trail::{AuditAction, DocumentAuditEntry};
 use management_system_core::domain::errors::{DomainError, DomainResult};
 use management_system_core::domain::outbox::OutboxEntry;
@@ -15,11 +16,7 @@ use management_system_core::infrastructure::bus::EventBus;
 use management_system_core::infrastructure::database::{
     CommandContext, IdempotencyDecision, IdempotencyStore, UnitOfWork,
 };
-use management_system_assets::AssetRepository;
-use management_system_core::infrastructure::repositories::{
-    AuditTrailStore, OutboxStore,
-};
-
+use management_system_core::infrastructure::repositories::{AuditTrailStore, OutboxStore};
 
 #[derive(Clone)]
 #[allow(dead_code)] // Fields retained for future use (dependency injection)
@@ -727,11 +724,20 @@ impl FinanceService {
         };
 
         let mut uow = UnitOfWork::begin(self.repo.pool()).await?;
-        let created_bill = self.repo.create_purchase_bill_with_uow(&mut uow, &bill).await?;
+        let created_bill = self
+            .repo
+            .create_purchase_bill_with_uow(&mut uow, &bill)
+            .await?;
 
         // Find Accounts for GL Journal Entry (Hutang Usaha & Beban Ops)
-        let ap_acc = self.find_by_code("2-1100").await?.or(self.find_by_code("21100").await?);
-        let exp_acc = self.find_by_code("6-1000").await?.or(self.find_by_code("51000").await?);
+        let ap_acc = self
+            .find_by_code("2-1100")
+            .await?
+            .or(self.find_by_code("21100").await?);
+        let exp_acc = self
+            .find_by_code("6-1000")
+            .await?
+            .or(self.find_by_code("51000").await?);
 
         if let (Some(ap), Some(exp)) = (ap_acc, exp_acc) {
             let journal_req = CreateJournalEntryRequest {
@@ -803,10 +809,16 @@ impl FinanceService {
         };
 
         let mut uow = UnitOfWork::begin(self.repo.pool()).await?;
-        let created_expense = self.repo.create_expense_with_uow(&mut uow, &expense).await?;
+        let created_expense = self
+            .repo
+            .create_expense_with_uow(&mut uow, &expense)
+            .await?;
 
         // Find Expense Account (Default 6-1000 / 51000)
-        let exp_acc = self.find_by_code("6-1000").await?.or(self.find_by_code("51000").await?);
+        let exp_acc = self
+            .find_by_code("6-1000")
+            .await?
+            .or(self.find_by_code("51000").await?);
 
         if let Some(exp) = exp_acc {
             let journal_req = CreateJournalEntryRequest {
@@ -822,7 +834,10 @@ impl FinanceService {
                     },
                     CreateJournalLineRequest {
                         account_id: req.pay_from_account_id,
-                        description: Some(format!("Pembayaran Beban {}", created_expense.expense_number)),
+                        description: Some(format!(
+                            "Pembayaran Beban {}",
+                            created_expense.expense_number
+                        )),
                         debit: rust_decimal::Decimal::ZERO,
                         credit: req.amount,
                     },
@@ -860,9 +875,10 @@ impl FinanceService {
         actor_id: Option<Uuid>,
         req: CreateCashBankTransactionRequest,
     ) -> DomainResult<CashBankTransaction> {
-        let tx_number = req.transaction_number.clone().unwrap_or_else(|| {
-            format!("TX-{}", Uuid::new_v4().to_string()[..8].to_uppercase())
-        });
+        let tx_number = req
+            .transaction_number
+            .clone()
+            .unwrap_or_else(|| format!("TX-{}", Uuid::new_v4().to_string()[..8].to_uppercase()));
         let tx = CashBankTransaction {
             id: Uuid::new_v4(),
             transaction_number: tx_number,
@@ -890,13 +906,19 @@ impl FinanceService {
                 lines: vec![
                     CreateJournalLineRequest {
                         account_id: to_acc,
-                        description: Some(format!("Penerimaan/Transfer {}", created_tx.transaction_number)),
+                        description: Some(format!(
+                            "Penerimaan/Transfer {}",
+                            created_tx.transaction_number
+                        )),
                         debit: req.amount,
                         credit: rust_decimal::Decimal::ZERO,
                     },
                     CreateJournalLineRequest {
                         account_id: from_acc,
-                        description: Some(format!("Pengeluaran/Transfer {}", created_tx.transaction_number)),
+                        description: Some(format!(
+                            "Pengeluaran/Transfer {}",
+                            created_tx.transaction_number
+                        )),
                         debit: rust_decimal::Decimal::ZERO,
                         credit: req.amount,
                     },
@@ -998,16 +1020,18 @@ impl FinanceService {
             created_at: Utc::now(),
         };
 
-        let items: Vec<SalesShipmentItem> = req.items.into_iter().map(|item| {
-            SalesShipmentItem {
+        let items: Vec<SalesShipmentItem> = req
+            .items
+            .into_iter()
+            .map(|item| SalesShipmentItem {
                 id: Uuid::new_v4(),
                 shipment_id,
                 order_item_id: item.order_item_id,
                 description: item.description,
                 quantity_shipped: item.quantity_shipped,
                 item_id: item.item_id,
-            }
-        }).collect();
+            })
+            .collect();
 
         self.repo.create_sales_shipment(&shipment, &items).await
     }
@@ -1087,7 +1111,10 @@ impl FinanceService {
         self.repo.create_purchase_shipment(&shipment).await
     }
 
-    pub async fn list_purchase_receipts(&self, company_id: Uuid) -> DomainResult<Vec<PurchaseReceipt>> {
+    pub async fn list_purchase_receipts(
+        &self,
+        company_id: Uuid,
+    ) -> DomainResult<Vec<PurchaseReceipt>> {
         self.repo.list_purchase_receipts(company_id).await
     }
 
@@ -1115,20 +1142,24 @@ impl FinanceService {
             created_by,
         };
 
-        let items: Vec<PurchaseReceiptItem> = req.items.into_iter().map(|item| {
-            let total_amount = item.qty_received * item.unit_cost;
-            PurchaseReceiptItem {
-                id: Uuid::new_v4(),
-                receipt_id,
-                item_id: item.item_id,
-                qty_received: item.qty_received,
-                unit_cost: item.unit_cost,
-                total_amount,
-                po_line_id: item.po_line_id,
-                batch_no: item.batch_no,
-                serial_no: item.serial_no,
-            }
-        }).collect();
+        let items: Vec<PurchaseReceiptItem> = req
+            .items
+            .into_iter()
+            .map(|item| {
+                let total_amount = item.qty_received * item.unit_cost;
+                PurchaseReceiptItem {
+                    id: Uuid::new_v4(),
+                    receipt_id,
+                    item_id: item.item_id,
+                    qty_received: item.qty_received,
+                    unit_cost: item.unit_cost,
+                    total_amount,
+                    po_line_id: item.po_line_id,
+                    batch_no: item.batch_no,
+                    serial_no: item.serial_no,
+                }
+            })
+            .collect();
 
         self.repo.create_purchase_receipt(&receipt, &items).await
     }

@@ -1,5 +1,5 @@
 use crate::domain::entities::stock_entry::{
-    StockEntry, StockEntryItem, MaterialRequest, MaterialRequestItem,
+    MaterialRequest, MaterialRequestItem, StockEntry, StockEntryItem,
 };
 use sqlx::{PgPool, Postgres, Transaction};
 use uuid::Uuid;
@@ -32,7 +32,7 @@ impl StockDocumentRepository {
             )
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
             RETURNING *
-            "#
+            "#,
         )
         .bind(entry.id)
         .bind(entry.company_id)
@@ -63,7 +63,7 @@ impl StockDocumentRepository {
             )
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
             RETURNING *
-            "#
+            "#,
         )
         .bind(item.id)
         .bind(item.stock_entry_id)
@@ -82,15 +82,16 @@ impl StockDocumentRepository {
     }
 
     pub async fn get_stock_entry(&self, id: Uuid) -> Result<Option<StockEntry>, sqlx::Error> {
-        sqlx::query_as::<_, StockEntry>(
-            "SELECT * FROM inventory.stock_entries WHERE id = $1"
-        )
-        .bind(id)
-        .fetch_optional(&self.pool)
-        .await
+        sqlx::query_as::<_, StockEntry>("SELECT * FROM inventory.stock_entries WHERE id = $1")
+            .bind(id)
+            .fetch_optional(&self.pool)
+            .await
     }
 
-    pub async fn get_stock_entry_items(&self, entry_id: Uuid) -> Result<Vec<StockEntryItem>, sqlx::Error> {
+    pub async fn get_stock_entry_items(
+        &self,
+        entry_id: Uuid,
+    ) -> Result<Vec<StockEntryItem>, sqlx::Error> {
         sqlx::query_as::<_, StockEntryItem>(
             "SELECT * FROM inventory.stock_entry_items WHERE stock_entry_id = $1 ORDER BY created_at"
         )
@@ -99,7 +100,10 @@ impl StockDocumentRepository {
         .await
     }
 
-    pub async fn list_stock_entries(&self, company_id: Uuid) -> Result<Vec<StockEntry>, sqlx::Error> {
+    pub async fn list_stock_entries(
+        &self,
+        company_id: Uuid,
+    ) -> Result<Vec<StockEntry>, sqlx::Error> {
         sqlx::query_as::<_, StockEntry>(
             "SELECT * FROM inventory.stock_entries WHERE company_id = $1 ORDER BY posting_date DESC, posting_time DESC"
         )
@@ -121,7 +125,7 @@ impl StockDocumentRepository {
             SET status = $2, updated_by = $3, updated_at = NOW()
             WHERE id = $1
             RETURNING *
-            "#
+            "#,
         )
         .bind(id)
         .bind(status)
@@ -144,7 +148,7 @@ impl StockDocumentRepository {
             )
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
             RETURNING *
-            "#
+            "#,
         )
         .bind(req.id)
         .bind(req.company_id)
@@ -171,7 +175,7 @@ impl StockDocumentRepository {
             )
             VALUES ($1, $2, $3, $4, $5, $6, $7)
             RETURNING *
-            "#
+            "#,
         )
         .bind(item.id)
         .bind(item.material_request_id)
@@ -184,16 +188,22 @@ impl StockDocumentRepository {
         .await
     }
 
-    pub async fn get_material_request(&self, id: Uuid) -> Result<Option<MaterialRequest>, sqlx::Error> {
+    pub async fn get_material_request(
+        &self,
+        id: Uuid,
+    ) -> Result<Option<MaterialRequest>, sqlx::Error> {
         sqlx::query_as::<_, MaterialRequest>(
-            "SELECT * FROM inventory.material_requests WHERE id = $1"
+            "SELECT * FROM inventory.material_requests WHERE id = $1",
         )
         .bind(id)
         .fetch_optional(&self.pool)
         .await
     }
 
-    pub async fn get_material_request_items(&self, request_id: Uuid) -> Result<Vec<MaterialRequestItem>, sqlx::Error> {
+    pub async fn get_material_request_items(
+        &self,
+        request_id: Uuid,
+    ) -> Result<Vec<MaterialRequestItem>, sqlx::Error> {
         sqlx::query_as::<_, MaterialRequestItem>(
             "SELECT * FROM inventory.material_request_items WHERE material_request_id = $1 ORDER BY created_at"
         )
@@ -202,7 +212,10 @@ impl StockDocumentRepository {
         .await
     }
 
-    pub async fn list_material_requests(&self, company_id: Uuid) -> Result<Vec<MaterialRequest>, sqlx::Error> {
+    pub async fn list_material_requests(
+        &self,
+        company_id: Uuid,
+    ) -> Result<Vec<MaterialRequest>, sqlx::Error> {
         sqlx::query_as::<_, MaterialRequest>(
             "SELECT * FROM inventory.material_requests WHERE company_id = $1 ORDER BY transaction_date DESC"
         )
@@ -224,7 +237,7 @@ impl StockDocumentRepository {
             SET status = $2, updated_by = $3, updated_at = NOW()
             WHERE id = $1
             RETURNING *
-            "#
+            "#,
         )
         .bind(id)
         .bind(status)

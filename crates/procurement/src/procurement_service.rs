@@ -1,7 +1,7 @@
-use management_system_core::{DomainError, DomainResult};
-use uuid::Uuid;
 use crate::domain::entities::PurchaseBill;
 use crate::repositories::PurchaseBillRepository;
+use management_system_core::{DomainError, DomainResult};
+use uuid::Uuid;
 
 #[derive(Clone)]
 pub struct ProcurementService {
@@ -20,7 +20,11 @@ impl ProcurementService {
             .map_err(|e: sqlx::Error| DomainError::internal(e.to_string()))
     }
 
-    pub async fn list_purchase_bills(&self, limit: i64, offset: i64) -> DomainResult<Vec<PurchaseBill>> {
+    pub async fn list_purchase_bills(
+        &self,
+        limit: i64,
+        offset: i64,
+    ) -> DomainResult<Vec<PurchaseBill>> {
         self.purchase_bill_repo
             .find_all(limit, offset)
             .await

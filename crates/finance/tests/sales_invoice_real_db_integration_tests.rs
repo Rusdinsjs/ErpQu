@@ -543,7 +543,11 @@ async fn assert_audit_mutation_denied(pool: &PgPool, statement: &str) {
         Err(_) => return,
     };
     if let Some(r) = role {
-        if sqlx::query(&format!("SET ROLE {r}")).execute(&mut *conn).await.is_ok() {
+        if sqlx::query(&format!("SET ROLE {r}"))
+            .execute(&mut *conn)
+            .await
+            .is_ok()
+        {
             let result = sqlx::query(statement).execute(&mut *conn).await;
             let _ = sqlx::query("RESET ROLE").execute(&mut *conn).await;
             assert!(

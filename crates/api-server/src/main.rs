@@ -37,50 +37,47 @@ async fn main() {
     );
     tracing::info!("Environment: {}", config.environment);
 
-    // Migrations run with a privileged connection; the application pool below must
-    // use the least-privilege runtime role from DATABASE_URL.
-    let migration_database_url = std::env::var("MIGRATION_DATABASE_URL")
-        .expect("MIGRATION_DATABASE_URL must be set separately from runtime DATABASE_URL");
-    let migration_pool = PgPoolOptions::new()
-        .max_connections(2)
-        .connect(&migration_database_url)
-        .await
-        .expect("Failed to connect to migration database");
+    // 1. Migration Execution (Fail-Closed: Any migration error immediately halts startup)
+    let run_migrations = std::env::var("RUN_MIGRATIONS_ON_STARTUP")
+        .map(|v| v.trim().eq_ignore_ascii_case("true") || v == "1")
+        .unwrap_or(true);
 
-    tracing::info!("Running database migrations with migration role...");
-    if let Err(e) = sqlx::migrate!("../../migrations").run(&migration_pool).await {
-        tracing::warn!("Migration runner notice: {} (continuing server startup)", e);
+    if run_migrations {
+        let migration_database_url = std::env::var("MIGRATION_DATABASE_URL")
+            .unwrap_or_else(|_| config.database_url.clone());
+        tracing::info!("Running database migrations with migration role...");
+        let migration_pool = PgPoolOptions::new()
+            .max_connections(2)
+            .connect(&migration_database_url)
+            .await
+            .expect("Failed to connect to migration database (MIGRATION_DATABASE_URL)");
+
+        sqlx::migrate!("../../migrations")
+            .run(&migration_pool)
+            .await
+            .expect("CRITICAL: Database migration failed. Aborting startup (Fail-Closed).");
+
+        tracing::info!("Database migrations applied successfully.");
+        migration_pool.close().await;
     } else {
-        tracing::info!("Migrations applied successfully.");
+        tracing::info!("Startup migration skipped (decoupled runner mode active).");
     }
-    migration_pool.close().await;
 
-    // Runtime database connection pool.
-    let pool = match PgPoolOptions::new()
+    // 2. Runtime Database Connection Pool (Least-Privilege Role, NO privileged fallback)
+    let pool = PgPoolOptions::new()
         .max_connections(50)
         .min_connections(2)
         .acquire_timeout(std::time::Duration::from_secs(30))
         .idle_timeout(std::time::Duration::from_secs(600))
         .connect(&config.database_url)
         .await
-    {
-        Ok(p) => p,
-        Err(err) => {
-            tracing::warn!(
-                "Runtime connection failed for {}: {}. Falling back to migration_database_url...",
+        .unwrap_or_else(|err| {
+            panic!(
+                "CRITICAL: Failed to connect to runtime database ({}): {}. Privileged fallback is strictly disabled (Fail-Closed).",
                 config.sanitized_db_url(),
                 err
             );
-            PgPoolOptions::new()
-                .max_connections(50)
-                .min_connections(2)
-                .acquire_timeout(std::time::Duration::from_secs(30))
-                .idle_timeout(std::time::Duration::from_secs(600))
-                .connect(&migration_database_url)
-                .await
-                .expect("Failed to connect to database using fallback connection URL")
-        }
-    };
+        });
 
     tracing::info!("Database connected successfully");
 

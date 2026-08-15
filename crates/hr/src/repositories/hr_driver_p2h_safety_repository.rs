@@ -7,8 +7,8 @@ use crate::domain::entities::{
     HrDriverAssignment, HrDriverSafetyIncident, HrP2hInspection, HrVehicleHandover,
 };
 use crate::dto::{
-    CreateDriverAssignmentRequest, CreateDriverSafetyIncidentRequest,
-    CreateVehicleHandoverRequest, ReturnDriverAssignmentRequest, SubmitP2hInspectionRequest,
+    CreateDriverAssignmentRequest, CreateDriverSafetyIncidentRequest, CreateVehicleHandoverRequest,
+    ReturnDriverAssignmentRequest, SubmitP2hInspectionRequest,
 };
 
 #[derive(Clone)]
@@ -22,7 +22,11 @@ impl HrDriverP2hSafetyRepository {
     }
 
     // ---- DRIVER ASSIGNMENTS ----
-    pub async fn list_driver_assignments(&self, employee_id: Option<Uuid>, asset_id: Option<Uuid>) -> Result<Vec<HrDriverAssignment>, AppError> {
+    pub async fn list_driver_assignments(
+        &self,
+        employee_id: Option<Uuid>,
+        asset_id: Option<Uuid>,
+    ) -> Result<Vec<HrDriverAssignment>, AppError> {
         sqlx::query_as::<_, HrDriverAssignment>(
             r#"
             SELECT da.*, emp.name as employee_name, emp.nik as employee_nik, ast.name as asset_name, ast.asset_code as asset_code
@@ -41,7 +45,10 @@ impl HrDriverP2hSafetyRepository {
         .map_err(|e| AppError::Database(e.to_string()))
     }
 
-    pub async fn create_driver_assignment(&self, req: CreateDriverAssignmentRequest) -> Result<HrDriverAssignment, AppError> {
+    pub async fn create_driver_assignment(
+        &self,
+        req: CreateDriverAssignmentRequest,
+    ) -> Result<HrDriverAssignment, AppError> {
         sqlx::query_as::<_, HrDriverAssignment>(
             r#"
             WITH inserted AS (
@@ -65,7 +72,11 @@ impl HrDriverP2hSafetyRepository {
         .map_err(|e| AppError::Database(e.to_string()))
     }
 
-    pub async fn return_driver_assignment(&self, id: Uuid, req: ReturnDriverAssignmentRequest) -> Result<HrDriverAssignment, AppError> {
+    pub async fn return_driver_assignment(
+        &self,
+        id: Uuid,
+        req: ReturnDriverAssignmentRequest,
+    ) -> Result<HrDriverAssignment, AppError> {
         sqlx::query_as::<_, HrDriverAssignment>(
             r#"
             WITH updated AS (
@@ -90,7 +101,11 @@ impl HrDriverP2hSafetyRepository {
     }
 
     // ---- P2H INSPECTIONS ----
-    pub async fn list_p2h_inspections(&self, employee_id: Option<Uuid>, asset_id: Option<Uuid>) -> Result<Vec<HrP2hInspection>, AppError> {
+    pub async fn list_p2h_inspections(
+        &self,
+        employee_id: Option<Uuid>,
+        asset_id: Option<Uuid>,
+    ) -> Result<Vec<HrP2hInspection>, AppError> {
         sqlx::query_as::<_, HrP2hInspection>(
             r#"
             SELECT p.*, emp.name as employee_name, emp.nik as employee_nik, ast.name as asset_name, ast.asset_code as asset_code
@@ -109,7 +124,11 @@ impl HrDriverP2hSafetyRepository {
         .map_err(|e| AppError::Database(e.to_string()))
     }
 
-    pub async fn submit_p2h_inspection(&self, req: SubmitP2hInspectionRequest, overall_status: &str) -> Result<HrP2hInspection, AppError> {
+    pub async fn submit_p2h_inspection(
+        &self,
+        req: SubmitP2hInspectionRequest,
+        overall_status: &str,
+    ) -> Result<HrP2hInspection, AppError> {
         sqlx::query_as::<_, HrP2hInspection>(
             r#"
             INSERT INTO hr_p2h_inspections (
@@ -141,7 +160,10 @@ impl HrDriverP2hSafetyRepository {
     }
 
     // ---- DRIVER SAFETY INCIDENTS ----
-    pub async fn list_driver_safety_incidents(&self, employee_id: Option<Uuid>) -> Result<Vec<HrDriverSafetyIncident>, AppError> {
+    pub async fn list_driver_safety_incidents(
+        &self,
+        employee_id: Option<Uuid>,
+    ) -> Result<Vec<HrDriverSafetyIncident>, AppError> {
         sqlx::query_as::<_, HrDriverSafetyIncident>(
             r#"
             SELECT s.*, emp.name as employee_name, emp.nik as employee_nik, ast.name as asset_name
@@ -158,7 +180,10 @@ impl HrDriverP2hSafetyRepository {
         .map_err(|e| AppError::Database(e.to_string()))
     }
 
-    pub async fn create_driver_safety_incident(&self, req: CreateDriverSafetyIncidentRequest) -> Result<HrDriverSafetyIncident, AppError> {
+    pub async fn create_driver_safety_incident(
+        &self,
+        req: CreateDriverSafetyIncidentRequest,
+    ) -> Result<HrDriverSafetyIncident, AppError> {
         sqlx::query_as::<_, HrDriverSafetyIncident>(
             r#"
             INSERT INTO hr_driver_safety_incidents (
@@ -184,7 +209,10 @@ impl HrDriverP2hSafetyRepository {
     }
 
     // ---- VEHICLE HANDOVERS ----
-    pub async fn list_vehicle_handovers(&self, asset_id: Option<Uuid>) -> Result<Vec<HrVehicleHandover>, AppError> {
+    pub async fn list_vehicle_handovers(
+        &self,
+        asset_id: Option<Uuid>,
+    ) -> Result<Vec<HrVehicleHandover>, AppError> {
         sqlx::query_as::<_, HrVehicleHandover>(
             r#"
             SELECT vh.*, f_emp.name as from_employee_name, t_emp.name as to_employee_name, ast.name as asset_name
@@ -202,7 +230,10 @@ impl HrDriverP2hSafetyRepository {
         .map_err(|e| AppError::Database(e.to_string()))
     }
 
-    pub async fn create_vehicle_handover(&self, req: CreateVehicleHandoverRequest) -> Result<HrVehicleHandover, AppError> {
+    pub async fn create_vehicle_handover(
+        &self,
+        req: CreateVehicleHandoverRequest,
+    ) -> Result<HrVehicleHandover, AppError> {
         sqlx::query_as::<_, HrVehicleHandover>(
             r#"
             INSERT INTO hr_vehicle_handovers (

@@ -3,10 +3,10 @@ use uuid::Uuid;
 
 use crate::api::responses::ApiResponse;
 use crate::api::server::AppState;
+use management_system_core::shared::errors::AppError;
 use management_system_ops::{
     CreateMaintenanceScheduleRequest, MaintenanceRecord, MaintenanceSchedule,
 };
-use management_system_core::shared::errors::AppError;
 
 pub async fn list_schedules(
     State(state): State<AppState>,
@@ -29,8 +29,7 @@ pub async fn run_schedule(
     axum::extract::Extension(claims): axum::extract::Extension<
         management_system_core::domain::entities::user::UserClaims,
     >,
-) -> Result<Json<ApiResponse<MaintenanceRecord>>, AppError>
-{
+) -> Result<Json<ApiResponse<MaintenanceRecord>>, AppError> {
     let user_id = Uuid::parse_str(&claims.sub)
         .map_err(|_| AppError::BadRequest("Invalid user ID in token".to_string()))?;
 

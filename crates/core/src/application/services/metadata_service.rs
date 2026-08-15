@@ -1,4 +1,6 @@
-use crate::domain::metadata_kernel::{EntityType, FieldDefinition, LayoutDefinition, StorageStrategy};
+use crate::domain::metadata_kernel::{
+    EntityType, FieldDefinition, LayoutDefinition, StorageStrategy,
+};
 use crate::infrastructure::repositories::MetadataRepository;
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
@@ -79,9 +81,14 @@ impl MetadataService {
             return Err("field_name must be lowercase without spaces".to_string());
         }
 
-        let valid_types = vec!["STRING", "NUMBER", "DECIMAL", "BOOLEAN", "DATE", "DATETIME", "JSON"];
+        let valid_types = vec![
+            "STRING", "NUMBER", "DECIMAL", "BOOLEAN", "DATE", "DATETIME", "JSON",
+        ];
         if !valid_types.contains(&data_type.to_uppercase().as_str()) {
-            return Err(format!("Invalid data_type. Must be one of {:?}", valid_types));
+            return Err(format!(
+                "Invalid data_type. Must be one of {:?}",
+                valid_types
+            ));
         }
 
         let field = FieldDefinition {
@@ -102,7 +109,10 @@ impl MetadataService {
             .map_err(|e| e.to_string())
     }
 
-    pub async fn get_entity_bundle(&self, entity_name: &str) -> Result<EntityMetadataBundle, String> {
+    pub async fn get_entity_bundle(
+        &self,
+        entity_name: &str,
+    ) -> Result<EntityMetadataBundle, String> {
         let entity = self
             .repository
             .find_entity_type_by_name(entity_name)
@@ -128,7 +138,7 @@ impl MetadataService {
             layout,
         })
     }
-    
+
     pub async fn remove_field(&self, field_id: Uuid) -> Result<u64, String> {
         self.repository
             .delete_field_definition(field_id)
@@ -136,7 +146,11 @@ impl MetadataService {
             .map_err(|e| e.to_string())
     }
 
-    pub async fn validate_entity_data(&self, _entity_name: &str, _data: &serde_json::Value) -> Result<(), String> {
+    pub async fn validate_entity_data(
+        &self,
+        _entity_name: &str,
+        _data: &serde_json::Value,
+    ) -> Result<(), String> {
         // TODO: Implement actual metadata validation based on FieldDefinitions
         Ok(())
     }

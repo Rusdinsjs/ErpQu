@@ -10,9 +10,7 @@ use serde_json::json;
 use uuid::Uuid;
 
 use management_system_core::domain::outbox::{OutboxEntry, OutboxStatus};
-use management_system_core::domain::platform_services::{
-    AcquireJobLockRequest, SystemJobLock,
-};
+use management_system_core::domain::platform_services::{AcquireJobLockRequest, SystemJobLock};
 
 #[test]
 fn test_qevt_001_outbox_exponential_backoff_retry() {

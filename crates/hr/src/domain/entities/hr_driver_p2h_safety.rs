@@ -64,7 +64,7 @@ pub struct HrDriverSafetyIncident {
     pub asset_id: Option<Uuid>,
     pub incident_date: NaiveDate,
     pub violation_type: String, // 'overspeeding', 'fatigue_sleep', 'reckless_driving', 'collision', 'sop_k3_breach'
-    pub severity: String, // 'low', 'medium', 'high', 'critical'
+    pub severity: String,       // 'low', 'medium', 'high', 'critical'
     pub location_site: String,
     pub speed_kmh: Option<Decimal>,
     pub damage_cost_estimate: Option<Decimal>,

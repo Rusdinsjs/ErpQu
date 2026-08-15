@@ -13,14 +13,14 @@ use management_system_assets::{
     CategoryTemplateService, DataService, LifecycleRepository, LifecycleService,
 };
 use management_system_core::application::services::{
-    ApprovalService, AuditService, AuthService,
-    LocationService, NotificationService, RbacService, SettingsService, UserService,
+    ApprovalService, AuditService, AuthService, LocationService, NotificationService, RbacService,
+    SettingsService, UserService,
 };
 use management_system_core::infrastructure::bus::EventBus;
 use management_system_core::infrastructure::cache::{CacheOperations, RedisCache, RedisConfig};
 use management_system_core::infrastructure::repositories::{
-    ApprovalRepository, AuditRepository, NotificationRepository, RbacRepository, SettingsRepository,
-    UserRepository,
+    ApprovalRepository, AuditRepository, NotificationRepository, RbacRepository,
+    SettingsRepository, UserRepository,
 };
 use management_system_inventory::{ConversionRepository, ConversionService};
 
@@ -31,27 +31,29 @@ use management_system_crm::repositories::{ClientRepository, VendorRepository};
 use management_system_crm::services::ClientService;
 
 use management_system_rental::repositories::{
-    ContractDocumentRepository, ContractTemplateRepository,
-    RentalBillingRepository, RentalRepository, TimesheetRepository,
+    ContractDocumentRepository, ContractTemplateRepository, RentalBillingRepository,
+    RentalRepository, TimesheetRepository,
 };
 use management_system_rental::{
     BillingService, ContractService, ContractTemplateService, RentalBillingService, RentalService,
     TimesheetService,
 };
 
-use management_system_inventory::repositories::InventoryRepository;
-use management_system_inventory::InventoryService;
 use management_system_core::infrastructure::storage::FileStorage;
 use management_system_core::shared::utils::jwt::JwtConfig;
-use management_system_finance::repositories::{AssetExpenseRepository, FinanceRepository, JournalRepository};
+use management_system_finance::repositories::{
+    AssetExpenseRepository, FinanceRepository, JournalRepository,
+};
 use management_system_finance::{AssetExpenseService, DepreciationService, JournalService};
+use management_system_inventory::repositories::InventoryRepository;
+use management_system_inventory::InventoryService;
 use management_system_ops::{
-    CreateWorkOrderRequest, FuelRepository, FuelService, GeofenceService, LoanRepository,
-    LoanService, MaintenanceOperationResult, MaintenanceRepository, MaintenanceService,
-    MaintenanceTeamRepository, MaintenanceTeamService, MaintenanceTemplateRepository,
-    MaintenanceTemplateService, SensorRepository, SensorService, TaxRenewalRepository,
-    TaxRenewalService, WorkOrderRepository, QualityRepository, DeliveryTripRepository,
-    QualityService, DeliveryTripService, CreateQualityInspectionRequest, CreateDeliveryTripRequest,
+    CreateDeliveryTripRequest, CreateQualityInspectionRequest, CreateWorkOrderRequest,
+    DeliveryTripRepository, DeliveryTripService, FuelRepository, FuelService, GeofenceService,
+    LoanRepository, LoanService, MaintenanceOperationResult, MaintenanceRepository,
+    MaintenanceService, MaintenanceTeamRepository, MaintenanceTeamService,
+    MaintenanceTemplateRepository, MaintenanceTemplateService, QualityRepository, QualityService,
+    SensorRepository, SensorService, TaxRenewalRepository, TaxRenewalService, WorkOrderRepository,
 };
 use std::sync::Arc;
 
@@ -92,7 +94,8 @@ pub struct ServiceRegistry {
     pub hr_leaves_service: management_system_hr::services::HrLeavesService,
     pub hr_payroll_service: management_system_hr::services::HrPayrollService,
     pub hr_loans_claims_kpi_service: management_system_hr::services::HrLoansClaimsKpiService,
-    pub hr_recruitment_training_discipline_service: management_system_hr::services::HrRecruitmentTrainingDisciplineService,
+    pub hr_recruitment_training_discipline_service:
+        management_system_hr::services::HrRecruitmentTrainingDisciplineService,
     pub hr_driver_p2h_safety_service: management_system_hr::services::HrDriverP2hSafetyService,
     pub metadata_service: management_system_core::application::services::MetadataService,
     pub stock_document_service: management_system_inventory::StockDocumentService,
@@ -182,7 +185,10 @@ impl AppState {
         let vendor_repo = VendorRepository::new(pool.clone());
         let quality_repo = QualityRepository::new(pool.clone());
         let delivery_trip_repo = DeliveryTripRepository::new(pool.clone());
-        let metadata_repo = management_system_core::infrastructure::repositories::MetadataRepository::new(pool.clone());
+        let metadata_repo =
+            management_system_core::infrastructure::repositories::MetadataRepository::new(
+                pool.clone(),
+            );
 
         // Create Internal Event Bus
         let event_bus = EventBus::new(1024);
@@ -210,7 +216,8 @@ impl AppState {
 
         // We need to register callbacks after creating all services
         // So we'll do it after all services are created
-        let metadata_service = management_system_core::application::services::MetadataService::new(metadata_repo);
+        let metadata_service =
+            management_system_core::application::services::MetadataService::new(metadata_repo);
 
         let asset_service = management_system_assets::AssetService::new(
             asset_repo.clone(),
@@ -224,11 +231,8 @@ impl AppState {
             asset_repo.clone(),
             approval_service.clone(),
         ); // Added
-        let auth_service = AuthService::new(
-            user_repo.clone(),
-            rbac_repo.clone(),
-            jwt_config.clone(),
-        );
+        let auth_service =
+            AuthService::new(user_repo.clone(), rbac_repo.clone(), jwt_config.clone());
         let category_service = CategoryService::new(category_repo.clone());
         let category_template_service = CategoryTemplateService::new(category_template_repo);
 
@@ -274,16 +278,23 @@ impl AppState {
             asset_expense_service.clone(),
             asset_repo.clone(),
             event_bus.clone(),
-        ).with_accounting_engine(acc_engine.clone());
+        )
+        .with_accounting_engine(acc_engine.clone());
         let depreciation_service = DepreciationService::new(
             asset_repo.clone(),
             category_repo.clone(),
             journal_service.clone(),
         );
 
-        let stock_engine = management_system_inventory::StockPostingEngine::new(pool.clone(), Some(acc_engine));
-        let stock_doc_repo = Arc::new(management_system_inventory::StockDocumentRepository::new(pool.clone()));
-        let stock_document_service = management_system_inventory::StockDocumentService::new(stock_doc_repo, stock_engine.clone());
+        let stock_engine =
+            management_system_inventory::StockPostingEngine::new(pool.clone(), Some(acc_engine));
+        let stock_doc_repo = Arc::new(management_system_inventory::StockDocumentRepository::new(
+            pool.clone(),
+        ));
+        let stock_document_service = management_system_inventory::StockDocumentService::new(
+            stock_doc_repo,
+            stock_engine.clone(),
+        );
 
         let inventory_service = InventoryService::with_stock_engine(
             std::sync::Arc::new(inventory_repo.clone()),
@@ -369,20 +380,48 @@ impl AppState {
             );
         let location_service = LocationService::new(location_repo);
 
-        let hr_lifecycle_repo = management_system_hr::repositories::HrLifecycleRepository::new(pool.clone());
-        let hr_lifecycle_service = management_system_hr::services::HrLifecycleService::new(hr_lifecycle_repo, employee_repo.clone());
-        let hr_shift_overtime_repo = management_system_hr::repositories::HrShiftOvertimeRepository::new(pool.clone());
-        let hr_shift_overtime_service = management_system_hr::services::HrShiftOvertimeService::new(hr_shift_overtime_repo, employee_repo.clone());
-        let hr_leaves_repo = management_system_hr::repositories::HrLeavesRepository::new(pool.clone());
-        let hr_leaves_service = management_system_hr::services::HrLeavesService::new(hr_leaves_repo, employee_repo.clone());
-        let hr_payroll_repo = management_system_hr::repositories::HrPayrollRepository::new(pool.clone());
-        let hr_loans_claims_kpi_repo = management_system_hr::repositories::HrLoansClaimsKpiRepository::new(pool.clone());
-        let hr_payroll_service = management_system_hr::services::HrPayrollService::new(hr_payroll_repo, employee_repo.clone(), hr_loans_claims_kpi_repo.clone());
-        let hr_loans_claims_kpi_service = management_system_hr::services::HrLoansClaimsKpiService::new(hr_loans_claims_kpi_repo);
-        let hr_recruitment_repo = management_system_hr::repositories::HrRecruitmentTrainingDisciplineRepository::new(pool.clone());
-        let hr_recruitment_training_discipline_service = management_system_hr::services::HrRecruitmentTrainingDisciplineService::new(hr_recruitment_repo, employee_repo.clone());
-        let hr_driver_repo = management_system_hr::repositories::HrDriverP2hSafetyRepository::new(pool.clone());
-        let hr_driver_p2h_safety_service = management_system_hr::services::HrDriverP2hSafetyService::new(hr_driver_repo);
+        let hr_lifecycle_repo =
+            management_system_hr::repositories::HrLifecycleRepository::new(pool.clone());
+        let hr_lifecycle_service = management_system_hr::services::HrLifecycleService::new(
+            hr_lifecycle_repo,
+            employee_repo.clone(),
+        );
+        let hr_shift_overtime_repo =
+            management_system_hr::repositories::HrShiftOvertimeRepository::new(pool.clone());
+        let hr_shift_overtime_service = management_system_hr::services::HrShiftOvertimeService::new(
+            hr_shift_overtime_repo,
+            employee_repo.clone(),
+        );
+        let hr_leaves_repo =
+            management_system_hr::repositories::HrLeavesRepository::new(pool.clone());
+        let hr_leaves_service = management_system_hr::services::HrLeavesService::new(
+            hr_leaves_repo,
+            employee_repo.clone(),
+        );
+        let hr_payroll_repo =
+            management_system_hr::repositories::HrPayrollRepository::new(pool.clone());
+        let hr_loans_claims_kpi_repo =
+            management_system_hr::repositories::HrLoansClaimsKpiRepository::new(pool.clone());
+        let hr_payroll_service = management_system_hr::services::HrPayrollService::new(
+            hr_payroll_repo,
+            employee_repo.clone(),
+            hr_loans_claims_kpi_repo.clone(),
+        );
+        let hr_loans_claims_kpi_service =
+            management_system_hr::services::HrLoansClaimsKpiService::new(hr_loans_claims_kpi_repo);
+        let hr_recruitment_repo =
+            management_system_hr::repositories::HrRecruitmentTrainingDisciplineRepository::new(
+                pool.clone(),
+            );
+        let hr_recruitment_training_discipline_service =
+            management_system_hr::services::HrRecruitmentTrainingDisciplineService::new(
+                hr_recruitment_repo,
+                employee_repo.clone(),
+            );
+        let hr_driver_repo =
+            management_system_hr::repositories::HrDriverP2hSafetyRepository::new(pool.clone());
+        let hr_driver_p2h_safety_service =
+            management_system_hr::services::HrDriverP2hSafetyService::new(hr_driver_repo);
         let leave_service = LeaveService::new(leave_repo, employee_repo);
 
         let settings_service = SettingsService::new(settings_repo);
@@ -478,9 +517,10 @@ impl AppState {
 
 /// Create the application router
 pub async fn create_app(state: AppState) -> axum::Router {
-    let app_registry_router = crate::api::app_registry::boot_apps(state.clone(), state.metadata_service.clone())
-        .await
-        .expect("Failed to boot app registry");
+    let app_registry_router =
+        crate::api::app_registry::boot_apps(state.clone(), state.metadata_service.clone())
+            .await
+            .expect("Failed to boot app registry");
 
     create_router(state.clone())
         .merge(app_registry_router.with_state(state))

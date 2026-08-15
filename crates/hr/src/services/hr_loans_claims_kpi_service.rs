@@ -29,43 +29,71 @@ impl HrLoansClaimsKpiService {
         self.repo.list_loan_types().await
     }
 
-    pub async fn list_employee_loans(&self, employee_id: Option<Uuid>) -> Result<Vec<HrEmployeeLoan>, AppError> {
+    pub async fn list_employee_loans(
+        &self,
+        employee_id: Option<Uuid>,
+    ) -> Result<Vec<HrEmployeeLoan>, AppError> {
         self.repo.list_employee_loans(employee_id).await
     }
 
     pub async fn apply_loan(&self, req: CreateLoanRequest) -> Result<HrEmployeeLoan, AppError> {
         if req.tenure_months <= 0 {
-            return Err(AppError::BadRequest("Tenor pinjaman minimal 1 bulan".into()));
+            return Err(AppError::BadRequest(
+                "Tenor pinjaman minimal 1 bulan".into(),
+            ));
         }
         let monthly = (req.loan_amount / Decimal::from(req.tenure_months)).round_dp(0);
         let loan = self.repo.create_employee_loan(req, monthly).await?;
         Ok(loan)
     }
 
-    pub async fn review_loan(&self, id: Uuid, req: ReviewLoanRequest, reviewer_id: Option<Uuid>) -> Result<HrEmployeeLoan, AppError> {
+    pub async fn review_loan(
+        &self,
+        id: Uuid,
+        req: ReviewLoanRequest,
+        reviewer_id: Option<Uuid>,
+    ) -> Result<HrEmployeeLoan, AppError> {
         let loan = self.repo.get_employee_loan(id).await?;
 
         match req.action.as_str() {
             "approve" => {
-                self.repo.update_loan_status(id, "approved", reviewer_id, None).await
-            },
+                self.repo
+                    .update_loan_status(id, "approved", reviewer_id, None)
+                    .await
+            }
             "disburse" => {
                 // Generate Amortization Repayment Schedule
                 let mut curr_date = loan.start_date;
                 for i in 1..=loan.tenure_months {
                     let due_date = Self::add_months(curr_date, i as u32);
-                    self.repo.create_repayment_schedule(loan.id, i, due_date, loan.monthly_installment).await?;
+                    self.repo
+                        .create_repayment_schedule(loan.id, i, due_date, loan.monthly_installment)
+                        .await?;
                 }
-                self.repo.update_loan_status(id, "disbursed", reviewer_id, None).await
-            },
+                self.repo
+                    .update_loan_status(id, "disbursed", reviewer_id, None)
+                    .await
+            }
             "reject" => {
-                self.repo.update_loan_status(id, "rejected", reviewer_id, req.rejection_reason.as_deref()).await
-            },
-            _ => Err(AppError::BadRequest("Aksi review pinjaman tidak valid".into())),
+                self.repo
+                    .update_loan_status(
+                        id,
+                        "rejected",
+                        reviewer_id,
+                        req.rejection_reason.as_deref(),
+                    )
+                    .await
+            }
+            _ => Err(AppError::BadRequest(
+                "Aksi review pinjaman tidak valid".into(),
+            )),
         }
     }
 
-    pub async fn list_repayment_schedules(&self, loan_id: Uuid) -> Result<Vec<HrLoanRepaymentSchedule>, AppError> {
+    pub async fn list_repayment_schedules(
+        &self,
+        loan_id: Uuid,
+    ) -> Result<Vec<HrLoanRepaymentSchedule>, AppError> {
         self.repo.list_repayment_schedules(loan_id).await
     }
 
@@ -85,19 +113,47 @@ impl HrLoansClaimsKpiService {
         self.repo.list_expense_claim_types().await
     }
 
-    pub async fn list_expense_claims(&self, employee_id: Option<Uuid>) -> Result<Vec<HrExpenseClaim>, AppError> {
+    pub async fn list_expense_claims(
+        &self,
+        employee_id: Option<Uuid>,
+    ) -> Result<Vec<HrExpenseClaim>, AppError> {
         self.repo.list_expense_claims(employee_id).await
     }
 
-    pub async fn create_expense_claim(&self, req: CreateExpenseClaimRequest) -> Result<HrExpenseClaim, AppError> {
+    pub async fn create_expense_claim(
+        &self,
+        req: CreateExpenseClaimRequest,
+    ) -> Result<HrExpenseClaim, AppError> {
         self.repo.create_expense_claim(req).await
     }
 
-    pub async fn review_expense_claim(&self, id: Uuid, req: ReviewExpenseClaimRequest, reviewer_id: Option<Uuid>) -> Result<HrExpenseClaim, AppError> {
+    pub async fn review_expense_claim(
+        &self,
+        id: Uuid,
+        req: ReviewExpenseClaimRequest,
+        reviewer_id: Option<Uuid>,
+    ) -> Result<HrExpenseClaim, AppError> {
         match req.action.as_str() {
-            "approve" => self.repo.update_claim_status(id, "approved", reviewer_id, None).await,
-            "mark_paid" => self.repo.update_claim_status(id, "paid", reviewer_id, None).await,
-            "reject" => self.repo.update_claim_status(id, "rejected", reviewer_id, req.rejection_reason.as_deref()).await,
+            "approve" => {
+                self.repo
+                    .update_claim_status(id, "approved", reviewer_id, None)
+                    .await
+            }
+            "mark_paid" => {
+                self.repo
+                    .update_claim_status(id, "paid", reviewer_id, None)
+                    .await
+            }
+            "reject" => {
+                self.repo
+                    .update_claim_status(
+                        id,
+                        "rejected",
+                        reviewer_id,
+                        req.rejection_reason.as_deref(),
+                    )
+                    .await
+            }
             _ => Err(AppError::BadRequest("Aksi review klaim tidak valid".into())),
         }
     }
@@ -107,20 +163,31 @@ impl HrLoansClaimsKpiService {
         self.repo.list_appraisal_templates().await
     }
 
-    pub async fn list_template_items(&self, template_id: Uuid) -> Result<Vec<HrAppraisalTemplateItem>, AppError> {
+    pub async fn list_template_items(
+        &self,
+        template_id: Uuid,
+    ) -> Result<Vec<HrAppraisalTemplateItem>, AppError> {
         self.repo.list_template_items(template_id).await
     }
 
-    pub async fn list_employee_appraisals(&self, employee_id: Option<Uuid>) -> Result<Vec<HrEmployeeAppraisal>, AppError> {
+    pub async fn list_employee_appraisals(
+        &self,
+        employee_id: Option<Uuid>,
+    ) -> Result<Vec<HrEmployeeAppraisal>, AppError> {
         self.repo.list_employee_appraisals(employee_id).await
     }
 
-    pub async fn submit_appraisal(&self, req: CreateAppraisalRequest, evaluator_id: Option<Uuid>) -> Result<HrEmployeeAppraisal, AppError> {
+    pub async fn submit_appraisal(
+        &self,
+        req: CreateAppraisalRequest,
+        evaluator_id: Option<Uuid>,
+    ) -> Result<HrEmployeeAppraisal, AppError> {
         let mgr = req.manager_score.unwrap_or(Decimal::ZERO);
         let self_s = req.self_score.unwrap_or(Decimal::ZERO);
-        
+
         let final_score = if mgr > Decimal::ZERO && self_s > Decimal::ZERO {
-            ((mgr * Decimal::from(70) + self_s * Decimal::from(30)) / Decimal::from(100)).round_dp(1)
+            ((mgr * Decimal::from(70) + self_s * Decimal::from(30)) / Decimal::from(100))
+                .round_dp(1)
         } else if mgr > Decimal::ZERO {
             mgr
         } else {
@@ -138,6 +205,8 @@ impl HrLoansClaimsKpiService {
             "D"
         };
 
-        self.repo.create_employee_appraisal(req, evaluator_id, final_score, rating).await
+        self.repo
+            .create_employee_appraisal(req, evaluator_id, final_score, rating)
+            .await
     }
 }

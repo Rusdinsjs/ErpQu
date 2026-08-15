@@ -1,8 +1,8 @@
-use crate::dto::*;
 use crate::domain::entities::{
-    HrDesignation, HrEmployeeDocument, HrEmployeeEducation, HrEmployeeLifecycle,
-    HrEmploymentType, WorkExperience,
+    HrDesignation, HrEmployeeDocument, HrEmployeeEducation, HrEmployeeLifecycle, HrEmploymentType,
+    WorkExperience,
 };
+use crate::dto::*;
 use crate::repositories::{EmployeeRepository, HrLifecycleRepository};
 use management_system_core::shared::errors::AppError;
 use uuid::Uuid;
@@ -15,7 +15,10 @@ pub struct HrLifecycleService {
 
 impl HrLifecycleService {
     pub fn new(repo: HrLifecycleRepository, employee_repo: EmployeeRepository) -> Self {
-        Self { repo, employee_repo }
+        Self {
+            repo,
+            employee_repo,
+        }
     }
 
     // ---- DESIGNATIONS ----
@@ -27,11 +30,18 @@ impl HrLifecycleService {
         self.repo.get_designation(id).await
     }
 
-    pub async fn create_designation(&self, req: CreateDesignationRequest) -> Result<HrDesignation, AppError> {
+    pub async fn create_designation(
+        &self,
+        req: CreateDesignationRequest,
+    ) -> Result<HrDesignation, AppError> {
         self.repo.create_designation(req).await
     }
 
-    pub async fn update_designation(&self, id: Uuid, req: UpdateDesignationRequest) -> Result<HrDesignation, AppError> {
+    pub async fn update_designation(
+        &self,
+        id: Uuid,
+        req: UpdateDesignationRequest,
+    ) -> Result<HrDesignation, AppError> {
         self.repo.update_designation(id, req).await
     }
 
@@ -44,12 +54,18 @@ impl HrLifecycleService {
         self.repo.list_employment_types().await
     }
 
-    pub async fn create_employment_type(&self, req: CreateEmploymentTypeRequest) -> Result<HrEmploymentType, AppError> {
+    pub async fn create_employment_type(
+        &self,
+        req: CreateEmploymentTypeRequest,
+    ) -> Result<HrEmploymentType, AppError> {
         self.repo.create_employment_type(req).await
     }
 
     // ---- LIFECYCLE EVENTS ----
-    pub async fn list_lifecycle_events(&self, employee_id: Option<Uuid>) -> Result<Vec<HrEmployeeLifecycle>, AppError> {
+    pub async fn list_lifecycle_events(
+        &self,
+        employee_id: Option<Uuid>,
+    ) -> Result<Vec<HrEmployeeLifecycle>, AppError> {
         self.repo.list_lifecycle_events(employee_id).await
     }
 
@@ -62,7 +78,10 @@ impl HrLifecycleService {
     }
 
     // ---- EMPLOYEE DOCUMENTS ----
-    pub async fn list_employee_documents(&self, employee_id: Uuid) -> Result<Vec<HrEmployeeDocument>, AppError> {
+    pub async fn list_employee_documents(
+        &self,
+        employee_id: Uuid,
+    ) -> Result<Vec<HrEmployeeDocument>, AppError> {
         self.repo.list_employee_documents(employee_id).await
     }
 
@@ -79,11 +98,17 @@ impl HrLifecycleService {
     }
 
     // ---- EMPLOYEE EDUCATION ----
-    pub async fn list_employee_education(&self, employee_id: Uuid) -> Result<Vec<HrEmployeeEducation>, AppError> {
+    pub async fn list_employee_education(
+        &self,
+        employee_id: Uuid,
+    ) -> Result<Vec<HrEmployeeEducation>, AppError> {
         self.repo.list_employee_education(employee_id).await
     }
 
-    pub async fn create_employee_education(&self, req: CreateEmployeeEducationRequest) -> Result<HrEmployeeEducation, AppError> {
+    pub async fn create_employee_education(
+        &self,
+        req: CreateEmployeeEducationRequest,
+    ) -> Result<HrEmployeeEducation, AppError> {
         self.repo.create_employee_education(req).await
     }
 
@@ -92,12 +117,18 @@ impl HrLifecycleService {
     }
 
     // ---- WORK EXPERIENCES ----
-    pub async fn list_work_experiences(&self, employee_id: Uuid) -> Result<Vec<WorkExperience>, AppError> {
+    pub async fn list_work_experiences(
+        &self,
+        employee_id: Uuid,
+    ) -> Result<Vec<WorkExperience>, AppError> {
         self.repo.list_work_experiences(employee_id).await
     }
 
     // ---- EMPLOYEE 360 VIEW ----
-    pub async fn get_employee_360(&self, employee_id: Uuid) -> Result<Employee360Response, AppError> {
+    pub async fn get_employee_360(
+        &self,
+        employee_id: Uuid,
+    ) -> Result<Employee360Response, AppError> {
         let employee = self.employee_repo.get_by_id(employee_id).await?;
 
         let designation = if let Some(did) = employee.designation_id {

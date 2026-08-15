@@ -37,12 +37,7 @@ pub fn create_router(state: AppState) -> Router {
         );
 
     // Transactional & Finance Routes (Strict Authorization)
-    let transactional_routes = Router::new()
-        .route(
-            "/api/placeholder_tx",
-            get(list_currencies),
-        );
-
+    let transactional_routes = Router::new().route("/api/placeholder_tx", get(list_currencies));
 
     // Protected routes (QSEC-006: Private file uploads & access)
     let protected_routes = Router::new()
@@ -215,12 +210,7 @@ pub fn create_router(state: AppState) -> Router {
                 .delete(delete_user.layer(axum_middleware::from_fn(admin_only_middleware))),
         )
         // Employees
-
-        .nest(
-            "/api/hr",
-            crate::api::routes::hr_routes::hr_routes(),
-        )
-    
+        .nest("/api/hr", crate::api::routes::hr_routes::hr_routes())
         .route("/api/employees", get(list_employees).post(create_employee))
         .route(
             "/api/employees/:id",
@@ -326,7 +316,6 @@ pub fn create_router(state: AppState) -> Router {
             delete(crate::api::handlers::role_permission_handler::delete_user_permission),
         )
         .route("/api/users/:user_id/roles", get(get_user_roles))
-
         .route("/api/users/:user_id/permissions", get(get_user_permissions))
         .route(
             "/api/users/:user_id/roles/:role_code",

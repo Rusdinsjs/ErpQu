@@ -12,9 +12,7 @@ use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 use uuid::Uuid;
 
-use management_system_inventory::{
-    StockPostingInstruction, StockPostingLineItem,
-};
+use management_system_inventory::{StockPostingInstruction, StockPostingLineItem};
 
 #[test]
 fn test_qstk_006_negative_stock_policy_check() {
@@ -102,8 +100,8 @@ fn test_qstk_003_bin_rebuild_from_ledger_deltas() {
 
 #[test]
 fn test_stock_entry_types_and_status() {
-    use uuid::Uuid;
     use chrono::{NaiveDate, NaiveTime};
+    use uuid::Uuid;
 
     let entry = management_system_inventory::StockEntry {
         id: Uuid::new_v4(),
@@ -129,8 +127,8 @@ fn test_stock_entry_types_and_status() {
 
 #[test]
 fn test_material_request_structure() {
-    use uuid::Uuid;
     use chrono::NaiveDate;
+    use uuid::Uuid;
 
     let req = management_system_inventory::MaterialRequest {
         id: Uuid::new_v4(),
@@ -150,4 +148,3 @@ fn test_material_request_structure() {
     assert_eq!(req.material_request_type, "PURCHASE");
     assert_eq!(req.status, "DRAFT");
 }
-

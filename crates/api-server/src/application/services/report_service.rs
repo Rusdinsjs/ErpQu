@@ -1,3 +1,5 @@
+use chrono::{NaiveDate, Utc};
+use genpdf::{elements, style, Element};
 use management_system_assets::AssetRepository;
 use management_system_assets::AssetState;
 use management_system_core::domain::errors::{DomainError, DomainResult};
@@ -5,8 +7,6 @@ use management_system_core::infrastructure::repositories::SettingsRepository;
 use management_system_ops::{
     FuelRepository, LoanRepository, MaintenanceRepository, WorkOrderRepository,
 };
-use chrono::{NaiveDate, Utc};
-use genpdf::{elements, style, Element};
 use std::io::Cursor;
 
 /// Service for generating reports and analytics data.
@@ -171,13 +171,15 @@ impl ReportService {
 
         // Create a new PDF document
         let font_dir = "assets/fonts";
-        let font_family = genpdf::fonts::from_files(font_dir, "Roboto", None).map_err(|e: genpdf::error::Error| {
-            let cwd = std::env::current_dir().unwrap_or_default();
-            DomainError::internal(format!(
-                "Failed to load fonts from '{}' (CWD: {:?}): {}",
-                font_dir, cwd, e
-            ))
-        })?;
+        let font_family = genpdf::fonts::from_files(font_dir, "Roboto", None).map_err(
+            |e: genpdf::error::Error| {
+                let cwd = std::env::current_dir().unwrap_or_default();
+                DomainError::internal(format!(
+                    "Failed to load fonts from '{}' (CWD: {:?}): {}",
+                    font_dir, cwd, e
+                ))
+            },
+        )?;
 
         let mut doc = genpdf::Document::new(font_family);
         doc.set_title("Asset Inventory Report");
@@ -263,9 +265,7 @@ impl ReportService {
         Ok(buffer.into_inner())
     }
 
-    pub async fn get_monthly_costs(
-        &self,
-    ) -> DomainResult<Vec<management_system_ops::MonthlyCost>> {
+    pub async fn get_monthly_costs(&self) -> DomainResult<Vec<management_system_ops::MonthlyCost>> {
         self.maintenance_repo
             .get_monthly_costs()
             .await
@@ -296,12 +296,7 @@ impl ReportService {
         let mut normalized_stats: Vec<management_system_assets::AssetStatusStats> =
             normalization_map
                 .into_iter()
-                .map(
-                    |(status, count)| management_system_assets::AssetStatusStats {
-                        status,
-                        count,
-                    },
-                )
+                .map(|(status, count)| management_system_assets::AssetStatusStats { status, count })
                 .collect();
 
         // Sort by count descending

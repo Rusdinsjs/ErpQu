@@ -1,7 +1,7 @@
 use crate::api::handlers::{inventory_handler, stock_document_handler};
 use crate::api::server::AppState;
 use axum::{
-    routing::{get, post, delete},
+    routing::{delete, get, post},
     Router,
 };
 
@@ -35,7 +35,10 @@ pub fn inventory_routes() -> Router<AppState> {
             "/warehouses",
             get(inventory_handler::list_warehouses).post(inventory_handler::create_warehouse),
         )
-        .route("/warehouses/:id", delete(inventory_handler::delete_warehouse))
+        .route(
+            "/warehouses/:id",
+            delete(inventory_handler::delete_warehouse),
+        )
         // Stock Entries
         .route(
             "/stock-entries",

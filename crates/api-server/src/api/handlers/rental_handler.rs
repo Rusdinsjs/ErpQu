@@ -17,8 +17,8 @@ use management_system_core::application::dto::{
     ReturnRentalRequest, UpdateRentalRateRequest,
 };
 use management_system_core::domain::entities::UserClaims;
-use management_system_rental::domain::entities::{Rental, RentalHandover, RentalRate};
 use management_system_core::shared::errors::AppError;
+use management_system_rental::domain::entities::{Rental, RentalHandover, RentalRate};
 use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]

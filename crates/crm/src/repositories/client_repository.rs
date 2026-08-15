@@ -176,11 +176,12 @@ impl ClientRepository {
 
     /// Soft delete (deactivate) a client
     pub async fn soft_delete(&self, id: Uuid) -> Result<bool, sqlx::Error> {
-        let result =
-            sqlx::query("UPDATE crm.clients SET is_active = false, updated_at = NOW() WHERE id = $1")
-                .bind(id)
-                .execute(&self.pool)
-                .await?;
+        let result = sqlx::query(
+            "UPDATE crm.clients SET is_active = false, updated_at = NOW() WHERE id = $1",
+        )
+        .bind(id)
+        .execute(&self.pool)
+        .await?;
         Ok(result.rows_affected() > 0)
     }
 

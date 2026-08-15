@@ -1,6 +1,6 @@
 use crate::domain::entities::stock_entry::{
-    StockEntry, StockEntryItem, MaterialRequest, MaterialRequestItem,
-    StockPostingInstruction, StockPostingLineItem,
+    MaterialRequest, MaterialRequestItem, StockEntry, StockEntryItem, StockPostingInstruction,
+    StockPostingLineItem,
 };
 use crate::repositories::StockDocumentRepository;
 use crate::stock_posting_engine::StockPostingEngine;
@@ -75,11 +75,17 @@ impl StockDocumentService {
         req: CreateStockEntryRequest,
         created_by: Option<Uuid>,
     ) -> DomainResult<(StockEntry, Vec<StockEntryItem>)> {
-        let mut tx = self.repository.pool().begin().await
+        let mut tx = self
+            .repository
+            .pool()
+            .begin()
+            .await
             .map_err(|e| DomainError::Database(e.to_string()))?;
 
         let entry_id = Uuid::new_v4();
-        let posting_time = req.posting_time.unwrap_or_else(|| chrono::Utc::now().time());
+        let posting_time = req
+            .posting_time
+            .unwrap_or_else(|| chrono::Utc::now().time());
 
         let entry = StockEntry {
             id: entry_id,
@@ -99,7 +105,10 @@ impl StockDocumentService {
             updated_by: None,
         };
 
-        let saved_entry = self.repository.create_stock_entry(&mut tx, &entry).await
+        let saved_entry = self
+            .repository
+            .create_stock_entry(&mut tx, &entry)
+            .await
             .map_err(|e| DomainError::Database(e.to_string()))?;
 
         let mut saved_items = Vec::new();
@@ -122,30 +131,45 @@ impl StockDocumentService {
                 target_bin_id: item_req.target_bin_id,
             };
 
-            let saved_item = self.repository.create_stock_entry_item(&mut tx, &item).await
+            let saved_item = self
+                .repository
+                .create_stock_entry_item(&mut tx, &item)
+                .await
                 .map_err(|e| DomainError::Database(e.to_string()))?;
             saved_items.push(saved_item);
         }
 
-        tx.commit().await
+        tx.commit()
+            .await
             .map_err(|e| DomainError::Database(e.to_string()))?;
 
         Ok((saved_entry, saved_items))
     }
 
-    pub async fn get_stock_entry(&self, id: Uuid) -> DomainResult<(StockEntry, Vec<StockEntryItem>)> {
-        let entry = self.repository.get_stock_entry(id).await
+    pub async fn get_stock_entry(
+        &self,
+        id: Uuid,
+    ) -> DomainResult<(StockEntry, Vec<StockEntryItem>)> {
+        let entry = self
+            .repository
+            .get_stock_entry(id)
+            .await
             .map_err(|e| DomainError::Database(e.to_string()))?
             .ok_or_else(|| DomainError::not_found("StockEntry", &id.to_string()))?;
 
-        let items = self.repository.get_stock_entry_items(id).await
+        let items = self
+            .repository
+            .get_stock_entry_items(id)
+            .await
             .map_err(|e| DomainError::Database(e.to_string()))?;
 
         Ok((entry, items))
     }
 
     pub async fn list_stock_entries(&self, company_id: Uuid) -> DomainResult<Vec<StockEntry>> {
-        self.repository.list_stock_entries(company_id).await
+        self.repository
+            .list_stock_entries(company_id)
+            .await
             .map_err(|e| DomainError::Database(e.to_string()))
     }
 
@@ -154,10 +178,17 @@ impl StockDocumentService {
         id: Uuid,
         updated_by: Option<Uuid>,
     ) -> DomainResult<(StockEntry, Vec<StockEntryItem>)> {
-        let mut tx = self.repository.pool().begin().await
+        let mut tx = self
+            .repository
+            .pool()
+            .begin()
+            .await
             .map_err(|e| DomainError::Database(e.to_string()))?;
 
-        let entry = self.repository.get_stock_entry(id).await
+        let entry = self
+            .repository
+            .get_stock_entry(id)
+            .await
             .map_err(|e| DomainError::Database(e.to_string()))?
             .ok_or_else(|| DomainError::not_found("StockEntry", &id.to_string()))?;
 
@@ -168,7 +199,10 @@ impl StockDocumentService {
             ));
         }
 
-        let items = self.repository.get_stock_entry_items(id).await
+        let items = self
+            .repository
+            .get_stock_entry_items(id)
+            .await
             .map_err(|e| DomainError::Database(e.to_string()))?;
 
         if items.is_empty() {
@@ -184,7 +218,10 @@ impl StockDocumentService {
             match entry.stock_entry_type.as_str() {
                 "MATERIAL_RECEIPT" => {
                     let target_wh = item.target_warehouse_id.ok_or_else(|| {
-                        DomainError::business_rule("MissingTargetWarehouse", "Material Receipt requires target warehouse")
+                        DomainError::business_rule(
+                            "MissingTargetWarehouse",
+                            "Material Receipt requires target warehouse",
+                        )
                     })?;
                     posting_lines.push(StockPostingLineItem {
                         warehouse_id: target_wh,
@@ -200,7 +237,10 @@ impl StockDocumentService {
                 }
                 "MATERIAL_ISSUE" => {
                     let source_wh = item.source_warehouse_id.ok_or_else(|| {
-                        DomainError::business_rule("MissingSourceWarehouse", "Material Issue requires source warehouse")
+                        DomainError::business_rule(
+                            "MissingSourceWarehouse",
+                            "Material Issue requires source warehouse",
+                        )
                     })?;
                     posting_lines.push(StockPostingLineItem {
                         warehouse_id: source_wh,
@@ -216,10 +256,16 @@ impl StockDocumentService {
                 }
                 "MATERIAL_TRANSFER" | "REPACK" => {
                     let source_wh = item.source_warehouse_id.ok_or_else(|| {
-                        DomainError::business_rule("MissingSourceWarehouse", "Stock movement requires source warehouse")
+                        DomainError::business_rule(
+                            "MissingSourceWarehouse",
+                            "Stock movement requires source warehouse",
+                        )
                     })?;
                     let target_wh = item.target_warehouse_id.ok_or_else(|| {
-                        DomainError::business_rule("MissingTargetWarehouse", "Stock movement requires target warehouse")
+                        DomainError::business_rule(
+                            "MissingTargetWarehouse",
+                            "Stock movement requires target warehouse",
+                        )
                     })?;
 
                     // Outbound first
@@ -268,13 +314,19 @@ impl StockDocumentService {
         };
 
         // Post stock ledger and update bins
-        self.stock_engine.post_in_uow(&mut tx, &posting_instruction).await?;
+        self.stock_engine
+            .post_in_uow(&mut tx, &posting_instruction)
+            .await?;
 
         // Update status to SUBMITTED
-        let updated_entry = self.repository.update_stock_entry_status(&mut tx, id, "SUBMITTED", updated_by).await
+        let updated_entry = self
+            .repository
+            .update_stock_entry_status(&mut tx, id, "SUBMITTED", updated_by)
+            .await
             .map_err(|e| DomainError::Database(e.to_string()))?;
 
-        tx.commit().await
+        tx.commit()
+            .await
             .map_err(|e| DomainError::Database(e.to_string()))?;
 
         Ok((updated_entry, items))
@@ -287,7 +339,11 @@ impl StockDocumentService {
         req: CreateMaterialRequest,
         created_by: Option<Uuid>,
     ) -> DomainResult<(MaterialRequest, Vec<MaterialRequestItem>)> {
-        let mut tx = self.repository.pool().begin().await
+        let mut tx = self
+            .repository
+            .pool()
+            .begin()
+            .await
             .map_err(|e| DomainError::Database(e.to_string()))?;
 
         let req_id = Uuid::new_v4();
@@ -307,7 +363,10 @@ impl StockDocumentService {
             updated_by: None,
         };
 
-        let saved_req = self.repository.create_material_request(&mut tx, &material_req).await
+        let saved_req = self
+            .repository
+            .create_material_request(&mut tx, &material_req)
+            .await
             .map_err(|e| DomainError::Database(e.to_string()))?;
 
         let mut saved_items = Vec::new();
@@ -324,30 +383,48 @@ impl StockDocumentService {
                 created_at: chrono::Utc::now(),
             };
 
-            let saved_item = self.repository.create_material_request_item(&mut tx, &item).await
+            let saved_item = self
+                .repository
+                .create_material_request_item(&mut tx, &item)
+                .await
                 .map_err(|e| DomainError::Database(e.to_string()))?;
             saved_items.push(saved_item);
         }
 
-        tx.commit().await
+        tx.commit()
+            .await
             .map_err(|e| DomainError::Database(e.to_string()))?;
 
         Ok((saved_req, saved_items))
     }
 
-    pub async fn get_material_request(&self, id: Uuid) -> DomainResult<(MaterialRequest, Vec<MaterialRequestItem>)> {
-        let req = self.repository.get_material_request(id).await
+    pub async fn get_material_request(
+        &self,
+        id: Uuid,
+    ) -> DomainResult<(MaterialRequest, Vec<MaterialRequestItem>)> {
+        let req = self
+            .repository
+            .get_material_request(id)
+            .await
             .map_err(|e| DomainError::Database(e.to_string()))?
             .ok_or_else(|| DomainError::not_found("MaterialRequest", &id.to_string()))?;
 
-        let items = self.repository.get_material_request_items(id).await
+        let items = self
+            .repository
+            .get_material_request_items(id)
+            .await
             .map_err(|e| DomainError::Database(e.to_string()))?;
 
         Ok((req, items))
     }
 
-    pub async fn list_material_requests(&self, company_id: Uuid) -> DomainResult<Vec<MaterialRequest>> {
-        self.repository.list_material_requests(company_id).await
+    pub async fn list_material_requests(
+        &self,
+        company_id: Uuid,
+    ) -> DomainResult<Vec<MaterialRequest>> {
+        self.repository
+            .list_material_requests(company_id)
+            .await
             .map_err(|e| DomainError::Database(e.to_string()))
     }
 
@@ -356,10 +433,17 @@ impl StockDocumentService {
         id: Uuid,
         updated_by: Option<Uuid>,
     ) -> DomainResult<MaterialRequest> {
-        let mut tx = self.repository.pool().begin().await
+        let mut tx = self
+            .repository
+            .pool()
+            .begin()
+            .await
             .map_err(|e| DomainError::Database(e.to_string()))?;
 
-        let req = self.repository.get_material_request(id).await
+        let req = self
+            .repository
+            .get_material_request(id)
+            .await
             .map_err(|e| DomainError::Database(e.to_string()))?
             .ok_or_else(|| DomainError::not_found("MaterialRequest", &id.to_string()))?;
 
@@ -370,10 +454,14 @@ impl StockDocumentService {
             ));
         }
 
-        let updated_req = self.repository.update_material_request_status(&mut tx, id, "APPROVED", updated_by).await
+        let updated_req = self
+            .repository
+            .update_material_request_status(&mut tx, id, "APPROVED", updated_by)
+            .await
             .map_err(|e| DomainError::Database(e.to_string()))?;
 
-        tx.commit().await
+        tx.commit()
+            .await
             .map_err(|e| DomainError::Database(e.to_string()))?;
 
         Ok(updated_req)
@@ -384,12 +472,20 @@ impl StockDocumentService {
         id: Uuid,
         updated_by: Option<Uuid>,
     ) -> DomainResult<()> {
-        let mut tx = self.repository.pool().begin().await
+        let mut tx = self
+            .repository
+            .pool()
+            .begin()
+            .await
             .map_err(|e| DomainError::Database(e.to_string()))?;
 
-        let finance_repo = management_system_finance::repositories::FinanceRepository::new(self.repository.pool().clone());
-        
-        let receipt = finance_repo.get_purchase_receipt(id).await?
+        let finance_repo = management_system_finance::repositories::FinanceRepository::new(
+            self.repository.pool().clone(),
+        );
+
+        let receipt = finance_repo
+            .get_purchase_receipt(id)
+            .await?
             .ok_or_else(|| DomainError::not_found("PurchaseReceipt", &id.to_string()))?;
 
         if receipt.status != "draft" {
@@ -434,15 +530,14 @@ impl StockDocumentService {
 
         self.stock_engine.post_in_uow(&mut tx, &instruction).await?;
 
-        sqlx::query(
-            "UPDATE purchase_receipts SET status = 'SUBMITTED' WHERE id = $1"
-        )
-        .bind(receipt.id)
-        .execute(&mut *tx)
-        .await
-        .map_err(|e| DomainError::Database(e.to_string()))?;
+        sqlx::query("UPDATE purchase_receipts SET status = 'SUBMITTED' WHERE id = $1")
+            .bind(receipt.id)
+            .execute(&mut *tx)
+            .await
+            .map_err(|e| DomainError::Database(e.to_string()))?;
 
-        tx.commit().await
+        tx.commit()
+            .await
             .map_err(|e| DomainError::Database(e.to_string()))?;
 
         Ok(())
@@ -453,12 +548,20 @@ impl StockDocumentService {
         id: Uuid,
         updated_by: Option<Uuid>,
     ) -> DomainResult<()> {
-        let mut tx = self.repository.pool().begin().await
+        let mut tx = self
+            .repository
+            .pool()
+            .begin()
+            .await
             .map_err(|e| DomainError::Database(e.to_string()))?;
 
-        let finance_repo = management_system_finance::repositories::FinanceRepository::new(self.repository.pool().clone());
-        
-        let shipment = finance_repo.get_sales_shipment(id).await?
+        let finance_repo = management_system_finance::repositories::FinanceRepository::new(
+            self.repository.pool().clone(),
+        );
+
+        let shipment = finance_repo
+            .get_sales_shipment(id)
+            .await?
             .ok_or_else(|| DomainError::not_found("SalesShipment", &id.to_string()))?;
 
         if shipment.status != "pending" {
@@ -469,7 +572,10 @@ impl StockDocumentService {
         }
 
         let warehouse_id = shipment.warehouse_id.ok_or_else(|| {
-            DomainError::business_rule("MissingWarehouse", "Sales shipment requires a warehouse to ship from")
+            DomainError::business_rule(
+                "MissingWarehouse",
+                "Sales shipment requires a warehouse to ship from",
+            )
         })?;
 
         let items = finance_repo.get_sales_shipment_items(id).await?;
@@ -483,14 +589,17 @@ impl StockDocumentService {
         let mut posting_lines = Vec::new();
         for item in &items {
             let item_id = item.item_id.ok_or_else(|| {
-                DomainError::business_rule("MissingItemId", "Each shipment item must have an item_id selected")
+                DomainError::business_rule(
+                    "MissingItemId",
+                    "Each shipment item must have an item_id selected",
+                )
             })?;
 
             // Quality Inspection Check: Block if status is QUALITY_HOLD or REJECTED
             let latest_quality_status: Option<String> = sqlx::query_scalar(
                 "SELECT status FROM quality_inspections 
                  WHERE item_id = $1 
-                 ORDER BY created_at DESC LIMIT 1"
+                 ORDER BY created_at DESC LIMIT 1",
             )
             .bind(item_id)
             .fetch_optional(&mut *tx)
@@ -499,11 +608,11 @@ impl StockDocumentService {
 
             if let Some(status) = latest_quality_status {
                 if status == "QUALITY_HOLD" || status == "REJECTED" {
-                    let msg = format!("Item cannot be shipped because its quality inspection status is {}", status);
-                    return Err(DomainError::business_rule(
-                        "QualityInspectionHold",
-                        &msg
-                    ));
+                    let msg = format!(
+                        "Item cannot be shipped because its quality inspection status is {}",
+                        status
+                    );
+                    return Err(DomainError::business_rule("QualityInspectionHold", &msg));
                 }
             }
 
@@ -520,13 +629,12 @@ impl StockDocumentService {
             });
         }
 
-        let company_id: Uuid = sqlx::query_scalar(
-            "SELECT company_id FROM sales_orders WHERE id = $1"
-        )
-        .bind(shipment.sales_order_id)
-        .fetch_one(&mut *tx)
-        .await
-        .map_err(|e| DomainError::Database(e.to_string()))?;
+        let company_id: Uuid =
+            sqlx::query_scalar("SELECT company_id FROM sales_orders WHERE id = $1")
+                .bind(shipment.sales_order_id)
+                .fetch_one(&mut *tx)
+                .await
+                .map_err(|e| DomainError::Database(e.to_string()))?;
 
         let instruction = StockPostingInstruction {
             company_id,
@@ -541,14 +649,15 @@ impl StockDocumentService {
         self.stock_engine.post_in_uow(&mut tx, &instruction).await?;
 
         sqlx::query(
-            "UPDATE sales_shipments SET status = 'SUBMITTED', updated_at = NOW() WHERE id = $1"
+            "UPDATE sales_shipments SET status = 'SUBMITTED', updated_at = NOW() WHERE id = $1",
         )
         .bind(shipment.id)
         .execute(&mut *tx)
         .await
         .map_err(|e| DomainError::Database(e.to_string()))?;
 
-        tx.commit().await
+        tx.commit()
+            .await
             .map_err(|e| DomainError::Database(e.to_string()))?;
 
         Ok(())

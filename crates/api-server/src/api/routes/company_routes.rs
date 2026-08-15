@@ -1,8 +1,8 @@
 //! Company Routes - ERPNext/Frappe Framework Company Module
 
-use axum::{routing::get, Router};
 use crate::api::handlers::company_handler;
 use crate::api::server::AppState;
+use axum::{routing::get, Router};
 
 pub fn company_routes() -> Router<AppState> {
     Router::new()

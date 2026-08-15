@@ -7,8 +7,8 @@ use management_system_core::application::dto::ApiResponse;
 use management_system_core::domain::entities::UserClaims as Claims;
 use management_system_core::shared::errors::AppError;
 use management_system_inventory::{
-    CreateStockEntryRequest, CreateMaterialRequest,
-    StockEntry, StockEntryItem, MaterialRequest, MaterialRequestItem,
+    CreateMaterialRequest, CreateStockEntryRequest, MaterialRequest, MaterialRequestItem,
+    StockEntry, StockEntryItem,
 };
 use uuid::Uuid;
 
@@ -38,7 +38,10 @@ pub async fn list_stock_entries(
     State(state): State<AppState>,
     Path(company_id): Path<Uuid>,
 ) -> Result<Json<ApiResponse<Vec<StockEntry>>>, AppError> {
-    let entries = state.stock_document_service.list_stock_entries(company_id).await?;
+    let entries = state
+        .stock_document_service
+        .list_stock_entries(company_id)
+        .await?;
     Ok(Json(ApiResponse::success(entries)))
 }
 
@@ -72,7 +75,10 @@ pub async fn get_material_request(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Result<Json<ApiResponse<(MaterialRequest, Vec<MaterialRequestItem>)>>, AppError> {
-    let result = state.stock_document_service.get_material_request(id).await?;
+    let result = state
+        .stock_document_service
+        .get_material_request(id)
+        .await?;
     Ok(Json(ApiResponse::success(result)))
 }
 
@@ -80,7 +86,10 @@ pub async fn list_material_requests(
     State(state): State<AppState>,
     Path(company_id): Path<Uuid>,
 ) -> Result<Json<ApiResponse<Vec<MaterialRequest>>>, AppError> {
-    let requests = state.stock_document_service.list_material_requests(company_id).await?;
+    let requests = state
+        .stock_document_service
+        .list_material_requests(company_id)
+        .await?;
     Ok(Json(ApiResponse::success(requests)))
 }
 

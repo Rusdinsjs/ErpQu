@@ -101,7 +101,7 @@ pub async fn get_docperms(
             JOIN roles r ON r.id = dp.role_id
             WHERE dp.doctype_id = $1
             ORDER BY dp.permlevel, r.name
-            "#
+            "#,
         )
         .bind(dt_id)
         .fetch_all(&state.pool)
@@ -120,7 +120,7 @@ pub async fn get_docperms(
             JOIN doctypes dt ON dt.id = dp.doctype_id
             JOIN roles r ON r.id = dp.role_id
             ORDER BY dt.name, dp.permlevel, r.name
-            "#
+            "#,
         )
         .fetch_all(&state.pool)
         .await
@@ -161,7 +161,7 @@ pub async fn save_docperm(
             if_owner = EXCLUDED.if_owner,
             updated_at = NOW()
         RETURNING *
-        "#
+        "#,
     )
     .bind(payload.doctype_id)
     .bind(payload.role_id)
@@ -227,7 +227,7 @@ pub async fn create_user_permission(
         INSERT INTO user_permissions (user_id, allow_doctype, for_value, is_default)
         VALUES ($1, $2, $3, $4)
         RETURNING *
-        "#
+        "#,
     )
     .bind(payload.user_id)
     .bind(payload.allow_doctype)

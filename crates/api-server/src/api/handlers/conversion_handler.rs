@@ -6,9 +6,9 @@ use axum::{
     Extension, Json,
 };
 use management_system_core::application::dto::ApiResponse;
-use management_system_inventory::{CreateConversionRequest, ExecuteConversionRequest};
 use management_system_core::domain::entities::user::UserClaims;
 use management_system_core::shared::errors::AppError;
+use management_system_inventory::{CreateConversionRequest, ExecuteConversionRequest};
 use uuid::Uuid;
 
 /// Create a conversion request
@@ -42,9 +42,7 @@ pub async fn create_conversion_request(
 }
 
 /// Get pending conversion requests
-pub async fn get_pending_conversions(
-    State(state): State<AppState>,
-) -> Result<Response, AppError> {
+pub async fn get_pending_conversions(State(state): State<AppState>) -> Result<Response, AppError> {
     let conversions = state.conversion_service.get_pending_requests().await?;
 
     Ok((StatusCode::OK, Json(ApiResponse::success(conversions))).into_response())

@@ -1,7 +1,7 @@
 //! Finance & Accounting Router Module
 
 use axum::{
-    routing::{get, post, put, delete},
+    routing::{delete, get, post, put},
     Router,
 };
 
@@ -15,14 +15,8 @@ pub fn finance_routes() -> Router<AppState> {
             "/accounts",
             get(finance_handler::list_accounts).post(finance_handler::create_account),
         )
-        .route(
-            "/accounts/tree",
-            get(finance_handler::list_accounts_tree),
-        )
-        .route(
-            "/accounts/:id",
-            put(finance_handler::update_account),
-        )
+        .route("/accounts/tree", get(finance_handler::list_accounts_tree))
+        .route("/accounts/:id", put(finance_handler::update_account))
         // Financial Reports
         .route(
             "/reports/ledger/:account_id",
@@ -45,10 +39,7 @@ pub fn finance_routes() -> Router<AppState> {
             "/journals",
             get(journal_handler::list_journals).post(journal_handler::create_journal),
         )
-        .route(
-            "/journals/:id",
-            get(journal_handler::get_journal_details),
-        )
+        .route("/journals/:id", get(journal_handler::get_journal_details))
         // Sales Invoices, Quotes, Orders, Shipments
         .route(
             "/sales/invoices",

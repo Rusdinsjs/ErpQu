@@ -89,7 +89,11 @@ impl MaintenanceTemplateRepository {
         Ok(result.rows_affected() > 0)
     }
 
-    pub async fn update_task_number(&self, task_id: Uuid, task_number: i32) -> Result<(), sqlx::Error> {
+    pub async fn update_task_number(
+        &self,
+        task_id: Uuid,
+        task_number: i32,
+    ) -> Result<(), sqlx::Error> {
         sqlx::query("UPDATE maintenance_template_tasks SET task_number = $2 WHERE id = $1")
             .bind(task_id)
             .bind(task_number)
@@ -98,7 +102,10 @@ impl MaintenanceTemplateRepository {
         Ok(())
     }
 
-    pub async fn get_versions(&self, template_id: Uuid) -> Result<Vec<MaintenanceTemplate>, sqlx::Error> {
+    pub async fn get_versions(
+        &self,
+        template_id: Uuid,
+    ) -> Result<Vec<MaintenanceTemplate>, sqlx::Error> {
         sqlx::query_as::<_, MaintenanceTemplate>(
             "SELECT * FROM maintenance_templates WHERE id = $1 ORDER BY version DESC",
         )

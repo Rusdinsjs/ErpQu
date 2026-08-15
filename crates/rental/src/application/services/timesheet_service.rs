@@ -7,16 +7,16 @@ use chrono::NaiveDate;
 use rust_decimal::Decimal;
 use uuid::Uuid;
 
-use management_system_ops::{CreateWorkOrderRequest, WorkOrderService};
+use crate::domain::entities::ClientContact;
+use crate::domain::entities::{Rental, RentalTimesheet};
+use crate::repositories::{RentalRepository, TimesheetRepository};
 use management_system_core::application::dto::{
     ClientApproveTimesheetRequest, CreateClientContactRequest, CreateTimesheetRequest,
     SubmitTimesheetRequest, TimesheetDetailResponse, TimesheetSummary, UpdateTimesheetRequest,
     VerifyTimesheetRequest,
 };
-use crate::domain::entities::ClientContact;
-use crate::domain::entities::{Rental, RentalTimesheet};
 use management_system_core::domain::errors::{DomainError, DomainResult};
-use crate::repositories::{RentalRepository, TimesheetRepository};
+use management_system_ops::{CreateWorkOrderRequest, WorkOrderService};
 
 #[derive(Clone)]
 pub struct TimesheetService {
@@ -140,7 +140,9 @@ impl TimesheetService {
                 let asset_id = if let Some(items) = &rental.items {
                     items
                         .iter()
-                        .find(|i: &&crate::domain::entities::RentalItem| i.id == request.rental_item_id)
+                        .find(|i: &&crate::domain::entities::RentalItem| {
+                            i.id == request.rental_item_id
+                        })
                         .map(|i| i.asset_id)
                 } else {
                     None

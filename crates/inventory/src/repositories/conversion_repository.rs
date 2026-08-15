@@ -166,7 +166,7 @@ impl ConversionRepository {
     // For counting pending reqs (for dashboards)
     pub async fn count_pending(&self) -> Result<i64, AppError> {
         let count: Option<i64> = sqlx::query_scalar(
-            r#"SELECT COUNT(*) FROM asset_conversions WHERE status = 'pending'"#
+            r#"SELECT COUNT(*) FROM asset_conversions WHERE status = 'pending'"#,
         )
         .fetch_one(&self.pool)
         .await

@@ -2,13 +2,13 @@
 
 use uuid::Uuid;
 
+use crate::domain::entities::{MaintenanceTeam, MaintenanceTeamDetail, MaintenanceTeamMember};
+use crate::repositories::MaintenanceTeamRepository;
 use management_system_core::application::dto::{
     CreateMaintenanceTeamRequest, CreateTeamMemberRequest, MaintenanceTeamQuery, PaginatedResponse,
     UpdateMaintenanceTeamRequest,
 };
 use management_system_core::domain::errors::{DomainError, DomainResult};
-use crate::domain::entities::{MaintenanceTeam, MaintenanceTeamDetail, MaintenanceTeamMember};
-use crate::repositories::MaintenanceTeamRepository;
 
 #[derive(Clone)]
 pub struct MaintenanceTeamService {
@@ -76,7 +76,10 @@ impl MaintenanceTeamService {
     }
 
     /// Create team with members
-    pub async fn create(&self, req: CreateMaintenanceTeamRequest) -> DomainResult<MaintenanceTeamDetail> {
+    pub async fn create(
+        &self,
+        req: CreateMaintenanceTeamRequest,
+    ) -> DomainResult<MaintenanceTeamDetail> {
         if req.team_name.trim().is_empty() {
             return Err(DomainError::ValidationError {
                 field: "team_name".to_string(),
@@ -163,7 +166,13 @@ impl MaintenanceTeamService {
                 if !m.member_name.trim().is_empty() {
                     let _ = self
                         .repo
-                        .add_member(id, m.user_id, m.employee_id, &m.member_name, &m.role_in_team)
+                        .add_member(
+                            id,
+                            m.user_id,
+                            m.employee_id,
+                            &m.member_name,
+                            &m.role_in_team,
+                        )
                         .await;
                 }
             }

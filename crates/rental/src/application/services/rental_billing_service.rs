@@ -7,11 +7,9 @@ use rust_decimal::Decimal;
 use uuid::Uuid;
 
 use crate::domain::entities::RentalBillingPeriod;
+use crate::repositories::{RentalBillingRepository, RentalRepository};
 use management_system_core::domain::errors::{DomainError, DomainResult};
 use management_system_core::infrastructure::bus::EventBus;
-use crate::repositories::{
-    RentalBillingRepository, RentalRepository,
-};
 
 #[derive(Clone)]
 pub struct RentalBillingService {

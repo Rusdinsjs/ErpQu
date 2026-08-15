@@ -10,9 +10,7 @@ use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 use uuid::Uuid;
 
-use management_system_assets::domain::asset_eam::{
-    AssetCustodyHistory, AssetDisposalRequest,
-};
+use management_system_assets::domain::asset_eam::{AssetCustodyHistory, AssetDisposalRequest};
 
 #[test]
 fn test_qast_003_depreciation_straight_line_math() {

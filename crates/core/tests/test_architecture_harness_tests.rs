@@ -61,7 +61,12 @@ fn tier_4_e2e_business_graph_traceability() {
     let sales_invoice_id = Uuid::new_v4();
     let payment_id = Uuid::new_v4();
 
-    let graph_linked = vec![sales_order_id, delivery_note_id, sales_invoice_id, payment_id];
+    let graph_linked = vec![
+        sales_order_id,
+        delivery_note_id,
+        sales_invoice_id,
+        payment_id,
+    ];
 
     assert_eq!(graph_linked.len(), 4);
     assert_ne!(graph_linked[0], graph_linked[3]);

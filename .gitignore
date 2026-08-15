@@ -1,24 +1,74 @@
+# Build artifacts & Cargo target
 /target
-# Log outputs & Database dumps
+Cargo.lock
+
+# Node / Frontend / Mobile artifacts
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+.expo/
+**/web-build/
+
+# Environment & Secrets (Fail-Closed)
+.env
+.env.*
+!.env.example
+*.env
+!*.env.example
+web-admin/.env
+web-admin/.env.*
+!web-admin/.env.example
+mobile/.env
+mobile/.env.*
+!mobile/.env.example
+
+# Logs & Debug outputs
 *.log
+**/*.log
+*output*.txt
+*results*.txt
+build_log.txt
+backend.err.log
+backend.out.log
 backend.log
-web-admin/frontend.log
+backend_backtrace.log
+backend_verify.log
+backend_fix_verify.log
+
+# Database dumps & Operational SQL
+*.dump
 *.sql.bak
 erpqu_backup*.sql
-clippy_output.txt
-web-admin/node_modules
-web-admin/dist
-.obsidian/
+/*.sql
+!migrations/*.sql
+
+# Auth, Token, & Request Debug Artifacts
+login_*.json
+categories_response.json
+
+# User Uploads & Media Storage
 uploads/
+uploads/**
 *.webp
 *.zip
+*.tar.gz
+roboto.zip
+
+# Patch, Temp, & Temporary text files
+*.patch
 *.tmp
+0_deploy.txt
+assets.txt
+check_output.txt
+=
+Untitled*.md
 
-# Environment & Secrets (QSEC-010)
-.env
-*.env
-!.env.example
-
-# Windows NTFS Zone Identifier
+# IDE & OS Metadata
+.obsidian/
+.idea/
+.vscode/
 *:Zone.Identifier
 *Zone.Identifier*
+.DS_Store
+Thumbs.db

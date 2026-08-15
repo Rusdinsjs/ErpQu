@@ -88,9 +88,9 @@ impl EmployeeRepository {
         .await
         .map_err(|e| AppError::Database(e.to_string()))?
         .ok_or_else(|| {
-            AppError::Domain(management_system_core::domain::errors::DomainError::not_found(
-                "Employee", id,
-            ))
+            AppError::Domain(
+                management_system_core::domain::errors::DomainError::not_found("Employee", id),
+            )
         })?;
 
         Ok(employee)

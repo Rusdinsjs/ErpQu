@@ -32,7 +32,6 @@ pub async fn list_salary_structures(
     Ok(Json(data))
 }
 
-
 pub async fn get_salary_component(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
@@ -45,8 +44,17 @@ pub async fn create_salary_component(
     State(state): State<AppState>,
     Json(payload): Json<management_system_hr::dto::CreateSalaryComponentRequest>,
 ) -> Result<(StatusCode, Json<ApiResponse<HrSalaryComponent>>), AppError> {
-    let data = state.hr_payroll_service.create_salary_component(payload).await?;
-    Ok((StatusCode::CREATED, Json(ApiResponse::success_with_message(data, "Komponen gaji berhasil ditambahkan"))))
+    let data = state
+        .hr_payroll_service
+        .create_salary_component(payload)
+        .await?;
+    Ok((
+        StatusCode::CREATED,
+        Json(ApiResponse::success_with_message(
+            data,
+            "Komponen gaji berhasil ditambahkan",
+        )),
+    ))
 }
 
 pub async fn update_salary_component(
@@ -54,8 +62,14 @@ pub async fn update_salary_component(
     Path(id): Path<Uuid>,
     Json(payload): Json<management_system_hr::dto::UpdateSalaryComponentRequest>,
 ) -> Result<Json<ApiResponse<HrSalaryComponent>>, AppError> {
-    let data = state.hr_payroll_service.update_salary_component(id, payload).await?;
-    Ok(Json(ApiResponse::success_with_message(data, "Komponen gaji berhasil diperbarui")))
+    let data = state
+        .hr_payroll_service
+        .update_salary_component(id, payload)
+        .await?;
+    Ok(Json(ApiResponse::success_with_message(
+        data,
+        "Komponen gaji berhasil diperbarui",
+    )))
 }
 
 pub async fn delete_salary_component(
@@ -63,7 +77,10 @@ pub async fn delete_salary_component(
     Path(id): Path<Uuid>,
 ) -> Result<Json<ApiResponse<()>>, AppError> {
     state.hr_payroll_service.delete_salary_component(id).await?;
-    Ok(Json(ApiResponse::success_with_message((), "Komponen gaji berhasil dihapus")))
+    Ok(Json(ApiResponse::success_with_message(
+        (),
+        "Komponen gaji berhasil dihapus",
+    )))
 }
 
 pub async fn get_salary_structure(
@@ -78,8 +95,17 @@ pub async fn create_salary_structure(
     State(state): State<AppState>,
     Json(payload): Json<management_system_hr::dto::CreateSalaryStructureRequest>,
 ) -> Result<(StatusCode, Json<ApiResponse<HrSalaryStructure>>), AppError> {
-    let data = state.hr_payroll_service.create_salary_structure(payload).await?;
-    Ok((StatusCode::CREATED, Json(ApiResponse::success_with_message(data, "Struktur gaji berhasil ditambahkan"))))
+    let data = state
+        .hr_payroll_service
+        .create_salary_structure(payload)
+        .await?;
+    Ok((
+        StatusCode::CREATED,
+        Json(ApiResponse::success_with_message(
+            data,
+            "Struktur gaji berhasil ditambahkan",
+        )),
+    ))
 }
 
 pub async fn update_salary_structure(
@@ -87,8 +113,14 @@ pub async fn update_salary_structure(
     Path(id): Path<Uuid>,
     Json(payload): Json<management_system_hr::dto::UpdateSalaryStructureRequest>,
 ) -> Result<Json<ApiResponse<HrSalaryStructure>>, AppError> {
-    let data = state.hr_payroll_service.update_salary_structure(id, payload).await?;
-    Ok(Json(ApiResponse::success_with_message(data, "Struktur gaji berhasil diperbarui")))
+    let data = state
+        .hr_payroll_service
+        .update_salary_structure(id, payload)
+        .await?;
+    Ok(Json(ApiResponse::success_with_message(
+        data,
+        "Struktur gaji berhasil diperbarui",
+    )))
 }
 
 pub async fn delete_salary_structure(
@@ -96,7 +128,10 @@ pub async fn delete_salary_structure(
     Path(id): Path<Uuid>,
 ) -> Result<Json<ApiResponse<()>>, AppError> {
     state.hr_payroll_service.delete_salary_structure(id).await?;
-    Ok(Json(ApiResponse::success_with_message((), "Struktur gaji berhasil dihapus")))
+    Ok(Json(ApiResponse::success_with_message(
+        (),
+        "Struktur gaji berhasil dihapus",
+    )))
 }
 
 // ---- SALARY ASSIGNMENTS ----
@@ -111,8 +146,17 @@ pub async fn create_salary_assignment(
     State(state): State<AppState>,
     Json(payload): Json<CreateSalaryAssignmentRequest>,
 ) -> Result<(StatusCode, Json<ApiResponse<HrSalaryAssignment>>), AppError> {
-    let data = state.hr_payroll_service.create_salary_assignment(payload).await?;
-    Ok((StatusCode::CREATED, Json(ApiResponse::success_with_message(data, "Penetapan gaji karyawan berhasil disimpan"))))
+    let data = state
+        .hr_payroll_service
+        .create_salary_assignment(payload)
+        .await?;
+    Ok((
+        StatusCode::CREATED,
+        Json(ApiResponse::success_with_message(
+            data,
+            "Penetapan gaji karyawan berhasil disimpan",
+        )),
+    ))
 }
 
 // ---- PAYROLL ENTRIES (BATCH RUN) ----
@@ -128,8 +172,17 @@ pub async fn run_payroll_entry(
     Extension(claims): Extension<UserClaims>,
     Json(payload): Json<RunPayrollEntryRequest>,
 ) -> Result<(StatusCode, Json<ApiResponse<HrPayrollEntry>>), AppError> {
-    let data = state.hr_payroll_service.run_payroll(payload, Some(claims.user_id())).await?;
-    Ok((StatusCode::CREATED, Json(ApiResponse::success_with_message(data, "Proses kalkulasi penggajian bulanan selesai"))))
+    let data = state
+        .hr_payroll_service
+        .run_payroll(payload, Some(claims.user_id()))
+        .await?;
+    Ok((
+        StatusCode::CREATED,
+        Json(ApiResponse::success_with_message(
+            data,
+            "Proses kalkulasi penggajian bulanan selesai",
+        )),
+    ))
 }
 
 // ---- SALARY SLIPS ----

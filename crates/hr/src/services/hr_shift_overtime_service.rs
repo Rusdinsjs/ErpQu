@@ -1,10 +1,10 @@
-use crate::dto::*;
 use crate::domain::entities::{
     HrAttendanceDetail, HrAttendanceRequest, HrOvertimeRequest, HrShiftAssignment, HrShiftType,
 };
+use crate::dto::*;
 use crate::repositories::{EmployeeRepository, HrShiftOvertimeRepository};
-use management_system_core::shared::errors::AppError;
 use chrono::NaiveDate;
+use management_system_core::shared::errors::AppError;
 use rust_decimal::Decimal;
 use uuid::Uuid;
 
@@ -16,7 +16,10 @@ pub struct HrShiftOvertimeService {
 
 impl HrShiftOvertimeService {
     pub fn new(repo: HrShiftOvertimeRepository, employee_repo: EmployeeRepository) -> Self {
-        Self { repo, employee_repo }
+        Self {
+            repo,
+            employee_repo,
+        }
     }
 
     // ---- SHIFT TYPES ----
@@ -28,11 +31,18 @@ impl HrShiftOvertimeService {
         self.repo.get_shift_type(id).await
     }
 
-    pub async fn create_shift_type(&self, req: CreateShiftTypeRequest) -> Result<HrShiftType, AppError> {
+    pub async fn create_shift_type(
+        &self,
+        req: CreateShiftTypeRequest,
+    ) -> Result<HrShiftType, AppError> {
         self.repo.create_shift_type(req).await
     }
 
-    pub async fn update_shift_type(&self, id: Uuid, req: UpdateShiftTypeRequest) -> Result<HrShiftType, AppError> {
+    pub async fn update_shift_type(
+        &self,
+        id: Uuid,
+        req: UpdateShiftTypeRequest,
+    ) -> Result<HrShiftType, AppError> {
         self.repo.update_shift_type(id, req).await
     }
 
@@ -41,15 +51,24 @@ impl HrShiftOvertimeService {
     }
 
     // ---- SHIFT ASSIGNMENTS ----
-    pub async fn list_shift_assignments(&self, employee_id: Option<Uuid>) -> Result<Vec<HrShiftAssignment>, AppError> {
+    pub async fn list_shift_assignments(
+        &self,
+        employee_id: Option<Uuid>,
+    ) -> Result<Vec<HrShiftAssignment>, AppError> {
         self.repo.list_shift_assignments(employee_id).await
     }
 
-    pub async fn create_shift_assignment(&self, req: CreateShiftAssignmentRequest) -> Result<HrShiftAssignment, AppError> {
+    pub async fn create_shift_assignment(
+        &self,
+        req: CreateShiftAssignmentRequest,
+    ) -> Result<HrShiftAssignment, AppError> {
         self.repo.create_shift_assignment(req).await
     }
 
-    pub async fn bulk_assign_shifts(&self, req: BulkShiftAssignmentRequest) -> Result<Vec<HrShiftAssignment>, AppError> {
+    pub async fn bulk_assign_shifts(
+        &self,
+        req: BulkShiftAssignmentRequest,
+    ) -> Result<Vec<HrShiftAssignment>, AppError> {
         let mut results = Vec::new();
         for emp_id in req.employee_ids {
             let item = self
@@ -72,11 +91,17 @@ impl HrShiftOvertimeService {
     }
 
     // ---- ATTENDANCE REQUESTS ----
-    pub async fn list_attendance_requests(&self, params: AttendanceRequestQueryParams) -> Result<Vec<HrAttendanceRequest>, AppError> {
+    pub async fn list_attendance_requests(
+        &self,
+        params: AttendanceRequestQueryParams,
+    ) -> Result<Vec<HrAttendanceRequest>, AppError> {
         self.repo.list_attendance_requests(params).await
     }
 
-    pub async fn create_attendance_request(&self, req: CreateAttendanceRequestPayload) -> Result<HrAttendanceRequest, AppError> {
+    pub async fn create_attendance_request(
+        &self,
+        req: CreateAttendanceRequestPayload,
+    ) -> Result<HrAttendanceRequest, AppError> {
         self.repo.create_attendance_request(req).await
     }
 
@@ -92,11 +117,17 @@ impl HrShiftOvertimeService {
     }
 
     // ---- OVERTIME ENGINE (Depnaker Standard) ----
-    pub async fn list_overtime_requests(&self, params: OvertimeQueryParams) -> Result<Vec<HrOvertimeRequest>, AppError> {
+    pub async fn list_overtime_requests(
+        &self,
+        params: OvertimeQueryParams,
+    ) -> Result<Vec<HrOvertimeRequest>, AppError> {
         self.repo.list_overtime_requests(params).await
     }
 
-    pub async fn create_overtime_request(&self, req: CreateOvertimeRequestPayload) -> Result<HrOvertimeRequest, AppError> {
+    pub async fn create_overtime_request(
+        &self,
+        req: CreateOvertimeRequestPayload,
+    ) -> Result<HrOvertimeRequest, AppError> {
         self.repo.create_overtime_request(req).await
     }
 
@@ -180,7 +211,10 @@ impl HrShiftOvertimeService {
     }
 
     // ---- ATTENDANCE LOGS & RECAP ----
-    pub async fn list_attendance_details(&self, params: AttendanceLogQueryParams) -> Result<Vec<HrAttendanceDetail>, AppError> {
+    pub async fn list_attendance_details(
+        &self,
+        params: AttendanceLogQueryParams,
+    ) -> Result<Vec<HrAttendanceDetail>, AppError> {
         self.repo.list_attendance_details(params).await
     }
 
@@ -190,6 +224,8 @@ impl HrShiftOvertimeService {
         end_date: NaiveDate,
         department_id: Option<Uuid>,
     ) -> Result<Vec<EmployeeAttendanceRecap>, AppError> {
-        self.repo.get_attendance_recap(start_date, end_date, department_id).await
+        self.repo
+            .get_attendance_recap(start_date, end_date, department_id)
+            .await
     }
 }

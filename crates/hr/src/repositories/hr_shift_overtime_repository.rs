@@ -1,9 +1,9 @@
-use crate::dto::*;
 use crate::domain::entities::{
     HrAttendanceDetail, HrAttendanceRequest, HrOvertimeRequest, HrShiftAssignment, HrShiftType,
 };
-use management_system_core::shared::errors::AppError;
+use crate::dto::*;
 use chrono::{NaiveDate, Utc};
+use management_system_core::shared::errors::AppError;
 use rust_decimal::Decimal;
 use sqlx::PgPool;
 use uuid::Uuid;
@@ -37,10 +37,20 @@ impl HrShiftOvertimeRepository {
             .fetch_optional(&self.pool)
             .await
             .map_err(|e| AppError::Database(e.to_string()))?
-            .ok_or_else(|| AppError::Domain(management_system_core::domain::errors::DomainError::not_found("HrShiftType", id)))
+            .ok_or_else(|| {
+                AppError::Domain(
+                    management_system_core::domain::errors::DomainError::not_found(
+                        "HrShiftType",
+                        id,
+                    ),
+                )
+            })
     }
 
-    pub async fn create_shift_type(&self, req: CreateShiftTypeRequest) -> Result<HrShiftType, AppError> {
+    pub async fn create_shift_type(
+        &self,
+        req: CreateShiftTypeRequest,
+    ) -> Result<HrShiftType, AppError> {
         sqlx::query_as::<_, HrShiftType>(
             "INSERT INTO hr_shift_types (
                 id, name, code, start_time, end_time, late_tolerance_minutes,
@@ -66,7 +76,11 @@ impl HrShiftOvertimeRepository {
         .map_err(|e| AppError::Database(e.to_string()))
     }
 
-    pub async fn update_shift_type(&self, id: Uuid, req: UpdateShiftTypeRequest) -> Result<HrShiftType, AppError> {
+    pub async fn update_shift_type(
+        &self,
+        id: Uuid,
+        req: UpdateShiftTypeRequest,
+    ) -> Result<HrShiftType, AppError> {
         let ex = self.get_shift_type(id).await?;
         sqlx::query_as::<_, HrShiftType>(
             "UPDATE hr_shift_types SET
@@ -82,8 +96,14 @@ impl HrShiftOvertimeRepository {
         .bind(req.code.or(ex.code))
         .bind(req.start_time.unwrap_or(ex.start_time))
         .bind(req.end_time.unwrap_or(ex.end_time))
-        .bind(req.late_tolerance_minutes.unwrap_or(ex.late_tolerance_minutes))
-        .bind(req.early_exit_tolerance_minutes.unwrap_or(ex.early_exit_tolerance_minutes))
+        .bind(
+            req.late_tolerance_minutes
+                .unwrap_or(ex.late_tolerance_minutes),
+        )
+        .bind(
+            req.early_exit_tolerance_minutes
+                .unwrap_or(ex.early_exit_tolerance_minutes),
+        )
         .bind(req.break_start_time.or(ex.break_start_time))
         .bind(req.break_end_time.or(ex.break_end_time))
         .bind(req.is_night_shift.unwrap_or(ex.is_night_shift))
@@ -96,11 +116,13 @@ impl HrShiftOvertimeRepository {
     }
 
     pub async fn delete_shift_type(&self, id: Uuid) -> Result<(), AppError> {
-        sqlx::query("UPDATE hr_shift_types SET is_active = FALSE, updated_at = NOW() WHERE id = $1")
-            .bind(id)
-            .execute(&self.pool)
-            .await
-            .map_err(|e| AppError::Database(e.to_string()))?;
+        sqlx::query(
+            "UPDATE hr_shift_types SET is_active = FALSE, updated_at = NOW() WHERE id = $1",
+        )
+        .bind(id)
+        .execute(&self.pool)
+        .await
+        .map_err(|e| AppError::Database(e.to_string()))?;
         Ok(())
     }
 
@@ -108,7 +130,10 @@ impl HrShiftOvertimeRepository {
     // SHIFT ASSIGNMENTS
     // ============================================================
 
-    pub async fn list_shift_assignments(&self, employee_id: Option<Uuid>) -> Result<Vec<HrShiftAssignment>, AppError> {
+    pub async fn list_shift_assignments(
+        &self,
+        employee_id: Option<Uuid>,
+    ) -> Result<Vec<HrShiftAssignment>, AppError> {
         sqlx::query_as::<_, HrShiftAssignment>(
             "SELECT sa.*,
                 e.name as employee_name, e.nik as employee_nik,
@@ -128,7 +153,10 @@ impl HrShiftOvertimeRepository {
         .map_err(|e| AppError::Database(e.to_string()))
     }
 
-    pub async fn create_shift_assignment(&self, req: CreateShiftAssignmentRequest) -> Result<HrShiftAssignment, AppError> {
+    pub async fn create_shift_assignment(
+        &self,
+        req: CreateShiftAssignmentRequest,
+    ) -> Result<HrShiftAssignment, AppError> {
         sqlx::query_as::<_, HrShiftAssignment>(
             "INSERT INTO hr_shift_assignments (
                 id, employee_id, shift_type_id, start_date, end_date, notes
@@ -151,11 +179,13 @@ impl HrShiftOvertimeRepository {
     }
 
     pub async fn delete_shift_assignment(&self, id: Uuid) -> Result<(), AppError> {
-        sqlx::query("UPDATE hr_shift_assignments SET is_active = FALSE, updated_at = NOW() WHERE id = $1")
-            .bind(id)
-            .execute(&self.pool)
-            .await
-            .map_err(|e| AppError::Database(e.to_string()))?;
+        sqlx::query(
+            "UPDATE hr_shift_assignments SET is_active = FALSE, updated_at = NOW() WHERE id = $1",
+        )
+        .bind(id)
+        .execute(&self.pool)
+        .await
+        .map_err(|e| AppError::Database(e.to_string()))?;
         Ok(())
     }
 
@@ -163,7 +193,10 @@ impl HrShiftOvertimeRepository {
     // ATTENDANCE REQUESTS
     // ============================================================
 
-    pub async fn list_attendance_requests(&self, params: AttendanceRequestQueryParams) -> Result<Vec<HrAttendanceRequest>, AppError> {
+    pub async fn list_attendance_requests(
+        &self,
+        params: AttendanceRequestQueryParams,
+    ) -> Result<Vec<HrAttendanceRequest>, AppError> {
         sqlx::query_as::<_, HrAttendanceRequest>(
             "SELECT ar.*,
                 e.name as employee_name, e.nik as employee_nik,
@@ -186,7 +219,10 @@ impl HrShiftOvertimeRepository {
         .map_err(|e| AppError::Database(e.to_string()))
     }
 
-    pub async fn create_attendance_request(&self, req: CreateAttendanceRequestPayload) -> Result<HrAttendanceRequest, AppError> {
+    pub async fn create_attendance_request(
+        &self,
+        req: CreateAttendanceRequestPayload,
+    ) -> Result<HrAttendanceRequest, AppError> {
         sqlx::query_as::<_, HrAttendanceRequest>(
             "INSERT INTO hr_attendance_requests (
                 id, employee_id, request_type, attendance_date,
@@ -238,7 +274,10 @@ impl HrShiftOvertimeRepository {
     // OVERTIME REQUESTS
     // ============================================================
 
-    pub async fn list_overtime_requests(&self, params: OvertimeQueryParams) -> Result<Vec<HrOvertimeRequest>, AppError> {
+    pub async fn list_overtime_requests(
+        &self,
+        params: OvertimeQueryParams,
+    ) -> Result<Vec<HrOvertimeRequest>, AppError> {
         sqlx::query_as::<_, HrOvertimeRequest>(
             "SELECT ov.*,
                 e.name as employee_name, e.nik as employee_nik,
@@ -279,10 +318,20 @@ impl HrShiftOvertimeRepository {
         .fetch_optional(&self.pool)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?
-        .ok_or_else(|| AppError::Domain(management_system_core::domain::errors::DomainError::not_found("HrOvertimeRequest", id)))
+        .ok_or_else(|| {
+            AppError::Domain(
+                management_system_core::domain::errors::DomainError::not_found(
+                    "HrOvertimeRequest",
+                    id,
+                ),
+            )
+        })
     }
 
-    pub async fn create_overtime_request(&self, req: CreateOvertimeRequestPayload) -> Result<HrOvertimeRequest, AppError> {
+    pub async fn create_overtime_request(
+        &self,
+        req: CreateOvertimeRequestPayload,
+    ) -> Result<HrOvertimeRequest, AppError> {
         sqlx::query_as::<_, HrOvertimeRequest>(
             "INSERT INTO hr_overtime_requests (
                 id, employee_id, overtime_date, start_time, end_time,
@@ -345,7 +394,10 @@ impl HrShiftOvertimeRepository {
     // ATTENDANCE LOGS & RECAP
     // ============================================================
 
-    pub async fn list_attendance_details(&self, params: AttendanceLogQueryParams) -> Result<Vec<HrAttendanceDetail>, AppError> {
+    pub async fn list_attendance_details(
+        &self,
+        params: AttendanceLogQueryParams,
+    ) -> Result<Vec<HrAttendanceDetail>, AppError> {
         sqlx::query_as::<_, HrAttendanceDetail>(
             "SELECT ar.id, ar.employee_id, ar.check_in_time, ar.check_out_time,
                 ar.check_in_status, ar.check_out_status, ar.late_minutes,

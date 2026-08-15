@@ -1,10 +1,10 @@
+use crate::domain::entities::ContractTemplate;
+use crate::repositories::ContractTemplateRepository;
+use chrono::Utc;
 use management_system_core::application::dto::{
     ContractTemplateResponse, CreateContractTemplateRequest, UpdateContractTemplateRequest,
 };
-use crate::domain::entities::ContractTemplate;
 use management_system_core::domain::errors::{DomainError, DomainResult};
-use crate::repositories::ContractTemplateRepository;
-use chrono::Utc;
 use std::sync::Arc;
 use uuid::Uuid;
 

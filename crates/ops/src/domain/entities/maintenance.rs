@@ -139,9 +139,7 @@ impl MaintenanceSchedule {
         match self.interval_unit.as_str() {
             "days" => Some(base_date + chrono::Duration::days(self.interval_value as i64)),
             "weeks" => Some(base_date + chrono::Duration::weeks(self.interval_value as i64)),
-            "months" => {
-                Some(base_date + chrono::Duration::days((self.interval_value * 30) as i64))
-            }
+            "months" => Some(base_date + chrono::Duration::days((self.interval_value * 30) as i64)),
             "years" => Some(base_date + chrono::Duration::days((self.interval_value * 365) as i64)),
             _ => None,
         }

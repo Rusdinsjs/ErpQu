@@ -34,16 +34,22 @@ impl QualityRepository {
         .await
     }
 
-    pub async fn get_quality_inspection(&self, id: Uuid) -> Result<Option<QualityInspection>, sqlx::Error> {
+    pub async fn get_quality_inspection(
+        &self,
+        id: Uuid,
+    ) -> Result<Option<QualityInspection>, sqlx::Error> {
         sqlx::query_as::<_, QualityInspection>(
-            "SELECT * FROM public.quality_inspections WHERE id = $1"
+            "SELECT * FROM public.quality_inspections WHERE id = $1",
         )
         .bind(id)
         .fetch_optional(&self.pool)
         .await
     }
 
-    pub async fn list_quality_inspections(&self, company_id: Uuid) -> Result<Vec<QualityInspection>, sqlx::Error> {
+    pub async fn list_quality_inspections(
+        &self,
+        company_id: Uuid,
+    ) -> Result<Vec<QualityInspection>, sqlx::Error> {
         sqlx::query_as::<_, QualityInspection>(
             "SELECT * FROM public.quality_inspections WHERE company_id = $1 ORDER BY created_at DESC"
         )
@@ -58,7 +64,7 @@ impl QualityRepository {
         status: &str,
     ) -> Result<QualityInspection, sqlx::Error> {
         sqlx::query_as::<_, QualityInspection>(
-            "UPDATE public.quality_inspections SET status = $2 WHERE id = $1 RETURNING *"
+            "UPDATE public.quality_inspections SET status = $2 WHERE id = $1 RETURNING *",
         )
         .bind(id)
         .bind(status)
@@ -75,7 +81,7 @@ impl QualityRepository {
             sqlx::query_as::<_, QualityInspection>(
                 "SELECT * FROM public.quality_inspections 
                  WHERE item_id = $1 AND batch_no = $2 
-                 ORDER BY created_at DESC LIMIT 1"
+                 ORDER BY created_at DESC LIMIT 1",
             )
             .bind(item_id)
             .bind(batch)
@@ -85,7 +91,7 @@ impl QualityRepository {
             sqlx::query_as::<_, QualityInspection>(
                 "SELECT * FROM public.quality_inspections 
                  WHERE item_id = $1 AND batch_no IS NULL 
-                 ORDER BY created_at DESC LIMIT 1"
+                 ORDER BY created_at DESC LIMIT 1",
             )
             .bind(item_id)
             .fetch_optional(&self.pool)

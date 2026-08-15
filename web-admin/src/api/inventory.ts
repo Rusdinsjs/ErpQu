@@ -221,14 +221,6 @@ export const inventoryApi = {
         return response.data;
     },
 
-    listBinBalancesByItem: async (itemId?: string) => {
-        const response = await api.get('/inventory/stock-balance');
-        return response.data?.data || response.data || [];
-    },
-    listBinBalances: async (binId?: string) => {
-        const response = await api.get('/inventory/stock-balance');
-        return response.data?.data || response.data || [];
-    },
     listWarehouses: async () => {
         const response = await api.get('/inventory/warehouses');
         return response.data.data;

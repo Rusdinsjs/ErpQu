@@ -156,7 +156,10 @@ impl MaintenanceTeamRepository {
     }
 
     /// Find members by team ID
-    pub async fn find_members_by_team_id(&self, team_id: Uuid) -> Result<Vec<MaintenanceTeamMember>, sqlx::Error> {
+    pub async fn find_members_by_team_id(
+        &self,
+        team_id: Uuid,
+    ) -> Result<Vec<MaintenanceTeamMember>, sqlx::Error> {
         sqlx::query_as::<_, MaintenanceTeamMember>(
             r#"
             SELECT id, team_id, user_id, employee_id, member_name, role_in_team, is_active, created_at

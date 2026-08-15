@@ -39,7 +39,6 @@ impl HrPayrollRepository {
         .map_err(|e| AppError::Database(e.to_string()))
     }
 
-
     pub async fn get_salary_component(&self, id: Uuid) -> Result<HrSalaryComponent, AppError> {
         sqlx::query_as::<_, HrSalaryComponent>("SELECT * FROM hr_salary_components WHERE id = $1")
             .bind(id)
@@ -49,7 +48,10 @@ impl HrPayrollRepository {
             .ok_or_else(|| AppError::NotFound("Komponen gaji tidak ditemukan".into()))
     }
 
-    pub async fn create_salary_component(&self, req: crate::dto::CreateSalaryComponentRequest) -> Result<HrSalaryComponent, AppError> {
+    pub async fn create_salary_component(
+        &self,
+        req: crate::dto::CreateSalaryComponentRequest,
+    ) -> Result<HrSalaryComponent, AppError> {
         sqlx::query_as::<_, HrSalaryComponent>(
             r#"
             INSERT INTO hr_salary_components (id, name, code, description, type, is_taxable, depends_on_payment_days)
@@ -68,7 +70,11 @@ impl HrPayrollRepository {
         .map_err(|e| AppError::Database(e.to_string()))
     }
 
-    pub async fn update_salary_component(&self, id: Uuid, req: crate::dto::UpdateSalaryComponentRequest) -> Result<HrSalaryComponent, AppError> {
+    pub async fn update_salary_component(
+        &self,
+        id: Uuid,
+        req: crate::dto::UpdateSalaryComponentRequest,
+    ) -> Result<HrSalaryComponent, AppError> {
         sqlx::query_as::<_, HrSalaryComponent>(
             r#"
             UPDATE hr_salary_components
@@ -81,7 +87,7 @@ impl HrPayrollRepository {
                 updated_at = NOW()
             WHERE id = $1
             RETURNING *
-            "#
+            "#,
         )
         .bind(id)
         .bind(&req.name)
@@ -114,7 +120,10 @@ impl HrPayrollRepository {
             .ok_or_else(|| AppError::NotFound("Struktur gaji tidak ditemukan".into()))
     }
 
-    pub async fn create_salary_structure(&self, req: crate::dto::CreateSalaryStructureRequest) -> Result<HrSalaryStructure, AppError> {
+    pub async fn create_salary_structure(
+        &self,
+        req: crate::dto::CreateSalaryStructureRequest,
+    ) -> Result<HrSalaryStructure, AppError> {
         sqlx::query_as::<_, HrSalaryStructure>(
             r#"
             INSERT INTO hr_salary_structures (id, name, code, description, payroll_frequency, currency)
@@ -132,7 +141,11 @@ impl HrPayrollRepository {
         .map_err(|e| AppError::Database(e.to_string()))
     }
 
-    pub async fn update_salary_structure(&self, id: Uuid, req: crate::dto::UpdateSalaryStructureRequest) -> Result<HrSalaryStructure, AppError> {
+    pub async fn update_salary_structure(
+        &self,
+        id: Uuid,
+        req: crate::dto::UpdateSalaryStructureRequest,
+    ) -> Result<HrSalaryStructure, AppError> {
         sqlx::query_as::<_, HrSalaryStructure>(
             r#"
             UPDATE hr_salary_structures
@@ -144,7 +157,7 @@ impl HrPayrollRepository {
                 updated_at = NOW()
             WHERE id = $1
             RETURNING *
-            "#
+            "#,
         )
         .bind(id)
         .bind(&req.name)
@@ -185,7 +198,10 @@ impl HrPayrollRepository {
         .map_err(|e| AppError::Database(e.to_string()))
     }
 
-    pub async fn get_assignment_by_employee(&self, employee_id: Uuid) -> Result<Option<HrSalaryAssignment>, AppError> {
+    pub async fn get_assignment_by_employee(
+        &self,
+        employee_id: Uuid,
+    ) -> Result<Option<HrSalaryAssignment>, AppError> {
         sqlx::query_as::<_, HrSalaryAssignment>(
             r#"
             SELECT a.*, e.name as employee_name, e.nik as employee_nik,
@@ -204,7 +220,10 @@ impl HrPayrollRepository {
         .map_err(|e| AppError::Database(e.to_string()))
     }
 
-    pub async fn create_salary_assignment(&self, req: CreateSalaryAssignmentRequest) -> Result<HrSalaryAssignment, AppError> {
+    pub async fn create_salary_assignment(
+        &self,
+        req: CreateSalaryAssignmentRequest,
+    ) -> Result<HrSalaryAssignment, AppError> {
         sqlx::query_as::<_, HrSalaryAssignment>(
             r#"
             INSERT INTO hr_salary_assignments (
@@ -250,7 +269,11 @@ impl HrPayrollRepository {
         .map_err(|e| AppError::Database(e.to_string()))
     }
 
-    pub async fn create_payroll_entry(&self, req: RunPayrollEntryRequest, processed_by: Option<Uuid>) -> Result<HrPayrollEntry, AppError> {
+    pub async fn create_payroll_entry(
+        &self,
+        req: RunPayrollEntryRequest,
+        processed_by: Option<Uuid>,
+    ) -> Result<HrPayrollEntry, AppError> {
         sqlx::query_as::<_, HrPayrollEntry>(
             r#"
             INSERT INTO hr_payroll_entries (
@@ -298,7 +321,10 @@ impl HrPayrollRepository {
     }
 
     // ---- SALARY SLIPS ----
-    pub async fn list_salary_slips(&self, params: PayrollQueryParams) -> Result<Vec<HrSalarySlip>, AppError> {
+    pub async fn list_salary_slips(
+        &self,
+        params: PayrollQueryParams,
+    ) -> Result<Vec<HrSalarySlip>, AppError> {
         sqlx::query_as::<_, HrSalarySlip>(
             r#"
             SELECT s.*, e.name as employee_name, e.nik as employee_nik, dept.name as department_name

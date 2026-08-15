@@ -5,7 +5,9 @@ use serde::Serialize;
 use uuid::Uuid;
 
 use management_system_assets::AssetRepository;
-use management_system_core::application::dto::{CreateMaintenanceRequest, UpdateMaintenanceRequest};
+use management_system_core::application::dto::{
+    CreateMaintenanceRequest, UpdateMaintenanceRequest,
+};
 use management_system_core::application::services::{ApprovalService, NotificationService};
 use management_system_core::domain::errors::{DomainError, DomainResult};
 
@@ -320,9 +322,7 @@ impl MaintenanceService {
         })
     }
 
-    pub async fn list_schedules(
-        &self,
-    ) -> DomainResult<Vec<MaintenanceSchedule>> {
+    pub async fn list_schedules(&self) -> DomainResult<Vec<MaintenanceSchedule>> {
         self.repository
             .list_schedules()
             .await
@@ -332,9 +332,7 @@ impl MaintenanceService {
             })
     }
 
-    pub async fn list_schedules_raw(
-        &self,
-    ) -> DomainResult<Vec<MaintenanceSchedule>> {
+    pub async fn list_schedules_raw(&self) -> DomainResult<Vec<MaintenanceSchedule>> {
         self.repository
             .list_schedules()
             .await

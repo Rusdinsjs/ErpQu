@@ -106,7 +106,7 @@ impl CostCenterRepository for PgCostCenterRepository {
                 FROM cost_centers
                 WHERE tenant_id = $1 AND deleted_at IS NULL
                 ORDER BY code ASC
-                "#
+                "#,
             )
             .bind(ctx.tenant_id)
             .fetch_all(&self.pool)

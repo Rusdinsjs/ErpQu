@@ -8,8 +8,8 @@ use rust_decimal::Decimal;
 use sqlx::{FromRow, PgPool};
 use uuid::Uuid;
 
-use management_system_core::application::dto::TimesheetDetailResponse;
 use crate::domain::entities::{ClientContact, RentalBillingPeriod, RentalTimesheet};
+use management_system_core::application::dto::TimesheetDetailResponse;
 
 #[derive(Clone)]
 pub struct TimesheetRepository {
@@ -268,11 +268,16 @@ impl TimesheetRepository {
             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
             RETURNING *"#,
         )
-        .bind(billing.id).bind(billing.rental_id)
-        .bind(billing.period_start).bind(billing.period_end)
-        .bind(&billing.period_type).bind(&billing.status)
-        .bind(billing.total_production_volume).bind(billing.total_fuel_consumed)
-        .bind(billing.fuel_surcharge_rate).bind(billing.fuel_surcharge_amount)
+        .bind(billing.id)
+        .bind(billing.rental_id)
+        .bind(billing.period_start)
+        .bind(billing.period_end)
+        .bind(&billing.period_type)
+        .bind(&billing.status)
+        .bind(billing.total_production_volume)
+        .bind(billing.total_fuel_consumed)
+        .bind(billing.fuel_surcharge_rate)
+        .bind(billing.fuel_surcharge_amount)
         .fetch_one(&self.pool)
         .await
     }
@@ -454,11 +459,17 @@ impl TimesheetRepository {
             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
             RETURNING *"#,
         )
-        .bind(contact.id).bind(contact.client_id)
-        .bind(&contact.name).bind(&contact.position)
-        .bind(&contact.email).bind(&contact.phone)
-        .bind(contact.can_approve_timesheet).bind(contact.can_approve_billing)
-        .bind(contact.approval_limit).bind(contact.is_primary).bind(contact.is_active)
+        .bind(contact.id)
+        .bind(contact.client_id)
+        .bind(&contact.name)
+        .bind(&contact.position)
+        .bind(&contact.email)
+        .bind(&contact.phone)
+        .bind(contact.can_approve_timesheet)
+        .bind(contact.can_approve_billing)
+        .bind(contact.approval_limit)
+        .bind(contact.is_primary)
+        .bind(contact.is_active)
         .fetch_one(&self.pool)
         .await
     }

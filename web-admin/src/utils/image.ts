@@ -1,5 +1,4 @@
 import { api } from '../api/http';
-import { useAuthStore } from '../store/useAuthStore';
 
 export const getImageUrl = (path?: string) => {
     if (!path) return '';
@@ -13,12 +12,6 @@ export const getImageUrl = (path?: string) => {
         finalUrl = `${baseUrl}/api${path}`;
     } else {
         finalUrl = `${baseUrl}${path}`;
-    }
-
-    const token = useAuthStore.getState().token;
-    if (token && finalUrl.includes('/uploads/')) {
-        const separator = finalUrl.includes('?') ? '&' : '?';
-        return `${finalUrl}${separator}token=${token}`;
     }
 
     return finalUrl;

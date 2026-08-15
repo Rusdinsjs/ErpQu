@@ -18,15 +18,24 @@ use management_system_finance::domain::indonesia_localization::{
 fn test_qidn_008_vat_rate_effective_date_versioning() {
     // 2021 Transaction -> 10% VAT
     let date_2021 = NaiveDate::from_ymd_opt(2021, 12, 15).unwrap();
-    assert_eq!(VatRateVersion::get_effective_vat_rate(date_2021), dec!(10.00));
+    assert_eq!(
+        VatRateVersion::get_effective_vat_rate(date_2021),
+        dec!(10.00)
+    );
 
     // 2023 Transaction -> 11% VAT
     let date_2023 = NaiveDate::from_ymd_opt(2023, 6, 1).unwrap();
-    assert_eq!(VatRateVersion::get_effective_vat_rate(date_2023), dec!(11.00));
+    assert_eq!(
+        VatRateVersion::get_effective_vat_rate(date_2023),
+        dec!(11.00)
+    );
 
     // 2025 Transaction -> 12% VAT
     let date_2025 = NaiveDate::from_ymd_opt(2025, 2, 10).unwrap();
-    assert_eq!(VatRateVersion::get_effective_vat_rate(date_2025), dec!(12.00));
+    assert_eq!(
+        VatRateVersion::get_effective_vat_rate(date_2025),
+        dec!(12.00)
+    );
 }
 
 #[test]

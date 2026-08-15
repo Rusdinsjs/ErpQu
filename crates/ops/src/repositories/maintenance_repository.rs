@@ -280,9 +280,7 @@ impl MaintenanceRepository {
         .await
     }
 
-    pub async fn list_schedules(
-        &self,
-    ) -> Result<Vec<MaintenanceSchedule>, sqlx::Error> {
+    pub async fn list_schedules(&self) -> Result<Vec<MaintenanceSchedule>, sqlx::Error> {
         sqlx::query_as!(
             MaintenanceSchedule,
             r#"
@@ -318,9 +316,7 @@ impl MaintenanceRepository {
         .await
     }
 
-    pub async fn list_due_time_schedules(
-        &self,
-    ) -> Result<Vec<MaintenanceSchedule>, sqlx::Error> {
+    pub async fn list_due_time_schedules(&self) -> Result<Vec<MaintenanceSchedule>, sqlx::Error> {
         let today = chrono::Utc::now().naive_utc().date();
         sqlx::query_as!(
             MaintenanceSchedule,

@@ -34,12 +34,13 @@ impl SensorService {
     pub async fn record_reading(&self, reading: SensorReading) -> DomainResult<()> {
         self.check_thresholds_and_alert(&reading).await?;
 
-        self.repository.insert_reading(&reading).await.map_err(|e: sqlx::Error| {
-            DomainError::ExternalServiceError {
+        self.repository
+            .insert_reading(&reading)
+            .await
+            .map_err(|e: sqlx::Error| DomainError::ExternalServiceError {
                 service: "database".to_string(),
                 message: e.to_string(),
-            }
-        })
+            })
     }
 
     /// Get latest readings for an asset
@@ -229,12 +230,14 @@ impl SensorService {
             created_at: Utc::now(),
         };
 
-        let created_alert = self.repository.create_alert(&alert).await.map_err(|e: sqlx::Error| {
-            DomainError::ExternalServiceError {
-                service: "database".to_string(),
-                message: e.to_string(),
-            }
-        })?;
+        let created_alert =
+            self.repository
+                .create_alert(&alert)
+                .await
+                .map_err(|e: sqlx::Error| DomainError::ExternalServiceError {
+                    service: "database".to_string(),
+                    message: e.to_string(),
+                })?;
 
         let asset = self.asset_repo.find_by_id(asset_id).await.ok().flatten();
         let asset_name = asset

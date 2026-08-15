@@ -215,9 +215,15 @@ impl ContractRepository {
         use rust_decimal::prelude::ToPrimitive;
 
         let total_sheets: i64 = row.get::<Option<i64>, _>("total_sheets").unwrap_or(0);
-        let total_op: rust_decimal::Decimal = row.get::<Option<rust_decimal::Decimal>, _>("total_operating").unwrap_or_default();
-        let total_sb: rust_decimal::Decimal = row.get::<Option<rust_decimal::Decimal>, _>("total_standby").unwrap_or_default();
-        let total_bd: rust_decimal::Decimal = row.get::<Option<rust_decimal::Decimal>, _>("total_breakdown").unwrap_or_default();
+        let total_op: rust_decimal::Decimal = row
+            .get::<Option<rust_decimal::Decimal>, _>("total_operating")
+            .unwrap_or_default();
+        let total_sb: rust_decimal::Decimal = row
+            .get::<Option<rust_decimal::Decimal>, _>("total_standby")
+            .unwrap_or_default();
+        let total_bd: rust_decimal::Decimal = row
+            .get::<Option<rust_decimal::Decimal>, _>("total_breakdown")
+            .unwrap_or_default();
 
         Ok((
             total_sheets,

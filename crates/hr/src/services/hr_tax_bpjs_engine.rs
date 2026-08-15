@@ -3,12 +3,12 @@ use rust_decimal::Decimal;
 
 #[derive(Debug, Clone)]
 pub struct BpjsResult {
-    pub kes_emp: Decimal, // 1% (Cap Rp 12.000.000)
+    pub kes_emp: Decimal,  // 1% (Cap Rp 12.000.000)
     pub kes_comp: Decimal, // 4% (Cap Rp 12.000.000)
-    pub jht_emp: Decimal, // 2%
+    pub jht_emp: Decimal,  // 2%
     pub jht_comp: Decimal, // 3.7%
-    pub jp_emp: Decimal, // 1% (Cap Rp 10.547.400)
-    pub jp_comp: Decimal, // 2% (Cap Rp 10.547.400)
+    pub jp_emp: Decimal,   // 1% (Cap Rp 10.547.400)
+    pub jp_comp: Decimal,  // 2% (Cap Rp 10.547.400)
     pub jkk_comp: Decimal, // 0.24% (Standar)
     pub jkm_comp: Decimal, // 0.30%
     pub total_emp_deduction: Decimal,
@@ -29,11 +29,19 @@ impl HrTaxBpjsEngine {
     pub fn calculate_bpjs(base_salary: Decimal) -> BpjsResult {
         // Cap BPJS Kesehatan: Rp 12,000,000
         let cap_kes = Decimal::from(12_000_000);
-        let salary_kes = if base_salary > cap_kes { cap_kes } else { base_salary };
+        let salary_kes = if base_salary > cap_kes {
+            cap_kes
+        } else {
+            base_salary
+        };
 
         // Cap BPJS JP (Jaminan Pensiun 2026): Rp 10,547,400
         let cap_jp = Decimal::from(10_547_400);
-        let salary_jp = if base_salary > cap_jp { cap_jp } else { base_salary };
+        let salary_jp = if base_salary > cap_jp {
+            cap_jp
+        } else {
+            base_salary
+        };
 
         let kes_emp = (salary_kes * Decimal::new(1, 2)).round_dp(0); // 1%
         let kes_comp = (salary_kes * Decimal::new(4, 2)).round_dp(0); // 4%
@@ -81,63 +89,120 @@ impl HrTaxBpjsEngine {
 
         let rate_f = match cat {
             "A" => {
-                if gross_f <= 5_400_000.0 { 0.0 }
-                else if gross_f <= 5_650_000.0 { 0.0025 }
-                else if gross_f <= 5_950_000.0 { 0.005 }
-                else if gross_f <= 6_300_000.0 { 0.0075 }
-                else if gross_f <= 6_750_000.0 { 0.01 }
-                else if gross_f <= 7_500_000.0 { 0.0125 }
-                else if gross_f <= 8_550_000.0 { 0.015 }
-                else if gross_f <= 9_650_000.0 { 0.0175 }
-                else if gross_f <= 10_050_000.0 { 0.02 }
-                else if gross_f <= 10_350_000.0 { 0.0225 }
-                else if gross_f <= 10_700_000.0 { 0.025 }
-                else if gross_f <= 11_050_000.0 { 0.03 }
-                else if gross_f <= 11_600_000.0 { 0.035 }
-                else if gross_f <= 12_500_000.0 { 0.04 }
-                else if gross_f <= 13_750_000.0 { 0.05 }
-                else if gross_f <= 15_100_000.0 { 0.06 }
-                else if gross_f <= 16_950_000.0 { 0.07 }
-                else if gross_f <= 19_750_000.0 { 0.08 }
-                else if gross_f <= 24_150_000.0 { 0.09 }
-                else if gross_f <= 26_450_000.0 { 0.10 }
-                else if gross_f <= 28_000_000.0 { 0.11 }
-                else if gross_f <= 30_050_000.0 { 0.12 }
-                else { 0.15 }
-            },
+                if gross_f <= 5_400_000.0 {
+                    0.0
+                } else if gross_f <= 5_650_000.0 {
+                    0.0025
+                } else if gross_f <= 5_950_000.0 {
+                    0.005
+                } else if gross_f <= 6_300_000.0 {
+                    0.0075
+                } else if gross_f <= 6_750_000.0 {
+                    0.01
+                } else if gross_f <= 7_500_000.0 {
+                    0.0125
+                } else if gross_f <= 8_550_000.0 {
+                    0.015
+                } else if gross_f <= 9_650_000.0 {
+                    0.0175
+                } else if gross_f <= 10_050_000.0 {
+                    0.02
+                } else if gross_f <= 10_350_000.0 {
+                    0.0225
+                } else if gross_f <= 10_700_000.0 {
+                    0.025
+                } else if gross_f <= 11_050_000.0 {
+                    0.03
+                } else if gross_f <= 11_600_000.0 {
+                    0.035
+                } else if gross_f <= 12_500_000.0 {
+                    0.04
+                } else if gross_f <= 13_750_000.0 {
+                    0.05
+                } else if gross_f <= 15_100_000.0 {
+                    0.06
+                } else if gross_f <= 16_950_000.0 {
+                    0.07
+                } else if gross_f <= 19_750_000.0 {
+                    0.08
+                } else if gross_f <= 24_150_000.0 {
+                    0.09
+                } else if gross_f <= 26_450_000.0 {
+                    0.10
+                } else if gross_f <= 28_000_000.0 {
+                    0.11
+                } else if gross_f <= 30_050_000.0 {
+                    0.12
+                } else {
+                    0.15
+                }
+            }
             "B" => {
-                if gross_f <= 6_200_000.0 { 0.0 }
-                else if gross_f <= 6_500_000.0 { 0.0025 }
-                else if gross_f <= 6_850_000.0 { 0.005 }
-                else if gross_f <= 7_300_000.0 { 0.0075 }
-                else if gross_f <= 9_200_000.0 { 0.01 }
-                else if gross_f <= 10_750_000.0 { 0.015 }
-                else if gross_f <= 11_250_000.0 { 0.02 }
-                else if gross_f <= 11_600_000.0 { 0.025 }
-                else if gross_f <= 12_600_000.0 { 0.03 }
-                else if gross_f <= 13_600_000.0 { 0.04 }
-                else if gross_f <= 14_950_000.0 { 0.05 }
-                else if gross_f <= 16_400_000.0 { 0.06 }
-                else if gross_f <= 18_450_000.0 { 0.07 }
-                else if gross_f <= 21_850_000.0 { 0.08 }
-                else if gross_f <= 26_000_000.0 { 0.09 }
-                else { 0.12 }
-            },
-            _ => { // C
-                if gross_f <= 6_600_000.0 { 0.0 }
-                else if gross_f <= 6_950_000.0 { 0.0025 }
-                else if gross_f <= 7_350_000.0 { 0.005 }
-                else if gross_f <= 7_800_000.0 { 0.0075 }
-                else if gross_f <= 8_850_000.0 { 0.01 }
-                else if gross_f <= 9_800_000.0 { 0.0125 }
-                else if gross_f <= 10_950_000.0 { 0.015 }
-                else if gross_f <= 11_200_000.0 { 0.0175 }
-                else if gross_f <= 12_050_000.0 { 0.02 }
-                else if gross_f <= 12_950_000.0 { 0.03 }
-                else if gross_f <= 14_150_000.0 { 0.04 }
-                else if gross_f <= 15_550_000.0 { 0.05 }
-                else if gross_f <= 17_050_000.0 { 0.06 }
-                else { 0.10 }
+                if gross_f <= 6_200_000.0 {
+                    0.0
+                } else if gross_f <= 6_500_000.0 {
+                    0.0025
+                } else if gross_f <= 6_850_000.0 {
+                    0.005
+                } else if gross_f <= 7_300_000.0 {
+                    0.0075
+                } else if gross_f <= 9_200_000.0 {
+                    0.01
+                } else if gross_f <= 10_750_000.0 {
+                    0.015
+                } else if gross_f <= 11_250_000.0 {
+                    0.02
+                } else if gross_f <= 11_600_000.0 {
+                    0.025
+                } else if gross_f <= 12_600_000.0 {
+                    0.03
+                } else if gross_f <= 13_600_000.0 {
+                    0.04
+                } else if gross_f <= 14_950_000.0 {
+                    0.05
+                } else if gross_f <= 16_400_000.0 {
+                    0.06
+                } else if gross_f <= 18_450_000.0 {
+                    0.07
+                } else if gross_f <= 21_850_000.0 {
+                    0.08
+                } else if gross_f <= 26_000_000.0 {
+                    0.09
+                } else {
+                    0.12
+                }
+            }
+            _ => {
+                // C
+                if gross_f <= 6_600_000.0 {
+                    0.0
+                } else if gross_f <= 6_950_000.0 {
+                    0.0025
+                } else if gross_f <= 7_350_000.0 {
+                    0.005
+                } else if gross_f <= 7_800_000.0 {
+                    0.0075
+                } else if gross_f <= 8_850_000.0 {
+                    0.01
+                } else if gross_f <= 9_800_000.0 {
+                    0.0125
+                } else if gross_f <= 10_950_000.0 {
+                    0.015
+                } else if gross_f <= 11_200_000.0 {
+                    0.0175
+                } else if gross_f <= 12_050_000.0 {
+                    0.02
+                } else if gross_f <= 12_950_000.0 {
+                    0.03
+                } else if gross_f <= 14_150_000.0 {
+                    0.04
+                } else if gross_f <= 15_550_000.0 {
+                    0.05
+                } else if gross_f <= 17_050_000.0 {
+                    0.06
+                } else {
+                    0.10
+                }
             }
         };
 

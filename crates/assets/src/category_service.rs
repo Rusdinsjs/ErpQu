@@ -4,13 +4,13 @@
 
 use uuid::Uuid;
 
+use crate::domain::entities::Category;
+use crate::repositories::CategoryRepository;
 use management_system_core::application::dto::{
     CategoryClassification, CategoryResponse, CategoryTreeNode, CreateCategoryRequest,
     SubCategoryItem, UpdateCategoryRequest,
 };
-use crate::domain::entities::Category;
 use management_system_core::domain::errors::{DomainError, DomainResult};
-use crate::repositories::CategoryRepository;
 
 /// Category service for managing asset categories
 #[derive(Clone)]

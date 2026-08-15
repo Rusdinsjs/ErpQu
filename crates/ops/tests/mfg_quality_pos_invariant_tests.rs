@@ -22,12 +22,13 @@ fn test_qmfg_001_bom_explosion_material_calculation() {
         id: Uuid::new_v4(),
         bom_id: Uuid::new_v4(),
         item_id: Uuid::new_v4(),
-        qty_required: dec!(2.50), // 2.5 units per finished product
+        qty_required: dec!(2.50),           // 2.5 units per finished product
         scrap_percentage: Some(dec!(2.00)), // 2% scrap
     };
 
     let base_material_req = target_production_qty * raw_material_line.qty_required; // 250.00
-    let scrap_allowance = base_material_req * (raw_material_line.scrap_percentage.unwrap() / dec!(100.00)); // 5.00
+    let scrap_allowance =
+        base_material_req * (raw_material_line.scrap_percentage.unwrap() / dec!(100.00)); // 5.00
     let total_required = base_material_req + scrap_allowance;
 
     assert_eq!(base_material_req, dec!(250.00));

@@ -18,8 +18,16 @@ pub struct HrPayrollService {
 }
 
 impl HrPayrollService {
-    pub fn new(repo: HrPayrollRepository, employee_repo: EmployeeRepository, loans_repo: crate::repositories::HrLoansClaimsKpiRepository) -> Self {
-        Self { repo, employee_repo, loans_repo }
+    pub fn new(
+        repo: HrPayrollRepository,
+        employee_repo: EmployeeRepository,
+        loans_repo: crate::repositories::HrLoansClaimsKpiRepository,
+    ) -> Self {
+        Self {
+            repo,
+            employee_repo,
+            loans_repo,
+        }
     }
 
     pub async fn list_salary_components(&self) -> Result<Vec<HrSalaryComponent>, AppError> {
@@ -30,16 +38,22 @@ impl HrPayrollService {
         self.repo.list_salary_structures().await
     }
 
-
     pub async fn get_salary_component(&self, id: Uuid) -> Result<HrSalaryComponent, AppError> {
         self.repo.get_salary_component(id).await
     }
 
-    pub async fn create_salary_component(&self, req: crate::dto::CreateSalaryComponentRequest) -> Result<HrSalaryComponent, AppError> {
+    pub async fn create_salary_component(
+        &self,
+        req: crate::dto::CreateSalaryComponentRequest,
+    ) -> Result<HrSalaryComponent, AppError> {
         self.repo.create_salary_component(req).await
     }
 
-    pub async fn update_salary_component(&self, id: Uuid, req: crate::dto::UpdateSalaryComponentRequest) -> Result<HrSalaryComponent, AppError> {
+    pub async fn update_salary_component(
+        &self,
+        id: Uuid,
+        req: crate::dto::UpdateSalaryComponentRequest,
+    ) -> Result<HrSalaryComponent, AppError> {
         self.repo.update_salary_component(id, req).await
     }
 
@@ -51,11 +65,18 @@ impl HrPayrollService {
         self.repo.get_salary_structure(id).await
     }
 
-    pub async fn create_salary_structure(&self, req: crate::dto::CreateSalaryStructureRequest) -> Result<HrSalaryStructure, AppError> {
+    pub async fn create_salary_structure(
+        &self,
+        req: crate::dto::CreateSalaryStructureRequest,
+    ) -> Result<HrSalaryStructure, AppError> {
         self.repo.create_salary_structure(req).await
     }
 
-    pub async fn update_salary_structure(&self, id: Uuid, req: crate::dto::UpdateSalaryStructureRequest) -> Result<HrSalaryStructure, AppError> {
+    pub async fn update_salary_structure(
+        &self,
+        id: Uuid,
+        req: crate::dto::UpdateSalaryStructureRequest,
+    ) -> Result<HrSalaryStructure, AppError> {
         self.repo.update_salary_structure(id, req).await
     }
 
@@ -67,7 +88,10 @@ impl HrPayrollService {
         self.repo.list_salary_assignments().await
     }
 
-    pub async fn create_salary_assignment(&self, req: CreateSalaryAssignmentRequest) -> Result<HrSalaryAssignment, AppError> {
+    pub async fn create_salary_assignment(
+        &self,
+        req: CreateSalaryAssignmentRequest,
+    ) -> Result<HrSalaryAssignment, AppError> {
         self.repo.create_salary_assignment(req).await
     }
 
@@ -75,7 +99,10 @@ impl HrPayrollService {
         self.repo.list_payroll_entries().await
     }
 
-    pub async fn list_salary_slips(&self, params: PayrollQueryParams) -> Result<Vec<HrSalarySlip>, AppError> {
+    pub async fn list_salary_slips(
+        &self,
+        params: PayrollQueryParams,
+    ) -> Result<Vec<HrSalarySlip>, AppError> {
         self.repo.list_salary_slips(params).await
     }
 
@@ -84,7 +111,11 @@ impl HrPayrollService {
     }
 
     /// Process Batch Monthly Payroll Run
-    pub async fn run_payroll(&self, req: RunPayrollEntryRequest, processed_by: Option<Uuid>) -> Result<HrPayrollEntry, AppError> {
+    pub async fn run_payroll(
+        &self,
+        req: RunPayrollEntryRequest,
+        processed_by: Option<Uuid>,
+    ) -> Result<HrPayrollEntry, AppError> {
         let entry = self.repo.create_payroll_entry(req, processed_by).await?;
         let assignments = self.repo.list_salary_assignments().await?;
 
@@ -113,7 +144,11 @@ impl HrPayrollService {
             // Deductions & Auto-deduct Active Loan Installment (Fase 5)
             let mut kasbon = Decimal::ZERO;
             let mut matched_schedule = None;
-            if let Ok(Some((sched_id, sched_amt, loan_id))) = self.loans_repo.get_due_loan_installment(assign.employee_id, entry.end_date).await {
+            if let Ok(Some((sched_id, sched_amt, loan_id))) = self
+                .loans_repo
+                .get_due_loan_installment(assign.employee_id, entry.end_date)
+                .await
+            {
                 kasbon = sched_amt;
                 matched_schedule = Some((sched_id, sched_amt, loan_id));
             }
@@ -167,7 +202,10 @@ impl HrPayrollService {
             self.repo.save_salary_slip(&slip).await?;
 
             if let Some((sched_id, sched_amt, loan_id)) = matched_schedule {
-                let _ = self.loans_repo.mark_schedule_paid_by_payroll(sched_id, loan_id, sched_amt, entry.id).await;
+                let _ = self
+                    .loans_repo
+                    .mark_schedule_paid_by_payroll(sched_id, loan_id, sched_amt, entry.id)
+                    .await;
             }
 
             total_gross += gross;
@@ -176,7 +214,9 @@ impl HrPayrollService {
             count += 1;
         }
 
-        self.repo.update_payroll_entry_totals(entry.id, total_gross, total_deductions, total_net, count).await?;
+        self.repo
+            .update_payroll_entry_totals(entry.id, total_gross, total_deductions, total_net, count)
+            .await?;
 
         Ok(entry)
     }

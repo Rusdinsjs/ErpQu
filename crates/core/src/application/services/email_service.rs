@@ -7,7 +7,6 @@ use lettre::message::{Attachment, MultiPart, SinglePart};
 use lettre::transport::smtp::authentication::Credentials;
 use lettre::{AsyncSmtpTransport, AsyncTransport, Message, Tokio1Executor};
 
-
 use crate::domain::errors::{DomainError, DomainResult};
 
 use crate::shared::config::AppConfig;

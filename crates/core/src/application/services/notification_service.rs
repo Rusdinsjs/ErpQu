@@ -179,14 +179,22 @@ impl NotificationService {
             .map_err(|e| DomainError::Database(e.to_string()))
     }
 
-    pub async fn mark_as_read_for_user(&self, id: Uuid, user_id: Uuid, is_admin: bool) -> DomainResult<bool> {
-        if let Some(notification) = self.repository
+    pub async fn mark_as_read_for_user(
+        &self,
+        id: Uuid,
+        user_id: Uuid,
+        is_admin: bool,
+    ) -> DomainResult<bool> {
+        if let Some(notification) = self
+            .repository
             .find_by_id(id)
             .await
             .map_err(|e| DomainError::Database(e.to_string()))?
         {
             if !is_admin && notification.user_id != user_id {
-                return Err(DomainError::unauthorized("Forbidden: You do not own this notification"));
+                return Err(DomainError::unauthorized(
+                    "Forbidden: You do not own this notification",
+                ));
             }
             self.repository
                 .mark_as_read(id)
@@ -377,8 +385,14 @@ impl NotificationService {
             tracing::info!("Notification Service event listener started");
             while let Ok(event) = receiver.recv().await {
                 match event {
-                    crate::domain::events::SystemEvent::BusinessEvent { event_name, payload: _payload } => {
-                        tracing::debug!("NotificationService ignoring BusinessEvent: {}", event_name);
+                    crate::domain::events::SystemEvent::BusinessEvent {
+                        event_name,
+                        payload: _payload,
+                    } => {
+                        tracing::debug!(
+                            "NotificationService ignoring BusinessEvent: {}",
+                            event_name
+                        );
                         // In a real implementation, NotificationService would subscribe to
                         // NotificationRequested events instead of hardcoding business logic here.
                     }

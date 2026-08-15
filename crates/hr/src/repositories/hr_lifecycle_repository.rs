@@ -1,8 +1,8 @@
-use crate::dto::*;
 use crate::domain::entities::{
-    HrDesignation, HrEmployeeDocument, HrEmployeeEducation, HrEmployeeLifecycle,
-    HrEmploymentType, WorkExperience,
+    HrDesignation, HrEmployeeDocument, HrEmployeeEducation, HrEmployeeLifecycle, HrEmploymentType,
+    WorkExperience,
 };
+use crate::dto::*;
 use management_system_core::shared::errors::AppError;
 use sqlx::PgPool;
 use uuid::Uuid;
@@ -26,7 +26,8 @@ impl HrLifecycleRepository {
              LEFT JOIN departments dept ON d.department_id = dept.id \
              WHERE d.is_active = TRUE ORDER BY d.name ASC",
         )
-        .fetch_all(&self.pool).await
+        .fetch_all(&self.pool)
+        .await
         .map_err(|e| AppError::Database(e.to_string()))
     }
 
@@ -38,12 +39,20 @@ impl HrLifecycleRepository {
              WHERE d.id = $1",
         )
         .bind(id)
-        .fetch_optional(&self.pool).await
+        .fetch_optional(&self.pool)
+        .await
         .map_err(|e| AppError::Database(e.to_string()))?
-        .ok_or_else(|| AppError::Domain(management_system_core::domain::errors::DomainError::not_found("HrDesignation", id)))
+        .ok_or_else(|| {
+            AppError::Domain(
+                management_system_core::domain::errors::DomainError::not_found("HrDesignation", id),
+            )
+        })
     }
 
-    pub async fn create_designation(&self, req: CreateDesignationRequest) -> Result<HrDesignation, AppError> {
+    pub async fn create_designation(
+        &self,
+        req: CreateDesignationRequest,
+    ) -> Result<HrDesignation, AppError> {
         sqlx::query_as::<_, HrDesignation>(
             "INSERT INTO hr_designations (id, name, code, description, grade, department_id, is_manager) \
              VALUES (uuid_generate_v4(), $1, $2, $3, $4, $5, $6) \
@@ -55,7 +64,11 @@ impl HrLifecycleRepository {
         .map_err(|e| AppError::Database(e.to_string()))
     }
 
-    pub async fn update_designation(&self, id: Uuid, req: UpdateDesignationRequest) -> Result<HrDesignation, AppError> {
+    pub async fn update_designation(
+        &self,
+        id: Uuid,
+        req: UpdateDesignationRequest,
+    ) -> Result<HrDesignation, AppError> {
         let ex = self.get_designation(id).await?;
         sqlx::query_as::<_, HrDesignation>(
             "UPDATE hr_designations \
@@ -72,13 +85,16 @@ impl HrLifecycleRepository {
         .bind(req.department_id.or(ex.department_id))
         .bind(req.is_manager.unwrap_or(ex.is_manager))
         .bind(req.is_active.unwrap_or(ex.is_active))
-        .fetch_one(&self.pool).await
+        .fetch_one(&self.pool)
+        .await
         .map_err(|e| AppError::Database(e.to_string()))
     }
 
     pub async fn delete_designation(&self, id: Uuid) -> Result<(), AppError> {
         sqlx::query("UPDATE hr_designations SET is_active=FALSE, updated_at=NOW() WHERE id=$1")
-            .bind(id).execute(&self.pool).await
+            .bind(id)
+            .execute(&self.pool)
+            .await
             .map_err(|e| AppError::Database(e.to_string()))?;
         Ok(())
     }
@@ -89,11 +105,15 @@ impl HrLifecycleRepository {
         sqlx::query_as::<_, HrEmploymentType>(
             "SELECT * FROM hr_employment_types WHERE is_active=TRUE ORDER BY name ASC",
         )
-        .fetch_all(&self.pool).await
+        .fetch_all(&self.pool)
+        .await
         .map_err(|e| AppError::Database(e.to_string()))
     }
 
-    pub async fn create_employment_type(&self, req: CreateEmploymentTypeRequest) -> Result<HrEmploymentType, AppError> {
+    pub async fn create_employment_type(
+        &self,
+        req: CreateEmploymentTypeRequest,
+    ) -> Result<HrEmploymentType, AppError> {
         sqlx::query_as::<_, HrEmploymentType>(
             "INSERT INTO hr_employment_types \
              (id, name, code, description, max_contract_years, is_eligible_bpjs, is_eligible_pph21, is_eligible_leave) \
@@ -110,7 +130,10 @@ impl HrLifecycleRepository {
 
     // ---- LIFECYCLE EVENTS ----
 
-    pub async fn list_lifecycle_events(&self, employee_id: Option<Uuid>) -> Result<Vec<HrEmployeeLifecycle>, AppError> {
+    pub async fn list_lifecycle_events(
+        &self,
+        employee_id: Option<Uuid>,
+    ) -> Result<Vec<HrEmployeeLifecycle>, AppError> {
         sqlx::query_as::<_, HrEmployeeLifecycle>(
             "SELECT lc.*, \
                 e.name as employee_name, e.nik as employee_nik, \
@@ -127,7 +150,9 @@ impl HrLifecycleRepository {
              WHERE ($1::uuid IS NULL OR lc.employee_id = $1) \
              ORDER BY lc.effective_date DESC, lc.created_at DESC",
         )
-        .bind(employee_id).fetch_all(&self.pool).await
+        .bind(employee_id)
+        .fetch_all(&self.pool)
+        .await
         .map_err(|e| AppError::Database(e.to_string()))
     }
 
@@ -153,25 +178,44 @@ impl HrLifecycleRepository {
                 NULL::text as from_department_name, NULL::text as to_department_name, \
                 NULL::text as performed_by_name",
         )
-        .bind(req.employee_id).bind(&req.event_type).bind(req.effective_date).bind(&req.notes)
-        .bind(req.from_designation_id).bind(req.to_designation_id)
-        .bind(req.from_department_id).bind(req.to_department_id)
-        .bind(&req.from_position).bind(&req.to_position)
-        .bind(req.from_salary).bind(req.to_salary)
-        .bind(&req.warning_level).bind(req.warning_expiry_date).bind(&req.warning_reason)
-        .bind(req.last_working_date).bind(&req.exit_reason).bind(&req.exit_interview_notes)
-        .bind(&req.document_url).bind(&req.document_number).bind(performed_by)
-        .fetch_one(&self.pool).await
+        .bind(req.employee_id)
+        .bind(&req.event_type)
+        .bind(req.effective_date)
+        .bind(&req.notes)
+        .bind(req.from_designation_id)
+        .bind(req.to_designation_id)
+        .bind(req.from_department_id)
+        .bind(req.to_department_id)
+        .bind(&req.from_position)
+        .bind(&req.to_position)
+        .bind(req.from_salary)
+        .bind(req.to_salary)
+        .bind(&req.warning_level)
+        .bind(req.warning_expiry_date)
+        .bind(&req.warning_reason)
+        .bind(req.last_working_date)
+        .bind(&req.exit_reason)
+        .bind(&req.exit_interview_notes)
+        .bind(&req.document_url)
+        .bind(&req.document_number)
+        .bind(performed_by)
+        .fetch_one(&self.pool)
+        .await
         .map_err(|e| AppError::Database(e.to_string()))
     }
 
     // ---- EMPLOYEE DOCUMENTS ----
 
-    pub async fn list_employee_documents(&self, employee_id: Uuid) -> Result<Vec<HrEmployeeDocument>, AppError> {
+    pub async fn list_employee_documents(
+        &self,
+        employee_id: Uuid,
+    ) -> Result<Vec<HrEmployeeDocument>, AppError> {
         sqlx::query_as::<_, HrEmployeeDocument>(
             "SELECT * FROM hr_employee_documents WHERE employee_id=$1 ORDER BY created_at DESC",
         )
-        .bind(employee_id).fetch_all(&self.pool).await
+        .bind(employee_id)
+        .fetch_all(&self.pool)
+        .await
         .map_err(|e| AppError::Database(e.to_string()))
     }
 
@@ -188,24 +232,37 @@ impl HrLifecycleRepository {
                 uuid_generate_v4(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11 \
              ) RETURNING *",
         )
-        .bind(req.employee_id).bind(&req.document_type).bind(&req.document_name)
-        .bind(&req.document_number).bind(&req.document_url).bind(&req.file_name)
-        .bind(req.file_size).bind(&req.mime_type).bind(req.expiry_date)
-        .bind(&req.notes).bind(uploaded_by)
-        .fetch_one(&self.pool).await
+        .bind(req.employee_id)
+        .bind(&req.document_type)
+        .bind(&req.document_name)
+        .bind(&req.document_number)
+        .bind(&req.document_url)
+        .bind(&req.file_name)
+        .bind(req.file_size)
+        .bind(&req.mime_type)
+        .bind(req.expiry_date)
+        .bind(&req.notes)
+        .bind(uploaded_by)
+        .fetch_one(&self.pool)
+        .await
         .map_err(|e| AppError::Database(e.to_string()))
     }
 
     pub async fn delete_employee_document(&self, id: Uuid) -> Result<(), AppError> {
         sqlx::query("DELETE FROM hr_employee_documents WHERE id=$1")
-            .bind(id).execute(&self.pool).await
+            .bind(id)
+            .execute(&self.pool)
+            .await
             .map_err(|e| AppError::Database(e.to_string()))?;
         Ok(())
     }
 
     // ---- EMPLOYEE EDUCATION ----
 
-    pub async fn list_employee_education(&self, employee_id: Uuid) -> Result<Vec<HrEmployeeEducation>, AppError> {
+    pub async fn list_employee_education(
+        &self,
+        employee_id: Uuid,
+    ) -> Result<Vec<HrEmployeeEducation>, AppError> {
         sqlx::query_as::<_, HrEmployeeEducation>(
             "SELECT * FROM hr_employee_education WHERE employee_id=$1 ORDER BY graduation_year DESC NULLS LAST",
         )
@@ -213,7 +270,10 @@ impl HrLifecycleRepository {
         .map_err(|e| AppError::Database(e.to_string()))
     }
 
-    pub async fn create_employee_education(&self, req: CreateEmployeeEducationRequest) -> Result<HrEmployeeEducation, AppError> {
+    pub async fn create_employee_education(
+        &self,
+        req: CreateEmployeeEducationRequest,
+    ) -> Result<HrEmployeeEducation, AppError> {
         sqlx::query_as::<_, HrEmployeeEducation>(
             "INSERT INTO hr_employee_education \
              (id, employee_id, level, institution_name, major, graduation_year, gpa, is_highest, attachment_url) \
@@ -229,14 +289,19 @@ impl HrLifecycleRepository {
 
     pub async fn delete_employee_education(&self, id: Uuid) -> Result<(), AppError> {
         sqlx::query("DELETE FROM hr_employee_education WHERE id=$1")
-            .bind(id).execute(&self.pool).await
+            .bind(id)
+            .execute(&self.pool)
+            .await
             .map_err(|e| AppError::Database(e.to_string()))?;
         Ok(())
     }
 
     // ---- WORK EXPERIENCES (existing table from 0035) ----
 
-    pub async fn list_work_experiences(&self, employee_id: Uuid) -> Result<Vec<WorkExperience>, AppError> {
+    pub async fn list_work_experiences(
+        &self,
+        employee_id: Uuid,
+    ) -> Result<Vec<WorkExperience>, AppError> {
         sqlx::query_as::<_, WorkExperience>(
             "SELECT * FROM work_experiences WHERE employee_id=$1 ORDER BY start_date DESC NULLS LAST",
         )
@@ -246,20 +311,30 @@ impl HrLifecycleRepository {
 
     // ---- HELPERS ----
 
-    pub async fn get_designation_optional(&self, id: Uuid) -> Result<Option<HrDesignation>, AppError> {
+    pub async fn get_designation_optional(
+        &self,
+        id: Uuid,
+    ) -> Result<Option<HrDesignation>, AppError> {
         sqlx::query_as::<_, HrDesignation>(
             "SELECT d.*, dept.name as department_name \
              FROM hr_designations d \
              LEFT JOIN departments dept ON d.department_id = dept.id \
              WHERE d.id=$1",
         )
-        .bind(id).fetch_optional(&self.pool).await
+        .bind(id)
+        .fetch_optional(&self.pool)
+        .await
         .map_err(|e| AppError::Database(e.to_string()))
     }
 
-    pub async fn get_employment_type_optional(&self, id: Uuid) -> Result<Option<HrEmploymentType>, AppError> {
+    pub async fn get_employment_type_optional(
+        &self,
+        id: Uuid,
+    ) -> Result<Option<HrEmploymentType>, AppError> {
         sqlx::query_as::<_, HrEmploymentType>("SELECT * FROM hr_employment_types WHERE id=$1")
-            .bind(id).fetch_optional(&self.pool).await
+            .bind(id)
+            .fetch_optional(&self.pool)
+            .await
             .map_err(|e| AppError::Database(e.to_string()))
     }
 }

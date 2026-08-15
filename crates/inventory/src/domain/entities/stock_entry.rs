@@ -175,4 +175,3 @@ pub struct ItemBinBalance {
     #[sqlx(default)]
     pub warehouse_id: Option<Uuid>,
 }
-

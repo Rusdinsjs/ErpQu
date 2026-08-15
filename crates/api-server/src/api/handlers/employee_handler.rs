@@ -7,11 +7,11 @@ use uuid::Uuid;
 
 use crate::api::server::AppState;
 use management_system_core::application::dto::{
-    CreateEmployeeUserRequest,
-    ApiResponse, CreateEmployeeRequest, PaginationParams, UpdateEmployeeRequest,
+    ApiResponse, CreateEmployeeRequest, CreateEmployeeUserRequest, PaginationParams,
+    UpdateEmployeeRequest,
 };
-use management_system_hr::domain::entities::Employee;
 use management_system_core::shared::errors::AppError;
+use management_system_hr::domain::entities::Employee;
 
 pub async fn list_employees(
     State(state): State<AppState>,

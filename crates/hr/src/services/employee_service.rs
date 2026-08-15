@@ -1,12 +1,12 @@
+use crate::domain::entities::Employee;
+use crate::repositories::EmployeeRepository;
+use chrono::Utc;
 use management_system_core::application::dto::{
     CreateEmployeeRequest, CreateEmployeeUserRequest, UpdateEmployeeRequest,
 };
 use management_system_core::application::services::UserService;
-use crate::domain::entities::Employee;
-use crate::repositories::EmployeeRepository;
-use management_system_core::shared::errors::AppError;
 use management_system_core::domain::errors::DomainError;
-use chrono::Utc;
+use management_system_core::shared::errors::AppError;
 use uuid::Uuid;
 
 #[derive(Clone)]
@@ -26,12 +26,10 @@ impl EmployeeService {
     pub async fn create(&self, req: CreateEmployeeRequest) -> Result<Employee, AppError> {
         // Check if NIK already exists
         if (self.repository.get_by_nik(&req.nik).await?).is_some() {
-            return Err(AppError::Domain(
-                DomainError::bad_request(&format!(
-                    "Employee with NIK {} already exists",
-                    req.nik
-                )),
-            ));
+            return Err(AppError::Domain(DomainError::bad_request(&format!(
+                "Employee with NIK {} already exists",
+                req.nik
+            ))));
         }
 
         let employee = Employee {
@@ -140,12 +138,10 @@ impl EmployeeService {
         if let Some(nik) = req.nik {
             // Check if new NIK exists for other employees
             if nik != employee.nik && (self.repository.get_by_nik(&nik).await?).is_some() {
-                return Err(AppError::Domain(
-                    DomainError::bad_request(&format!(
-                        "Employee with NIK {} already exists",
-                        nik
-                    )),
-                ));
+                return Err(AppError::Domain(DomainError::bad_request(&format!(
+                    "Employee with NIK {} already exists",
+                    nik
+                ))));
             }
             employee.nik = nik;
         }
@@ -295,9 +291,9 @@ impl EmployeeService {
 
         // 2. Check if already has user
         if employee.user_id.is_some() {
-            return Err(AppError::Domain(
-                DomainError::conflict("Employee already has a user account"),
-            ));
+            return Err(AppError::Domain(DomainError::conflict(
+                "Employee already has a user account",
+            )));
         }
 
         // 3. Create user via UserService

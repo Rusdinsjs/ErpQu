@@ -4,8 +4,8 @@ use sqlx::PgPool;
 use uuid::Uuid;
 
 use crate::domain::entities::{
-    HrDisciplinaryAction, HrEmployeeCertification, HrJobApplicant, HrJobOpening,
-    HrTrainingEvent, HrTrainingParticipant, HrTrainingProgram,
+    HrDisciplinaryAction, HrEmployeeCertification, HrJobApplicant, HrJobOpening, HrTrainingEvent,
+    HrTrainingParticipant, HrTrainingProgram,
 };
 use crate::dto::{
     CreateEmployeeCertificationRequest, CreateJobApplicantRequest, CreateJobOpeningRequest,
@@ -58,7 +58,10 @@ impl HrRecruitmentTrainingDisciplineRepository {
         .ok_or_else(|| AppError::NotFound("Lowongan pekerjaan tidak ditemukan".into()))
     }
 
-    pub async fn create_job_opening(&self, req: CreateJobOpeningRequest) -> Result<HrJobOpening, AppError> {
+    pub async fn create_job_opening(
+        &self,
+        req: CreateJobOpeningRequest,
+    ) -> Result<HrJobOpening, AppError> {
         sqlx::query_as::<_, HrJobOpening>(
             r#"
             INSERT INTO hr_job_openings (
@@ -89,7 +92,10 @@ impl HrRecruitmentTrainingDisciplineRepository {
     }
 
     // ---- JOB APPLICANTS ----
-    pub async fn list_job_applicants(&self, job_opening_id: Option<Uuid>) -> Result<Vec<HrJobApplicant>, AppError> {
+    pub async fn list_job_applicants(
+        &self,
+        job_opening_id: Option<Uuid>,
+    ) -> Result<Vec<HrJobApplicant>, AppError> {
         sqlx::query_as::<_, HrJobApplicant>(
             r#"
             SELECT a.*, j.title as job_title
@@ -121,7 +127,10 @@ impl HrRecruitmentTrainingDisciplineRepository {
         .ok_or_else(|| AppError::NotFound("Pelamar tidak ditemukan".into()))
     }
 
-    pub async fn create_job_applicant(&self, req: CreateJobApplicantRequest) -> Result<HrJobApplicant, AppError> {
+    pub async fn create_job_applicant(
+        &self,
+        req: CreateJobApplicantRequest,
+    ) -> Result<HrJobApplicant, AppError> {
         sqlx::query_as::<_, HrJobApplicant>(
             r#"
             INSERT INTO hr_job_applicants (
@@ -144,7 +153,11 @@ impl HrRecruitmentTrainingDisciplineRepository {
         .map_err(|e| AppError::Database(e.to_string()))
     }
 
-    pub async fn update_applicant_stage(&self, id: Uuid, req: UpdateApplicantStageRequest) -> Result<HrJobApplicant, AppError> {
+    pub async fn update_applicant_stage(
+        &self,
+        id: Uuid,
+        req: UpdateApplicantStageRequest,
+    ) -> Result<HrJobApplicant, AppError> {
         sqlx::query_as::<_, HrJobApplicant>(
             r#"
             UPDATE hr_job_applicants
@@ -167,7 +180,11 @@ impl HrRecruitmentTrainingDisciplineRepository {
         .map_err(|e| AppError::Database(e.to_string()))
     }
 
-    pub async fn link_applicant_converted_employee(&self, applicant_id: Uuid, employee_id: Uuid) -> Result<(), AppError> {
+    pub async fn link_applicant_converted_employee(
+        &self,
+        applicant_id: Uuid,
+        employee_id: Uuid,
+    ) -> Result<(), AppError> {
         sqlx::query("UPDATE hr_job_applicants SET stage = 'hired', converted_employee_id = $2, updated_at = NOW() WHERE id = $1")
             .bind(applicant_id)
             .bind(employee_id)
@@ -179,13 +196,18 @@ impl HrRecruitmentTrainingDisciplineRepository {
 
     // ---- TRAINING PROGRAMS & EVENTS ----
     pub async fn list_training_programs(&self) -> Result<Vec<HrTrainingProgram>, AppError> {
-        sqlx::query_as::<_, HrTrainingProgram>("SELECT * FROM hr_training_programs WHERE is_active = TRUE ORDER BY title ASC")
-            .fetch_all(&self.pool)
-            .await
-            .map_err(|e| AppError::Database(e.to_string()))
+        sqlx::query_as::<_, HrTrainingProgram>(
+            "SELECT * FROM hr_training_programs WHERE is_active = TRUE ORDER BY title ASC",
+        )
+        .fetch_all(&self.pool)
+        .await
+        .map_err(|e| AppError::Database(e.to_string()))
     }
 
-    pub async fn create_training_program(&self, req: CreateTrainingProgramRequest) -> Result<HrTrainingProgram, AppError> {
+    pub async fn create_training_program(
+        &self,
+        req: CreateTrainingProgramRequest,
+    ) -> Result<HrTrainingProgram, AppError> {
         sqlx::query_as::<_, HrTrainingProgram>(
             r#"
             INSERT INTO hr_training_programs (id, title, code, description, trainer_type, duration_hours, is_mandatory)
@@ -219,7 +241,10 @@ impl HrRecruitmentTrainingDisciplineRepository {
         .map_err(|e| AppError::Database(e.to_string()))
     }
 
-    pub async fn create_training_event(&self, req: CreateTrainingEventRequest) -> Result<HrTrainingEvent, AppError> {
+    pub async fn create_training_event(
+        &self,
+        req: CreateTrainingEventRequest,
+    ) -> Result<HrTrainingEvent, AppError> {
         sqlx::query_as::<_, HrTrainingEvent>(
             r#"
             INSERT INTO hr_training_events (id, program_id, title, start_date, end_date, location, trainer_name, total_cost)
@@ -239,7 +264,10 @@ impl HrRecruitmentTrainingDisciplineRepository {
         .map_err(|e| AppError::Database(e.to_string()))
     }
 
-    pub async fn list_training_participants(&self, event_id: Uuid) -> Result<Vec<HrTrainingParticipant>, AppError> {
+    pub async fn list_training_participants(
+        &self,
+        event_id: Uuid,
+    ) -> Result<Vec<HrTrainingParticipant>, AppError> {
         sqlx::query_as::<_, HrTrainingParticipant>(
             r#"
             SELECT tp.*, emp.name as employee_name, emp.nik as employee_nik
@@ -255,7 +283,11 @@ impl HrRecruitmentTrainingDisciplineRepository {
         .map_err(|e| AppError::Database(e.to_string()))
     }
 
-    pub async fn add_training_participant(&self, event_id: Uuid, employee_id: Uuid) -> Result<(), AppError> {
+    pub async fn add_training_participant(
+        &self,
+        event_id: Uuid,
+        employee_id: Uuid,
+    ) -> Result<(), AppError> {
         sqlx::query(
             r#"
             INSERT INTO hr_training_participants (id, event_id, employee_id)
@@ -272,7 +304,10 @@ impl HrRecruitmentTrainingDisciplineRepository {
     }
 
     // ---- EMPLOYEE CERTIFICATIONS ----
-    pub async fn list_employee_certifications(&self, employee_id: Option<Uuid>) -> Result<Vec<HrEmployeeCertification>, AppError> {
+    pub async fn list_employee_certifications(
+        &self,
+        employee_id: Option<Uuid>,
+    ) -> Result<Vec<HrEmployeeCertification>, AppError> {
         sqlx::query_as::<_, HrEmployeeCertification>(
             r#"
             SELECT c.*, emp.name as employee_name, emp.nik as employee_nik
@@ -288,7 +323,10 @@ impl HrRecruitmentTrainingDisciplineRepository {
         .map_err(|e| AppError::Database(e.to_string()))
     }
 
-    pub async fn create_employee_certification(&self, req: CreateEmployeeCertificationRequest) -> Result<HrEmployeeCertification, AppError> {
+    pub async fn create_employee_certification(
+        &self,
+        req: CreateEmployeeCertificationRequest,
+    ) -> Result<HrEmployeeCertification, AppError> {
         sqlx::query_as::<_, HrEmployeeCertification>(
             r#"
             INSERT INTO hr_employee_certifications (
@@ -312,7 +350,10 @@ impl HrRecruitmentTrainingDisciplineRepository {
     }
 
     // ---- DISCIPLINARY ACTIONS ----
-    pub async fn list_disciplinary_actions(&self, employee_id: Option<Uuid>) -> Result<Vec<HrDisciplinaryAction>, AppError> {
+    pub async fn list_disciplinary_actions(
+        &self,
+        employee_id: Option<Uuid>,
+    ) -> Result<Vec<HrDisciplinaryAction>, AppError> {
         sqlx::query_as::<_, HrDisciplinaryAction>(
             r#"
             SELECT d.*, emp.name as employee_name, emp.nik as employee_nik
@@ -328,7 +369,12 @@ impl HrRecruitmentTrainingDisciplineRepository {
         .map_err(|e| AppError::Database(e.to_string()))
     }
 
-    pub async fn issue_disciplinary_action(&self, req: IssueDisciplinaryActionRequest, valid_until: NaiveDate, issued_by: Option<Uuid>) -> Result<HrDisciplinaryAction, AppError> {
+    pub async fn issue_disciplinary_action(
+        &self,
+        req: IssueDisciplinaryActionRequest,
+        valid_until: NaiveDate,
+        issued_by: Option<Uuid>,
+    ) -> Result<HrDisciplinaryAction, AppError> {
         sqlx::query_as::<_, HrDisciplinaryAction>(
             r#"
             INSERT INTO hr_disciplinary_actions (

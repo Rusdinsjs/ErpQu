@@ -79,14 +79,18 @@ impl DataService {
             offset += batch_size;
         }
 
-        let inner_writer = wtr.into_inner().map_err(|e| DomainError::ExternalServiceError {
-            service: "csv_export".to_string(),
-            message: e.to_string(),
-        })?;
+        let inner_writer = wtr
+            .into_inner()
+            .map_err(|e| DomainError::ExternalServiceError {
+                service: "csv_export".to_string(),
+                message: e.to_string(),
+            })?;
 
-        let data = String::from_utf8(inner_writer).map_err(|e: std::string::FromUtf8Error| DomainError::ExternalServiceError {
-            service: "csv_export".to_string(),
-            message: e.to_string(),
+        let data = String::from_utf8(inner_writer).map_err(|e: std::string::FromUtf8Error| {
+            DomainError::ExternalServiceError {
+                service: "csv_export".to_string(),
+                message: e.to_string(),
+            }
         })?;
 
         Ok(data)

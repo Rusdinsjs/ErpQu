@@ -87,7 +87,7 @@ pub async fn list_workflows(State(state): State<AppState>) -> AppResult<impl Int
         FROM workflows w
         JOIN doctypes dt ON dt.id = w.doctype_id
         ORDER BY w.workflow_name
-        "#
+        "#,
     )
     .fetch_all(&state.pool)
     .await
@@ -109,7 +109,7 @@ pub async fn get_workflow_detail(
         FROM workflows w
         JOIN doctypes dt ON dt.id = w.doctype_id
         WHERE w.id = $1
-        "#
+        "#,
     )
     .bind(id)
     .fetch_optional(&state.pool)
@@ -137,7 +137,7 @@ pub async fn get_workflow_detail(
         JOIN roles r ON r.id = t.allowed_role_id
         WHERE t.workflow_id = $1
         ORDER BY s1.state_name
-        "#
+        "#,
     )
     .bind(id)
     .fetch_all(&state.pool)
@@ -165,7 +165,7 @@ pub async fn create_workflow(
         INSERT INTO workflows (workflow_name, doctype_id, document_status_field)
         VALUES ($1, $2, $3)
         RETURNING *
-        "#
+        "#,
     )
     .bind(payload.workflow_name)
     .bind(payload.doctype_id)
@@ -266,7 +266,7 @@ pub async fn apply_workflow_action(
         JOIN workflow_states s2 ON s2.id = t.next_state_id
         JOIN roles r ON r.id = t.allowed_role_id
         WHERE t.workflow_id = $1 AND s1.state_name = $2 AND t.action_name = $3
-        "#
+        "#,
     )
     .bind(payload.workflow_id)
     .bind(&payload.current_state_name)
@@ -274,11 +274,13 @@ pub async fn apply_workflow_action(
     .fetch_optional(&state.pool)
     .await
     .map_err(|e: sqlx::Error| AppError::Database(e.to_string()))?
-    .ok_or(AppError::BadRequest("Transisi alur kerja tidak valid atau tidak ditemukan".to_string()))?;
+    .ok_or(AppError::BadRequest(
+        "Transisi alur kerja tidak valid atau tidak ditemukan".to_string(),
+    ))?;
 
     // 2. Validate User Role Authorization (User must have the allowed_role_id or role_level <= 2)
     let user_role_count = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM user_roles WHERE user_id = $1 AND role_id = $2"
+        "SELECT COUNT(*) FROM user_roles WHERE user_id = $1 AND role_id = $2",
     )
     .bind(claims.user_id())
     .bind(transition.allowed_role_id)
@@ -303,7 +305,7 @@ pub async fn apply_workflow_action(
             $1, $2, $3, $4, $5, $6, $7
         )
         RETURNING *
-        "#
+        "#,
     )
     .bind(payload.workflow_id)
     .bind(payload.document_id)

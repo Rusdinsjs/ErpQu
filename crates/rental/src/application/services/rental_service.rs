@@ -7,15 +7,15 @@ use chrono::{NaiveDate, Utc};
 use rust_decimal::Decimal;
 use uuid::Uuid;
 
+use crate::domain::entities::{Rental, RentalItem, RentalRate, RentalStatus};
+use crate::repositories::RentalRepository;
+use management_system_assets::{AssetRepository, AssetState};
 use management_system_core::application::dto::{
     ApproveRentalRequest, CreateRentalRateRequest, CreateRentalRequest, DispatchRentalRequest,
     RejectRentalRequest, RentalScheduleItem, ReturnRentalRequest, UpdateRentalRateRequest,
 };
 use management_system_core::domain::entities::UserClaims;
-use management_system_assets::{AssetRepository, AssetState};
-use crate::domain::entities::{Rental, RentalItem, RentalRate, RentalStatus};
 use management_system_core::domain::errors::{DomainError, DomainResult};
-use crate::repositories::RentalRepository;
 use management_system_crm::repositories::ClientRepository;
 use management_system_hr::repositories::EmployeeRepository;
 
@@ -145,12 +145,14 @@ impl RentalService {
         rental.items = Some(rental_items);
 
         // 4. Save to Repo
-        let created_rental = self.rental_repo.create_rental(&rental).await.map_err(|e: sqlx::Error| {
-            DomainError::ExternalServiceError {
-                service: "database".to_string(),
-                message: e.to_string(),
-            }
-        })?;
+        let created_rental =
+            self.rental_repo
+                .create_rental(&rental)
+                .await
+                .map_err(|e: sqlx::Error| DomainError::ExternalServiceError {
+                    service: "database".to_string(),
+                    message: e.to_string(),
+                })?;
 
         Ok(created_rental)
     }
@@ -434,12 +436,14 @@ impl RentalService {
     }
 
     pub async fn get_asset_name_for_rental(&self, rental_id: Uuid) -> DomainResult<Option<String>> {
-        let rental = self.rental_repo.find_rental_by_id(rental_id).await.map_err(|e: sqlx::Error| {
-            DomainError::ExternalServiceError {
+        let rental = self
+            .rental_repo
+            .find_rental_by_id(rental_id)
+            .await
+            .map_err(|e: sqlx::Error| DomainError::ExternalServiceError {
                 service: "db".to_string(),
                 message: e.to_string(),
-            }
-        })?;
+            })?;
 
         if let Some(r) = rental {
             if let Some(items) = r.items {
@@ -581,12 +585,13 @@ impl RentalService {
     /// Delete a rental order
     pub async fn delete_rental(&self, id: Uuid) -> DomainResult<()> {
         let _existing = self.find_rental(id).await?;
-        self.rental_repo.delete_rental(id).await.map_err(|e: sqlx::Error| {
-            DomainError::ExternalServiceError {
+        self.rental_repo
+            .delete_rental(id)
+            .await
+            .map_err(|e: sqlx::Error| DomainError::ExternalServiceError {
                 service: "database".to_string(),
                 message: e.to_string(),
-            }
-        })?;
+            })?;
 
         Ok(())
     }

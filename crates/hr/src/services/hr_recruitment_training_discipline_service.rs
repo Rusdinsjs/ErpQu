@@ -3,8 +3,8 @@ use management_system_core::shared::errors::AppError;
 use uuid::Uuid;
 
 use crate::domain::entities::{
-    HrDisciplinaryAction, HrEmployeeCertification, HrJobApplicant, HrJobOpening,
-    HrTrainingEvent, HrTrainingParticipant, HrTrainingProgram,
+    HrDisciplinaryAction, HrEmployeeCertification, HrJobApplicant, HrJobOpening, HrTrainingEvent,
+    HrTrainingParticipant, HrTrainingProgram,
 };
 use crate::dto::{
     ConvertApplicantRequest, CreateEmployeeCertificationRequest, CreateJobApplicantRequest,
@@ -20,7 +20,10 @@ pub struct HrRecruitmentTrainingDisciplineService {
 }
 
 impl HrRecruitmentTrainingDisciplineService {
-    pub fn new(repo: HrRecruitmentTrainingDisciplineRepository, emp_repo: EmployeeRepository) -> Self {
+    pub fn new(
+        repo: HrRecruitmentTrainingDisciplineRepository,
+        emp_repo: EmployeeRepository,
+    ) -> Self {
         Self { repo, emp_repo }
     }
 
@@ -29,23 +32,40 @@ impl HrRecruitmentTrainingDisciplineService {
         self.repo.list_job_openings().await
     }
 
-    pub async fn create_job_opening(&self, req: CreateJobOpeningRequest) -> Result<HrJobOpening, AppError> {
+    pub async fn create_job_opening(
+        &self,
+        req: CreateJobOpeningRequest,
+    ) -> Result<HrJobOpening, AppError> {
         self.repo.create_job_opening(req).await
     }
 
-    pub async fn list_job_applicants(&self, job_opening_id: Option<Uuid>) -> Result<Vec<HrJobApplicant>, AppError> {
+    pub async fn list_job_applicants(
+        &self,
+        job_opening_id: Option<Uuid>,
+    ) -> Result<Vec<HrJobApplicant>, AppError> {
         self.repo.list_job_applicants(job_opening_id).await
     }
 
-    pub async fn create_job_applicant(&self, req: CreateJobApplicantRequest) -> Result<HrJobApplicant, AppError> {
+    pub async fn create_job_applicant(
+        &self,
+        req: CreateJobApplicantRequest,
+    ) -> Result<HrJobApplicant, AppError> {
         self.repo.create_job_applicant(req).await
     }
 
-    pub async fn update_applicant_stage(&self, id: Uuid, req: UpdateApplicantStageRequest) -> Result<HrJobApplicant, AppError> {
+    pub async fn update_applicant_stage(
+        &self,
+        id: Uuid,
+        req: UpdateApplicantStageRequest,
+    ) -> Result<HrJobApplicant, AppError> {
         self.repo.update_applicant_stage(id, req).await
     }
 
-    pub async fn convert_applicant_to_employee(&self, applicant_id: Uuid, req: ConvertApplicantRequest) -> Result<Uuid, AppError> {
+    pub async fn convert_applicant_to_employee(
+        &self,
+        applicant_id: Uuid,
+        req: ConvertApplicantRequest,
+    ) -> Result<Uuid, AppError> {
         let applicant = self.repo.get_job_applicant(applicant_id).await?;
         let job = self.repo.get_job_opening(applicant.job_opening_id).await?;
 
@@ -113,7 +133,9 @@ impl HrRecruitmentTrainingDisciplineService {
         };
 
         let created_emp = self.emp_repo.create(&emp).await?;
-        self.repo.link_applicant_converted_employee(applicant_id, created_emp.id).await?;
+        self.repo
+            .link_applicant_converted_employee(applicant_id, created_emp.id)
+            .await?;
 
         Ok(created_emp.id)
     }
@@ -123,7 +145,10 @@ impl HrRecruitmentTrainingDisciplineService {
         self.repo.list_training_programs().await
     }
 
-    pub async fn create_training_program(&self, req: CreateTrainingProgramRequest) -> Result<HrTrainingProgram, AppError> {
+    pub async fn create_training_program(
+        &self,
+        req: CreateTrainingProgramRequest,
+    ) -> Result<HrTrainingProgram, AppError> {
         self.repo.create_training_program(req).await
     }
 
@@ -131,32 +156,57 @@ impl HrRecruitmentTrainingDisciplineService {
         self.repo.list_training_events().await
     }
 
-    pub async fn create_training_event(&self, req: CreateTrainingEventRequest) -> Result<HrTrainingEvent, AppError> {
+    pub async fn create_training_event(
+        &self,
+        req: CreateTrainingEventRequest,
+    ) -> Result<HrTrainingEvent, AppError> {
         self.repo.create_training_event(req).await
     }
 
-    pub async fn list_training_participants(&self, event_id: Uuid) -> Result<Vec<HrTrainingParticipant>, AppError> {
+    pub async fn list_training_participants(
+        &self,
+        event_id: Uuid,
+    ) -> Result<Vec<HrTrainingParticipant>, AppError> {
         self.repo.list_training_participants(event_id).await
     }
 
-    pub async fn add_training_participant(&self, event_id: Uuid, employee_id: Uuid) -> Result<(), AppError> {
-        self.repo.add_training_participant(event_id, employee_id).await
+    pub async fn add_training_participant(
+        &self,
+        event_id: Uuid,
+        employee_id: Uuid,
+    ) -> Result<(), AppError> {
+        self.repo
+            .add_training_participant(event_id, employee_id)
+            .await
     }
 
-    pub async fn list_employee_certifications(&self, employee_id: Option<Uuid>) -> Result<Vec<HrEmployeeCertification>, AppError> {
+    pub async fn list_employee_certifications(
+        &self,
+        employee_id: Option<Uuid>,
+    ) -> Result<Vec<HrEmployeeCertification>, AppError> {
         self.repo.list_employee_certifications(employee_id).await
     }
 
-    pub async fn create_employee_certification(&self, req: CreateEmployeeCertificationRequest) -> Result<HrEmployeeCertification, AppError> {
+    pub async fn create_employee_certification(
+        &self,
+        req: CreateEmployeeCertificationRequest,
+    ) -> Result<HrEmployeeCertification, AppError> {
         self.repo.create_employee_certification(req).await
     }
 
     // ---- DISCIPLINARY ACTIONS ----
-    pub async fn list_disciplinary_actions(&self, employee_id: Option<Uuid>) -> Result<Vec<HrDisciplinaryAction>, AppError> {
+    pub async fn list_disciplinary_actions(
+        &self,
+        employee_id: Option<Uuid>,
+    ) -> Result<Vec<HrDisciplinaryAction>, AppError> {
         self.repo.list_disciplinary_actions(employee_id).await
     }
 
-    pub async fn issue_disciplinary_action(&self, req: IssueDisciplinaryActionRequest, issued_by: Option<Uuid>) -> Result<HrDisciplinaryAction, AppError> {
+    pub async fn issue_disciplinary_action(
+        &self,
+        req: IssueDisciplinaryActionRequest,
+        issued_by: Option<Uuid>,
+    ) -> Result<HrDisciplinaryAction, AppError> {
         // Standard Indonesian Labor Rule: 6 months validity
         let today = Utc::now().date_naive();
         let mut year = today.year();
@@ -165,8 +215,11 @@ impl HrRecruitmentTrainingDisciplineService {
             year += 1;
             month -= 12;
         }
-        let valid_until = NaiveDate::from_ymd_opt(year, month, today.day().min(28)).unwrap_or(today);
+        let valid_until =
+            NaiveDate::from_ymd_opt(year, month, today.day().min(28)).unwrap_or(today);
 
-        self.repo.issue_disciplinary_action(req, valid_until, issued_by).await
+        self.repo
+            .issue_disciplinary_action(req, valid_until, issued_by)
+            .await
     }
 }

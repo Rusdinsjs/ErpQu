@@ -62,7 +62,10 @@ impl ContractApprovalRepository {
     pub async fn find_by_contract_with_names(
         &self,
         contract_id: Uuid,
-    ) -> Result<Vec<management_system_core::application::dto::contract_dto::ApprovalResponse>, DomainError> {
+    ) -> Result<
+        Vec<management_system_core::application::dto::contract_dto::ApprovalResponse>,
+        DomainError,
+    > {
         let rows = sqlx::query(
             r#"SELECT
                 ca.id,

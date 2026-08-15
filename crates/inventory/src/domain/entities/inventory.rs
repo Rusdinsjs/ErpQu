@@ -85,4 +85,3 @@ pub struct ItemAlternative {
     pub alternative_item_id: Uuid,
     pub created_at: DateTime<Utc>,
 }
-

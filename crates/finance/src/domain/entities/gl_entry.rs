@@ -30,6 +30,36 @@ pub struct GLEntry {
     pub created_by: Option<Uuid>,
 }
 
+impl GLEntry {
+    /// Creates an exact mirrored reversal entry for this GL entry (QACC-003)
+    pub fn create_reversal(&self, reversal_date: NaiveDate) -> Self {
+        Self {
+            id: Uuid::new_v4(),
+            company_id: self.company_id,
+            posting_date: reversal_date,
+            posting_datetime: Utc::now(),
+            account_id: self.account_id,
+            party_type: self.party_type.clone(),
+            party_id: self.party_id,
+            cost_center_id: self.cost_center_id,
+            project_id: self.project_id,
+            currency: self.currency.clone(),
+            exchange_rate: self.exchange_rate,
+            debit: self.credit,
+            credit: self.debit,
+            debit_in_account_currency: self.credit_in_account_currency,
+            credit_in_account_currency: self.debit_in_account_currency,
+            voucher_type: self.voucher_type.clone(),
+            voucher_no: format!("{}-REV", self.voucher_no),
+            voucher_id: self.voucher_id,
+            is_reversal: true,
+            reversal_source_id: Some(self.id),
+            created_at: Utc::now(),
+            created_by: self.created_by,
+        }
+    }
+}
+
 /// A line item inside a posting instruction sent to AccountingPostingEngine (QACC-004)
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PostingLineItem {

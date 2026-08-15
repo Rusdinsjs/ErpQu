@@ -37,16 +37,20 @@ impl InventoryRepository {
     }
 
     pub async fn list_categories(&self) -> Result<Vec<InventoryCategory>, sqlx::Error> {
-        sqlx::query_as::<_, InventoryCategory>("SELECT * FROM inventory.inventory_categories ORDER BY name")
-            .fetch_all(&self.pool)
-            .await
+        sqlx::query_as::<_, InventoryCategory>(
+            "SELECT * FROM inventory.inventory_categories ORDER BY name",
+        )
+        .fetch_all(&self.pool)
+        .await
     }
 
     pub async fn get_category(&self, id: Uuid) -> Result<Option<InventoryCategory>, sqlx::Error> {
-        sqlx::query_as::<_, InventoryCategory>("SELECT * FROM inventory.inventory_categories WHERE id = $1")
-            .bind(id)
-            .fetch_optional(&self.pool)
-            .await
+        sqlx::query_as::<_, InventoryCategory>(
+            "SELECT * FROM inventory.inventory_categories WHERE id = $1",
+        )
+        .bind(id)
+        .fetch_optional(&self.pool)
+        .await
     }
 
     pub async fn update_category(
@@ -117,8 +121,9 @@ impl InventoryRepository {
         category_id: Option<Uuid>,
         search: Option<String>,
     ) -> Result<Vec<InventoryItem>, sqlx::Error> {
-        let mut query_builder: sqlx::QueryBuilder<sqlx::Postgres> =
-            sqlx::QueryBuilder::new("SELECT * FROM inventory.inventory_items WHERE is_active = true");
+        let mut query_builder: sqlx::QueryBuilder<sqlx::Postgres> = sqlx::QueryBuilder::new(
+            "SELECT * FROM inventory.inventory_items WHERE is_active = true",
+        );
 
         if let Some(category_id) = category_id {
             query_builder.push(" AND category_id = ");
@@ -257,7 +262,7 @@ impl InventoryRepository {
             JOIN public.companies c ON w.company_id = c.id 
             WHERE c.tenant_id = $1 
             ORDER BY w.name
-            "#
+            "#,
         )
         .bind(tenant_id)
         .fetch_all(&self.pool)
@@ -305,7 +310,7 @@ impl InventoryRepository {
     ) -> Result<crate::domain::entities::inventory::ProductBundle, sqlx::Error> {
         sqlx::query_as::<_, crate::domain::entities::inventory::ProductBundle>(
             "INSERT INTO inventory.product_bundles (id, parent_item_id, description)
-             VALUES ($1, $2, $3) RETURNING *"
+             VALUES ($1, $2, $3) RETURNING *",
         )
         .bind(bundle.id)
         .bind(bundle.parent_item_id)
@@ -321,7 +326,7 @@ impl InventoryRepository {
     ) -> Result<crate::domain::entities::inventory::ProductBundleItem, sqlx::Error> {
         sqlx::query_as::<_, crate::domain::entities::inventory::ProductBundleItem>(
             "INSERT INTO inventory.product_bundle_items (id, bundle_id, item_id, qty)
-             VALUES ($1, $2, $3, $4) RETURNING *"
+             VALUES ($1, $2, $3, $4) RETURNING *",
         )
         .bind(item.id)
         .bind(item.bundle_id)
@@ -331,18 +336,24 @@ impl InventoryRepository {
         .await
     }
 
-    pub async fn get_product_bundle(&self, parent_item_id: Uuid) -> Result<Option<crate::domain::entities::inventory::ProductBundle>, sqlx::Error> {
+    pub async fn get_product_bundle(
+        &self,
+        parent_item_id: Uuid,
+    ) -> Result<Option<crate::domain::entities::inventory::ProductBundle>, sqlx::Error> {
         sqlx::query_as::<_, crate::domain::entities::inventory::ProductBundle>(
-            "SELECT * FROM inventory.product_bundles WHERE parent_item_id = $1"
+            "SELECT * FROM inventory.product_bundles WHERE parent_item_id = $1",
         )
         .bind(parent_item_id)
         .fetch_optional(&self.pool)
         .await
     }
 
-    pub async fn get_product_bundle_items(&self, bundle_id: Uuid) -> Result<Vec<crate::domain::entities::inventory::ProductBundleItem>, sqlx::Error> {
+    pub async fn get_product_bundle_items(
+        &self,
+        bundle_id: Uuid,
+    ) -> Result<Vec<crate::domain::entities::inventory::ProductBundleItem>, sqlx::Error> {
         sqlx::query_as::<_, crate::domain::entities::inventory::ProductBundleItem>(
-            "SELECT * FROM inventory.product_bundle_items WHERE bundle_id = $1"
+            "SELECT * FROM inventory.product_bundle_items WHERE bundle_id = $1",
         )
         .bind(bundle_id)
         .fetch_all(&self.pool)
@@ -357,7 +368,7 @@ impl InventoryRepository {
     ) -> Result<crate::domain::entities::inventory::ItemAlternative, sqlx::Error> {
         sqlx::query_as::<_, crate::domain::entities::inventory::ItemAlternative>(
             "INSERT INTO inventory.item_alternatives (id, item_id, alternative_item_id)
-             VALUES ($1, $2, $3) RETURNING *"
+             VALUES ($1, $2, $3) RETURNING *",
         )
         .bind(alternative.id)
         .bind(alternative.item_id)
@@ -366,9 +377,12 @@ impl InventoryRepository {
         .await
     }
 
-    pub async fn get_item_alternatives(&self, item_id: Uuid) -> Result<Vec<crate::domain::entities::inventory::ItemAlternative>, sqlx::Error> {
+    pub async fn get_item_alternatives(
+        &self,
+        item_id: Uuid,
+    ) -> Result<Vec<crate::domain::entities::inventory::ItemAlternative>, sqlx::Error> {
         sqlx::query_as::<_, crate::domain::entities::inventory::ItemAlternative>(
-            "SELECT * FROM inventory.item_alternatives WHERE item_id = $1"
+            "SELECT * FROM inventory.item_alternatives WHERE item_id = $1",
         )
         .bind(item_id)
         .fetch_all(&self.pool)
@@ -397,18 +411,24 @@ impl InventoryRepository {
         .await
     }
 
-    pub async fn get_warehouse_bin(&self, id: Uuid) -> Result<Option<crate::domain::entities::stock_entry::WarehouseBin>, sqlx::Error> {
+    pub async fn get_warehouse_bin(
+        &self,
+        id: Uuid,
+    ) -> Result<Option<crate::domain::entities::stock_entry::WarehouseBin>, sqlx::Error> {
         sqlx::query_as::<_, crate::domain::entities::stock_entry::WarehouseBin>(
-            "SELECT * FROM inventory.warehouse_bins WHERE id = $1"
+            "SELECT * FROM inventory.warehouse_bins WHERE id = $1",
         )
         .bind(id)
         .fetch_optional(&self.pool)
         .await
     }
 
-    pub async fn list_warehouse_bins(&self, warehouse_id: Uuid) -> Result<Vec<crate::domain::entities::stock_entry::WarehouseBin>, sqlx::Error> {
+    pub async fn list_warehouse_bins(
+        &self,
+        warehouse_id: Uuid,
+    ) -> Result<Vec<crate::domain::entities::stock_entry::WarehouseBin>, sqlx::Error> {
         sqlx::query_as::<_, crate::domain::entities::stock_entry::WarehouseBin>(
-            "SELECT * FROM inventory.warehouse_bins WHERE warehouse_id = $1 ORDER BY bin_code"
+            "SELECT * FROM inventory.warehouse_bins WHERE warehouse_id = $1 ORDER BY bin_code",
         )
         .bind(warehouse_id)
         .fetch_all(&self.pool)
@@ -423,14 +443,17 @@ impl InventoryRepository {
         Ok(())
     }
 
-    pub async fn get_item_bin_balances(&self, warehouse_bin_id: Uuid) -> Result<Vec<crate::domain::entities::stock_entry::ItemBinBalance>, sqlx::Error> {
+    pub async fn get_item_bin_balances(
+        &self,
+        warehouse_bin_id: Uuid,
+    ) -> Result<Vec<crate::domain::entities::stock_entry::ItemBinBalance>, sqlx::Error> {
         sqlx::query_as::<_, crate::domain::entities::stock_entry::ItemBinBalance>(
             r#"
             SELECT ibb.*, wb.bin_code, wb.warehouse_id
             FROM inventory.item_bin_balances ibb
             LEFT JOIN inventory.warehouse_bins wb ON ibb.warehouse_bin_id = wb.id
             WHERE ibb.warehouse_bin_id = $1
-            "#
+            "#,
         )
         .bind(warehouse_bin_id)
         .fetch_all(&self.pool)
@@ -448,7 +471,7 @@ impl InventoryRepository {
             FROM inventory.item_bin_balances ibb
             LEFT JOIN inventory.warehouse_bins wb ON ibb.warehouse_bin_id = wb.id
             WHERE ibb.warehouse_bin_id = $1 AND ibb.item_id = $2
-            "#
+            "#,
         )
         .bind(warehouse_bin_id)
         .bind(item_id)
@@ -456,14 +479,17 @@ impl InventoryRepository {
         .await
     }
 
-    pub async fn list_bin_balances_by_item(&self, item_id: Uuid) -> Result<Vec<crate::domain::entities::stock_entry::ItemBinBalance>, sqlx::Error> {
+    pub async fn list_bin_balances_by_item(
+        &self,
+        item_id: Uuid,
+    ) -> Result<Vec<crate::domain::entities::stock_entry::ItemBinBalance>, sqlx::Error> {
         sqlx::query_as::<_, crate::domain::entities::stock_entry::ItemBinBalance>(
             r#"
             SELECT ibb.*, wb.bin_code, wb.warehouse_id
             FROM inventory.item_bin_balances ibb
             LEFT JOIN inventory.warehouse_bins wb ON ibb.warehouse_bin_id = wb.id
             WHERE ibb.item_id = $1
-            "#
+            "#,
         )
         .bind(item_id)
         .fetch_all(&self.pool)

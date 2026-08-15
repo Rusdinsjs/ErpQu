@@ -1,9 +1,9 @@
 use crate::domain::operational_erp::{DeliveryTrip, DeliveryTripStop};
 use crate::repositories::delivery_trip_repository::DeliveryTripRepository;
+use chrono::{DateTime, Utc};
 use management_system_core::domain::errors::DomainError;
 use std::sync::Arc;
 use uuid::Uuid;
-use chrono::{DateTime, Utc};
 
 pub type DomainResult<T> = Result<T, DomainError>;
 
@@ -35,11 +35,19 @@ impl DeliveryTripService {
         &self,
         req: CreateDeliveryTripRequest,
     ) -> DomainResult<(DeliveryTrip, Vec<DeliveryTripStop>)> {
-        let mut tx = self.repository.pool().begin().await
+        let mut tx = self
+            .repository
+            .pool()
+            .begin()
+            .await
             .map_err(|e| DomainError::Database(e.to_string()))?;
 
         let trip_id = Uuid::new_v4();
-        let trip_number = format!("TRIP-{}-{}", Utc::now().format("%Y%m%d"), Uuid::new_v4().to_string()[..8].to_uppercase());
+        let trip_number = format!(
+            "TRIP-{}-{}",
+            Utc::now().format("%Y%m%d"),
+            Uuid::new_v4().to_string()[..8].to_uppercase()
+        );
 
         let trip = DeliveryTrip {
             id: trip_id,
@@ -53,7 +61,10 @@ impl DeliveryTripService {
             created_at: Utc::now(),
         };
 
-        let saved_trip = self.repository.create_delivery_trip(&mut tx, &trip).await
+        let saved_trip = self
+            .repository
+            .create_delivery_trip(&mut tx, &trip)
+            .await
             .map_err(|e| DomainError::Database(e.to_string()))?;
 
         let mut saved_stops = Vec::new();
@@ -65,23 +76,36 @@ impl DeliveryTripService {
                 stop_order: stop_req.stop_order,
                 status: "PENDING".to_string(),
             };
-            let saved_stop = self.repository.add_delivery_trip_stop(&mut tx, &stop).await
+            let saved_stop = self
+                .repository
+                .add_delivery_trip_stop(&mut tx, &stop)
+                .await
                 .map_err(|e| DomainError::Database(e.to_string()))?;
             saved_stops.push(saved_stop);
         }
 
-        tx.commit().await
+        tx.commit()
+            .await
             .map_err(|e| DomainError::Database(e.to_string()))?;
 
         Ok((saved_trip, saved_stops))
     }
 
-    pub async fn get_delivery_trip(&self, id: Uuid) -> DomainResult<Option<(DeliveryTrip, Vec<DeliveryTripStop>)>> {
-        let trip = self.repository.get_delivery_trip(id).await
+    pub async fn get_delivery_trip(
+        &self,
+        id: Uuid,
+    ) -> DomainResult<Option<(DeliveryTrip, Vec<DeliveryTripStop>)>> {
+        let trip = self
+            .repository
+            .get_delivery_trip(id)
+            .await
             .map_err(|e| DomainError::Database(e.to_string()))?;
 
         if let Some(trip) = trip {
-            let stops = self.repository.get_delivery_trip_stops(trip.id).await
+            let stops = self
+                .repository
+                .get_delivery_trip_stops(trip.id)
+                .await
                 .map_err(|e| DomainError::Database(e.to_string()))?;
             Ok(Some((trip, stops)))
         } else {
@@ -90,7 +114,9 @@ impl DeliveryTripService {
     }
 
     pub async fn list_delivery_trips(&self, company_id: Uuid) -> DomainResult<Vec<DeliveryTrip>> {
-        self.repository.list_delivery_trips(company_id).await
+        self.repository
+            .list_delivery_trips(company_id)
+            .await
             .map_err(|e| DomainError::Database(e.to_string()))
     }
 

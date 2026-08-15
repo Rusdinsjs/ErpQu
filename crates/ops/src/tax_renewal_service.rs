@@ -1,3 +1,5 @@
+use crate::domain::entities::{TaxRenewal, UpdateTaxRenewalCostRequest};
+use crate::repositories::TaxRenewalRepository;
 use async_trait::async_trait;
 use chrono::{NaiveDate, Utc};
 use management_system_assets::AssetRepository;
@@ -6,8 +8,6 @@ use management_system_core::domain::errors::DomainError;
 use management_system_crm::domain::entities::Vendor;
 use management_system_crm::repositories::VendorRepository;
 use management_system_finance::{CreateBillItemRequest, CreatePurchaseBillRequest, FinanceService};
-use crate::domain::entities::{TaxRenewal, UpdateTaxRenewalCostRequest};
-use crate::repositories::TaxRenewalRepository;
 use uuid::Uuid;
 
 #[derive(Clone)]
@@ -236,7 +236,10 @@ impl TaxRenewalService {
             attachment_url: renewal.invoice_attachment.clone(),
         };
 
-        let bill = self.finance_service.create_purchase_bill(None, bill_req).await?;
+        let bill = self
+            .finance_service
+            .create_purchase_bill(None, bill_req)
+            .await?;
 
         // Update Tax Renewal status to INVOICED and link bill
         self.repository

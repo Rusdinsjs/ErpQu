@@ -5,15 +5,13 @@ use sqlx::PgPool;
 use uuid::Uuid;
 
 use crate::domain::entities::{
-    HrHoliday, HrHolidayList, HrLeaveAllocation, HrLeaveApplication,
-    HrLeaveBlockDate, HrLeaveBlockList, HrLeaveEncashment, HrLeaveType,
-    LeaveBalanceSummary,
+    HrHoliday, HrHolidayList, HrLeaveAllocation, HrLeaveApplication, HrLeaveBlockDate,
+    HrLeaveBlockList, HrLeaveEncashment, HrLeaveType, LeaveBalanceSummary,
 };
 use crate::dto::{
-    AddBlockDateRequest, AddHolidayRequest, CreateHolidayListRequest,
-    CreateLeaveAllocationRequest, CreateLeaveApplicationRequest,
-    CreateLeaveBlockListRequest, CreateLeaveTypeRequest, LeaveQueryParams,
-    UpdateLeaveTypeRequest,
+    AddBlockDateRequest, AddHolidayRequest, CreateHolidayListRequest, CreateLeaveAllocationRequest,
+    CreateLeaveApplicationRequest, CreateLeaveBlockListRequest, CreateLeaveTypeRequest,
+    LeaveQueryParams, UpdateLeaveTypeRequest,
 };
 
 #[derive(Clone)]
@@ -45,7 +43,10 @@ impl HrLeavesRepository {
             .ok_or_else(|| AppError::NotFound("Jenis Cuti tidak ditemukan".into()))
     }
 
-    pub async fn create_leave_type(&self, req: CreateLeaveTypeRequest) -> Result<HrLeaveType, AppError> {
+    pub async fn create_leave_type(
+        &self,
+        req: CreateLeaveTypeRequest,
+    ) -> Result<HrLeaveType, AppError> {
         sqlx::query_as::<_, HrLeaveType>(
             r#"
             INSERT INTO hr_leave_types (
@@ -75,7 +76,11 @@ impl HrLeavesRepository {
         .map_err(|e| AppError::Database(e.to_string()))
     }
 
-    pub async fn update_leave_type(&self, id: Uuid, req: UpdateLeaveTypeRequest) -> Result<HrLeaveType, AppError> {
+    pub async fn update_leave_type(
+        &self,
+        id: Uuid,
+        req: UpdateLeaveTypeRequest,
+    ) -> Result<HrLeaveType, AppError> {
         let cur = self.get_leave_type(id).await?;
         sqlx::query_as::<_, HrLeaveType>(
             r#"
@@ -93,9 +98,15 @@ impl HrLeavesRepository {
         .bind(req.name.unwrap_or(cur.name))
         .bind(req.description.or(cur.description))
         .bind(req.max_days_allowed.unwrap_or(cur.max_days_allowed))
-        .bind(req.applicable_after_working_days.unwrap_or(cur.applicable_after_working_days))
+        .bind(
+            req.applicable_after_working_days
+                .unwrap_or(cur.applicable_after_working_days),
+        )
         .bind(req.is_carry_forward.unwrap_or(cur.is_carry_forward))
-        .bind(req.max_carry_forward_days.unwrap_or(cur.max_carry_forward_days))
+        .bind(
+            req.max_carry_forward_days
+                .unwrap_or(cur.max_carry_forward_days),
+        )
         .bind(req.is_encashable.unwrap_or(cur.is_encashable))
         .bind(req.is_earned_leave.unwrap_or(cur.is_earned_leave))
         .bind(req.is_unpaid.unwrap_or(cur.is_unpaid))
@@ -108,16 +119,21 @@ impl HrLeavesRepository {
     }
 
     pub async fn delete_leave_type(&self, id: Uuid) -> Result<(), AppError> {
-        sqlx::query("UPDATE hr_leave_types SET is_active = FALSE, updated_at = NOW() WHERE id = $1")
-            .bind(id)
-            .execute(&self.pool)
-            .await
-            .map_err(|e| AppError::Database(e.to_string()))?;
+        sqlx::query(
+            "UPDATE hr_leave_types SET is_active = FALSE, updated_at = NOW() WHERE id = $1",
+        )
+        .bind(id)
+        .execute(&self.pool)
+        .await
+        .map_err(|e| AppError::Database(e.to_string()))?;
         Ok(())
     }
 
     // ---- LEAVE ALLOCATIONS ----
-    pub async fn list_allocations(&self, employee_id: Option<Uuid>) -> Result<Vec<HrLeaveAllocation>, AppError> {
+    pub async fn list_allocations(
+        &self,
+        employee_id: Option<Uuid>,
+    ) -> Result<Vec<HrLeaveAllocation>, AppError> {
         sqlx::query_as::<_, HrLeaveAllocation>(
             r#"
             SELECT a.*, e.name as employee_name, e.nik as employee_nik,
@@ -135,7 +151,10 @@ impl HrLeavesRepository {
         .map_err(|e| AppError::Database(e.to_string()))
     }
 
-    pub async fn create_allocation(&self, req: CreateLeaveAllocationRequest) -> Result<HrLeaveAllocation, AppError> {
+    pub async fn create_allocation(
+        &self,
+        req: CreateLeaveAllocationRequest,
+    ) -> Result<HrLeaveAllocation, AppError> {
         sqlx::query_as::<_, HrLeaveAllocation>(
             r#"
             INSERT INTO hr_leave_allocations (
@@ -161,7 +180,10 @@ impl HrLeavesRepository {
     }
 
     // ---- LEAVE BALANCE CALCULATION ----
-    pub async fn get_leave_balance(&self, employee_id: Uuid) -> Result<Vec<LeaveBalanceSummary>, AppError> {
+    pub async fn get_leave_balance(
+        &self,
+        employee_id: Uuid,
+    ) -> Result<Vec<LeaveBalanceSummary>, AppError> {
         let types = self.list_leave_types().await?;
         let mut summaries = Vec::new();
 
@@ -237,7 +259,10 @@ impl HrLeavesRepository {
     }
 
     // ---- LEAVE APPLICATIONS ----
-    pub async fn list_applications(&self, params: LeaveQueryParams) -> Result<Vec<HrLeaveApplication>, AppError> {
+    pub async fn list_applications(
+        &self,
+        params: LeaveQueryParams,
+    ) -> Result<Vec<HrLeaveApplication>, AppError> {
         sqlx::query_as::<_, HrLeaveApplication>(
             r#"
             SELECT a.*, e.name as employee_name, e.nik as employee_nik,
@@ -285,7 +310,11 @@ impl HrLeavesRepository {
         .ok_or_else(|| AppError::NotFound("Pengajuan cuti tidak ditemukan".into()))
     }
 
-    pub async fn create_application(&self, req: CreateLeaveApplicationRequest, days: Decimal) -> Result<HrLeaveApplication, AppError> {
+    pub async fn create_application(
+        &self,
+        req: CreateLeaveApplicationRequest,
+        days: Decimal,
+    ) -> Result<HrLeaveApplication, AppError> {
         sqlx::query_as::<_, HrLeaveApplication>(
             r#"
             INSERT INTO hr_leave_applications (
@@ -366,7 +395,11 @@ impl HrLeavesRepository {
         .map_err(|e| AppError::Database(e.to_string()))
     }
 
-    pub async fn add_holiday(&self, holiday_list_id: Uuid, req: AddHolidayRequest) -> Result<HrHoliday, AppError> {
+    pub async fn add_holiday(
+        &self,
+        holiday_list_id: Uuid,
+        req: AddHolidayRequest,
+    ) -> Result<HrHoliday, AppError> {
         sqlx::query_as::<_, HrHoliday>(
             r#"
             INSERT INTO hr_holidays (id, holiday_list_id, holiday_date, description, is_weekly_off)
@@ -385,23 +418,24 @@ impl HrLeavesRepository {
     }
 
     pub async fn is_holiday(&self, date: NaiveDate) -> Result<bool, AppError> {
-        let count: i64 = sqlx::query_scalar(
-            "SELECT COUNT(*) FROM hr_holidays WHERE holiday_date = $1",
-        )
-        .bind(date)
-        .fetch_one(&self.pool)
-        .await
-        .map_err(|e| AppError::Database(e.to_string()))?;
+        let count: i64 =
+            sqlx::query_scalar("SELECT COUNT(*) FROM hr_holidays WHERE holiday_date = $1")
+                .bind(date)
+                .fetch_one(&self.pool)
+                .await
+                .map_err(|e| AppError::Database(e.to_string()))?;
 
         Ok(count > 0)
     }
 
     // ---- LEAVE BLOCK LISTS ----
     pub async fn list_block_lists(&self) -> Result<Vec<HrLeaveBlockList>, AppError> {
-        sqlx::query_as::<_, HrLeaveBlockList>("SELECT * FROM hr_leave_block_lists WHERE is_active = TRUE")
-            .fetch_all(&self.pool)
-            .await
-            .map_err(|e| AppError::Database(e.to_string()))
+        sqlx::query_as::<_, HrLeaveBlockList>(
+            "SELECT * FROM hr_leave_block_lists WHERE is_active = TRUE",
+        )
+        .fetch_all(&self.pool)
+        .await
+        .map_err(|e| AppError::Database(e.to_string()))
     }
 
     pub async fn is_date_blocked(&self, date: NaiveDate) -> Result<Option<String>, AppError> {

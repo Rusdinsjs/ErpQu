@@ -16,8 +16,9 @@ use management_system_core::domain::tenant::TenantContext;
 use management_system_core::shared::{AppError, AppResult};
 
 const MAX_UPLOAD_SIZE: u64 = 10 * 1024 * 1024; // 10MB
+const ALLOWED_EXTENSIONS: &[&str] = &["jpg", "jpeg", "png", "webp", "pdf", "csv", "xlsx", "docx"];
 
-/// Upload a file (QSEC-006: Authenticated file upload with metadata tracking)
+/// Upload a file (QSEC-006: Authenticated file upload with fail-closed metadata tracking)
 pub async fn upload_file(
     Extension(claims): Extension<UserClaims>,
     Extension(tenant_ctx): Extension<TenantContext>,
@@ -49,7 +50,7 @@ pub async fn upload_file(
                 .map_err(|e| AppError::Internal(e.to_string()))?;
 
             if data.len() as u64 > MAX_UPLOAD_SIZE {
-                return Err(AppError::BadRequest("File too large".to_string()));
+                return Err(AppError::BadRequest("File too large (max 10MB)".to_string()));
             }
 
             // Determine extension
@@ -58,6 +59,14 @@ pub async fn upload_file(
                 .and_then(|e| e.to_str())
                 .unwrap_or("bin")
                 .to_lowercase();
+
+            // Strict extension allowlist
+            if !ALLOWED_EXTENSIONS.contains(&ext.as_str()) {
+                return Err(AppError::BadRequest(format!(
+                    "File extension '.{}' is not permitted",
+                    ext
+                )));
+            }
 
             // Compress if image
             let (final_data, final_ext) = if ["jpg", "jpeg", "png", "webp"].contains(&ext.as_str())
@@ -113,14 +122,11 @@ pub async fn upload_file(
                 .await
                 .map_err(|e| AppError::Internal(format!("Failed to save file: {}", e)))?;
 
-            let url = format!("/api/{}", file_path);
-
-            // Record upload metadata in database for IDOR & authorization enforcement
-            let _ = sqlx::query(
+            // Record upload metadata in database for IDOR & authorization enforcement (Fail-Closed)
+            let insert_res = sqlx::query(
                 r#"
                 INSERT INTO public.uploads (id, file_path, original_name, content_type, file_size, uploaded_by, company_id, role_level_required)
                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-                ON CONFLICT (file_path) DO NOTHING
                 "#
             )
             .bind(file_id)
@@ -134,6 +140,16 @@ pub async fn upload_file(
             .execute(&state.pool)
             .await;
 
+            if let Err(e) = insert_res {
+                // If metadata insert fails, delete written file to remain fail-closed
+                let _ = fs::remove_file(&file_path).await;
+                return Err(AppError::Internal(format!(
+                    "Failed to register upload metadata in database: {}",
+                    e
+                )));
+            }
+
+            let url = format!("/api/{}", file_path);
             uploaded_file = Some(json!({
                 "id": file_id,
                 "url": url,
@@ -154,13 +170,7 @@ pub async fn upload_file(
     }
 }
 
-struct UploadRecord {
-    uploaded_by: Uuid,
-    company_id: Option<Uuid>,
-    role_level_required: i32,
-}
-
-/// Private file download service (QSEC-006: Authenticated file access with IDOR check)
+/// Private file download service (QSEC-006: Authenticated file access with IDOR & tenant check)
 pub async fn get_private_file(
     Extension(claims): Extension<UserClaims>,
     Extension(tenant_ctx): Extension<TenantContext>,
@@ -175,7 +185,7 @@ pub async fn get_private_file(
 
     // Prevent directory traversal attacks
     let safe_path = file_path.trim_start_matches('/');
-    if safe_path.contains("..") || safe_path.contains("\\") {
+    if safe_path.contains("..") || safe_path.contains('\\') {
         return Err(AppError::BadRequest("Invalid file path".to_string()));
     }
 
@@ -186,30 +196,39 @@ pub async fn get_private_file(
         return Err(AppError::NotFound("File not found".to_string()));
     }
 
-    // Check authorization against DB record if available
+    // Check authorization against DB record (Fail-Closed: Record must exist and be authorized)
     let record = sqlx::query_as::<_, (Uuid, Option<Uuid>, i32)>(
         "SELECT uploaded_by, company_id, role_level_required FROM public.uploads WHERE file_path = $1"
     )
     .bind(&db_path)
     .fetch_optional(&state.pool)
     .await
-    .unwrap_or(None);
+    .map_err(|e| AppError::Internal(format!("Database error during authorization: {}", e)))?;
+
+    let (uploaded_by, company_id, role_level_required) = match record {
+        Some(r) => r,
+        None => {
+            return Err(AppError::NotFound("File metadata not found in database".to_string()));
+        }
+    };
 
     let is_admin = claims.role == "super_admin"
         || claims.role == "admin"
         || claims.role.starts_with("admin_")
         || claims.role_level <= 2;
 
-    if let Some((uploaded_by, company_id, role_level_required)) = record {
-        if !is_admin {
-            // Owner or matching role level required
-            if uploaded_by != claims.user_id() && claims.role_level > role_level_required {
-                return Err(AppError::Forbidden("Access denied to requested file".to_string()));
-            }
-            // Enforce company boundary
-            if tenant_ctx.enforce_company_boundary(company_id).is_err() {
-                return Err(AppError::Forbidden("Cross-company file access denied".to_string()));
-            }
+    if !is_admin {
+        // Owner or matching role level required
+        if uploaded_by != claims.user_id() && claims.role_level > role_level_required {
+            return Err(AppError::Forbidden(
+                "Access denied to requested file".to_string(),
+            ));
+        }
+        // Enforce company boundary
+        if tenant_ctx.enforce_company_boundary(company_id).is_err() {
+            return Err(AppError::Forbidden(
+                "Cross-company file access denied".to_string(),
+            ));
         }
     }
 
@@ -225,11 +244,14 @@ pub async fn get_private_file(
     if let Ok(val) = HeaderValue::from_str(&mime_type) {
         headers.insert(header::CONTENT_TYPE, val);
     } else {
-        headers.insert(header::CONTENT_TYPE, HeaderValue::from_static("application/octet-stream"));
+        headers.insert(
+            header::CONTENT_TYPE,
+            HeaderValue::from_static("application/octet-stream"),
+        );
     }
     headers.insert(
         header::CACHE_CONTROL,
-        HeaderValue::from_static("private, max-age=3600"),
+        HeaderValue::from_static("private, no-cache, no-store, must-revalidate"),
     );
 
     Ok((headers, contents))

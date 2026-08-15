@@ -13,7 +13,10 @@ impl LocationService {
     }
 
     pub async fn list_locations(&self) -> Result<Vec<Location>, String> {
-        self.repository.list().await.map_err(|e: sqlx::Error| e.to_string())
+        self.repository
+            .list()
+            .await
+            .map_err(|e: sqlx::Error| e.to_string())
     }
 
     pub async fn get_location(&self, id: Uuid) -> Result<Option<Location>, String> {

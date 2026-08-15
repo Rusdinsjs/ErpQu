@@ -1,6 +1,4 @@
-use crate::domain::entities::inventory::{
-    InventoryItem, InventoryMovement, InventoryMovementType,
-};
+use crate::domain::entities::inventory::{InventoryItem, InventoryMovement, InventoryMovementType};
 use crate::domain::entities::stock_entry::{
     StockLedgerEntry, StockPostingInstruction, StockPostingLineItem,
 };
@@ -164,7 +162,7 @@ impl StockPostingEngine {
                 .map_err(|e| DomainError::internal(e.to_string()))?;
 
                 let new_bin_qty = bin_bal_row.0 + line.actual_qty_delta;
-                
+
                 if !allow_negative && new_bin_qty < Decimal::ZERO {
                     return Err(DomainError::business_rule(
                         "NegativeBinStockNotAllowed",

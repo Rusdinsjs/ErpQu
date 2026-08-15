@@ -12,13 +12,10 @@ pub enum SystemEvent {
         event_name: String,
         payload: serde_json::Value,
     },
-    
+
     /// Platform-level system alert (e.g., low disk space, provisioning failed)
-    SystemAlert {
-        alert_name: String,
-        message: String,
-    },
-    
+    SystemAlert { alert_name: String, message: String },
+
     /// Generic notification request that can be processed by NotificationService
     NotificationRequested {
         user_id: uuid::Uuid,
@@ -27,10 +24,10 @@ pub enum SystemEvent {
         reference_type: Option<String>,
         reference_id: Option<uuid::Uuid>,
     },
-    
+
     /// Generic broadcast request for WebSocket clients
     WebSocketBroadcast {
         topic: String,
         payload: serde_json::Value,
-    }
+    },
 }

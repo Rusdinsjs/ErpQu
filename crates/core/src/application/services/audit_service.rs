@@ -123,20 +123,24 @@ impl AuditService {
             tracing::info!("Audit Service event listener started");
             while let Ok(event) = receiver.recv().await {
                 match event {
-                    crate::domain::events::SystemEvent::BusinessEvent { event_name, payload } => {
+                    crate::domain::events::SystemEvent::BusinessEvent {
+                        event_name,
+                        payload,
+                    } => {
                         // Dynamically extract ID and actor from payload if present, to auto-log
-                        let id = payload.get("id").or_else(|| payload.get("loan_id")).and_then(|v| uuid::Uuid::parse_str(v.as_str().unwrap_or("")).ok()).unwrap_or_else(uuid::Uuid::new_v4);
-                        let actor_id = payload.get("actor_id").or_else(|| payload.get("user_id")).and_then(|v| uuid::Uuid::parse_str(v.as_str().unwrap_or("")).ok());
-                        
+                        let id = payload
+                            .get("id")
+                            .or_else(|| payload.get("loan_id"))
+                            .and_then(|v| uuid::Uuid::parse_str(v.as_str().unwrap_or("")).ok())
+                            .unwrap_or_else(uuid::Uuid::new_v4);
+                        let actor_id = payload
+                            .get("actor_id")
+                            .or_else(|| payload.get("user_id"))
+                            .and_then(|v| uuid::Uuid::parse_str(v.as_str().unwrap_or("")).ok());
+
                         let _ = service
                             .repository
-                            .create_log(
-                                "business_event",
-                                id,
-                                &event_name,
-                                payload,
-                                actor_id,
-                            )
+                            .create_log("business_event", id, &event_name, payload, actor_id)
                             .await;
                     }
                     _ => {}

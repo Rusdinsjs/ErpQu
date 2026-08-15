@@ -5,12 +5,12 @@
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use chrono::NaiveDate;
 use crate::domain::entities::{
-    Asset, AssetDetail, AssetDocument, AssetHistory, AssetStatusStats, AssetSummary, BuildingDetails,
-    FurnitureDetails, HeavyEquipmentDetails, InventoryDetails, LandDetails, MachineDetails,
-    VehicleDetails,
+    Asset, AssetDetail, AssetDocument, AssetHistory, AssetStatusStats, AssetSummary,
+    BuildingDetails, FurnitureDetails, HeavyEquipmentDetails, InventoryDetails, LandDetails,
+    MachineDetails, VehicleDetails,
 };
+use chrono::NaiveDate;
 
 /// Asset repository
 #[derive(Clone)]
@@ -51,10 +51,7 @@ impl AssetRepository {
     }
 
     /// Find asset detail by ID (with joins)
-    pub async fn find_detail_by_id(
-        &self,
-        id: Uuid,
-    ) -> Result<Option<AssetDetail>, sqlx::Error> {
+    pub async fn find_detail_by_id(&self, id: Uuid) -> Result<Option<AssetDetail>, sqlx::Error> {
         use sqlx::Row;
 
         // 1. Fetch Asset Details (SAFE Joins Only)
@@ -637,7 +634,8 @@ impl AssetRepository {
         executor: &mut sqlx::PgConnection,
         details: &LandDetails,
     ) -> Result<LandDetails, sqlx::Error> {
-        let json = serde_json::to_value(details).map_err(|e| sqlx::Error::Protocol(e.to_string()))?;
+        let json =
+            serde_json::to_value(details).map_err(|e| sqlx::Error::Protocol(e.to_string()))?;
         sqlx::query("UPDATE assets SET land_details = $2, updated_at = NOW() WHERE id = $1")
             .bind(details.asset_id)
             .bind(json)
@@ -651,7 +649,8 @@ impl AssetRepository {
         executor: &mut sqlx::PgConnection,
         details: &BuildingDetails,
     ) -> Result<BuildingDetails, sqlx::Error> {
-        let json = serde_json::to_value(details).map_err(|e| sqlx::Error::Protocol(e.to_string()))?;
+        let json =
+            serde_json::to_value(details).map_err(|e| sqlx::Error::Protocol(e.to_string()))?;
         sqlx::query("UPDATE assets SET building_details = $2, updated_at = NOW() WHERE id = $1")
             .bind(details.asset_id)
             .bind(json)
@@ -665,12 +664,15 @@ impl AssetRepository {
         executor: &mut sqlx::PgConnection,
         details: &HeavyEquipmentDetails,
     ) -> Result<HeavyEquipmentDetails, sqlx::Error> {
-        let json = serde_json::to_value(details).map_err(|e| sqlx::Error::Protocol(e.to_string()))?;
-        sqlx::query("UPDATE assets SET heavy_equipment_details = $2, updated_at = NOW() WHERE id = $1")
-            .bind(details.asset_id)
-            .bind(json)
-            .execute(executor)
-            .await?;
+        let json =
+            serde_json::to_value(details).map_err(|e| sqlx::Error::Protocol(e.to_string()))?;
+        sqlx::query(
+            "UPDATE assets SET heavy_equipment_details = $2, updated_at = NOW() WHERE id = $1",
+        )
+        .bind(details.asset_id)
+        .bind(json)
+        .execute(executor)
+        .await?;
         Ok(details.clone())
     }
 
@@ -679,7 +681,8 @@ impl AssetRepository {
         executor: &mut sqlx::PgConnection,
         details: &MachineDetails,
     ) -> Result<MachineDetails, sqlx::Error> {
-        let json = serde_json::to_value(details).map_err(|e| sqlx::Error::Protocol(e.to_string()))?;
+        let json =
+            serde_json::to_value(details).map_err(|e| sqlx::Error::Protocol(e.to_string()))?;
         sqlx::query("UPDATE assets SET machine_details = $2, updated_at = NOW() WHERE id = $1")
             .bind(details.asset_id)
             .bind(json)
@@ -693,7 +696,8 @@ impl AssetRepository {
         executor: &mut sqlx::PgConnection,
         details: &InventoryDetails,
     ) -> Result<InventoryDetails, sqlx::Error> {
-        let json = serde_json::to_value(details).map_err(|e| sqlx::Error::Protocol(e.to_string()))?;
+        let json =
+            serde_json::to_value(details).map_err(|e| sqlx::Error::Protocol(e.to_string()))?;
         sqlx::query("UPDATE assets SET inventory_details = $2, updated_at = NOW() WHERE id = $1")
             .bind(details.asset_id)
             .bind(json)
@@ -707,7 +711,8 @@ impl AssetRepository {
         executor: &mut sqlx::PgConnection,
         details: &FurnitureDetails,
     ) -> Result<FurnitureDetails, sqlx::Error> {
-        let json = serde_json::to_value(details).map_err(|e| sqlx::Error::Protocol(e.to_string()))?;
+        let json =
+            serde_json::to_value(details).map_err(|e| sqlx::Error::Protocol(e.to_string()))?;
         sqlx::query("UPDATE assets SET furniture_details = $2, updated_at = NOW() WHERE id = $1")
             .bind(details.asset_id)
             .bind(json)

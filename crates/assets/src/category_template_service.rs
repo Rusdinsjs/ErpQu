@@ -4,8 +4,8 @@ use uuid::Uuid;
 use crate::domain::entities::{
     CategoryAttributeTemplate, CategoryTemplateWithName, CreateCategoryAttributeTemplateRequest,
 };
-use management_system_core::domain::errors::{DomainError, DomainResult};
 use crate::repositories::CategoryTemplateRepository;
+use management_system_core::domain::errors::{DomainError, DomainResult};
 
 #[derive(Clone)]
 pub struct CategoryTemplateService {

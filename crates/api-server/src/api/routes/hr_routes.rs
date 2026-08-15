@@ -7,8 +7,8 @@ use axum::{
 
 use crate::api::handlers::{
     hr_driver_p2h_safety_handler, hr_leaves_handler, hr_lifecycle_handler,
-    hr_loans_claims_kpi_handler, hr_payroll_handler,
-    hr_recruitment_training_discipline_handler, hr_shift_overtime_handler,
+    hr_loans_claims_kpi_handler, hr_payroll_handler, hr_recruitment_training_discipline_handler,
+    hr_shift_overtime_handler,
 };
 use crate::api::server::AppState;
 
@@ -58,7 +58,6 @@ pub fn hr_routes() -> Router<AppState> {
             "/education/:id",
             delete(hr_lifecycle_handler::delete_employee_education),
         )
-
         // HR Fase 2 - Shift Management & Overtime
         .route(
             "/shift-types",
@@ -98,12 +97,10 @@ pub fn hr_routes() -> Router<AppState> {
             "/attendance-requests/:id/review",
             post(hr_shift_overtime_handler::review_attendance_request),
         )
-
         // HR Fase 3 - Leaves & Holidays
         .route(
             "/leave-types",
-            get(hr_leaves_handler::list_leave_types)
-                .post(hr_leaves_handler::create_leave_type),
+            get(hr_leaves_handler::list_leave_types).post(hr_leaves_handler::create_leave_type),
         )
         .route(
             "/leave-types/:id",
@@ -113,8 +110,7 @@ pub fn hr_routes() -> Router<AppState> {
         )
         .route(
             "/leave-allocations",
-            get(hr_leaves_handler::list_allocations)
-                .post(hr_leaves_handler::create_allocation),
+            get(hr_leaves_handler::list_allocations).post(hr_leaves_handler::create_allocation),
         )
         .route(
             "/leave-allocations/bulk",
@@ -126,8 +122,7 @@ pub fn hr_routes() -> Router<AppState> {
         )
         .route(
             "/leave-applications",
-            get(hr_leaves_handler::list_applications)
-                .post(hr_leaves_handler::create_application),
+            get(hr_leaves_handler::list_applications).post(hr_leaves_handler::create_application),
         )
         .route(
             "/leave-applications/:id",
@@ -137,10 +132,7 @@ pub fn hr_routes() -> Router<AppState> {
             "/leave-applications/:id/review",
             post(hr_leaves_handler::review_application),
         )
-        .route(
-            "/holiday-lists",
-            get(hr_leaves_handler::list_holiday_lists),
-        )
+        .route("/holiday-lists", get(hr_leaves_handler::list_holiday_lists))
         .route(
             "/holiday-lists/:id/holidays",
             get(hr_leaves_handler::list_holidays).post(hr_leaves_handler::add_holiday),
@@ -181,7 +173,6 @@ pub fn hr_routes() -> Router<AppState> {
             "/attendance-recap",
             get(hr_shift_overtime_handler::get_attendance_recap),
         )
-
         // HR Fase 4 - Payroll
         .route(
             "/salary-components",
@@ -215,15 +206,11 @@ pub fn hr_routes() -> Router<AppState> {
             get(hr_payroll_handler::list_payroll_entries)
                 .post(hr_payroll_handler::run_payroll_entry),
         )
-        .route(
-            "/salary-slips",
-            get(hr_payroll_handler::list_salary_slips),
-        )
+        .route("/salary-slips", get(hr_payroll_handler::list_salary_slips))
         .route(
             "/salary-slips/:id",
             get(hr_payroll_handler::get_salary_slip),
         )
-
         // HR Fase 5 - Loans, Claims & KPI
         .route(
             "/loan-types",
@@ -268,7 +255,6 @@ pub fn hr_routes() -> Router<AppState> {
             get(hr_loans_claims_kpi_handler::list_employee_appraisals)
                 .post(hr_loans_claims_kpi_handler::submit_employee_appraisal),
         )
-
         // HR Fase 6 - Recruitment ATS, Training & Disciplinary Actions
         .route(
             "/job-openings",
@@ -313,7 +299,6 @@ pub fn hr_routes() -> Router<AppState> {
             get(hr_recruitment_training_discipline_handler::list_disciplinary_actions)
                 .post(hr_recruitment_training_discipline_handler::issue_disciplinary_action),
         )
-
         // HR Fase 7 - Driver Ops, P2H & Safety Incidents
         .route(
             "/driver-assignments",

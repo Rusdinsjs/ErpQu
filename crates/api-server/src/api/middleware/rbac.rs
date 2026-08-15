@@ -122,11 +122,12 @@ pub async fn admin_only_middleware(request: Request, next: Next) -> Result<Respo
 
 /// Default-deny middleware: Enforces explicit permission contract on every protected route.
 pub async fn default_deny_middleware(request: Request, next: Next) -> Result<Response, StatusCode> {
-    let matched_path = if let Some(matched) = request.extensions().get::<axum::extract::MatchedPath>() {
-        matched.as_str().to_string()
-    } else {
-        request.uri().path().to_string()
-    };
+    let matched_path =
+        if let Some(matched) = request.extensions().get::<axum::extract::MatchedPath>() {
+            matched.as_str().to_string()
+        } else {
+            request.uri().path().to_string()
+        };
 
     let claims = extract_user_claims(&request).ok_or(StatusCode::UNAUTHORIZED)?;
 
@@ -181,7 +182,9 @@ pub async fn default_deny_middleware(request: Request, next: Next) -> Result<Res
         Some("maintenance_team")
     } else if matched_path.starts_with("/api/loans") {
         Some("asset_loan")
-    } else if matched_path.starts_with("/api/notifications") || matched_path.contains("/notifications") {
+    } else if matched_path.starts_with("/api/notifications")
+        || matched_path.contains("/notifications")
+    {
         Some("notification")
     } else if matched_path.starts_with("/api/users") {
         Some("user")
@@ -189,7 +192,9 @@ pub async fn default_deny_middleware(request: Request, next: Next) -> Result<Res
         Some("employee")
     } else if matched_path.starts_with("/api/departments") {
         Some("department")
-    } else if matched_path.starts_with("/api/hrd/attendance") || matched_path.starts_with("/api/attendance") {
+    } else if matched_path.starts_with("/api/hrd/attendance")
+        || matched_path.starts_with("/api/attendance")
+    {
         Some("attendance")
     } else if matched_path.starts_with("/api/hrd/leaves") {
         Some("leave")
@@ -254,7 +259,9 @@ pub async fn default_deny_middleware(request: Request, next: Next) -> Result<Res
                 }
             }
             let norm_user = p.replace(".view", ".read").replace(".edit", ".update");
-            let norm_req = required_perm.replace(".view", ".read").replace(".edit", ".update");
+            let norm_req = required_perm
+                .replace(".view", ".read")
+                .replace(".edit", ".update");
             norm_user == norm_req
         });
 

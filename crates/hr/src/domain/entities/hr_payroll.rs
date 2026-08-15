@@ -90,7 +90,7 @@ pub struct HrSalarySlip {
     pub posting_date: NaiveDate,
     pub start_date: NaiveDate,
     pub end_date: NaiveDate,
-    
+
     // Earnings
     pub base_salary: Decimal,
     pub tunjangan_jabatan: Decimal,
@@ -100,7 +100,7 @@ pub struct HrSalarySlip {
     pub overtime_pay: Decimal,
     pub other_earnings: Decimal,
     pub gross_pay: Decimal,
-    
+
     // BPJS
     pub bpjs_kes_employee: Decimal,
     pub bpjs_kes_company: Decimal,
@@ -110,19 +110,19 @@ pub struct HrSalarySlip {
     pub bpjs_jp_company: Decimal,
     pub bpjs_jkk_company: Decimal,
     pub bpjs_jkm_company: Decimal,
-    
+
     // PPh 21 TER
     pub ptkp_status: String,
     pub pph21_ter_category: String,
     pub pph21_ter_rate: Decimal,
     pub pph21_amount: Decimal,
-    
+
     // Deductions & Net
     pub kasbon_deduction: Decimal,
     pub unpaid_leave_deduction: Decimal,
     pub total_deductions: Decimal,
     pub net_pay: Decimal,
-    
+
     // Status & Bank
     pub status: String,
     pub bank_name: Option<String>,
@@ -131,7 +131,7 @@ pub struct HrSalarySlip {
     pub payment_date: Option<NaiveDate>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
-    
+
     #[sqlx(default)]
     pub employee_name: Option<String>,
     #[sqlx(default)]
