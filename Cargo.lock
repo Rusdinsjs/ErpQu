@@ -2079,6 +2079,8 @@ dependencies = [
  "genpdf",
  "jsonwebtoken",
  "lettre",
+ "management-system-finance",
+ "management-system-inventory",
  "mime_guess",
  "redis",
  "rust_decimal",

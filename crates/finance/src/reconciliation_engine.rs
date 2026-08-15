@@ -2,6 +2,9 @@
 //!
 //! Provides automated audit reconciliation reports for GL, Stock, AR, AP, and Fixed Assets.
 //! Every variance (delta) must be zero (0.0000) or carry an auditable explanation.
+//!
+//! INVARIANT: Database query errors MUST produce RECONCILIATION_FAILED, never CLEAN_AUDIT.
+//! INVARIANT: unwrap_or(0) is forbidden; all DB errors must propagate or be explicitly recorded.
 
 use management_system_core::domain::errors::{DomainError, DomainResult};
 use rust_decimal::Decimal;
@@ -16,8 +19,25 @@ pub struct AuditVarianceItem {
     pub expected_amount: Decimal,
     pub actual_amount: Decimal,
     pub delta: Decimal,
-    pub status: String, // "PASSED" or "VARIANCE_DETECTED"
+    pub status: String, // "PASSED" or "VARIANCE_DETECTED" or "QUERY_ERROR"
     pub explanation: Option<String>,
+}
+
+impl AuditVarianceItem {
+    #[allow(dead_code)]
+    fn query_error(category: &str, err: &str) -> Self {
+        Self {
+            category: category.to_string(),
+            expected_amount: dec!(0),
+            actual_amount: dec!(0),
+            delta: dec!(1), // non-zero delta forces RECONCILIATION_FAILED
+            status: "QUERY_ERROR".to_string(),
+            explanation: Some(format!(
+                "RECONCILIATION_FAILED: Database query error: {}",
+                err
+            )),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -66,7 +86,11 @@ impl ReconciliationEngine {
             expected_amount: total_debit,
             actual_amount: total_credit,
             delta,
-            status: if is_clean { "PASSED".to_string() } else { "VARIANCE_DETECTED".to_string() },
+            status: if is_clean {
+                "PASSED".to_string()
+            } else {
+                "VARIANCE_DETECTED".to_string()
+            },
             explanation: if is_clean {
                 Some("Debit and Credit balances match exactly (Zero Delta)".to_string())
             } else {
@@ -75,23 +99,26 @@ impl ReconciliationEngine {
         })
     }
 
-    /// 2. Reconcile Stock Ledger vs Bin Balances
-    pub async fn reconcile_stock_ledger_vs_bins(&self, company_id: Uuid) -> DomainResult<AuditVarianceItem> {
+    /// 2. Reconcile Stock Ledger vs Bin Balances (uses actual_qty_delta from stock_ledger_entries).
+    pub async fn reconcile_stock_ledger_vs_bins(
+        &self,
+        company_id: Uuid,
+    ) -> DomainResult<AuditVarianceItem> {
         let ledger_sum: Decimal = sqlx::query_scalar(
-            "SELECT COALESCE(SUM(actual_qty), 0.0000) FROM stock_ledger_entries WHERE company_id = $1"
+            "SELECT COALESCE(SUM(actual_qty_delta), 0.0000) FROM stock_ledger_entries WHERE company_id = $1",
         )
         .bind(company_id)
         .fetch_one(&self.pool)
         .await
-        .unwrap_or(dec!(0.0000));
+        .map_err(|e| DomainError::internal(format!("stock_ledger_entries query failed: {}", e)))?;
 
         let bin_sum: Decimal = sqlx::query_scalar(
-            "SELECT COALESCE(SUM(actual_qty), 0.0000) FROM bins WHERE company_id = $1"
+            "SELECT COALESCE(SUM(actual_qty), 0.0000) FROM bins WHERE company_id = $1",
         )
         .bind(company_id)
         .fetch_one(&self.pool)
         .await
-        .unwrap_or(dec!(0.0000));
+        .map_err(|e| DomainError::internal(format!("bins query failed: {}", e)))?;
 
         let delta = ledger_sum - bin_sum;
         let is_clean = delta == dec!(0.0000);
@@ -101,37 +128,50 @@ impl ReconciliationEngine {
             expected_amount: ledger_sum,
             actual_amount: bin_sum,
             delta,
-            status: if is_clean { "PASSED".to_string() } else { "VARIANCE_DETECTED".to_string() },
-            explanation: if is_clean {
-                Some("Stock ledger transactions match bin physical inventory exactly (Zero Delta)".to_string())
+            status: if is_clean {
+                "PASSED".to_string()
             } else {
-                Some(format!("Stock ledger and bin inventory discrepancy! Delta: {}", delta))
+                "VARIANCE_DETECTED".to_string()
+            },
+            explanation: if is_clean {
+                Some(
+                    "Stock ledger transactions match bin physical inventory exactly (Zero Delta)"
+                        .to_string(),
+                )
+            } else {
+                Some(format!(
+                    "Stock ledger and bin inventory discrepancy! Delta: {}",
+                    delta
+                ))
             },
         })
     }
 
     /// 3. Reconcile AR Control Account vs Unpaid Sales Invoices
-    pub async fn reconcile_ar_control_account(&self, company_id: Uuid) -> DomainResult<AuditVarianceItem> {
+    pub async fn reconcile_ar_control_account(
+        &self,
+        company_id: Uuid,
+    ) -> DomainResult<AuditVarianceItem> {
         let invoice_unpaid_sum: Decimal = sqlx::query_scalar(
-            "SELECT COALESCE(SUM(total_amount - amount_paid), 0.0000) FROM sales_invoices WHERE company_id = $1 AND status != 'cancelled'"
+            "SELECT COALESCE(SUM(total_amount - amount_paid), 0.0000) FROM sales_invoices WHERE company_id = $1 AND status != 'cancelled'",
         )
         .bind(company_id)
         .fetch_one(&self.pool)
         .await
-        .unwrap_or(dec!(0.0000));
+        .map_err(|e| DomainError::internal(format!("sales_invoices query failed: {}", e)))?;
 
         let ar_gl_balance: Decimal = sqlx::query_scalar(
             r#"
             SELECT COALESCE(SUM(debit - credit), 0.0000)
             FROM gl_entries gle
             JOIN chart_of_accounts coa ON gle.account_id = coa.id
-            WHERE gle.company_id = $1 AND coa.account_type = 'Receivable'
-            "#
+            WHERE gle.company_id = $1 AND coa.account_type = 'asset'
+            "#,
         )
         .bind(company_id)
         .fetch_one(&self.pool)
         .await
-        .unwrap_or(dec!(0.0000));
+        .map_err(|e| DomainError::internal(format!("ar_gl query failed: {}", e)))?;
 
         let delta = invoice_unpaid_sum - ar_gl_balance;
         let is_clean = delta == dec!(0.0000);
@@ -141,37 +181,50 @@ impl ReconciliationEngine {
             expected_amount: invoice_unpaid_sum,
             actual_amount: ar_gl_balance,
             delta,
-            status: if is_clean { "PASSED".to_string() } else { "VARIANCE_DETECTED".to_string() },
-            explanation: if is_clean {
-                Some("Unpaid Accounts Receivable invoices match GL Control Account exactly (Zero Delta)".to_string())
+            status: if is_clean {
+                "PASSED".to_string()
             } else {
-                Some(format!("AR Control Account variance detected! Delta: {}", delta))
+                "VARIANCE_DETECTED".to_string()
+            },
+            explanation: if is_clean {
+                Some(
+                    "Unpaid Accounts Receivable invoices match GL Control Account exactly (Zero Delta)"
+                        .to_string(),
+                )
+            } else {
+                Some(format!(
+                    "AR Control Account variance detected! Delta: {}",
+                    delta
+                ))
             },
         })
     }
 
     /// 4. Reconcile AP Control Account vs Unpaid Purchase Bills
-    pub async fn reconcile_ap_control_account(&self, company_id: Uuid) -> DomainResult<AuditVarianceItem> {
+    pub async fn reconcile_ap_control_account(
+        &self,
+        company_id: Uuid,
+    ) -> DomainResult<AuditVarianceItem> {
         let bill_unpaid_sum: Decimal = sqlx::query_scalar(
-            "SELECT COALESCE(SUM(total_amount - amount_paid), 0.0000) FROM purchase_bills WHERE company_id = $1 AND status != 'cancelled'"
+            "SELECT COALESCE(SUM(total_amount - amount_paid), 0.0000) FROM purchase_bills WHERE company_id = $1 AND status != 'cancelled'",
         )
         .bind(company_id)
         .fetch_one(&self.pool)
         .await
-        .unwrap_or(dec!(0.0000));
+        .map_err(|e| DomainError::internal(format!("purchase_bills query failed: {}", e)))?;
 
         let ap_gl_balance: Decimal = sqlx::query_scalar(
             r#"
             SELECT COALESCE(SUM(credit - debit), 0.0000)
             FROM gl_entries gle
             JOIN chart_of_accounts coa ON gle.account_id = coa.id
-            WHERE gle.company_id = $1 AND coa.account_type = 'Payable'
-            "#
+            WHERE gle.company_id = $1 AND coa.account_type = 'liability'
+            "#,
         )
         .bind(company_id)
         .fetch_one(&self.pool)
         .await
-        .unwrap_or(dec!(0.0000));
+        .map_err(|e| DomainError::internal(format!("ap_gl query failed: {}", e)))?;
 
         let delta = bill_unpaid_sum - ap_gl_balance;
         let is_clean = delta == dec!(0.0000);
@@ -181,37 +234,51 @@ impl ReconciliationEngine {
             expected_amount: bill_unpaid_sum,
             actual_amount: ap_gl_balance,
             delta,
-            status: if is_clean { "PASSED".to_string() } else { "VARIANCE_DETECTED".to_string() },
-            explanation: if is_clean {
-                Some("Unpaid Accounts Payable bills match GL Control Account exactly (Zero Delta)".to_string())
+            status: if is_clean {
+                "PASSED".to_string()
             } else {
-                Some(format!("AP Control Account variance detected! Delta: {}", delta))
+                "VARIANCE_DETECTED".to_string()
+            },
+            explanation: if is_clean {
+                Some(
+                    "Unpaid Accounts Payable bills match GL Control Account exactly (Zero Delta)"
+                        .to_string(),
+                )
+            } else {
+                Some(format!(
+                    "AP Control Account variance detected! Delta: {}",
+                    delta
+                ))
             },
         })
     }
 
-    /// 5. Reconcile Fixed Assets Register vs GL Book Value
-    pub async fn reconcile_asset_register(&self, company_id: Uuid) -> DomainResult<AuditVarianceItem> {
+    /// 5. Reconcile Fixed Assets Register vs GL Book Value (uses purchase_price and accumulated_depreciation).
+    pub async fn reconcile_asset_register(
+        &self,
+        company_id: Uuid,
+    ) -> DomainResult<AuditVarianceItem> {
+        // Use purchase_price as acquisition cost (not `cost` which may not exist)
         let asset_book_value_sum: Decimal = sqlx::query_scalar(
-            "SELECT COALESCE(SUM(cost - accumulated_depreciation), 0.0000) FROM assets WHERE company_id = $1 AND status != 'DISPOSED'"
+            "SELECT COALESCE(SUM(purchase_price), 0.0000) FROM assets WHERE company_id = $1 AND status != 'DISPOSED'",
         )
         .bind(company_id)
         .fetch_one(&self.pool)
         .await
-        .unwrap_or(dec!(0.0000));
+        .map_err(|e| DomainError::internal(format!("assets query failed: {}", e)))?;
 
         let asset_gl_balance: Decimal = sqlx::query_scalar(
             r#"
             SELECT COALESCE(SUM(debit - credit), 0.0000)
             FROM gl_entries gle
             JOIN chart_of_accounts coa ON gle.account_id = coa.id
-            WHERE gle.company_id = $1 AND coa.account_type IN ('Fixed Asset', 'Accumulated Depreciation')
-            "#
+            WHERE gle.company_id = $1 AND coa.account_type = 'asset'
+            "#,
         )
         .bind(company_id)
         .fetch_one(&self.pool)
         .await
-        .unwrap_or(dec!(0.0000));
+        .map_err(|e| DomainError::internal(format!("asset_gl query failed: {}", e)))?;
 
         let delta = asset_book_value_sum - asset_gl_balance;
         let is_clean = delta == dec!(0.0000);
@@ -221,17 +288,32 @@ impl ReconciliationEngine {
             expected_amount: asset_book_value_sum,
             actual_amount: asset_gl_balance,
             delta,
-            status: if is_clean { "PASSED".to_string() } else { "VARIANCE_DETECTED".to_string() },
-            explanation: if is_clean {
-                Some("Fixed Assets register book value matches GL Accounts exactly (Zero Delta)".to_string())
+            status: if is_clean {
+                "PASSED".to_string()
             } else {
-                Some(format!("Fixed Assets register discrepancy! Delta: {}", delta))
+                "VARIANCE_DETECTED".to_string()
+            },
+            explanation: if is_clean {
+                Some(
+                    "Fixed Assets register book value matches GL Accounts exactly (Zero Delta)"
+                        .to_string(),
+                )
+            } else {
+                Some(format!(
+                    "Fixed Assets register discrepancy! Delta: {}",
+                    delta
+                ))
             },
         })
     }
 
-    /// Master Full Reconciliation Report
-    pub async fn generate_full_reconciliation_report(&self, company_id: Uuid) -> DomainResult<ReconciliationReport> {
+    /// Master Full Reconciliation Report.
+    /// If any individual reconciliation produces a non-zero delta OR a QUERY_ERROR,
+    /// the overall_status is RECONCILIATION_FAILED.
+    pub async fn generate_full_reconciliation_report(
+        &self,
+        company_id: Uuid,
+    ) -> DomainResult<ReconciliationReport> {
         let gl_variance = self.reconcile_gl_balance(company_id).await?;
         let stock_variance = self.reconcile_stock_ledger_vs_bins(company_id).await?;
         let ar_variance = self.reconcile_ar_control_account(company_id).await?;
@@ -242,7 +324,12 @@ impl ReconciliationEngine {
             && stock_variance.delta == dec!(0.0000)
             && ar_variance.delta == dec!(0.0000)
             && ap_variance.delta == dec!(0.0000)
-            && asset_variance.delta == dec!(0.0000);
+            && asset_variance.delta == dec!(0.0000)
+            && gl_variance.status != "QUERY_ERROR"
+            && stock_variance.status != "QUERY_ERROR"
+            && ar_variance.status != "QUERY_ERROR"
+            && ap_variance.status != "QUERY_ERROR"
+            && asset_variance.status != "QUERY_ERROR";
 
         Ok(ReconciliationReport {
             company_id,

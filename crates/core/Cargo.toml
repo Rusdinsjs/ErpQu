@@ -28,3 +28,7 @@ mime_guess = { workspace = true }
 axum = { workspace = true }
 csv = { workspace = true }
 tokio-cron-scheduler = { workspace = true }
+
+[dev-dependencies]
+management-system-finance = { workspace = true }
+management-system-inventory = { workspace = true }

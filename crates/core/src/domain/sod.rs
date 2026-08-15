@@ -46,7 +46,10 @@ impl SodValidator {
     }
 
     /// Rule 3: Validate Goods Receiver vs Supplier Payer Conflict
-    pub fn validate_goods_receipt_vs_payment(receiver_id: Uuid, payer_id: Uuid) -> DomainResult<()> {
+    pub fn validate_goods_receipt_vs_payment(
+        receiver_id: Uuid,
+        payer_id: Uuid,
+    ) -> DomainResult<()> {
         if receiver_id == payer_id {
             return Err(DomainError::business_rule(
                 "sod_role_conflict",
@@ -71,7 +74,11 @@ impl SodValidator {
 
     /// Rule 6: Validate Stock Adjustment Approval SoD
     pub fn validate_stock_adjustment(created_by: Uuid, approver_id: Uuid) -> DomainResult<()> {
-        Self::validate_maker_checker(created_by, approver_id, "Stock Inventory Adjustment Approval")
+        Self::validate_maker_checker(
+            created_by,
+            approver_id,
+            "Stock Inventory Adjustment Approval",
+        )
     }
 
     /// Rule 7: Validate Asset Disposal Approval SoD
@@ -113,12 +120,19 @@ mod tests {
     fn test_goods_receiver_cannot_pay_supplier() {
         let user_id = Uuid::new_v4();
         let res = SodValidator::validate_goods_receipt_vs_payment(user_id, user_id);
-        assert!(res.is_err(), "Goods receiver paying supplier must be rejected");
+        assert!(
+            res.is_err(),
+            "Goods receiver paying supplier must be rejected"
+        );
     }
 
     #[test]
     fn test_technical_admin_denied_finance_action_without_explicit_perm() {
-        let res = SodValidator::validate_technical_admin_finance_action("admin", false, "journal.post");
-        assert!(res.is_err(), "Technical admin without explicit perm must be denied journal.post");
+        let res =
+            SodValidator::validate_technical_admin_finance_action("admin", false, "journal.post");
+        assert!(
+            res.is_err(),
+            "Technical admin without explicit perm must be denied journal.post"
+        );
     }
 }

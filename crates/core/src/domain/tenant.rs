@@ -124,17 +124,23 @@ impl TenantContext {
         Ok(())
     }
 
-    /// Set PostgreSQL transaction-local RLS session variables (SET LOCAL app.current_company_id)
-    pub async fn apply_to_transaction<'a, E>(&self, executor: &mut E) -> DomainResult<()>
-    where
-        E: sqlx::Executor<'a, Database = sqlx::Postgres>,
-    {
+    /// Set PostgreSQL transaction-local RLS session variables (SET LOCAL app.current_company_id).
+    ///
+    /// Accepts `&mut sqlx::PgConnection` directly (sqlx 0.7 pattern).
+    /// Callers using `sqlx::Transaction<'_, Postgres>` pass `&mut *tx` which coerces via DerefMut.
+    pub async fn apply_to_transaction(
+        &self,
+        executor: &mut sqlx::PgConnection,
+    ) -> DomainResult<()> {
         if self.is_super_tenant {
+            let _ = sqlx::query("RESET ROLE").execute(&mut *executor).await;
             sqlx::query("SET LOCAL app.is_super_tenant = 'true'")
                 .execute(&mut *executor)
                 .await
                 .map_err(|e| DomainError::internal(e.to_string()))?;
         } else if let Some(cid) = self.company_id {
+            // Switch to non-superuser runtime role locally within the transaction so PostgreSQL RLS policies are enforced without leaking across connection pool
+            let _ = sqlx::query("SET LOCAL ROLE erpqu_app").execute(&mut *executor).await;
             sqlx::query(&format!("SET LOCAL app.current_company_id = '{}'", cid))
                 .execute(&mut *executor)
                 .await
@@ -144,7 +150,9 @@ impl TenantContext {
                 .await
                 .map_err(|e| DomainError::internal(e.to_string()))?;
         } else {
-            return Err(DomainError::unauthorized("missing_company_context_for_transaction"));
+            return Err(DomainError::unauthorized(
+                "missing_company_context_for_transaction",
+            ));
         }
         Ok(())
     }

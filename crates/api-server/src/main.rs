@@ -39,7 +39,9 @@ async fn main() {
 
     // Check for CLI flags (--check-migration, --migrate-only, -v, --version)
     let args: Vec<String> = std::env::args().collect();
-    let is_migration_only = args.iter().any(|arg| arg == "--check-migration" || arg == "--migrate-only");
+    let is_migration_only = args
+        .iter()
+        .any(|arg| arg == "--check-migration" || arg == "--migrate-only");
 
     if args.iter().any(|arg| arg == "-v" || arg == "--version") {
         println!("management-system v{}", env!("CARGO_PKG_VERSION"));
@@ -47,9 +49,10 @@ async fn main() {
     }
 
     // 1. Migration Execution (Fail-Closed: Any migration error immediately halts startup)
-    let run_migrations = is_migration_only || std::env::var("RUN_MIGRATIONS_ON_STARTUP")
-        .map(|v| v.trim().eq_ignore_ascii_case("true") || v == "1")
-        .unwrap_or(true);
+    let run_migrations = is_migration_only
+        || std::env::var("RUN_MIGRATIONS_ON_STARTUP")
+            .map(|v| v.trim().eq_ignore_ascii_case("true") || v == "1")
+            .unwrap_or(true);
 
     if run_migrations {
         let migration_database_url =
@@ -67,7 +70,10 @@ async fn main() {
             }
         };
 
-        if let Err(e) = sqlx::migrate!("../../migrations").run(&migration_pool).await {
+        if let Err(e) = sqlx::migrate!("../../migrations")
+            .run(&migration_pool)
+            .await
+        {
             tracing::error!("CRITICAL: Database migration failed (Fail-Closed): {}", e);
             std::process::exit(1);
         }
@@ -76,7 +82,9 @@ async fn main() {
         migration_pool.close().await;
 
         if is_migration_only {
-            tracing::info!("Migration-only execution completed successfully. Exiting with status 0.");
+            tracing::info!(
+                "Migration-only execution completed successfully. Exiting with status 0."
+            );
             std::process::exit(0);
         }
     } else {

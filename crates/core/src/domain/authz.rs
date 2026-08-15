@@ -102,7 +102,11 @@ impl AuthorizationEngine for DefaultAuthorizationEngine {
         // Sensitive finance/posting actions that technical admins cannot bypass automatically (Rule 8)
         let is_sensitive_finance_action = matches!(
             required_perm.as_str(),
-            "journal.post" | "payment.approve" | "period.close" | "vendor.approve" | "asset.dispose"
+            "journal.post"
+                | "payment.approve"
+                | "period.close"
+                | "vendor.approve"
+                | "asset.dispose"
         );
 
         // 2. Global Super Admin bypass (unconditional)

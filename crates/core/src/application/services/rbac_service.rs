@@ -304,6 +304,25 @@ impl RbacService {
 
         Ok(removed)
     }
+    /// Periodic Access Review Report generator (Governance Fase 18)
+    pub async fn generate_access_review_report(
+        &self,
+        company_id: Option<Uuid>,
+    ) -> DomainResult<AccessReviewReport> {
+        let roles = self.list_roles().await?;
+        let permissions = self.list_permissions().await?;
+        Ok(AccessReviewReport {
+            company_id,
+            generated_at: chrono::Utc::now(),
+            total_roles: roles.len(),
+            total_permissions: permissions.len(),
+            high_privilege_roles: roles
+                .iter()
+                .filter(|r| r.role_level.is_some_and(|l| l <= 2))
+                .cloned()
+                .collect(),
+        })
+    }
 }
 
 /// Validate role mutation invariants (QSEC-002)
@@ -331,18 +350,14 @@ pub fn validate_role_mutation(
         });
     }
 
-    /// Periodic Access Review Report generator (Governance Fase 18)
-    pub async fn generate_access_review_report(&self, company_id: Option<Uuid>) -> DomainResult<AccessReviewReport> {
-        let roles = self.list_roles().await?;
-        let permissions = self.list_permissions().await?;
-        Ok(AccessReviewReport {
-            company_id,
-            generated_at: chrono::Utc::now(),
-            total_roles: roles.len(),
-            total_permissions: permissions.len(),
-            high_privilege_roles: roles.iter().filter(|r| r.level <= 2).cloned().collect(),
-        })
+    // 3. Cross-tenant isolation check
+    if let (Some(actor_org), Some(target_org)) = (actor.organization_id, target_org_id) {
+        if actor_org != target_org && !actor.is_super_admin() {
+            return Err(DomainError::unauthorized("cross_tenant_role_assignment"));
+        }
     }
+
+    Ok(())
 }
 
 #[derive(Debug, serde::Serialize, serde::Deserialize, Clone)]

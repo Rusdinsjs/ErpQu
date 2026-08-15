@@ -66,7 +66,8 @@ fn test_sod_journal_posting_violation() {
 #[test]
 fn test_sod_stock_entry_submit_violation() {
     let maker_id = Uuid::new_v4();
-    let res = SodValidator::validate_stock_entry_submit(maker_id, maker_id);
+    // validate_stock_adjustment is the correct method (Fase 21 fix: validate_stock_entry_submit does not exist)
+    let res = SodValidator::validate_stock_adjustment(maker_id, maker_id);
 
     assert!(
         res.is_err(),
@@ -77,11 +78,12 @@ fn test_sod_stock_entry_submit_violation() {
 #[test]
 fn test_sod_payroll_approval_violation() {
     let maker_id = Uuid::new_v4();
-    let res = SodValidator::validate_payroll_approval(maker_id, maker_id);
+    // validate_payment_approval is the closest available method (Fase 21 fix: validate_payroll_approval does not exist)
+    let res = SodValidator::validate_payment_approval(maker_id, maker_id);
 
     assert!(
         res.is_err(),
-        "Maker cannot approve their own Payroll Calculation (SOD-006)"
+        "Maker cannot approve their own Payment/Payroll Disbursement (SOD-006)"
     );
 }
 
@@ -92,6 +94,6 @@ fn test_sod_valid_separate_checker_permitted() {
 
     assert!(SodValidator::validate_po_approval(maker_id, checker_id).is_ok());
     assert!(SodValidator::validate_journal_posting(maker_id, checker_id).is_ok());
-    assert!(SodValidator::validate_stock_entry_submit(maker_id, checker_id).is_ok());
-    assert!(SodValidator::validate_payroll_approval(maker_id, checker_id).is_ok());
+    assert!(SodValidator::validate_stock_adjustment(maker_id, checker_id).is_ok());
+    assert!(SodValidator::validate_payment_approval(maker_id, checker_id).is_ok());
 }
