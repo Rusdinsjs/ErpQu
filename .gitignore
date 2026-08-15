@@ -1,14 +1,15 @@
 # Build artifacts & Cargo target
 /target
-Cargo.lock
+/debug
 
-# Node / Frontend / Mobile artifacts
+# Node / Frontend / Mobile artifacts & dependencies
 node_modules/
 **/node_modules/
 dist/
 **/dist/
 .expo/
 **/web-build/
+.next/
 
 # Environment & Secrets (Fail-Closed)
 .env
@@ -26,19 +27,21 @@ mobile/.env.*
 # Logs & Debug outputs
 *.log
 **/*.log
+*.err
+*.out
 *output*.txt
 *results*.txt
 build_log.txt
 backend.err.log
 backend.out.log
 backend.log
-backend_backtrace.log
-backend_verify.log
-backend_fix_verify.log
+backend_app.log
+app.log
 
-# Database dumps & Operational SQL
+# Database Dumps, Backups & Non-Migration SQL
 *.dump
 *.sql.bak
+*.sql.gz
 erpqu_backup*.sql
 /*.sql
 !migrations/*.sql
@@ -53,15 +56,14 @@ uploads/**
 *.webp
 *.zip
 *.tar.gz
-roboto.zip
 
-# Patch, Temp, & Temporary text files
+# Patch, Temp, & Scratch Scripts
 *.patch
 *.tmp
+*.temp
 0_deploy.txt
 assets.txt
 check_output.txt
-=
 Untitled*.md
 
 # IDE & OS Metadata

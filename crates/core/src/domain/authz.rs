@@ -96,13 +96,24 @@ impl AuthorizationEngine for DefaultAuthorizationEngine {
         _resource_id: Option<&str>,
         context: &AuthzContext,
     ) -> AuthzDecision {
-        // 1. Super admin / system admin bypass
-        if actor.is_admin() {
+        // 1. Format required permission string: resource_type.action
+        let required_perm = format!("{}.{}", resource_type, action);
+
+        // Sensitive finance/posting actions that technical admins cannot bypass automatically (Rule 8)
+        let is_sensitive_finance_action = matches!(
+            required_perm.as_str(),
+            "journal.post" | "payment.approve" | "period.close" | "vendor.approve" | "asset.dispose"
+        );
+
+        // 2. Global Super Admin bypass (unconditional)
+        if actor.is_super_admin() {
             return AuthzDecision::Allow;
         }
 
-        // 2. Format required permission string: resource_type.action
-        let required_perm = format!("{}.{}", resource_type, action);
+        // Technical admin bypass for non-sensitive actions
+        if actor.is_admin() && !is_sensitive_finance_action {
+            return AuthzDecision::Allow;
+        }
 
         // 3. Evaluate permissions (DENY by default if empty or unmatched)
         let has_permission = actor.permissions.iter().any(|p| {

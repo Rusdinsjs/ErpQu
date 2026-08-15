@@ -34,13 +34,10 @@ pub async fn tenant_middleware(
     if let Some(company_header) = request.headers().get("x-company-id") {
         if let Ok(company_str) = company_header.to_str() {
             if let Ok(company_uuid) = Uuid::parse_str(company_str) {
-                // Validate company membership if user is not super_admin or admin
-                let is_admin = claims.role == "super_admin"
-                    || claims.role == "admin"
-                    || claims.role.starts_with("admin_")
-                    || claims.role_level <= 2;
+                // Only super_admin (global system admin) can select arbitrary company IDs without explicit membership
+                let is_super_admin = claims.role == "super_admin" || claims.role_level <= 1;
 
-                if !is_admin {
+                if !is_super_admin {
                     let has_emp = sqlx::query_scalar::<_, bool>(
                         "SELECT EXISTS(SELECT 1 FROM public.employees WHERE user_id = $1 AND company_id = $2)"
                     )

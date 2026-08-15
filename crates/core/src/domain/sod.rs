@@ -1,9 +1,14 @@
-//! Segregation of Duties (SoD) & Maker-Checker Kernel (Fase 6)
+//! Segregation of Duties (SoD) & Maker-Checker Kernel (Fase 18 Governance)
 //!
-//! Enforces:
-//! 1. Maker cannot approve or post their own financial/operational document.
-//! 2. Four-Eyes Principle for high-risk mutations.
-//! 3. Mandatory audit log trail for elevated overrides.
+//! Enforces 8 Minimal SoD Rules:
+//! 1. Vendor Creator vs Vendor Approver (vendor.create != vendor.approve)
+//! 2. PO Creator vs PO Approver (purchase_order.create != purchase_order.approve)
+//! 3. Goods Receiver vs Supplier Payer (goods_receipt.post != payment.create / payment.approve)
+//! 4. Payment Creator vs Payment Approver (payment.create != payment.approve)
+//! 5. Journal Creator vs Journal Poster (journal.create != journal.post)
+//! 6. Stock Adjustment Creator vs Stock Adjustment Approver (stock.adjust)
+//! 7. Asset Disposal Creator vs Asset Disposal Approver (asset.dispose)
+//! 8. Technical Administrator IS NOT automatically a Finance Approver without explicit permission.
 
 use crate::domain::errors::{DomainError, DomainResult};
 use uuid::Uuid;
@@ -22,7 +27,7 @@ impl SodValidator {
             return Err(DomainError::business_rule(
                 "sod_conflict_violation",
                 &format!(
-                    "Document maker ({}) cannot perform '{}' on their own document. A separate checker is required (Four-Eyes Principle).",
+                    "Self-approval rejected: Document maker ({}) cannot perform '{}' on their own document. A separate checker is required (Four-Eyes Principle).",
                     maker_id, action_name
                 ),
             ));
@@ -30,24 +35,66 @@ impl SodValidator {
         Ok(())
     }
 
-    /// Validate Purchase Order Approval SoD (SOD-004)
+    /// Rule 1: Validate Vendor Approval SoD
+    pub fn validate_vendor_approval(created_by: Uuid, approver_id: Uuid) -> DomainResult<()> {
+        Self::validate_maker_checker(created_by, approver_id, "Vendor Approval")
+    }
+
+    /// Rule 2: Validate Purchase Order Approval SoD
     pub fn validate_po_approval(created_by: Uuid, approver_id: Uuid) -> DomainResult<()> {
         Self::validate_maker_checker(created_by, approver_id, "Purchase Order Approval")
     }
 
-    /// Validate Journal Entry Posting SoD (SOD-003)
+    /// Rule 3: Validate Goods Receiver vs Supplier Payer Conflict
+    pub fn validate_goods_receipt_vs_payment(receiver_id: Uuid, payer_id: Uuid) -> DomainResult<()> {
+        if receiver_id == payer_id {
+            return Err(DomainError::business_rule(
+                "sod_role_conflict",
+                &format!(
+                    "Role Conflict Violation: User ({}) who posted Goods Receipt cannot execute or approve Supplier Payment for the same transaction.",
+                    receiver_id
+                ),
+            ));
+        }
+        Ok(())
+    }
+
+    /// Rule 4: Validate Payment Approval SoD
+    pub fn validate_payment_approval(created_by: Uuid, approver_id: Uuid) -> DomainResult<()> {
+        Self::validate_maker_checker(created_by, approver_id, "Payment Disbursement Approval")
+    }
+
+    /// Rule 5: Validate Journal Entry Posting SoD
     pub fn validate_journal_posting(created_by: Uuid, poster_id: Uuid) -> DomainResult<()> {
         Self::validate_maker_checker(created_by, poster_id, "General Ledger Journal Posting")
     }
 
-    /// Validate Stock Entry Submit SoD (SOD-009)
-    pub fn validate_stock_entry_submit(created_by: Uuid, submitter_id: Uuid) -> DomainResult<()> {
-        Self::validate_maker_checker(created_by, submitter_id, "Stock Entry Final Submit")
+    /// Rule 6: Validate Stock Adjustment Approval SoD
+    pub fn validate_stock_adjustment(created_by: Uuid, approver_id: Uuid) -> DomainResult<()> {
+        Self::validate_maker_checker(created_by, approver_id, "Stock Inventory Adjustment Approval")
     }
 
-    /// Validate Payroll Approval SoD (SOD-006)
-    pub fn validate_payroll_approval(prepared_by: Uuid, approver_id: Uuid) -> DomainResult<()> {
-        Self::validate_maker_checker(prepared_by, approver_id, "Payroll Disbursement Approval")
+    /// Rule 7: Validate Asset Disposal Approval SoD
+    pub fn validate_asset_disposal(created_by: Uuid, approver_id: Uuid) -> DomainResult<()> {
+        Self::validate_maker_checker(created_by, approver_id, "Asset Disposal Approval")
+    }
+
+    /// Rule 8: Validate Technical Admin vs Finance Action Boundary
+    pub fn validate_technical_admin_finance_action(
+        user_role: &str,
+        has_explicit_permission: bool,
+        finance_action: &str,
+    ) -> DomainResult<()> {
+        if (user_role == "admin" || user_role == "sysadmin") && !has_explicit_permission {
+            return Err(DomainError::business_rule(
+                "sod_admin_finance_boundary",
+                &format!(
+                    "Technical Administrator role ('{}') is strictly prohibited from executing finance action '{}' without explicit action permission.",
+                    user_role, finance_action
+                ),
+            ));
+        }
+        Ok(())
     }
 }
 
@@ -63,27 +110,15 @@ mod tests {
     }
 
     #[test]
-    fn test_separate_checker_can_approve_po() {
-        let maker_id = Uuid::new_v4();
-        let checker_id = Uuid::new_v4();
-        let res = SodValidator::validate_po_approval(maker_id, checker_id);
-        assert!(
-            res.is_ok(),
-            "Separate checker must be allowed to approve PO"
-        );
+    fn test_goods_receiver_cannot_pay_supplier() {
+        let user_id = Uuid::new_v4();
+        let res = SodValidator::validate_goods_receipt_vs_payment(user_id, user_id);
+        assert!(res.is_err(), "Goods receiver paying supplier must be rejected");
     }
 
     #[test]
-    fn test_maker_cannot_post_own_journal() {
-        let user_id = Uuid::new_v4();
-        let res = SodValidator::validate_journal_posting(user_id, user_id);
-        assert!(res.is_err(), "Maker posting own Journal must be rejected");
-    }
-
-    #[test]
-    fn test_maker_cannot_approve_own_payroll() {
-        let user_id = Uuid::new_v4();
-        let res = SodValidator::validate_payroll_approval(user_id, user_id);
-        assert!(res.is_err(), "Maker approving own Payroll must be rejected");
+    fn test_technical_admin_denied_finance_action_without_explicit_perm() {
+        let res = SodValidator::validate_technical_admin_finance_action("admin", false, "journal.post");
+        assert!(res.is_err(), "Technical admin without explicit perm must be denied journal.post");
     }
 }

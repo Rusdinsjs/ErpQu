@@ -19,9 +19,8 @@ pub struct DatabaseConfig {
 impl Default for DatabaseConfig {
     fn default() -> Self {
         Self {
-            url: std::env::var("DATABASE_URL").unwrap_or_else(|_| {
-                "postgres://postgres:postgres@localhost:5432/asset_management".to_string()
-            }),
+            url: std::env::var("DATABASE_URL")
+                .expect("FATAL SECURITY ERROR: DATABASE_URL environment variable is required"),
             max_connections: 10,
             min_connections: 2,
             acquire_timeout: Duration::from_secs(30),

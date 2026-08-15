@@ -30,7 +30,7 @@ impl AppConfig {
                 .parse()
                 .expect("SERVER_PORT must be a number"),
             jwt_secret: env::var("JWT_SECRET")
-                .unwrap_or_else(|_| "super-secret-key-change-in-production".to_string()),
+                .expect("FATAL SECURITY ERROR: JWT_SECRET environment variable is required and must not be empty"),
             jwt_expiry_hours: env::var("JWT_EXPIRY_HOURS")
                 .unwrap_or_else(|_| "24".to_string())
                 .parse()

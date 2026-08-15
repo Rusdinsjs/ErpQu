@@ -1,29 +1,7 @@
-import glob
-import subprocess
-
-files = sorted(glob.glob("migrations/*.sql"))
-print(f"Found {len(files)} migration files.")
-for f in files:
-    with open(f, "rb") as sql_file:
-        res = subprocess.run(
-            [
-                "wsl",
-                "-d",
-                "archlinux",
-                "docker",
-                "exec",
-                "-i",
-                "-e",
-                "PGPASSWORD=postgres",
-                "mgmt-db",
-                "psql",
-                "-U",
-                "postgres",
-                "-d",
-                "management_system",
-            ],
-            stdin=sql_file,
-            capture_output=True,
-            text=False
-        )
-print("All migrations applied successfully.")
+#!/usr/bin/env python3
+# DEPRECATED & REMOVED (Migration Governance Fase 16)
+# Direct execution of SQL migration files bypassing _sqlx_migrations tracking is forbidden.
+# Use standard sqlx migration runner (--check-migration) instead.
+import sys
+print("ERROR: Direct un-tracked SQL execution is deprecated. Use binary runner with --check-migration instead.")
+sys.exit(1)

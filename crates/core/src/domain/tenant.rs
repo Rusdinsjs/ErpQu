@@ -123,6 +123,31 @@ impl TenantContext {
         }
         Ok(())
     }
+
+    /// Set PostgreSQL transaction-local RLS session variables (SET LOCAL app.current_company_id)
+    pub async fn apply_to_transaction<'a, E>(&self, executor: &mut E) -> DomainResult<()>
+    where
+        E: sqlx::Executor<'a, Database = sqlx::Postgres>,
+    {
+        if self.is_super_tenant {
+            sqlx::query("SET LOCAL app.is_super_tenant = 'true'")
+                .execute(&mut *executor)
+                .await
+                .map_err(|e| DomainError::internal(e.to_string()))?;
+        } else if let Some(cid) = self.company_id {
+            sqlx::query(&format!("SET LOCAL app.current_company_id = '{}'", cid))
+                .execute(&mut *executor)
+                .await
+                .map_err(|e| DomainError::internal(e.to_string()))?;
+            sqlx::query("SET LOCAL app.is_super_tenant = 'false'")
+                .execute(&mut *executor)
+                .await
+                .map_err(|e| DomainError::internal(e.to_string()))?;
+        } else {
+            return Err(DomainError::unauthorized("missing_company_context_for_transaction"));
+        }
+        Ok(())
+    }
 }
 
 /// Query Scoping Rule for tenant isolation and soft-delete filtering (QTEN-002)

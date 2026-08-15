@@ -37,8 +37,17 @@ async fn main() {
     );
     tracing::info!("Environment: {}", config.environment);
 
+    // Check for CLI flags (--check-migration, --migrate-only, -v, --version)
+    let args: Vec<String> = std::env::args().collect();
+    let is_migration_only = args.iter().any(|arg| arg == "--check-migration" || arg == "--migrate-only");
+
+    if args.iter().any(|arg| arg == "-v" || arg == "--version") {
+        println!("management-system v{}", env!("CARGO_PKG_VERSION"));
+        std::process::exit(0);
+    }
+
     // 1. Migration Execution (Fail-Closed: Any migration error immediately halts startup)
-    let run_migrations = std::env::var("RUN_MIGRATIONS_ON_STARTUP")
+    let run_migrations = is_migration_only || std::env::var("RUN_MIGRATIONS_ON_STARTUP")
         .map(|v| v.trim().eq_ignore_ascii_case("true") || v == "1")
         .unwrap_or(true);
 
@@ -46,19 +55,30 @@ async fn main() {
         let migration_database_url =
             std::env::var("MIGRATION_DATABASE_URL").unwrap_or_else(|_| config.database_url.clone());
         tracing::info!("Running database migrations with migration role...");
-        let migration_pool = PgPoolOptions::new()
+        let migration_pool = match PgPoolOptions::new()
             .max_connections(2)
             .connect(&migration_database_url)
             .await
-            .expect("Failed to connect to migration database (MIGRATION_DATABASE_URL)");
+        {
+            Ok(pool) => pool,
+            Err(e) => {
+                tracing::error!("CRITICAL: Failed to connect to migration database: {}", e);
+                std::process::exit(1);
+            }
+        };
 
-        sqlx::migrate!("../../migrations")
-            .run(&migration_pool)
-            .await
-            .expect("CRITICAL: Database migration failed. Aborting startup (Fail-Closed).");
+        if let Err(e) = sqlx::migrate!("../../migrations").run(&migration_pool).await {
+            tracing::error!("CRITICAL: Database migration failed (Fail-Closed): {}", e);
+            std::process::exit(1);
+        }
 
         tracing::info!("Database migrations applied successfully.");
         migration_pool.close().await;
+
+        if is_migration_only {
+            tracing::info!("Migration-only execution completed successfully. Exiting with status 0.");
+            std::process::exit(0);
+        }
     } else {
         tracing::info!("Startup migration skipped (decoupled runner mode active).");
     }

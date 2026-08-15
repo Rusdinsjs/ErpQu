@@ -30,7 +30,8 @@ impl JwtConfig {
 
     pub fn from_env() -> Self {
         Self {
-            secret: std::env::var("JWT_SECRET").unwrap_or_else(|_| "super-secret-key".to_string()),
+            secret: std::env::var("JWT_SECRET")
+                .expect("FATAL SECURITY ERROR: JWT_SECRET environment variable is required"),
             expiry_hours: std::env::var("JWT_EXPIRY_HOURS")
                 .unwrap_or_else(|_| "24".to_string())
                 .parse()
