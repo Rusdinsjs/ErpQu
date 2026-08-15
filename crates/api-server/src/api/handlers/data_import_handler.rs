@@ -125,7 +125,7 @@ pub async fn generate_template(
     .map(String::from)
     .collect();
 
-    let mut category_code = "ASSET".to_string();
+    let mut _category_code = String::new();
     let mut category_name = "Kategori Umum".to_string();
 
     if payload.doctype_name.eq_ignore_ascii_case("asset") {
@@ -140,7 +140,7 @@ pub async fn generate_template(
             .map_err(|e| AppError::Database(e.to_string()))?;
 
             if let Some((cat_code, cat_name, cat_attributes)) = category {
-                category_code = cat_code.clone();
+                _category_code = cat_code.clone();
                 category_name = cat_name.clone();
                 let cat_code_upper = cat_code.to_uppercase();
 

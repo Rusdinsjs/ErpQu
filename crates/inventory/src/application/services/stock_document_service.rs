@@ -155,7 +155,7 @@ impl StockDocumentService {
             .get_stock_entry(id)
             .await
             .map_err(|e| DomainError::Database(e.to_string()))?
-            .ok_or_else(|| DomainError::not_found("StockEntry", &id.to_string()))?;
+            .ok_or_else(|| DomainError::not_found("StockEntry", id.to_string()))?;
 
         let items = self
             .repository
@@ -190,7 +190,7 @@ impl StockDocumentService {
             .get_stock_entry(id)
             .await
             .map_err(|e| DomainError::Database(e.to_string()))?
-            .ok_or_else(|| DomainError::not_found("StockEntry", &id.to_string()))?;
+            .ok_or_else(|| DomainError::not_found("StockEntry", id.to_string()))?;
 
         if entry.status != "DRAFT" {
             return Err(DomainError::business_rule(
@@ -407,7 +407,7 @@ impl StockDocumentService {
             .get_material_request(id)
             .await
             .map_err(|e| DomainError::Database(e.to_string()))?
-            .ok_or_else(|| DomainError::not_found("MaterialRequest", &id.to_string()))?;
+            .ok_or_else(|| DomainError::not_found("MaterialRequest", id.to_string()))?;
 
         let items = self
             .repository
@@ -445,7 +445,7 @@ impl StockDocumentService {
             .get_material_request(id)
             .await
             .map_err(|e| DomainError::Database(e.to_string()))?
-            .ok_or_else(|| DomainError::not_found("MaterialRequest", &id.to_string()))?;
+            .ok_or_else(|| DomainError::not_found("MaterialRequest", id.to_string()))?;
 
         if req.status != "DRAFT" {
             return Err(DomainError::business_rule(
@@ -486,7 +486,7 @@ impl StockDocumentService {
         let receipt = finance_repo
             .get_purchase_receipt(id)
             .await?
-            .ok_or_else(|| DomainError::not_found("PurchaseReceipt", &id.to_string()))?;
+            .ok_or_else(|| DomainError::not_found("PurchaseReceipt", id.to_string()))?;
 
         if receipt.status != "draft" {
             return Err(DomainError::business_rule(
@@ -562,7 +562,7 @@ impl StockDocumentService {
         let shipment = finance_repo
             .get_sales_shipment(id)
             .await?
-            .ok_or_else(|| DomainError::not_found("SalesShipment", &id.to_string()))?;
+            .ok_or_else(|| DomainError::not_found("SalesShipment", id.to_string()))?;
 
         if shipment.status != "pending" {
             return Err(DomainError::business_rule(

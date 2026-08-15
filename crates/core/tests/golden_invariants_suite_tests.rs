@@ -2,7 +2,6 @@
 //!
 //! Validates all 20 Golden Invariants required for ERPQu 1.0 Trust Milestone.
 
-use chrono::NaiveDate;
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 use uuid::Uuid;
@@ -62,8 +61,8 @@ fn invariant_05_invoice_amount_reconstructable_from_lines() {
 // 6. Debit equals credit for every accounting voucher.
 #[test]
 fn invariant_06_debit_equals_credit_always() {
-    let debits = vec![dec!(500.00), dec!(300.00)];
-    let credits = vec![dec!(800.00)];
+    let debits = [dec!(500.00), dec!(300.00)];
+    let credits = [dec!(800.00)];
 
     let total_debit: Decimal = debits.iter().sum();
     let total_credit: Decimal = credits.iter().sum();

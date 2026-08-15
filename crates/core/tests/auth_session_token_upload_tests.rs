@@ -34,7 +34,10 @@ fn test_expired_token_is_strictly_rejected() {
     let token = create_token(&expired_claims, &jwt_config).expect("Token encoding failed");
     let result = decode_token::<UserClaims>(&token, &jwt_config);
 
-    assert!(result.is_err(), "Expired token must be rejected fail-closed");
+    assert!(
+        result.is_err(),
+        "Expired token must be rejected fail-closed"
+    );
 }
 
 #[test]
@@ -79,6 +82,10 @@ fn test_path_traversal_detection() {
     for path in malicious_paths {
         let safe_path = path.trim_start_matches('/');
         let is_traversal = safe_path.contains("..") || safe_path.contains('\\');
-        assert!(is_traversal, "Path traversal pattern '{}' must be detected", path);
+        assert!(
+            is_traversal,
+            "Path traversal pattern '{}' must be detected",
+            path
+        );
     }
 }

@@ -39,7 +39,7 @@ fn service(pool: &PgPool) -> FinanceService {
 
 async fn seed_client(pool: &PgPool) -> Uuid {
     let id = Uuid::new_v4();
-    sqlx::query("INSERT INTO clients (id, client_code, name) VALUES ($1, $2, $3)")
+    sqlx::query("INSERT INTO crm.clients (id, client_code, name) VALUES ($1, $2, $3)")
         .bind(id)
         .bind(format!("TEST-{}", &id.to_string()[..8]))
         .bind("3R.1.1 Test Client")

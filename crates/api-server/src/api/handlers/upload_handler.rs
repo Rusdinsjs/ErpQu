@@ -50,7 +50,9 @@ pub async fn upload_file(
                 .map_err(|e| AppError::Internal(e.to_string()))?;
 
             if data.len() as u64 > MAX_UPLOAD_SIZE {
-                return Err(AppError::BadRequest("File too large (max 10MB)".to_string()));
+                return Err(AppError::BadRequest(
+                    "File too large (max 10MB)".to_string(),
+                ));
             }
 
             // Determine extension
@@ -208,7 +210,9 @@ pub async fn get_private_file(
     let (uploaded_by, company_id, role_level_required) = match record {
         Some(r) => r,
         None => {
-            return Err(AppError::NotFound("File metadata not found in database".to_string()));
+            return Err(AppError::NotFound(
+                "File metadata not found in database".to_string(),
+            ));
         }
     };
 

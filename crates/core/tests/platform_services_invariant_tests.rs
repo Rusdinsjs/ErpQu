@@ -86,7 +86,7 @@ fn test_qjob_001_job_lock_ttl_expiration() {
 
 #[test]
 fn test_qwf_001_metadata_driven_approval_workflow_levels() {
-    let levels = vec![
+    let levels = [
         "DEPARTMENT_HEAD",
         "FINANCE_MANAGER",
         "GENERAL_MANAGER",

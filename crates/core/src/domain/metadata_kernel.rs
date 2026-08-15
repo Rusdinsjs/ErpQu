@@ -61,10 +61,8 @@ impl FieldDefinition {
                     return Err(format!("Field '{}' must be a number", self.label));
                 }
             }
-            "BOOLEAN" => {
-                if !value.is_boolean() {
-                    return Err(format!("Field '{}' must be a boolean", self.label));
-                }
+            "BOOLEAN" if !value.is_boolean() => {
+                return Err(format!("Field '{}' must be a boolean", self.label));
             }
             _ => {}
         }

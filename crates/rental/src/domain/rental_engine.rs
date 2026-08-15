@@ -31,7 +31,8 @@ impl HeavyEquipmentRentalEngine {
         }
 
         let total_recorded_hours = operating_hours + standby_hours;
-        let standard_gross = (operating_hours * operating_rate_per_hour) + (standby_hours * standby_rate_per_hour);
+        let standard_gross =
+            (operating_hours * operating_rate_per_hour) + (standby_hours * standby_rate_per_hour);
 
         if total_recorded_hours < minimum_hours_guarantee {
             // Apply minimum guarantee billing

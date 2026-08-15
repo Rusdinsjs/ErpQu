@@ -2,7 +2,7 @@ use crate::domain::entities::{
     HrAttendanceDetail, HrAttendanceRequest, HrOvertimeRequest, HrShiftAssignment, HrShiftType,
 };
 use crate::dto::*;
-use chrono::{NaiveDate, Utc};
+use chrono::NaiveDate;
 use management_system_core::shared::errors::AppError;
 use rust_decimal::Decimal;
 use sqlx::PgPool;
@@ -355,6 +355,7 @@ impl HrShiftOvertimeRepository {
         .map_err(|e| AppError::Database(e.to_string()))
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub async fn update_overtime_approval(
         &self,
         id: Uuid,

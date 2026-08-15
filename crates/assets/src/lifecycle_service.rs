@@ -3,7 +3,6 @@
 //! Business logic for asset lifecycle state transitions.
 
 use serde_json::json;
-use std::str::FromStr;
 use uuid::Uuid;
 
 use crate::domain::entities::{AssetState, LifecycleHistory};

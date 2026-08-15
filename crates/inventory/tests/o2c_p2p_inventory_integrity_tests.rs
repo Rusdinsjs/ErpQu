@@ -51,7 +51,8 @@ fn test_sufficient_stock_issue_permitted() {
         current_balance,
         requested_issue,
         allow_negative,
-    ).is_ok());
+    )
+    .is_ok());
 }
 
 #[test]
@@ -69,7 +70,8 @@ fn test_moving_average_valuation_after_receipt() {
         current_rate,
         incoming_qty,
         incoming_rate,
-    ).unwrap();
+    )
+    .unwrap();
 
     assert_eq!(new_rate, d("12000.00"));
 }
@@ -82,10 +84,7 @@ fn test_landed_cost_allocation_to_receipt_items() {
     // Freight / Landed Cost = 30,000
     // Item 1 allocated 10,000 -> unit cost increases by 10,000 / 10 = 1,000 -> new cost 11,000
     // Item 2 allocated 20,000 -> unit cost increases by 20,000 / 20 = 1,000 -> new cost 11,000
-    let mut items = vec![
-        (d("10.00"), d("10000.00")),
-        (d("20.00"), d("10000.00")),
-    ];
+    let mut items = vec![(d("10.00"), d("10000.00")), (d("20.00"), d("10000.00"))];
     let freight_cost = d("30000.00");
 
     InventoryValuationEngine::distribute_landed_cost(&mut items, freight_cost).unwrap();
@@ -128,7 +127,8 @@ fn test_serial_number_duplicate_rejection() {
 
     // 2. Collision with already registered serial
     let batch_with_existing = vec!["SN-1001".to_string()];
-    let res2 = SerialTrackingValidator::validate_unique_serials(&batch_with_existing, &existing_serials);
+    let res2 =
+        SerialTrackingValidator::validate_unique_serials(&batch_with_existing, &existing_serials);
     assert!(res2.is_err());
     match res2.unwrap_err() {
         DomainError::BusinessRuleViolation { rule, .. } => {
@@ -139,5 +139,7 @@ fn test_serial_number_duplicate_rejection() {
 
     // 3. Valid unique serials
     let valid_batch = vec!["SN-3001".to_string(), "SN-3002".to_string()];
-    assert!(SerialTrackingValidator::validate_unique_serials(&valid_batch, &existing_serials).is_ok());
+    assert!(
+        SerialTrackingValidator::validate_unique_serials(&valid_batch, &existing_serials).is_ok()
+    );
 }

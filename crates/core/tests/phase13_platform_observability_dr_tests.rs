@@ -26,7 +26,8 @@ fn test_outbox_lifecycle_and_exponential_backoff() {
         Uuid::new_v4(),
         None,
         "CORR-013",
-    ).with_max_attempts(3);
+    )
+    .with_max_attempts(3);
 
     assert_eq!(outbox.status, OutboxStatus::Pending.as_str());
     assert_eq!(outbox.attempt_count, 0);
@@ -69,7 +70,10 @@ fn test_distributed_job_lock_ttl_expiration_and_acquisition() {
         ttl_seconds: 600,
     };
     let is_locked = active_lock.expires_at > now;
-    assert!(is_locked, "Lock must be active and protect against worker B");
+    assert!(
+        is_locked,
+        "Lock must be active and protect against worker B"
+    );
 
     // Simulate TTL expiry (time advances past expires_at)
     active_lock.expires_at = now - Duration::seconds(1);

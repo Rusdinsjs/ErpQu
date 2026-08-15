@@ -175,7 +175,8 @@ impl BpjsCalculator {
         let bpjs_kes_company = (kes_basis * dec!(0.040)).round_dp(2);
         let bpjs_kes_employee = (kes_basis * dec!(0.010)).round_dp(2);
 
-        let total_company_cost = jht_company + jkk_company + jkm_company + jp_company + bpjs_kes_company;
+        let total_company_cost =
+            jht_company + jkk_company + jkm_company + jp_company + bpjs_kes_company;
         let total_employee_deduction = jht_employee + jp_employee + bpjs_kes_employee;
 
         BpjsContributions {
@@ -198,7 +199,10 @@ pub struct IndonesianOvertimeCalculator;
 
 impl IndonesianOvertimeCalculator {
     /// Calculates overtime pay for workdays: 1st hour = 1.5x, 2nd+ hours = 2.0x
-    pub fn calculate_workday_overtime(monthly_base_salary: Decimal, overtime_hours: Decimal) -> Decimal {
+    pub fn calculate_workday_overtime(
+        monthly_base_salary: Decimal,
+        overtime_hours: Decimal,
+    ) -> Decimal {
         if overtime_hours <= Decimal::ZERO {
             return Decimal::ZERO;
         }

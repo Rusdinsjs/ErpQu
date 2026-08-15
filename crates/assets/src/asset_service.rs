@@ -65,7 +65,7 @@ impl AssetService {
         page: i64,
         per_page: i64,
         department: Option<&str>,
-        asset_group: Option<&str>,
+        _asset_group: Option<&str>,
     ) -> DomainResult<PaginatedResponse<AssetSummary>> {
         let offset = (page - 1) * per_page;
         let assets = self
@@ -1154,9 +1154,9 @@ impl AssetService {
         let book_value = asset
             .calculate_book_value()
             .unwrap_or(rust_decimal::Decimal::ZERO);
-        let accum_depr = purchase_price - book_value;
+        let _accum_depr = purchase_price - book_value;
         let sale_price = req.sale_price;
-        let gain_loss = sale_price - book_value;
+        let _gain_loss = sale_price - book_value;
 
         // 3. Update Asset State
         asset.status = AssetState::Sold.as_str().to_string();

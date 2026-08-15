@@ -39,7 +39,7 @@ pub struct ThreeWayMatchValidator;
 impl ThreeWayMatchValidator {
     /// Validates Purchase Order vs Goods Receipt vs Purchase Bill
     pub fn validate(
-        po_qty: Decimal,
+        _po_qty: Decimal,
         po_unit_price: Decimal,
         gr_qty: Decimal,
         invoice_qty: Decimal,

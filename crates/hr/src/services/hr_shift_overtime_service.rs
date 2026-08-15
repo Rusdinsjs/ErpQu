@@ -188,7 +188,7 @@ impl HrShiftOvertimeService {
             // 7 jam pertama: 2x
             // Jam ke-8: 3x
             // Jam ke-9 & ke-10: 4x
-            let mut total_mult = 0.0;
+            let total_mult;
             if h <= 7.0 {
                 total_mult = h * 2.0;
             } else if h <= 8.0 {

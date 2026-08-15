@@ -2,7 +2,7 @@
 
 use uuid::Uuid;
 
-use crate::domain::entities::{MaintenanceTeam, MaintenanceTeamDetail, MaintenanceTeamMember};
+use crate::domain::entities::{MaintenanceTeamDetail, MaintenanceTeamMember};
 use crate::repositories::MaintenanceTeamRepository;
 use management_system_core::application::dto::{
     CreateMaintenanceTeamRequest, CreateTeamMemberRequest, MaintenanceTeamQuery, PaginatedResponse,

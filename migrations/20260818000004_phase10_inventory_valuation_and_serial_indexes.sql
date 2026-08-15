@@ -1,29 +1,29 @@
 -- Migration: 20260818000004_phase10_inventory_valuation_and_serial_indexes.sql
--- Purpose: Indexes for stock ledger valuation, bin balance reconciliation, and serial tracking (Fase 10)
+-- Purpose: Indexes for Inventory Valuation, Serial Traceability, and Bin Conservation (Fase 10)
 
 DO $$
 BEGIN
-    -- 1. Stock Ledger Entries valuation & timeline index
-    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'stock_ledger_entries' AND column_name = 'company_id') THEN
-        CREATE INDEX IF NOT EXISTS idx_stock_ledger_val_timeline 
-            ON public.stock_ledger_entries(company_id, warehouse_id, item_id, posting_date);
+    -- 1. Stock ledger entries valuation & FIFO index
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'stock_ledger_entries' AND column_name = 'company_id')
+       AND EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'stock_ledger_entries' AND column_name = 'item_id') THEN
+        IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'stock_ledger_entries' AND column_name = 'posting_time') THEN
+            EXECUTE 'CREATE INDEX IF NOT EXISTS idx_sle_valuation_fifo ON public.stock_ledger_entries(company_id, item_id, warehouse_id, posting_date, posting_time)';
+        ELSIF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'stock_ledger_entries' AND column_name = 'posting_date') THEN
+            EXECUTE 'CREATE INDEX IF NOT EXISTS idx_sle_valuation_fifo ON public.stock_ledger_entries(company_id, item_id, warehouse_id, posting_date)';
+        ELSE
+            EXECUTE 'CREATE INDEX IF NOT EXISTS idx_sle_valuation_fifo ON public.stock_ledger_entries(company_id, item_id, warehouse_id)';
+        END IF;
     END IF;
 
-    -- 2. Serial Numbers uniqueness and company index
-    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'serial_numbers' AND column_name = 'company_id') THEN
-        CREATE UNIQUE INDEX IF NOT EXISTS idx_serial_nos_unique_per_company 
-            ON public.serial_numbers(company_id, serial_no);
+    -- 2. Serial and batch tracking index
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'serial_and_batch_bundles' AND column_name = 'company_id')
+       AND EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'serial_and_batch_bundles' AND column_name = 'item_id') THEN
+        EXECUTE 'CREATE INDEX IF NOT EXISTS idx_serial_bundles_item ON public.serial_and_batch_bundles(company_id, item_id, voucher_type, voucher_no)';
     END IF;
 
-    -- 3. Batch Numbers tracking index
-    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'batches' AND column_name = 'company_id') THEN
-        CREATE INDEX IF NOT EXISTS idx_batch_nos_company_item 
-            ON public.batches(company_id, item_id, batch_no);
-    END IF;
-
-    -- 4. Bins lookup index
-    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'bins' AND column_name = 'company_id') THEN
-        CREATE INDEX IF NOT EXISTS idx_bins_lookup 
-            ON public.bins(company_id, warehouse_id, item_id);
+    -- 3. Warehouse bin quantity conservation index
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'warehouse_bins' AND column_name = 'company_id')
+       AND EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'warehouse_bins' AND column_name = 'item_id') THEN
+        EXECUTE 'CREATE INDEX IF NOT EXISTS idx_warehouse_bins_stock ON public.warehouse_bins(company_id, warehouse_id, item_id)';
     END IF;
 END $$;

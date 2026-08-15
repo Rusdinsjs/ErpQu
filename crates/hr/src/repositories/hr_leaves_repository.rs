@@ -5,13 +5,12 @@ use sqlx::PgPool;
 use uuid::Uuid;
 
 use crate::domain::entities::{
-    HrHoliday, HrHolidayList, HrLeaveAllocation, HrLeaveApplication, HrLeaveBlockDate,
-    HrLeaveBlockList, HrLeaveEncashment, HrLeaveType, LeaveBalanceSummary,
+    HrHoliday, HrHolidayList, HrLeaveAllocation, HrLeaveApplication, HrLeaveBlockList, HrLeaveType,
+    LeaveBalanceSummary,
 };
 use crate::dto::{
-    AddBlockDateRequest, AddHolidayRequest, CreateHolidayListRequest, CreateLeaveAllocationRequest,
-    CreateLeaveApplicationRequest, CreateLeaveBlockListRequest, CreateLeaveTypeRequest,
-    LeaveQueryParams, UpdateLeaveTypeRequest,
+    AddHolidayRequest, CreateLeaveAllocationRequest, CreateLeaveApplicationRequest,
+    CreateLeaveTypeRequest, LeaveQueryParams, UpdateLeaveTypeRequest,
 };
 
 #[derive(Clone)]

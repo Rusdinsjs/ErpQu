@@ -8,13 +8,9 @@ use axum::{
     Extension, Router,
 };
 
-use crate::api::handlers::finance_handler;
 use crate::api::handlers::lifecycle_handler;
 use crate::api::handlers::*;
-use crate::api::middleware::{
-    auth_middleware,
-    rbac::{admin_only_middleware, default_deny_middleware, require_permission},
-};
+use crate::api::middleware::{auth_middleware, rbac::admin_only_middleware};
 use crate::api::server::AppState;
 use management_system_core::domain::entities::UserClaims;
 

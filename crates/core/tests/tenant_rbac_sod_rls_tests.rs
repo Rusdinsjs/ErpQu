@@ -46,7 +46,10 @@ fn test_sod_purchase_order_approval_violation() {
     let maker_id = Uuid::new_v4();
     let res = SodValidator::validate_po_approval(maker_id, maker_id);
 
-    assert!(res.is_err(), "Maker cannot approve their own Purchase Order (SOD-004)");
+    assert!(
+        res.is_err(),
+        "Maker cannot approve their own Purchase Order (SOD-004)"
+    );
 }
 
 #[test]
@@ -54,7 +57,10 @@ fn test_sod_journal_posting_violation() {
     let maker_id = Uuid::new_v4();
     let res = SodValidator::validate_journal_posting(maker_id, maker_id);
 
-    assert!(res.is_err(), "Maker cannot post their own Journal Entry to General Ledger (SOD-003)");
+    assert!(
+        res.is_err(),
+        "Maker cannot post their own Journal Entry to General Ledger (SOD-003)"
+    );
 }
 
 #[test]
@@ -62,7 +68,10 @@ fn test_sod_stock_entry_submit_violation() {
     let maker_id = Uuid::new_v4();
     let res = SodValidator::validate_stock_entry_submit(maker_id, maker_id);
 
-    assert!(res.is_err(), "Maker cannot submit their own Stock Adjustment Entry (SOD-009)");
+    assert!(
+        res.is_err(),
+        "Maker cannot submit their own Stock Adjustment Entry (SOD-009)"
+    );
 }
 
 #[test]
@@ -70,7 +79,10 @@ fn test_sod_payroll_approval_violation() {
     let maker_id = Uuid::new_v4();
     let res = SodValidator::validate_payroll_approval(maker_id, maker_id);
 
-    assert!(res.is_err(), "Maker cannot approve their own Payroll Calculation (SOD-006)");
+    assert!(
+        res.is_err(),
+        "Maker cannot approve their own Payroll Calculation (SOD-006)"
+    );
 }
 
 #[test]

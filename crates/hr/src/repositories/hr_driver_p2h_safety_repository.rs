@@ -1,4 +1,3 @@
-use chrono::Utc;
 use management_system_core::shared::errors::AppError;
 use sqlx::PgPool;
 use uuid::Uuid;

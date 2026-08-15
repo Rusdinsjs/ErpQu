@@ -2,7 +2,7 @@
 
 use axum::{
     handler::Handler,
-    routing::{delete, get, post, put},
+    routing::{get, post},
     Router,
 };
 

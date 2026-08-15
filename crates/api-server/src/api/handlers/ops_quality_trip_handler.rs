@@ -1,6 +1,6 @@
 use crate::api::server::AppState;
 use axum::{
-    extract::{Path, Query, State},
+    extract::{Path, State},
     Json,
 };
 use management_system_core::application::dto::ApiResponse;

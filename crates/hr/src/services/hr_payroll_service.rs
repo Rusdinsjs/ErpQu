@@ -13,6 +13,7 @@ use crate::services::hr_tax_bpjs_engine::HrTaxBpjsEngine;
 #[derive(Clone)]
 pub struct HrPayrollService {
     repo: HrPayrollRepository,
+    #[allow(dead_code)]
     employee_repo: EmployeeRepository,
     loans_repo: crate::repositories::HrLoansClaimsKpiRepository,
 }
@@ -20,7 +21,7 @@ pub struct HrPayrollService {
 impl HrPayrollService {
     pub fn new(
         repo: HrPayrollRepository,
-        employee_repo: EmployeeRepository,
+        #[allow(dead_code)] employee_repo: EmployeeRepository,
         loans_repo: crate::repositories::HrLoansClaimsKpiRepository,
     ) -> Self {
         Self {

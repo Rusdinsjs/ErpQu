@@ -1,7 +1,7 @@
 //! HR Domain Routes (Fase 1 - 7)
 
 use axum::{
-    routing::{delete, get, post, put},
+    routing::{delete, get, post},
     Router,
 };
 

@@ -75,7 +75,7 @@ impl CategoryService {
         }
 
         // Sort by display_order
-        tree.sort_by(|a, b| a.display_order.cmp(&b.display_order));
+        tree.sort_by_key(|a| a.display_order);
 
         Ok(tree)
     }
@@ -98,7 +98,7 @@ impl CategoryService {
             .filter(|c| c.parent_id.is_none() && c.main_category.is_some())
             .collect();
 
-        main_categories.sort_by(|a, b| a.display_order.cmp(&b.display_order));
+        main_categories.sort_by_key(|a| a.display_order);
 
         let mut result: Vec<CategoryClassification> = Vec::new();
 
@@ -109,7 +109,7 @@ impl CategoryService {
                 .filter(|c| c.parent_id == Some(main.id))
                 .collect();
 
-            sub_cats.sort_by(|a, b| a.display_order.cmp(&b.display_order));
+            sub_cats.sort_by_key(|a| a.display_order);
 
             let sub_category_items: Vec<SubCategoryItem> = sub_cats
                 .into_iter()
@@ -314,7 +314,7 @@ impl CategoryService {
             .map(|c| Self::build_tree_node(c, all_categories, level + 1))
             .collect();
 
-        children.sort_by(|a, b| a.display_order.cmp(&b.display_order));
+        children.sort_by_key(|a| a.display_order);
 
         let example_assets: Option<Vec<String>> = category
             .example_assets

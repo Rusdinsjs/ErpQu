@@ -1,7 +1,6 @@
 use chrono::NaiveDate;
 use management_system_core::domain::errors::{DomainError, DomainResult};
 use rust_decimal::Decimal;
-use serde::{Deserialize, Serialize};
 
 pub struct FleetTelemetryEngine;
 

@@ -1,4 +1,3 @@
-use crate::domain::entities::inventory::{InventoryItem, InventoryMovement, InventoryMovementType};
 use crate::domain::entities::stock_entry::{
     StockLedgerEntry, StockPostingInstruction, StockPostingLineItem,
 };
@@ -23,6 +22,7 @@ use uuid::Uuid;
 /// 5. Perpetual Inventory GL Bridge calling AccountingPostingEngine (QSTK-012).
 #[derive(Clone)]
 pub struct StockPostingEngine {
+    #[allow(dead_code)]
     pool: PgPool,
     accounting_engine: Option<AccountingPostingEngine>,
 }
@@ -393,6 +393,7 @@ impl StockPostingEngine {
     }
 
     /// QSTK-009 Atomic Transfer between two warehouses inside a UnitOfWork
+    #[allow(clippy::too_many_arguments)]
     pub async fn transfer_in_uow(
         &self,
         tx: &mut Transaction<'_, Postgres>,

@@ -27,12 +27,9 @@ fn test_depreciation_schedule_sum_matches_depreciable_amount() {
     let start_date = NaiveDate::from_ymd_opt(2026, 8, 1).unwrap();
     let months = 48;
 
-    let schedule = AssetEamEngine::generate_straight_line_schedule(
-        cost,
-        residual,
-        start_date,
-        months,
-    ).unwrap();
+    let schedule =
+        AssetEamEngine::generate_straight_line_schedule(cost, residual, start_date, months)
+            .unwrap();
 
     assert_eq!(schedule.len(), 48);
     let total_depreciated: Decimal = schedule.iter().map(|item| item.depreciation_amount).sum();
@@ -64,7 +61,8 @@ fn test_rental_timesheet_with_minimum_guarantee_applied() {
         operating_rate,
         standby_rate,
         min_guarantee,
-    ).unwrap();
+    )
+    .unwrap();
 
     assert!(calc.is_minimum_guarantee_applied);
     assert_eq!(calc.billed_hours_applied, d("200.00"));
@@ -86,7 +84,8 @@ fn test_rental_timesheet_exceeding_minimum_guarantee() {
         operating_rate,
         standby_rate,
         min_guarantee,
-    ).unwrap();
+    )
+    .unwrap();
 
     assert!(!calc.is_minimum_guarantee_applied);
     assert_eq!(calc.billed_hours_applied, d("220.00"));
@@ -101,8 +100,18 @@ fn test_fuel_consumption_anomaly_detection() {
     let excessive_fuel = d("280.00"); // 28 L/HM
     let max_sfc = d("20.00"); // 20 L/HM threshold
 
-    assert!(!FleetTelemetryEngine::check_fuel_consumption_anomaly(normal_fuel, running_hours, max_sfc).unwrap());
-    assert!(FleetTelemetryEngine::check_fuel_consumption_anomaly(excessive_fuel, running_hours, max_sfc).unwrap());
+    assert!(!FleetTelemetryEngine::check_fuel_consumption_anomaly(
+        normal_fuel,
+        running_hours,
+        max_sfc
+    )
+    .unwrap());
+    assert!(FleetTelemetryEngine::check_fuel_consumption_anomaly(
+        excessive_fuel,
+        running_hours,
+        max_sfc
+    )
+    .unwrap());
 }
 
 #[test]
@@ -112,7 +121,9 @@ fn test_operator_license_expiration_rejection() {
     let expired_dispatch = NaiveDate::from_ymd_opt(2026, 8, 15).unwrap();
 
     // Valid dispatch before expiry
-    assert!(FleetTelemetryEngine::validate_operator_license(license_expiry, valid_dispatch).is_ok());
+    assert!(
+        FleetTelemetryEngine::validate_operator_license(license_expiry, valid_dispatch).is_ok()
+    );
 
     // Rejection when license is expired
     let result = FleetTelemetryEngine::validate_operator_license(license_expiry, expired_dispatch);
@@ -134,10 +145,18 @@ fn test_geofence_breach_detection() {
     // Point 1 km away -> Inside geofence
     let inside_lat = -6.205000;
     let inside_lon = 106.820000;
-    assert!(!FleetTelemetryEngine::is_outside_geofence(inside_lat, inside_lon, center_lat, center_lon, radius_km));
+    assert!(!FleetTelemetryEngine::is_outside_geofence(
+        inside_lat, inside_lon, center_lat, center_lon, radius_km
+    ));
 
     // Point 50 km away -> Outside geofence (Breach!)
     let outside_lat = -6.600000;
     let outside_lon = 106.816666;
-    assert!(FleetTelemetryEngine::is_outside_geofence(outside_lat, outside_lon, center_lat, center_lon, radius_km));
+    assert!(FleetTelemetryEngine::is_outside_geofence(
+        outside_lat,
+        outside_lon,
+        center_lat,
+        center_lon,
+        radius_km
+    ));
 }

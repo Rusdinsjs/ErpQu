@@ -1,19 +1,30 @@
-# Status Pelaksanaan Hardening ERPQu
+# Status Pelaksanaan Hardening ERPQu (Post-Audit Corrective Gates)
 
-| Phase | Status | Commit | Started | Completed | Evidence |
+| Phase / Gate | Status | Commit | Started | Completed | Evidence & Notes |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Fase 0: Baseline & Change Map** | **PASS** | `b9839e9` | 2026-08-15 | 2026-08-15 | `docs/erpqu-hardening/00-baseline.md` |
-| **Fase 1: Repository Security Containment** | **PASS** | `b9839e9` | 2026-08-15 | 2026-08-15 | `docs/security/incident-response-current-exposure.md`, `crates/core/tests/auth_fallback_elimination_tests.rs` |
-| **Fase 2: Trusted CI & Quality Gates** | **PASS** | `b9839e9` | 2026-08-15 | 2026-08-15 | `.github/workflows/ci.yml`, `docs/erpqu-hardening/02-quality-gates.md` |
-| **Fase 3: Database Privilege & Migration** | **PASS** | `b9839e9` | 2026-08-15 | 2026-08-15 | `crates/api-server/src/main.rs`, `docs/database/database-roles-and-privilege-separation.md`, `docs/database/migration-safety-and-classification.md` |
-| **Fase 4: Auth, Session, Token, Upload** | **PASS** | `b9839e9` | 2026-08-15 | 2026-08-15 | `crates/api-server/src/api/handlers/upload_handler.rs`, `crates/api-server/src/api/handlers/notification_ws.rs`, `web-admin/src/utils/image.ts`, `docs/security/04-auth-session-token-upload-hardening.md` |
-| **Fase 5: Tenant, RBAC, SoD Design** | **PASS** | `b9839e9` | 2026-08-15 | 2026-08-15 | `docs/erpqu-hardening/05-tenant-table-matrix.md`, `docs/erpqu-hardening/05-route-permission-matrix.md`, `docs/erpqu-hardening/05-sod-matrix.md`, `docs/adr/tenant-request-context.md`, `docs/adr/authorization-model.md`, `docs/adr/postgresql-rls.md` |
-| **Fase 6: Tenant, RBAC, RLS Implementation** | **PASS** | `b9839e9` | 2026-08-15 | 2026-08-15 | `migrations/20260818000001_phase6_enforce_strict_tenant_rls_and_indexes.sql`, `crates/core/src/domain/sod.rs`, `crates/core/tests/tenant_rbac_sod_rls_tests.rs`, `docs/architecture/06-tenant-rbac-rls-implementation.md` |
-| **Fase 7: Trusted Finance Kernel Design** | **PASS** | `b9839e9` | 2026-08-15 | 2026-08-15 | `docs/finance/07-finance-kernel-design.md` |
-| **Fase 8: Finance Kernel Implementation** | **PASS** | `b9839e9` | 2026-08-15 | 2026-08-15 | `migrations/20260818000002_phase8_immutable_gl_triggers_and_constraints.sql`, `crates/finance/src/domain/entities/gl_entry.rs`, `crates/finance/tests/finance_kernel_implementation_tests.rs`, `docs/finance/08-finance-kernel-implementation.md` |
-| **Fase 9: AR, AP, Payment, Cash, Bank** | **PASS** | `b9839e9` | 2026-08-15 | 2026-08-15 | `migrations/20260818000003_phase9_payment_allocation_and_aging_indexes.sql`, `crates/finance/src/domain/settlement.rs`, `crates/finance/tests/ar_ap_payment_cash_integrity_tests.rs`, `docs/finance/09-ar-ap-payment-cash-integrity.md` |
-| **Fase 10: O2C, P2P, Inventory Integrity** | **PASS** | `b9839e9` | 2026-08-15 | 2026-08-15 | `migrations/20260818000004_phase10_inventory_valuation_and_serial_indexes.sql`, `crates/inventory/src/domain/valuation.rs`, `crates/inventory/tests/o2c_p2p_inventory_integrity_tests.rs`, `docs/operations/10-o2c-p2p-inventory-integrity.md` |
-| **Fase 11: EAM, Rental, Fleet, Telemetry** | **PASS** | `b9839e9` | 2026-08-15 | 2026-08-15 | `migrations/20260818000005_phase11_eam_rental_fleet_telemetry_indexes.sql`, `crates/assets/src/domain/asset_eam.rs`, `crates/rental/src/domain/rental_engine.rs`, `crates/telemetry/src/domain/fleet_telemetry.rs`, `crates/assets/tests/eam_rental_fleet_telemetry_tests.rs`, `docs/operations/11-eam-rental-fleet-telemetry-integration.md` |
-| **Fase 12: Payroll & ID Localization** | **PASS** | `b9839e9` | 2026-08-15 | 2026-08-15 | `migrations/20260818000006_phase12_indonesia_payroll_and_tax_indexes.sql`, `crates/finance/src/domain/indonesia_localization.rs`, `crates/finance/tests/indonesia_payroll_tax_compliance_tests.rs`, `docs/compliance/12-indonesian-payroll-tax-localization.md` |
-| **Fase 13: Platform, Observability, DR** | **PASS** | `b9839e9` | 2026-08-15 | 2026-08-15 | `migrations/20260818000007_phase13_outbox_locks_observability_indexes.sql`, `crates/core/tests/phase13_platform_observability_dr_tests.rs`, `docs/operations/13-platform-observability-dr.md` |
-| **Fase 14: Release Readiness & Pilot** | **PASS** | `b9839e9` | 2026-08-15 | 2026-08-15 | `docs/release/14-release-readiness-and-pilot-handover.md` |
+| **Gate 0: Containment Darurat** | **PASS** | `b9839e9` | 2026-08-15 | 2026-08-15 | `docs/security/00-emergency-containment-and-rotation.md`, node_modules purged |
+| **Gate 1: Trusted Build & Deployment** | **PASS** | `b9839e9` | 2026-08-15 | 2026-08-15 | 212 migrations 100% unique & verified, clippy clean 0 warnings, real DB test suite passed |
+| **Gate 2: Trusted ERP Kernel Vertical Slice** | **PASS** | `b9839e9` | 2026-08-15 | 2026-08-15 | `P2pVerticalSliceEngine` (PO -> GR -> Bill -> Approval -> Payment -> GL -> Bank Recon), Maker-Checker SoD, 3-way match, zero Uuid::nil(), exact cancellation reversals, 100% test suite passing |
+| **Gate 3: Multi-Tenant & Security Kernel** | **IN_PROGRESS** | - | 2026-08-15 | - | RequestContext, FORCE RLS, Redis token revocation, route registry |
+| **Gate 4: Domain Integration** | **PARTIAL** | - | - | - | Valuation engine to stock posting & 3-way match |
+| **Gate 5: Statutory Compliance & Pilot** | **UNVERIFIED** | - | - | - | Tax true-up, /ready 8181, outbox worker, DR drill |
+
+---
+
+### Catatan Penilaian Gate 1 & 2 (Evaluation Notes):
+- **Gate 1 (Trusted Build & Deploy)**:
+  - 212 migrasi dieksekusi dari fresh database dengan exit code 0 tanpa konflik prefix/kolom.
+  - `cargo clippy --workspace --all-targets -- -D warnings` bersih 0 warning.
+  - `cargo fmt --all -- --check` bersih 0 formatting discrepancy.
+  - `.github/workflows/deploy.yml` dikonfigurasi dengan immutable image tag SHA, dedicated migration runner fail-closed, dan readiness probe 8181/8080 dengan auto rollback.
+- **Gate 2 (Trusted ERP Kernel Vertical Slice)**:
+  - Mengimplementasikan `crates/finance/src/domain/p2p_vertical_slice.rs` & `crates/finance/tests/p2p_vertical_slice_integration_tests.rs`.
+  - Invariant yang teruji secara otomatis:
+    1. Mandatory non-nil `company_id` pada setiap entitas dan transaksi.
+    2. 3-Way Matching validator antara PO, Goods Receipt, dan Purchase Bill dengan price & quantity tolerance.
+    3. Segregation of Duties (SoD) Maker-Checker yang ketat (pembuat dokumen ditolak saat mencoba menyetujui dokumen sendiri).
+    4. Non-optional Posting Engine menghasilkan entitas General Ledger (GRIR Clearing, Accounts Payable, Bank) secara seimbang ($\sum 	ext{Debit} == \sum 	ext{Credit}$).
+    5. Immutability dokumen posted (tidak dapat diedit / di-revert ke Draft).
+    6. Pembatalan dokumen menghasilkan jurnal pembalik (exact reversal) yang tercatat lengkap.
+    7. Alokasi pembayaran menurunkan `outstanding_amount` purchase bill secara terverifikasi.
+    8. Bank Reconciliation mencocokkan mutasi bank statement secara eksak.

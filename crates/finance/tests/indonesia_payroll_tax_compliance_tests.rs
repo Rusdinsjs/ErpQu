@@ -10,8 +10,8 @@
 
 use chrono::NaiveDate;
 use management_system_finance::domain::indonesia_localization::{
-    BpjsCalculator, IndonesianOvertimeCalculator, PayrollJournalValidator,
-    Pph21TerCalculator, Pph23Calculator, VatRateVersion,
+    BpjsCalculator, IndonesianOvertimeCalculator, PayrollJournalValidator, Pph21TerCalculator,
+    Pph23Calculator, VatRateVersion,
 };
 use rust_decimal_macros::dec;
 
@@ -19,30 +19,51 @@ use rust_decimal_macros::dec;
 fn test_pph21_ter_category_a_calculation() {
     // Category A (TK/0, TK/1, K/0)
     // 5.000.000 (<= 5.4M) -> 0%
-    assert_eq!(Pph21TerCalculator::calculate_monthly_pph21("A", dec!(5000000.00)), dec!(0.00));
+    assert_eq!(
+        Pph21TerCalculator::calculate_monthly_pph21("A", dec!(5000000.00)),
+        dec!(0.00)
+    );
 
     // 5.500.000 (<= 5.65M) -> 0.25% = 13,750
-    assert_eq!(Pph21TerCalculator::calculate_monthly_pph21("A", dec!(5500000.00)), dec!(13750.00));
+    assert_eq!(
+        Pph21TerCalculator::calculate_monthly_pph21("A", dec!(5500000.00)),
+        dec!(13750.00)
+    );
 
     // 6.000.000 (<= 6.30M) -> 0.75% = 45,000
-    assert_eq!(Pph21TerCalculator::calculate_monthly_pph21("A", dec!(6000000.00)), dec!(45000.00));
+    assert_eq!(
+        Pph21TerCalculator::calculate_monthly_pph21("A", dec!(6000000.00)),
+        dec!(45000.00)
+    );
 }
 
 #[test]
 fn test_pph21_ter_category_b_and_c_calculation() {
     // Category B (TK/2, TK/3, K/1, K/2)
     // 6.000.000 (<= 6.2M) -> 0%
-    assert_eq!(Pph21TerCalculator::calculate_monthly_pph21("B", dec!(6000000.00)), dec!(0.00));
+    assert_eq!(
+        Pph21TerCalculator::calculate_monthly_pph21("B", dec!(6000000.00)),
+        dec!(0.00)
+    );
 
     // 6.400.000 (<= 6.5M) -> 0.25% = 16,000
-    assert_eq!(Pph21TerCalculator::calculate_monthly_pph21("B", dec!(6400000.00)), dec!(16000.00));
+    assert_eq!(
+        Pph21TerCalculator::calculate_monthly_pph21("B", dec!(6400000.00)),
+        dec!(16000.00)
+    );
 
     // Category C (K/3)
     // 6.500.000 (<= 6.6M) -> 0%
-    assert_eq!(Pph21TerCalculator::calculate_monthly_pph21("C", dec!(6500000.00)), dec!(0.00));
+    assert_eq!(
+        Pph21TerCalculator::calculate_monthly_pph21("C", dec!(6500000.00)),
+        dec!(0.00)
+    );
 
     // 7.000.000 (> 6.95M) -> 0.50% = 35,000
-    assert_eq!(Pph21TerCalculator::calculate_monthly_pph21("C", dec!(7000000.00)), dec!(35000.00));
+    assert_eq!(
+        Pph21TerCalculator::calculate_monthly_pph21("C", dec!(7000000.00)),
+        dec!(35000.00)
+    );
 }
 
 #[test]
@@ -79,7 +100,8 @@ fn test_indonesian_overtime_calculation_kepmenaker_102() {
     // 1st hour: 1.5 * 30,000 = 45,000
     // 2nd & 3rd hours (2 hours): 2.0 * 30,000 * 2 = 120,000
     // Total overtime pay = 165,000
-    let overtime_pay = IndonesianOvertimeCalculator::calculate_workday_overtime(base_salary, overtime_hours);
+    let overtime_pay =
+        IndonesianOvertimeCalculator::calculate_workday_overtime(base_salary, overtime_hours);
     assert_eq!(overtime_pay, dec!(165000.00));
 }
 
@@ -88,10 +110,16 @@ fn test_pph23_withholding_npwp_difference() {
     let service_fee = dec!(10000000.00);
 
     // With NPWP -> 2% = 200,000
-    assert_eq!(Pph23Calculator::calculate_pph23(service_fee, true), dec!(200000.00));
+    assert_eq!(
+        Pph23Calculator::calculate_pph23(service_fee, true),
+        dec!(200000.00)
+    );
 
     // Without NPWP -> 4% = 400,000
-    assert_eq!(Pph23Calculator::calculate_pph23(service_fee, false), dec!(400000.00));
+    assert_eq!(
+        Pph23Calculator::calculate_pph23(service_fee, false),
+        dec!(400000.00)
+    );
 }
 
 #[test]
@@ -99,8 +127,14 @@ fn test_vat_rate_schedule_evolution() {
     let date_2023 = NaiveDate::from_ymd_opt(2023, 6, 15).unwrap();
     let date_2025 = NaiveDate::from_ymd_opt(2025, 3, 1).unwrap();
 
-    assert_eq!(VatRateVersion::get_effective_vat_rate(date_2023), dec!(11.00));
-    assert_eq!(VatRateVersion::get_effective_vat_rate(date_2025), dec!(12.00));
+    assert_eq!(
+        VatRateVersion::get_effective_vat_rate(date_2023),
+        dec!(11.00)
+    );
+    assert_eq!(
+        VatRateVersion::get_effective_vat_rate(date_2025),
+        dec!(12.00)
+    );
 }
 
 #[test]
@@ -120,5 +154,6 @@ fn test_balanced_payroll_journal_generation() {
         pph21,
         bpjs.total_employee_deduction,
         net_pay,
-    ).is_ok());
+    )
+    .is_ok());
 }

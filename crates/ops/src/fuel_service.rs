@@ -104,7 +104,7 @@ impl FuelService {
         let coupon_code = format!(
             "CPN-{}-{}",
             now.format("%y%m"),
-            &Uuid::new_v4().to_string()[..6].to_uppercase()
+            Uuid::new_v4().to_string()[..6].to_uppercase()
         );
 
         self.repo
@@ -193,7 +193,7 @@ impl ModuleApprovalCallback for FuelService {
         let coupon_code = format!(
             "CPN-{}-{}",
             now.format("%y%m"),
-            &Uuid::new_v4().to_string()[..6].to_uppercase()
+            Uuid::new_v4().to_string()[..6].to_uppercase()
         );
 
         self.repo

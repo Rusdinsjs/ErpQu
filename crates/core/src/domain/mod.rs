@@ -17,8 +17,8 @@ pub mod outbox;
 pub mod platform_services;
 pub mod reporting_platform;
 pub mod request_context;
-pub mod sre_platform;
 pub mod sod;
+pub mod sre_platform;
 pub mod tenant;
 pub mod value_objects;
 
@@ -39,7 +39,7 @@ pub use outbox::{OutboxEntry, OutboxStatus};
 pub use platform_services::*;
 pub use reporting_platform::*;
 pub use request_context::*;
-pub use sre_platform::*;
 pub use sod::*;
+pub use sre_platform::*;
 pub use tenant::*;
 pub use value_objects::*;

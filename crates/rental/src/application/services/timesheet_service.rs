@@ -8,7 +8,7 @@ use rust_decimal::Decimal;
 use uuid::Uuid;
 
 use crate::domain::entities::ClientContact;
-use crate::domain::entities::{Rental, RentalTimesheet};
+use crate::domain::entities::RentalTimesheet;
 use crate::repositories::{RentalRepository, TimesheetRepository};
 use management_system_core::application::dto::{
     ClientApproveTimesheetRequest, CreateClientContactRequest, CreateTimesheetRequest,

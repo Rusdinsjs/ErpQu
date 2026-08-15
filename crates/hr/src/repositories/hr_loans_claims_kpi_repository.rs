@@ -1,4 +1,4 @@
-use chrono::{NaiveDate, Utc};
+use chrono::NaiveDate;
 use management_system_core::shared::errors::AppError;
 use rust_decimal::Decimal;
 use sqlx::PgPool;

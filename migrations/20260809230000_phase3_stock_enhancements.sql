@@ -1,3 +1,5 @@
+SET search_path TO public, inventory, hr, crm, rental, commercial;
+
 -- Migration 20260809230000: Phase 3 Stock & Fleet Enhancements
 
 -- 1. Product Bundle Tables

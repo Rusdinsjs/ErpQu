@@ -8,16 +8,16 @@ use crate::domain::entities::{
     LeaveBalanceSummary,
 };
 use crate::dto::{
-    AddHolidayRequest, BulkLeaveAllocationRequest, CreateHolidayListRequest,
-    CreateLeaveAllocationRequest, CreateLeaveApplicationRequest, CreateLeaveBlockListRequest,
-    CreateLeaveTypeRequest, LeaveQueryParams, ReviewLeaveApplicationRequest,
-    UpdateLeaveTypeRequest,
+    AddHolidayRequest, BulkLeaveAllocationRequest, CreateLeaveAllocationRequest,
+    CreateLeaveApplicationRequest, CreateLeaveTypeRequest, LeaveQueryParams,
+    ReviewLeaveApplicationRequest, UpdateLeaveTypeRequest,
 };
 use crate::repositories::{EmployeeRepository, HrLeavesRepository};
 
 #[derive(Clone)]
 pub struct HrLeavesService {
     repo: HrLeavesRepository,
+    #[allow(dead_code)]
     employee_repo: EmployeeRepository,
 }
 

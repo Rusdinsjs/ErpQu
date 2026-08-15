@@ -38,18 +38,16 @@ pub async fn ws_handler(
                 .get(header::COOKIE)
                 .and_then(|h| h.to_str().ok())
                 .and_then(|cookies| {
-                    cookies
-                        .split(';')
-                        .find_map(|c| {
-                            let trimmed = c.trim();
-                            if trimmed.starts_with("token=") {
-                                Some(trimmed.trim_start_matches("token=").to_string())
-                            } else if trimmed.starts_with("auth_token=") {
-                                Some(trimmed.trim_start_matches("auth_token=").to_string())
-                            } else {
-                                None
-                            }
-                        })
+                    cookies.split(';').find_map(|c| {
+                        let trimmed = c.trim();
+                        if trimmed.starts_with("token=") {
+                            Some(trimmed.trim_start_matches("token=").to_string())
+                        } else if trimmed.starts_with("auth_token=") {
+                            Some(trimmed.trim_start_matches("auth_token=").to_string())
+                        } else {
+                            None
+                        }
+                    })
                 })
         });
 

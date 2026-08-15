@@ -75,7 +75,7 @@ fn test_qast_005_asset_custody_history_append_only() {
         notes: Some("Reassigned to new operator".to_string()),
     };
 
-    let custody_log = vec![history1, history2];
+    let custody_log = [history1, history2];
 
     assert_eq!(custody_log.len(), 2);
     assert_eq!(custody_log[0].custodian_user_id, Some(first_custodian));

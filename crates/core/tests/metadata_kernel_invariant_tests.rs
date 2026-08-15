@@ -45,7 +45,7 @@ fn test_qmeta_004_hybrid_jsonb_storage_model() {
         "vendor_rating": "A+"
     });
 
-    assert_eq!(custom_data["warranty_extended"], true);
+    assert_eq!(custom_data["warranty_extended"], serde_json::json!(true));
     assert_eq!(custom_data["inspection_frequency_days"], 30);
     assert_eq!(custom_data["vendor_rating"], "A+");
 }
@@ -76,6 +76,6 @@ fn test_qmeta_012_sample_custom_entity_end_to_end_crud() {
     };
 
     assert_eq!(entity_type.name, "SAFETY_INSPECTION");
-    assert_eq!(record.data["passed"], true);
+    assert_eq!(record.data["passed"], serde_json::json!(true));
     assert_eq!(record.data["score"], 98.5);
 }

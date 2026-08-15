@@ -14,10 +14,9 @@ use management_system_hr::domain::entities::{
     LeaveBalanceSummary,
 };
 use management_system_hr::dto::{
-    AddHolidayRequest, BulkLeaveAllocationRequest, CreateHolidayListRequest,
-    CreateLeaveAllocationRequest, CreateLeaveApplicationRequest, CreateLeaveBlockListRequest,
-    CreateLeaveTypeRequest, LeaveQueryParams, ReviewLeaveApplicationRequest,
-    UpdateLeaveTypeRequest,
+    AddHolidayRequest, BulkLeaveAllocationRequest, CreateLeaveAllocationRequest,
+    CreateLeaveApplicationRequest, CreateLeaveTypeRequest, LeaveQueryParams,
+    ReviewLeaveApplicationRequest, UpdateLeaveTypeRequest,
 };
 
 // ---- LEAVE TYPES ----

@@ -1,14 +1,13 @@
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
-    Extension, Json,
+    Json,
 };
 use serde::Deserialize;
 use uuid::Uuid;
 
 use crate::api::server::AppState;
 use management_system_core::application::dto::ApiResponse;
-use management_system_core::domain::entities::UserClaims;
 use management_system_core::shared::errors::AppError;
 use management_system_hr::domain::entities::{
     HrDriverAssignment, HrDriverSafetyIncident, HrP2hInspection, HrVehicleHandover,

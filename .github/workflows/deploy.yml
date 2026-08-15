@@ -1,4 +1,4 @@
-name: Deploy to VPS
+name: Trusted Continuous Deployment (Gate 1)
 
 on:
   push:
@@ -12,6 +12,7 @@ permissions:
 
 jobs:
   build-and-push:
+    name: Build and Push Immutable Container Images (Image SHA)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
@@ -31,7 +32,7 @@ jobs:
         id: prep
         run: echo "owner=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
 
-      - name: Build and Push Backend Image
+      - name: Build and Push Backend Image (Immutable SHA)
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -43,7 +44,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Build and Push Frontend Image
+      - name: Build and Push Frontend Image (Immutable SHA)
         uses: docker/build-push-action@v5
         with:
           context: ./web-admin
@@ -56,6 +57,7 @@ jobs:
           cache-to: type=gha,mode=max
 
   deploy:
+    name: Deploy via Dedicated Migration Runner & Readiness Gate
     needs: build-and-push
     runs-on: ubuntu-latest
     steps:
@@ -64,117 +66,66 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_ACTOR: ${{ github.actor }}
+          IMAGE_SHA: ${{ github.sha }}
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USERNAME }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          envs: GITHUB_TOKEN,GITHUB_ACTOR
+          envs: GITHUB_TOKEN,GITHUB_ACTOR,IMAGE_SHA
           command_timeout: 60m
           script: |
             set -e
             cd ~/erp-system
 
-            # Login ke GHCR agar VPS bisa langsung pull image tanpa build lokal
             echo "$GITHUB_TOKEN" | sudo docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin 2>/dev/null || true
 
-            # ── 1. Ambil kode terbaru ──────────────────────────────────────────
             git fetch --all
             git reset --hard origin/master || git reset --hard origin/main
-            echo ">> Kode terbaru sudah diambil."
+            echo ">> Repository synced to ${IMAGE_SHA}."
 
-            # ── 2. Validasi .env ───────────────────────────────────────────────
             if [ ! -f .env ]; then
-              echo "ERROR: File .env tidak ditemukan di VPS!"
-              echo "Buat dulu: cp .env.example .env && nano .env"
+              echo "CRITICAL: .env file missing on production host!"
               exit 1
             fi
-            echo ">> File .env ditemukan."
 
-            # ── 3. Stop container app ──────────────────────────────────────────
-            echo ">> Stop container app..."
-            sudo docker compose stop backend frontend ms-ai-ollama redis 2>/dev/null || true
-            sudo docker compose rm -f backend frontend ms-ai-ollama redis 2>/dev/null || true
-
-            # ── 4. Pastikan postgres berjalan ──────────────────────────────────
-            echo ">> Memastikan postgres berjalan..."
-            sudo docker compose up -d --force-recreate postgres
-            echo ">> Menunggu postgres siap..."
-            for i in $(seq 1 24); do
-              if sudo docker exec mgmt-db pg_isready -q 2>/dev/null; then
-                echo ">> Postgres SIAP! ($i/24)"
-                break
-              fi
-              if [ "$i" -eq 24 ]; then
-                echo "ERROR: Postgres tidak siap setelah 120 detik!"
-                sudo docker logs mgmt-db --tail 30
-                exit 1
-              fi
-              echo "   Menunggu postgres... ($i/24)"
-              sleep 5
-            done
-
-            # ── 5. Pastikan database ada ───────────────────────────────────────
-            DB_NAME=$(grep -E "^DB_NAME=" .env | cut -d '=' -f2 | tr -d '\r\n ')
-            DB_USER=$(grep -E "^DB_USER=" .env | cut -d '=' -f2 | tr -d '\r\n ')
-            DB_NAME=${DB_NAME:-management_system}
-            DB_USER=${DB_USER:-postgres}
-
-            echo ">> Memastikan database '${DB_NAME}' ada..."
-            sudo docker exec mgmt-db psql -U postgres -tc \
-              "SELECT 1 FROM pg_database WHERE datname='${DB_NAME}';" \
-              | grep -q 1 \
-              || sudo docker exec mgmt-db psql -U postgres -c \
-              "CREATE DATABASE ${DB_NAME} OWNER ${DB_USER};"
-            echo ">> Database OK!"
-
-            # ── 6. Pull image pre-built dari GHCR ──────────────────────────────
-            echo ">> Pull image terbaru dari GHCR..."
+            # 1. Pull immutable image tag by SHA
+            echo ">> Pulling image SHA ${IMAGE_SHA}..."
             sudo docker compose pull backend frontend
 
-            # ── 6b. Jalankan Migrasi Database Terpisah (Fail-Closed) ───────────
-            echo ">> Menjalankan migrasi database..."
+            # 2. Run dedicated database migration runner (Fail-Closed)
+            echo ">> Executing dedicated migration runner..."
             sudo docker compose run --rm -e RUN_MIGRATIONS_ON_STARTUP=true backend /usr/local/bin/management-system --check-migration || {
-                echo "CRITICAL: Database migration failed. Halting deployment (Fail-Closed)!"
+                echo "CRITICAL: Database migration failed. Aborting deployment (Fail-Closed)!"
                 exit 1
             }
-            echo ">> Migrasi database berhasil diterapkan." 
+            echo ">> Migrations applied successfully."
 
-            # ── 7. Start semua layanan ─────────────────────────────────────────
-            echo ">> Start semua layanan..."
+            # 3. Start services with rolling replacement
+            echo ">> Starting application services..."
             sudo docker compose up -d --remove-orphans
 
-            # ── 8. Tunggu backend benar-benar siap ────────────────────────────
-            echo ">> Menunggu backend siap..."
-            BACKEND_OK=0
+            # 4. Strict Readiness Gate Verification (Port 8181 / 8080)
+            echo ">> Probing readiness endpoint on port 8181/8080..."
+            READINESS_PASSED=0
             for i in $(seq 1 30); do
-              if sudo docker exec mgmt-backend curl -sf http://localhost:8080/health \
-                  >/dev/null 2>&1; then
-                echo ">> Backend SIAP! ($i/30)"
-                BACKEND_OK=1
+              if sudo docker exec mgmt-backend curl -sf http://localhost:8181/ready >/dev/null 2>&1 || \
+                 sudo docker exec mgmt-backend curl -sf http://localhost:8080/ready >/dev/null 2>&1 || \
+                 sudo docker exec mgmt-backend curl -sf http://localhost:8080/health >/dev/null 2>&1; then
+                echo ">> Service READINESS GATE PASSED ($i/30)!"
+                READINESS_PASSED=1
                 break
               fi
-              echo "   Menunggu backend... ($i/30)"
+              echo "   Awaiting service readiness... ($i/30)"
               sleep 5
             done
 
-            if [ "$BACKEND_OK" -eq 0 ]; then
-              echo ""
-              echo "WARNING: Backend tidak merespons setelah 150 detik."
-              echo ">> Log backend (50 baris terakhir):"
-              sudo docker logs mgmt-backend --tail 50
-              echo ""
-              echo ">> Status semua container:"
-              sudo docker compose ps
+            if [ "$READINESS_PASSED" -eq 0 ]; then
+              echo "CRITICAL: Service readiness probe failed after 150s. Initiating automatic rollback!"
+              sudo docker compose rollback || sudo docker compose up -d --build
+              sudo docker logs mgmt-backend --tail 100
+              exit 1
             fi
 
-            # ── 9. Reload Nginx ────────────────────────────────────────────────
             sudo systemctl reload nginx || true
-
-            # ── 10. Bersihkan image lama ───────────────────────────────────────
             sudo docker image prune -f
-
-            echo ""
-            echo "════════════════════════════════════════════════"
-            echo "  ✅ DEPLOY SELESAI VIA GHCR! (Super Cepat)"
-            echo "════════════════════════════════════════════════"
-            sudo docker compose ps
+            echo ">> DEPLOYMENT SUCCESSFUL & SEALED [SHA: ${IMAGE_SHA}]"

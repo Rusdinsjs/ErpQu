@@ -1,4 +1,3 @@
-use chrono::NaiveDate;
 use management_system_core::shared::errors::AppError;
 use rust_decimal::Decimal;
 use sqlx::PgPool;
@@ -60,7 +59,7 @@ impl HrPayrollRepository {
             "#
         )
         .bind(&req.name)
-        .bind(&req.code.to_uppercase())
+        .bind(req.code.to_uppercase())
         .bind(&req.description)
         .bind(&req.r#type)
         .bind(req.is_taxable.unwrap_or(true))
@@ -132,7 +131,7 @@ impl HrPayrollRepository {
             "#
         )
         .bind(&req.name)
-        .bind(&req.code.to_uppercase())
+        .bind(req.code.to_uppercase())
         .bind(&req.description)
         .bind(req.payroll_frequency.unwrap_or_else(|| "monthly".into()))
         .bind(req.currency.unwrap_or_else(|| "IDR".into()))

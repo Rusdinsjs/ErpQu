@@ -140,11 +140,12 @@ impl AnalyticsService {
             })
             .collect();
 
-        result.sort_by(|a, b| b.count.cmp(&a.count));
+        result.sort_by_key(|b| std::cmp::Reverse(b.count));
 
         Ok(result)
     }
 
+    #[allow(dead_code)]
     pub async fn get_asset_roi(&self, asset_id: Uuid) -> DomainResult<AssetRoiResponse> {
         let asset_row = sqlx::query(
             r#"SELECT 

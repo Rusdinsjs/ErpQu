@@ -11,7 +11,9 @@ use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 use uuid::Uuid;
 
-use management_system_finance::domain::entities::gl_entry::{GLEntry, PostingInstruction, PostingLineItem};
+use management_system_finance::domain::entities::gl_entry::{
+    GLEntry, PostingInstruction, PostingLineItem,
+};
 
 #[test]
 fn test_unbalanced_journal_rejected_zero_discrepancy() {
@@ -51,7 +53,10 @@ fn test_unbalanced_journal_rejected_zero_discrepancy() {
     let total_debit: Decimal = unbalance_inst.lines.iter().map(|l| l.debit).sum();
     let total_credit: Decimal = unbalance_inst.lines.iter().map(|l| l.credit).sum();
 
-    assert_ne!(total_debit, total_credit, "Unbalanced instruction must not have zero discrepancy");
+    assert_ne!(
+        total_debit, total_credit,
+        "Unbalanced instruction must not have zero discrepancy"
+    );
     assert_eq!(total_debit - total_credit, dec!(0.01));
 }
 
@@ -93,7 +98,10 @@ fn test_balanced_journal_validates_perfect_equality() {
     let total_debit: Decimal = balanced_inst.lines.iter().map(|l| l.debit).sum();
     let total_credit: Decimal = balanced_inst.lines.iter().map(|l| l.credit).sum();
 
-    assert_eq!(total_debit, total_credit, "Total debit must equal total credit exactly");
+    assert_eq!(
+        total_debit, total_credit,
+        "Total debit must equal total credit exactly"
+    );
     assert_eq!(total_debit - total_credit, dec!(0.00));
 }
 
@@ -130,9 +138,15 @@ fn test_reversal_voucher_generates_exact_opposite_entries() {
 
     assert_eq!(reversal.debit, original.credit);
     assert_eq!(reversal.credit, original.debit);
-    assert_eq!(reversal.debit_in_account_currency, original.credit_in_account_currency);
-    assert_eq!(reversal.credit_in_account_currency, original.debit_in_account_currency);
-    assert_eq!(reversal.is_reversal, true);
+    assert_eq!(
+        reversal.debit_in_account_currency,
+        original.credit_in_account_currency
+    );
+    assert_eq!(
+        reversal.credit_in_account_currency,
+        original.debit_in_account_currency
+    );
+    assert!(reversal.is_reversal);
     assert_eq!(reversal.reversal_source_id, Some(orig_id));
 }
 

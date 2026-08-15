@@ -54,6 +54,7 @@ pub struct InventoryService {
     repository: Arc<InventoryRepository>,
     journal_service: JournalService,
     notification_service: NotificationService,
+    #[allow(dead_code)]
     stock_engine: Option<StockPostingEngine>,
 }
 

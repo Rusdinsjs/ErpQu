@@ -265,6 +265,7 @@ impl ReportService {
         Ok(buffer.into_inner())
     }
 
+    #[allow(dead_code)]
     pub async fn get_monthly_costs(&self) -> DomainResult<Vec<management_system_ops::MonthlyCost>> {
         self.maintenance_repo
             .get_monthly_costs()
@@ -272,6 +273,7 @@ impl ReportService {
             .map_err(|e| DomainError::internal(e.to_string()))
     }
 
+    #[allow(dead_code)]
     pub async fn get_asset_status_distribution(
         &self,
     ) -> DomainResult<Vec<management_system_assets::AssetStatusStats>> {
@@ -300,7 +302,7 @@ impl ReportService {
                 .collect();
 
         // Sort by count descending
-        normalized_stats.sort_by(|a, b| b.count.cmp(&a.count));
+        normalized_stats.sort_by_key(|b| std::cmp::Reverse(b.count));
 
         Ok(normalized_stats)
     }

@@ -3,6 +3,12 @@ use crate::infrastructure::pdf::summary_generator::SummaryGenerator;
 #[derive(Clone)]
 pub struct PDFService {}
 
+impl Default for PDFService {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl PDFService {
     pub fn new() -> Self {
         Self {}

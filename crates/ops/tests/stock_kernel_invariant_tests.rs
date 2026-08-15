@@ -92,7 +92,7 @@ fn test_qstk_009_transfer_atomicity_instruction_building() {
 
 #[test]
 fn test_qstk_003_bin_rebuild_from_ledger_deltas() {
-    let deltas = vec![dec!(100.00), dec!(-20.00), dec!(-30.00), dec!(50.00)];
+    let deltas = [dec!(100.00), dec!(-20.00), dec!(-30.00), dec!(50.00)];
     let final_qty: Decimal = deltas.iter().sum();
 
     assert_eq!(final_qty, dec!(100.00));

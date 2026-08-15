@@ -2,7 +2,6 @@ use management_system_core::domain::errors::{DomainError, DomainResult};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
-use uuid::Uuid;
 
 /// Valuation Method (QSTK-007)
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -118,7 +117,10 @@ impl SerialTrackingValidator {
             if existing_serials.contains(trimmed) {
                 return Err(DomainError::business_rule(
                     "serial_number_already_exists",
-                    &format!("Serial number '{}' is already registered in the system", trimmed),
+                    &format!(
+                        "Serial number '{}' is already registered in the system",
+                        trimmed
+                    ),
                 ));
             }
         }
@@ -131,10 +133,7 @@ pub struct GrirReconciler;
 
 impl GrirReconciler {
     /// Reconciles GRIR clearing account: Receipt accrual vs Invoice bill
-    pub fn calculate_grir_balance(
-        received_accrual: Decimal,
-        invoiced_amount: Decimal,
-    ) -> Decimal {
+    pub fn calculate_grir_balance(received_accrual: Decimal, invoiced_amount: Decimal) -> Decimal {
         received_accrual - invoiced_amount
     }
 }

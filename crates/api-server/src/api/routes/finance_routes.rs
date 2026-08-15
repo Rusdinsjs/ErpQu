@@ -1,7 +1,7 @@
 //! Finance & Accounting Router Module
 
 use axum::{
-    routing::{delete, get, post, put},
+    routing::{get, post, put},
     Router,
 };
 

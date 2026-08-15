@@ -43,8 +43,8 @@ async fn main() {
         .unwrap_or(true);
 
     if run_migrations {
-        let migration_database_url = std::env::var("MIGRATION_DATABASE_URL")
-            .unwrap_or_else(|_| config.database_url.clone());
+        let migration_database_url =
+            std::env::var("MIGRATION_DATABASE_URL").unwrap_or_else(|_| config.database_url.clone());
         tracing::info!("Running database migrations with migration role...");
         let migration_pool = PgPoolOptions::new()
             .max_connections(2)

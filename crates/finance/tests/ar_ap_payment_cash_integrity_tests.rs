@@ -38,10 +38,16 @@ fn test_exact_and_partial_allocation_permitted() {
     let outstanding = dec!(5000000.00);
 
     // Exact allocation
-    assert!(PaymentAllocationEngine::validate_explicit_allocation(outstanding, dec!(5000000.00)).is_ok());
+    assert!(
+        PaymentAllocationEngine::validate_explicit_allocation(outstanding, dec!(5000000.00))
+            .is_ok()
+    );
 
     // Partial allocation
-    assert!(PaymentAllocationEngine::validate_explicit_allocation(outstanding, dec!(2500000.00)).is_ok());
+    assert!(
+        PaymentAllocationEngine::validate_explicit_allocation(outstanding, dec!(2500000.00))
+            .is_ok()
+    );
 }
 
 #[test]
@@ -120,7 +126,8 @@ fn test_three_way_matching_within_tolerance_permitted() {
         inv_price,
         price_tolerance,
         qty_tolerance,
-    ).is_ok());
+    )
+    .is_ok());
 }
 
 #[test]
@@ -199,15 +206,13 @@ fn test_fifo_multi_invoice_allocation_and_advance() {
 
 #[test]
 fn test_fifo_overpayment_creates_unallocated_advance() {
-    let invoices = vec![
-        InvoiceAllocationItem {
-            invoice_id: Uuid::new_v4(),
-            invoice_no: "SINV-001".to_string(),
-            total_amount: dec!(2000000.00),
-            outstanding_amount: dec!(2000000.00),
-            allocated_amount: dec!(0.00),
-        },
-    ];
+    let invoices = vec![InvoiceAllocationItem {
+        invoice_id: Uuid::new_v4(),
+        invoice_no: "SINV-001".to_string(),
+        total_amount: dec!(2000000.00),
+        outstanding_amount: dec!(2000000.00),
+        allocated_amount: dec!(0.00),
+    }];
 
     // Payment of 3.000.000 pays SINV-001 (2M) with 1M remaining as unallocated advance
     let summary = PaymentAllocationEngine::allocate_fifo(dec!(3000000.00), &invoices).unwrap();
@@ -231,7 +236,8 @@ fn test_bank_transfer_balance_conservation() {
         transit_clearing,
         dest_credit,
         fee_amount,
-    ).is_ok());
+    )
+    .is_ok());
 
     // Mismatched transfer (e.g. money created from nowhere)
     let corrupt_credit = dec!(10500000.00);

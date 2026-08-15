@@ -21,9 +21,13 @@ fn test_sanitized_db_url_never_exposes_password() {
         smtp_user: None,
         smtp_pass: None,
         smtp_from: "noreply@example.com".to_string(),
-    }.sanitized_db_url();
+    }
+    .sanitized_db_url();
 
-    assert!(!sample_sanitized.contains("SuperSecretPass123!"), "Password must be masked in sanitized URL");
+    assert!(
+        !sample_sanitized.contains("SuperSecretPass123!"),
+        "Password must be masked in sanitized URL"
+    );
     assert!(sample_sanitized.contains("postgres://erpqu_app:***@localhost:5432/erpqu_db"));
 }
 
@@ -43,7 +47,13 @@ fn test_production_environment_detection() {
         smtp_from: "noreply@example.com".to_string(),
     };
 
-    assert!(config.is_production(), "Environment 'production' must be detected as production");
+    assert!(
+        config.is_production(),
+        "Environment 'production' must be detected as production"
+    );
     config.environment = "development".to_string();
-    assert!(!config.is_production(), "Environment 'development' must not be detected as production");
+    assert!(
+        !config.is_production(),
+        "Environment 'development' must not be detected as production"
+    );
 }

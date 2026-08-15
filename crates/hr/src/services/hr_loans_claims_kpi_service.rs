@@ -1,4 +1,4 @@
-use chrono::{Datelike, NaiveDate, Utc};
+use chrono::{Datelike, NaiveDate};
 use management_system_core::shared::errors::AppError;
 use rust_decimal::prelude::ToPrimitive;
 use rust_decimal::Decimal;
@@ -63,7 +63,7 @@ impl HrLoansClaimsKpiService {
             }
             "disburse" => {
                 // Generate Amortization Repayment Schedule
-                let mut curr_date = loan.start_date;
+                let curr_date = loan.start_date;
                 for i in 1..=loan.tenure_months {
                     let due_date = Self::add_months(curr_date, i as u32);
                     self.repo

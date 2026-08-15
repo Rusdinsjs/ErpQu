@@ -10,7 +10,7 @@ use crate::application::services::scheduler_service::SchedulerService;
 use crate::application::services::{AnalyticsService, ReportService};
 use management_system_assets::{
     AssetRepository, CategoryRepository, CategoryService, CategoryTemplateRepository,
-    CategoryTemplateService, DataService, LifecycleRepository, LifecycleService,
+    CategoryTemplateService, LifecycleRepository, LifecycleService,
 };
 use management_system_core::application::services::{
     ApprovalService, AuditService, AuthService, LocationService, NotificationService, RbacService,
@@ -48,12 +48,10 @@ use management_system_finance::{AssetExpenseService, DepreciationService, Journa
 use management_system_inventory::repositories::InventoryRepository;
 use management_system_inventory::InventoryService;
 use management_system_ops::{
-    CreateDeliveryTripRequest, CreateQualityInspectionRequest, CreateWorkOrderRequest,
-    DeliveryTripRepository, DeliveryTripService, FuelRepository, FuelService, GeofenceService,
-    LoanRepository, LoanService, MaintenanceOperationResult, MaintenanceRepository,
-    MaintenanceService, MaintenanceTeamRepository, MaintenanceTeamService,
-    MaintenanceTemplateRepository, MaintenanceTemplateService, QualityRepository, QualityService,
-    SensorRepository, SensorService, TaxRenewalRepository, TaxRenewalService, WorkOrderRepository,
+    DeliveryTripRepository, DeliveryTripService, FuelRepository, FuelService, LoanRepository,
+    LoanService, MaintenanceRepository, MaintenanceService, MaintenanceTemplateRepository,
+    MaintenanceTemplateService, QualityRepository, QualityService, SensorRepository, SensorService,
+    TaxRenewalRepository, TaxRenewalService, WorkOrderRepository,
 };
 use std::sync::Arc;
 

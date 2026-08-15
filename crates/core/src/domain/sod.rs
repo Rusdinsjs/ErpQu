@@ -67,7 +67,10 @@ mod tests {
         let maker_id = Uuid::new_v4();
         let checker_id = Uuid::new_v4();
         let res = SodValidator::validate_po_approval(maker_id, checker_id);
-        assert!(res.is_ok(), "Separate checker must be allowed to approve PO");
+        assert!(
+            res.is_ok(),
+            "Separate checker must be allowed to approve PO"
+        );
     }
 
     #[test]

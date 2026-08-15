@@ -2,7 +2,6 @@ use async_trait::async_trait;
 use axum::Router;
 use management_system_core::application::services::MetadataService;
 use management_system_core::shared::errors::AppError;
-use std::sync::Arc;
 
 use crate::api::server::AppState;
 
