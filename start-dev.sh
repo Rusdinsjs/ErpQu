@@ -57,10 +57,25 @@ export SQLX_OFFLINE=false
 
 # Fix: Hapus entry migration yang checksumnya tidak cocok (akibat file migration yang dimodifikasi)
 docker exec -e PGPASSWORD=${POSTGRES_PASSWORD:-postgres} mgmt-db psql -U ${POSTGRES_USER:-postgres} -d ${DB_NAME:-management_system} -c "
-  DELETE FROM _sqlx_migrations WHERE version IN (20260808000001, 20260808140000, 20260808150000, 20260808190000, 20260808200000, 20260808210000, 20260809220000);
+  DELETE FROM _sqlx_migrations WHERE version IN (20260806000003, 20260808000001, 20260808140000, 20260808150000, 20260808190000, 20260808200000, 20260808210000, 20260809220000, 20260820000001);
 " > /dev/null 2>&1 || true
 
 cargo sqlx migrate run > migrate.log 2>&1 || true
+
+# Fix: Grant permissions ke role aplikasi untuk semua schema
+docker exec -e PGPASSWORD=${POSTGRES_PASSWORD:-postgres} mgmt-db psql -U ${POSTGRES_USER:-postgres} -d ${DB_NAME:-management_system} -c "
+  DO \$\$
+  DECLARE s text;
+  BEGIN
+    FOR s IN SELECT unnest(ARRAY['public', 'hr', 'crm', 'rental', 'inventory', 'commercial']) LOOP
+      EXECUTE format('GRANT ALL ON SCHEMA %I TO erpqu_app;', s);
+      EXECUTE format('GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA %I TO erpqu_app;', s);
+      EXECUTE format('GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA %I TO erpqu_app;', s);
+      EXECUTE format('ALTER DEFAULT PRIVILEGES IN SCHEMA %I GRANT ALL ON TABLES TO erpqu_app;', s);
+      EXECUTE format('ALTER DEFAULT PRIVILEGES IN SCHEMA %I GRANT ALL ON SEQUENCES TO erpqu_app;', s);
+    END LOOP;
+  END \$\$;
+" > /dev/null 2>&1 || true
 
 # 4. Setup & Jalankan Frontend (Bun / Vite) di background
 echo -e "${GREEN}4. Menyiapkan Frontend Web Admin...${NC}"

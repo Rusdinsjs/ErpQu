@@ -18,30 +18,19 @@ SELECT format(
 WHERE NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = :'app_user') \gexec
 
 SELECT format('GRANT CONNECT ON DATABASE %I TO %I', current_database(), :'app_user') \gexec
-SELECT format('GRANT USAGE ON SCHEMA public TO %I', :'app_user') \gexec
-
--- Existing volumes already contain tables created before this role existed.
--- Grant the runtime DML it needs without requiring the application to run as
--- the migration/superuser role.
-SELECT format(
-  'GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO %I',
-  :'app_user'
-) \gexec
-SELECT format(
-  'GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO %I',
-  :'app_user'
-) \gexec
-
--- Migrations run later as POSTGRES_USER. These defaults make their newly-created
--- tables/sequences usable by the runtime role without granting DDL privileges.
-SELECT format(
-  'ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO %I',
-  :'app_user'
-) \gexec
-SELECT format(
-  'ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE, SELECT ON SEQUENCES TO %I',
-  :'app_user'
-) \gexec
+DO $$
+DECLARE
+  s text;
+BEGIN
+  FOR s IN SELECT unnest(ARRAY['public', 'hr', 'crm', 'rental', 'inventory', 'commercial']) LOOP
+    EXECUTE format('CREATE SCHEMA IF NOT EXISTS %I', s);
+    EXECUTE format('GRANT USAGE ON SCHEMA %I TO %I', s, :'app_user');
+    EXECUTE format('GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA %I TO %I', s, :'app_user');
+    EXECUTE format('GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA %I TO %I', s, :'app_user');
+    EXECUTE format('ALTER DEFAULT PRIVILEGES IN SCHEMA %I GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO %I', s, :'app_user');
+    EXECUTE format('ALTER DEFAULT PRIVILEGES IN SCHEMA %I GRANT USAGE, SELECT ON SEQUENCES TO %I', s, :'app_user');
+  END LOOP;
+END $$;
 
 -- Re-applying this bootstrap to an existing volume must not undo the audit
 -- append-only invariant even when the audit migration already ran earlier.

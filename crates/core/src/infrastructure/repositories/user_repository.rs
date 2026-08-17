@@ -27,7 +27,7 @@ impl UserRepository {
                 u.created_at, u.updated_at
             FROM users u
             LEFT JOIN roles r ON u.role_id = r.id
-            LEFT JOIN employees e ON u.id = e.user_id
+            LEFT JOIN hr.employees e ON u.id = e.user_id
             WHERE u.id = $1
             "#,
         )
@@ -48,7 +48,7 @@ impl UserRepository {
                 u.created_at, u.updated_at
             FROM users u
             LEFT JOIN roles r ON u.role_id = r.id
-            LEFT JOIN employees e ON u.id = e.user_id
+            LEFT JOIN hr.employees e ON u.id = e.user_id
             WHERE LOWER(TRIM(u.email)) = LOWER(TRIM($1))
             "#,
         )
@@ -75,7 +75,7 @@ impl UserRepository {
                 ), '[]'::jsonb) as roles
             FROM users u
             LEFT JOIN roles r ON u.role_id = r.id
-            LEFT JOIN employees e ON u.id = e.user_id
+            LEFT JOIN hr.employees e ON u.id = e.user_id
             ORDER BY u.name
             LIMIT $1 OFFSET $2
             "#,
@@ -164,19 +164,19 @@ impl UserRepository {
 
     pub async fn link_employee(&self, user_id: Uuid, employee_id: Uuid) -> Result<(), sqlx::Error> {
         // Clear any previous link for this user
-        sqlx::query("UPDATE employees SET user_id = NULL WHERE user_id = $1")
+        sqlx::query("UPDATE hr.employees SET user_id = NULL WHERE user_id = $1")
             .bind(user_id)
             .execute(&self.pool)
             .await?;
 
         // Clear any previous link for target employee
-        sqlx::query("UPDATE employees SET user_id = NULL WHERE id = $1")
+        sqlx::query("UPDATE hr.employees SET user_id = NULL WHERE id = $1")
             .bind(employee_id)
             .execute(&self.pool)
             .await?;
 
         // Link target employee to user
-        sqlx::query("UPDATE employees SET user_id = $1, updated_at = NOW() WHERE id = $2")
+        sqlx::query("UPDATE hr.employees SET user_id = $1, updated_at = NOW() WHERE id = $2")
             .bind(user_id)
             .bind(employee_id)
             .execute(&self.pool)
@@ -184,7 +184,7 @@ impl UserRepository {
 
         // Synchronize user.email & avatar_url from linked employee (Name is intentionally kept independent)
         sqlx::query(
-            "UPDATE users SET email = e.email, avatar_url = COALESCE(e.photo_url, users.avatar_url), updated_at = NOW() FROM employees e WHERE users.id = $1 AND e.id = $2"
+            "UPDATE users SET email = e.email, avatar_url = COALESCE(e.photo_url, users.avatar_url), updated_at = NOW() FROM hr.employees e WHERE users.id = $1 AND e.id = $2"
         )
         .bind(user_id)
         .bind(employee_id)
@@ -195,7 +195,7 @@ impl UserRepository {
     }
 
     pub async fn unlink_employee(&self, user_id: Uuid) -> Result<(), sqlx::Error> {
-        sqlx::query("UPDATE employees SET user_id = NULL, updated_at = NOW() WHERE user_id = $1")
+        sqlx::query("UPDATE hr.employees SET user_id = NULL, updated_at = NOW() WHERE user_id = $1")
             .bind(user_id)
             .execute(&self.pool)
             .await?;
@@ -226,7 +226,7 @@ impl UserRepository {
                 u.created_at, u.updated_at
             FROM inserted_user u
             LEFT JOIN roles r ON u.role_id = r.id
-            LEFT JOIN employees e ON u.id = e.user_id
+            LEFT JOIN hr.employees e ON u.id = e.user_id
             "#,
         )
         .bind(user.id)
@@ -298,11 +298,11 @@ impl UserRepository {
                 RETURNING *
             ),
             synced_employee AS (
-                UPDATE employees
+                UPDATE hr.employees
                 SET updated_at = NOW()
                 FROM updated_user u
-                WHERE employees.user_id = u.id
-                RETURNING employees.*
+                WHERE hr.employees.user_id = u.id
+                RETURNING hr.employees.*
             )
             SELECT 
                 u.id, u.email, u.password_hash, u.name, 
@@ -313,7 +313,7 @@ impl UserRepository {
                 u.created_at, u.updated_at
             FROM updated_user u
             LEFT JOIN roles r ON u.role_id = r.id
-            LEFT JOIN employees e ON u.id = e.user_id
+            LEFT JOIN hr.employees e ON u.id = e.user_id
             "#,
         )
         .bind(id)
@@ -354,7 +354,7 @@ impl UserRepository {
                 u.created_at, u.updated_at
             FROM updated_user u
             LEFT JOIN roles r ON u.role_id = r.id
-            LEFT JOIN employees e ON u.id = e.user_id
+            LEFT JOIN hr.employees e ON u.id = e.user_id
             "#,
         )
         .bind(id)
@@ -384,7 +384,7 @@ impl UserRepository {
                 u.created_at, u.updated_at
             FROM updated_user u
             LEFT JOIN roles r ON u.role_id = r.id
-            LEFT JOIN employees e ON u.id = e.user_id
+            LEFT JOIN hr.employees e ON u.id = e.user_id
             "#,
         )
         .bind(id)
@@ -398,7 +398,7 @@ impl UserRepository {
             r#"
             UPDATE users
             SET is_active = false, updated_at = NOW()
-            WHERE id = (SELECT user_id FROM employees WHERE id = $1)
+            WHERE id = (SELECT user_id FROM hr.employees WHERE id = $1)
                OR employee_id = $1
             "#,
         )

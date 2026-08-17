@@ -117,7 +117,11 @@ CREATE TABLE IF NOT EXISTS hr_employee_education (
 CREATE INDEX IF NOT EXISTS idx_hr_education_employee ON hr_employee_education(employee_id);
 
 -- 7. TRIGGERS
+DROP TRIGGER IF EXISTS trigger_hr_designations_updated_at ON hr_designations;
 CREATE TRIGGER trigger_hr_designations_updated_at BEFORE UPDATE ON hr_designations FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+DROP TRIGGER IF EXISTS trigger_hr_employment_types_updated_at ON hr_employment_types;
 CREATE TRIGGER trigger_hr_employment_types_updated_at BEFORE UPDATE ON hr_employment_types FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+DROP TRIGGER IF EXISTS trigger_hr_lifecycle_updated_at ON hr_employee_lifecycle;
 CREATE TRIGGER trigger_hr_lifecycle_updated_at BEFORE UPDATE ON hr_employee_lifecycle FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+DROP TRIGGER IF EXISTS trigger_hr_documents_updated_at ON hr_employee_documents;
 CREATE TRIGGER trigger_hr_documents_updated_at BEFORE UPDATE ON hr_employee_documents FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();

@@ -20,6 +20,7 @@ pub fn create_router(state: AppState) -> Router {
         .route("/health", get(health_check))
         .route("/api/auth/login", post(login))
         .route("/api/auth/register", post(register))
+        .route("/api/uploads/*path", get(upload_handler::get_file))
         .route("/ws", get(notification_ws::ws_handler));
 
     // Lookup routes
@@ -43,7 +44,6 @@ pub fn create_router(state: AppState) -> Router {
                 10 * 1024 * 1024,
             )),
         )
-        .route("/api/uploads/*path", get(upload_handler::get_private_file))
         .nest(
             "/api/assets",
             crate::api::routes::asset_routes::asset_routes(),

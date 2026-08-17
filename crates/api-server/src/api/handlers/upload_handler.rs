@@ -260,3 +260,48 @@ pub async fn get_private_file(
 
     Ok((headers, contents))
 }
+
+/// Serve file from uploads directory (Public access for images/media in <img> tags)
+pub async fn get_file(
+    Path(file_path): Path<String>,
+) -> Result<impl IntoResponse, AppError> {
+    let clean_path = file_path.trim_start_matches('/');
+    if clean_path.contains("..") || clean_path.contains('\\') {
+        return Err(AppError::BadRequest("Invalid file path".to_string()));
+    }
+
+    let db_path = if clean_path.starts_with("uploads/") {
+        clean_path.to_string()
+    } else {
+        format!("uploads/{}", clean_path)
+    };
+    let full_path = PathBuf::from(&db_path);
+
+    if !full_path.exists() || !full_path.is_file() {
+        return Err(AppError::NotFound("File not found".to_string()));
+    }
+
+    let contents = fs::read(&full_path)
+        .await
+        .map_err(|e| AppError::Internal(format!("Failed to read file: {}", e)))?;
+
+    let mime_type = mime_guess::from_path(&full_path)
+        .first_or_octet_stream()
+        .to_string();
+
+    let mut headers = HeaderMap::new();
+    if let Ok(val) = HeaderValue::from_str(&mime_type) {
+        headers.insert(header::CONTENT_TYPE, val);
+    } else {
+        headers.insert(
+            header::CONTENT_TYPE,
+            HeaderValue::from_static("application/octet-stream"),
+        );
+    }
+    headers.insert(
+        header::CACHE_CONTROL,
+        HeaderValue::from_static("public, max-age=86400"),
+    );
+
+    Ok((headers, contents))
+}

@@ -19,8 +19,7 @@ DECLARE
         'work_orders',
         'payroll_entries',
         'clients',
-        'vendors',
-        'uploads'
+        'vendors'
     ];
 BEGIN
     FOREACH t IN ARRAY tenant_tables LOOP

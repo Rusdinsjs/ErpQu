@@ -24,8 +24,8 @@ export default function LoginPage() {
         queryFn: settingsApi.getPublic
     });
 
-    const appName = publicSettings?.app_name || 'Management System';
-    const companyName = publicSettings?.company_name || appName;
+    const companyName = publicSettings?.company_name || "ERPQu";
+    const appName = publicSettings?.app_name || 'Enterprise Resource Planning System';
     const companyLogo = publicSettings?.company_logo;
 
     const handleSubmit = async (e: React.FormEvent) => {

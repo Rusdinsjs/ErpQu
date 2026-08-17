@@ -4,7 +4,7 @@
 -- ============================================================
 
 -- 0. SEED HARDCODED EMPLOYEES TO PREVENT FK VIOLATIONS
-INSERT INTO employees (id, nik, name, email) VALUES
+INSERT INTO hr.employees (id, nik, name, email) VALUES
     ('e0000000-0000-0000-0000-000000000001', 'DUMMY001', 'Admin User', 'dummy001@example.com'),
     ('e0000000-0000-0000-0000-000000000002', 'DUMMY002', 'Budi Santoso', 'dummy002@example.com'),
     ('e0000000-0000-0000-0000-000000000003', 'DUMMY003', 'Siti Rahmawati', 'dummy003@example.com'),
