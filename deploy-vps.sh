@@ -21,7 +21,17 @@ log_error() { echo -e "${COLOR_RED}[ERROR]${COLOR_NC} $1"; }
 # 1. Check prerequisites
 log_info "Checking deployment prerequisites..."
 command -v docker >/dev/null 2>&1 || { log_error "Docker is required but not installed."; exit 1; }
-command -v docker-compose >/dev/null 2>&1 || command -v "docker compose" >/dev/null 2>&1 || { log_error "Docker Compose is required."; exit 1; }
+
+if command -v docker-compose >/dev/null 2>&1; then
+    DOCKER_COMPOSE="docker-compose"
+elif docker compose version >/dev/null 2>&1; then
+    DOCKER_COMPOSE="docker compose"
+else
+    log_error "Docker Compose is required but not installed."
+    exit 1
+fi
+
+log_info "Using Docker Compose CLI: $DOCKER_COMPOSE"
 
 # 2. Check .env file
 if [ ! -f ".env" ]; then
@@ -46,23 +56,23 @@ ACTION="${1:---full}"
 case "$ACTION" in
     --migrate-only)
         log_info "Running database migrations..."
-        docker compose -f docker-compose.prod.yml --profile migrate up --build
+        $DOCKER_COMPOSE -f docker-compose.prod.yml --profile migrate up --build
         log_info "Migrations completed."
         ;;
     --status)
         log_info "System Container Status:"
-        docker compose -f docker-compose.prod.yml ps
+        $DOCKER_COMPOSE -f docker-compose.prod.yml ps
         ;;
     --full|*)
         log_info "Running pre-deployment database migration..."
-        docker compose -f docker-compose.prod.yml --profile migrate up --build
+        $DOCKER_COMPOSE -f docker-compose.prod.yml --profile migrate up --build
 
         log_info "Starting full production container stack..."
-        docker compose -f docker-compose.prod.yml up -d --build
+        $DOCKER_COMPOSE -f docker-compose.prod.yml up -d --build
 
         log_info "Verifying health status..."
         sleep 5
-        docker compose -f docker-compose.prod.yml ps
+        $DOCKER_COMPOSE -f docker-compose.prod.yml ps
 
         log_info "ERPQu Production Deployment Successful!"
         log_info "Health Check:  curl http://localhost:8181/health/detailed"
