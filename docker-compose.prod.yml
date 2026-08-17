@@ -58,7 +58,6 @@ services:
       - ./scripts/backup.sh:/usr/local/bin/backup.sh:ro
     command: >
       postgres
-        -c hba_file=/etc/postgresql/pg_hba.conf
         -c password_encryption=scram-sha-256
         -c max_connections=200
         -c shared_buffers=256MB
