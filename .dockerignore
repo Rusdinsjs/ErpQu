@@ -1,4 +1,44 @@
-target
-web-admin
-.git
+# Docker Build Context Exclusions (Production Readiness)
+# Prevents unnecessary files, secrets, logs, and dev scripts from entering Docker build context
+
+# Target & Build Artifacts
+target/
+debug/
+dist/
+node_modules/
+
+# Git & Repository Metadata
+.git/
+.github/
+.vscode/
+.idea/
+.obsidian/
+.agent/
+.agents/
+
+# Environment & Secret Files (Prevents accidental key leaking into images)
 .env
+.env.*
+!.env.example
+!.env.production.example
+
+# Logs & Temporary Files
+*.log
+**/*.log
+scratch/
+uploads/
+backups/
+coverage/
+
+# Development & Utility Scripts (Not needed in Docker container build)
+*.py
+*.bat
+*.ps1
+*.txt
+build_errors*.txt
+md-ku/
+sql-ku/
+
+# Documentation & Markdown files not needed during compilation
+*.md
+!README.md
