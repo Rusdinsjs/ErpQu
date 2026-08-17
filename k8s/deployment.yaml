@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: erpqu-backend
+  namespace: erpqu
+  labels:
+    app.kubernetes.io/name: erpqu-backend
+    app.kubernetes.io/part-of: erpqu-system
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: erpqu-backend
+  template:
+    metadata:
+      labels:
+        app: erpqu-backend
+    spec:
+      containers:
+        - name: backend
+          image: erpqu/backend:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+              name: http
+          envFrom:
+            - configMapRef:
+                name: erpqu-config
+            - secretRef:
+                name: erpqu-secrets
+          resources:
+            requests:
+              cpu: 250m
+              memory: 256Mi
+            limits:
+              cpu: 1000m
+              memory: 1Gi
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 5

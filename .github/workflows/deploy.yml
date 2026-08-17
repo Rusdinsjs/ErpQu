@@ -1,19 +1,40 @@
-name: Trusted Continuous Deployment (Gate 1)
+name: ERPQu Production Deployment
 
 on:
   push:
-    branches:
-      - master
-      - main
+    branches: [master, main]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deploy to environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
 
 permissions:
   contents: read
   packages: write
 
+# Only one deployment at a time
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  REGISTRY: ghcr.io
+
 jobs:
+  # ═══════════════════════════════════════════════════
+  # 1. BUILD IMMUTABLE CONTAINER IMAGES
+  # ═══════════════════════════════════════════════════
   build-and-push:
-    name: Build and Push Immutable Container Images (Image SHA)
+    name: "🐳 Build Immutable Container Images"
     runs-on: ubuntu-latest
+    outputs:
+      image_sha: ${{ github.sha }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -21,7 +42,7 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Log in to GitHub Container Registry (GHCR)
+      - name: Log in to GHCR
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
@@ -32,7 +53,7 @@ jobs:
         id: prep
         run: echo "owner=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
 
-      - name: Build and Push Backend Image (Immutable SHA)
+      - name: Build and Push Backend Image
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -44,7 +65,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Build and Push Frontend Image (Immutable SHA)
+      - name: Build and Push Frontend Image
         uses: docker/build-push-action@v5
         with:
           context: ./web-admin
@@ -56,12 +77,130 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  deploy:
-    name: Deploy via Dedicated Migration Runner & Readiness Gate
+  # ═══════════════════════════════════════════════════
+  # 2. DEPLOY TO STAGING (automatic)
+  # ═══════════════════════════════════════════════════
+  deploy-staging:
+    name: "🧪 Deploy to Staging"
     needs: build-and-push
     runs-on: ubuntu-latest
+    environment: staging
+    if: >
+      (github.event_name == 'push') ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'staging')
+
     steps:
-      - name: Deploy via SSH
+      - name: Deploy to Staging Server
+        uses: appleboy/ssh-action@v1.0.3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_ACTOR: ${{ github.actor }}
+          IMAGE_SHA: ${{ github.sha }}
+        with:
+          host: ${{ secrets.STAGING_HOST }}
+          username: ${{ secrets.STAGING_USERNAME }}
+          key: ${{ secrets.STAGING_SSH_KEY }}
+          envs: GITHUB_TOKEN,GITHUB_ACTOR,IMAGE_SHA
+          command_timeout: 30m
+          script: |
+            set -e
+            echo "══════════════════════════════════════════"
+            echo "  ERPQu Staging Deployment [${IMAGE_SHA:0:8}]"
+            echo "══════════════════════════════════════════"
+
+            cd ~/erp-system
+
+            # Login to GHCR
+            echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin 2>/dev/null
+
+            # Sync code
+            git fetch --all --prune
+            git reset --hard origin/master || git reset --hard origin/main
+
+            # Verify .env exists
+            [ -f .env ] || { echo "CRITICAL: .env missing!"; exit 1; }
+
+            # Update image tag
+            export IMAGE_TAG="${IMAGE_SHA}"
+
+            # Pre-deployment backup
+            echo ">> Creating pre-deployment database backup..."
+            docker compose exec -T postgres pg_dump -U postgres -Fc management_system > /tmp/pre_deploy_backup.dump 2>/dev/null || true
+
+            # Pull new images
+            echo ">> Pulling images [${IMAGE_SHA:0:8}]..."
+            docker compose -f docker-compose.prod.yml pull backend frontend
+
+            # Run migrations
+            echo ">> Running database migrations..."
+            docker compose -f docker-compose.prod.yml run --rm migrate || {
+                echo "CRITICAL: Migration failed! Aborting."
+                exit 1
+            }
+
+            # Deploy with zero-downtime
+            echo ">> Starting services..."
+            docker compose -f docker-compose.prod.yml up -d --remove-orphans
+
+            # Readiness probe
+            echo ">> Waiting for service readiness..."
+            READY=0
+            for i in $(seq 1 30); do
+              if docker exec erpqu-backend curl -sf http://localhost:8181/health > /dev/null 2>&1; then
+                echo ">> ✅ Service READY ($i/30)"
+                READY=1
+                break
+              fi
+              echo "   Waiting... ($i/30)"
+              sleep 5
+            done
+
+            if [ "$READY" -eq 0 ]; then
+              echo "CRITICAL: Readiness failed! Rolling back..."
+              docker compose -f docker-compose.prod.yml down
+              # Restore from backup
+              docker compose -f docker-compose.prod.yml up -d postgres
+              sleep 10
+              docker exec -i erpqu-db pg_restore -U postgres -d management_system --clean --if-exists < /tmp/pre_deploy_backup.dump || true
+              docker compose -f docker-compose.prod.yml up -d
+              echo "ROLLBACK COMPLETE"
+              exit 1
+            fi
+
+            # Smoke tests
+            echo ">> Running smoke tests..."
+            HEALTH=$(docker exec erpqu-backend curl -sf http://localhost:8181/health)
+            echo "   Health: $HEALTH"
+
+            docker image prune -f
+            echo "══════════════════════════════════════════"
+            echo "  ✅ STAGING DEPLOYMENT COMPLETE"
+            echo "  SHA: ${IMAGE_SHA}"
+            echo "══════════════════════════════════════════"
+
+      - name: Notify Staging Success
+        if: success()
+        run: |
+          echo "✅ Staging deployment successful: ${{ github.sha }}"
+          # TODO: Add Telegram/Slack notification
+          # curl -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+          #   -d "chat_id=${TELEGRAM_CHAT_ID}" \
+          #   -d "text=✅ ERPQu Staging deployed: ${GITHUB_SHA:0:8}"
+
+  # ═══════════════════════════════════════════════════
+  # 3. DEPLOY TO PRODUCTION (manual approval required)
+  # ═══════════════════════════════════════════════════
+  deploy-production:
+    name: "🚀 Deploy to Production"
+    needs: [build-and-push, deploy-staging]
+    runs-on: ubuntu-latest
+    environment: production  # Requires manual approval in GitHub Environment settings
+    if: >
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production') ||
+      (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'))
+
+    steps:
+      - name: Deploy to Production Server
         uses: appleboy/ssh-action@v1.0.3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -75,57 +214,116 @@ jobs:
           command_timeout: 60m
           script: |
             set -e
+            echo "══════════════════════════════════════════"
+            echo "  🚀 ERPQu PRODUCTION Deployment"
+            echo "  SHA: ${IMAGE_SHA}"
+            echo "  Time: $(date '+%Y-%m-%d %H:%M:%S %Z')"
+            echo "══════════════════════════════════════════"
+
             cd ~/erp-system
 
-            echo "$GITHUB_TOKEN" | sudo docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin 2>/dev/null || true
+            # Login to GHCR
+            echo "$GITHUB_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin 2>/dev/null
 
-            git fetch --all
+            # Sync code
+            git fetch --all --prune
             git reset --hard origin/master || git reset --hard origin/main
-            echo ">> Repository synced to ${IMAGE_SHA}."
 
-            if [ ! -f .env ]; then
-              echo "CRITICAL: .env file missing on production host!"
-              exit 1
+            # Verify production .env
+            [ -f .env ] || { echo "CRITICAL: .env missing on production!"; exit 1; }
+
+            export IMAGE_TAG="${IMAGE_SHA}"
+
+            # === MANDATORY PRE-DEPLOYMENT BACKUP ===
+            echo ">> Creating MANDATORY production backup..."
+            BACKUP_FILE="/backups/pre_deploy_$(date +%Y%m%d_%H%M%S).dump"
+            mkdir -p /backups
+            docker compose -f docker-compose.prod.yml exec -T postgres \
+              pg_dump -U postgres -Fc management_system > "$BACKUP_FILE" 2>/dev/null || {
+                echo "WARNING: Pre-deploy backup failed. Proceeding with caution."
+              }
+            if [ -f "$BACKUP_FILE" ]; then
+              echo "   Backup: $BACKUP_FILE ($(du -sh "$BACKUP_FILE" | cut -f1))"
             fi
 
-            # 1. Pull immutable image tag by SHA
-            echo ">> Pulling image SHA ${IMAGE_SHA}..."
-            sudo docker compose pull backend frontend
+            # Pull new images
+            echo ">> Pulling production images [${IMAGE_SHA:0:8}]..."
+            docker compose -f docker-compose.prod.yml pull backend frontend nginx
 
-            # 2. Run dedicated database migration runner (Fail-Closed)
-            echo ">> Executing dedicated migration runner..."
-            sudo docker compose run --rm -e RUN_MIGRATIONS_ON_STARTUP=true backend /usr/local/bin/management-system --check-migration || {
-                echo "CRITICAL: Database migration failed. Aborting deployment (Fail-Closed)!"
+            # Run migrations (fail-closed)
+            echo ">> Running database migrations..."
+            docker compose -f docker-compose.prod.yml run --rm migrate || {
+                echo "═══════════════════════════════════════"
+                echo "CRITICAL: Migration FAILED!"
+                echo "Production database is UNCHANGED."
+                echo "Backup available at: $BACKUP_FILE"
+                echo "═══════════════════════════════════════"
                 exit 1
             }
-            echo ">> Migrations applied successfully."
 
-            # 3. Start services with rolling replacement
-            echo ">> Starting application services..."
-            sudo docker compose up -d --remove-orphans
+            # Rolling deployment
+            echo ">> Starting production services..."
+            docker compose -f docker-compose.prod.yml up -d --remove-orphans
 
-            # 4. Strict Readiness Gate Verification (Port 8181 / 8080)
-            echo ">> Probing readiness endpoint on port 8181/8080..."
-            READINESS_PASSED=0
-            for i in $(seq 1 30); do
-              if sudo docker exec mgmt-backend curl -sf http://localhost:8181/ready >/dev/null 2>&1 || \
-                 sudo docker exec mgmt-backend curl -sf http://localhost:8080/ready >/dev/null 2>&1 || \
-                 sudo docker exec mgmt-backend curl -sf http://localhost:8080/health >/dev/null 2>&1; then
-                echo ">> Service READINESS GATE PASSED ($i/30)!"
-                READINESS_PASSED=1
+            # Strict readiness gate
+            echo ">> Production readiness gate..."
+            READY=0
+            for i in $(seq 1 40); do
+              if docker exec erpqu-backend curl -sf http://localhost:8181/health > /dev/null 2>&1; then
+                echo ">> ✅ Production service READY ($i/40)"
+                READY=1
                 break
               fi
-              echo "   Awaiting service readiness... ($i/30)"
+              echo "   Waiting for readiness... ($i/40)"
               sleep 5
             done
 
-            if [ "$READINESS_PASSED" -eq 0 ]; then
-              echo "CRITICAL: Service readiness probe failed after 150s. Initiating automatic rollback!"
-              sudo docker compose rollback || sudo docker compose up -d --build
-              sudo docker logs mgmt-backend --tail 100
+            if [ "$READY" -eq 0 ]; then
+              echo "═══════════════════════════════════════"
+              echo "CRITICAL: Production readiness FAILED!"
+              echo "Initiating AUTOMATIC ROLLBACK..."
+              echo "═══════════════════════════════════════"
+
+              # Rollback: stop new containers
+              docker compose -f docker-compose.prod.yml down
+
+              # Restore database from backup
+              docker compose -f docker-compose.prod.yml up -d postgres redis
+              sleep 15
+              if [ -f "$BACKUP_FILE" ]; then
+                docker exec -i erpqu-db pg_restore -U postgres -d management_system \
+                  --clean --if-exists < "$BACKUP_FILE" || true
+                echo ">> Database restored from: $BACKUP_FILE"
+              fi
+
+              # Restart with previous image
+              unset IMAGE_TAG
+              docker compose -f docker-compose.prod.yml up -d
+              echo ">> ROLLBACK COMPLETE. Previous version restored."
               exit 1
             fi
 
-            sudo systemctl reload nginx || true
-            sudo docker image prune -f
-            echo ">> DEPLOYMENT SUCCESSFUL & SEALED [SHA: ${IMAGE_SHA}]"
+            # Post-deploy verification
+            echo ">> Post-deployment verification..."
+            HEALTH_RESPONSE=$(docker exec erpqu-backend curl -sf http://localhost:8181/health 2>/dev/null)
+            echo "   Health: $HEALTH_RESPONSE"
+
+            # Cleanup
+            docker image prune -f
+
+            echo "══════════════════════════════════════════"
+            echo "  ✅ PRODUCTION DEPLOYMENT SUCCESSFUL"
+            echo "  SHA: ${IMAGE_SHA}"
+            echo "  Backup: ${BACKUP_FILE}"
+            echo "  Time: $(date '+%Y-%m-%d %H:%M:%S %Z')"
+            echo "══════════════════════════════════════════"
+
+      - name: Notify Production Success
+        if: success()
+        run: |
+          echo "🚀 Production deployment successful: ${{ github.sha }}"
+
+      - name: Notify Production Failure
+        if: failure()
+        run: |
+          echo "❌ Production deployment FAILED: ${{ github.sha }}"

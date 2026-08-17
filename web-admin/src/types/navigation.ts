@@ -141,7 +141,10 @@ export type TabId =
     | 'email-account'
     | 'metadata-editor'
     | 'analytics'
-    | 'profile';
+    | 'profile'
+    | 'period-closing'
+    | 'exchange-rates'
+    | 'webhooks';
 
 export interface NavItem {
     id: TabId;

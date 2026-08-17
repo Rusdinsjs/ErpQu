@@ -1,5 +1,6 @@
 //! API Middleware
 
+pub mod api_version;
 pub mod auth;
 pub mod rate_limit;
 pub mod rbac;

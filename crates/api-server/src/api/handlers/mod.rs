@@ -73,6 +73,8 @@ pub use report_handler::*;
 pub use sensor_handler::*;
 pub use user_handler::*;
 pub use work_order_handler::*;
+pub mod metrics_handler;
+pub use metrics_handler::*;
 pub mod ops_quality_trip_handler;
 
 pub mod hr_driver_p2h_safety_handler;

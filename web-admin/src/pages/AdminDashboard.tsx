@@ -190,7 +190,8 @@ export default function AdminDashboard() {
                                 'credit-notes', 'debit-notes', 'dunnings', 'balance-sheet',
                                 'profit-loss', 'cash-flow', 'trial-balance', 'general-ledger-report',
                                 'ar-aging', 'ap-aging', 'finance', 'cash-bank', 'expenses', 'journal-entries',
-                                'financial-reports', 'sales-invoices', 'purchase-bills'
+                                'financial-reports', 'sales-invoices', 'purchase-bills',
+                                'period-closing', 'exchange-rates'
                             ];
                             accIds.forEach(id => {
                                 if (!ids.includes(id)) ids.push(id);
@@ -225,6 +226,7 @@ export default function AdminDashboard() {
                             if (!ids.includes('approval-workflow-settings')) ids.push('approval-workflow-settings');
                             if (!ids.includes('users')) ids.push('users');
                             if (!ids.includes('roles')) ids.push('roles');
+                            if (!ids.includes('webhooks')) ids.push('webhooks');
                             return { ...m, menuIds: ids };
                         }
                         return m;

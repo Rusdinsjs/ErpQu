@@ -7,7 +7,7 @@ import {
     Briefcase, FileSpreadsheet, Database, Mail, ShoppingBag, Tag,
     Lock, CheckCircle2, DollarSign, BarChart2, Activity, CreditCard,
     HandCoins, Award, UserPlus, GraduationCap, AlertOctagon, UserCircle,
-    ClipboardCheck, RefreshCw, Gift
+    ClipboardCheck, RefreshCw, Gift, Globe, Radio
 } from 'lucide-react';
 import type { NavItem } from '../types/navigation';
 
@@ -217,6 +217,8 @@ export const ALL_NAV_ITEMS: Record<string, NavItem> = {
     'general-ledger-report': { id: 'general-ledger-report', icon: History, label: 'General Ledger Report', minLevel: 2 },
     'ar-aging': { id: 'ar-aging', icon: Clock, label: 'AR Aging Report', minLevel: 2 },
     'ap-aging': { id: 'ap-aging', icon: Clock, label: 'AP Aging Report', minLevel: 2 },
+    'period-closing': { id: 'period-closing', icon: Lock, label: 'Period Closing (Tutup Buku)', minLevel: 2 },
+    'exchange-rates': { id: 'exchange-rates', icon: Globe, label: 'Multi-Currency Exchange Rates', minLevel: 2 },
 
     'hr-workspace': { id: 'hr-workspace', icon: Users, label: 'HR Workspace', path: '/hr-workspace', minLevel: 4 },
     'employees': { id: 'employees', icon: Users, label: 'Employees', minLevel: 3 },
@@ -249,6 +251,7 @@ export const ALL_NAV_ITEMS: Record<string, NavItem> = {
     'users': { id: 'users', icon: Users, label: 'User Operations', minLevel: 2 },
     'roles': { id: 'roles', icon: Shield, label: 'Access Rights', minLevel: 1 },
     'approval-workflow-settings': { id: 'approval-workflow-settings', icon: Layers, label: 'Workflows', minLevel: 1 },
+    'webhooks': { id: 'webhooks', icon: Radio, label: 'Outbound Webhooks', minLevel: 1 },
     'audit': { id: 'audit', icon: History, label: 'Audit Logs', minLevel: 2 },
     'companies': { id: 'companies', icon: Building2, label: 'Companies (Entitas)', minLevel: 2 },
     'company': { id: 'company', icon: Building2, label: 'Company Management', minLevel: 2 },

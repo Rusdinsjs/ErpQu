@@ -4,7 +4,7 @@ use sqlx::PgPool;
 use tower_http::cors::CorsLayer;
 use utoipa::OpenApi;
 
-// use crate::api::middleware::security_headers::security_headers_middleware;
+
 use crate::api::routes::create_router;
 use crate::application::services::scheduler_service::SchedulerService;
 use crate::application::services::{AnalyticsService, ReportService};
@@ -527,19 +527,44 @@ pub async fn create_app(state: AppState) -> axum::Router {
             crate::api::docs::ApiDoc::openapi(),
         ))
         .layer(axum::middleware::from_fn(
+            crate::api::middleware::api_version::api_version_rewrite_middleware,
+        ))
+        .layer(axum::middleware::from_fn(
             crate::api::middleware::rate_limit::rate_limit_middleware,
         ))
         .layer(axum::middleware::from_fn(
             crate::api::middleware::security_headers::security_headers_middleware,
         ))
-        .layer(
-            CorsLayer::new()
-                .allow_origin([
-                    axum::http::HeaderValue::from_static("http://localhost:3000"),
-                    axum::http::HeaderValue::from_static("http://localhost:5173"),
-                    axum::http::HeaderValue::from_static("http://localhost:5174"),
-                    axum::http::HeaderValue::from_static("http://localhost:5175"),
-                ])
+        .layer({
+            let cors_origins = std::env::var("CORS_ALLOWED_ORIGINS").unwrap_or_default();
+            let cors_layer = if cors_origins.is_empty() {
+                // Development mode: allow common localhost ports
+                tracing::warn!("CORS: No CORS_ALLOWED_ORIGINS set, allowing localhost dev origins");
+                CorsLayer::new()
+                    .allow_origin([
+                        axum::http::HeaderValue::from_static("http://localhost:3000"),
+                        axum::http::HeaderValue::from_static("http://localhost:5173"),
+                        axum::http::HeaderValue::from_static("http://localhost:5174"),
+                        axum::http::HeaderValue::from_static("http://localhost:5175"),
+                    ])
+            } else {
+                // Production mode: parse origins from env
+                let origins: Vec<axum::http::HeaderValue> = cors_origins
+                    .split(',')
+                    .filter_map(|s| {
+                        let trimmed = s.trim();
+                        axum::http::HeaderValue::from_str(trimmed)
+                            .map_err(|e| {
+                                tracing::error!("CORS: Invalid origin '{}': {}", trimmed, e);
+                                e
+                            })
+                            .ok()
+                    })
+                    .collect();
+                tracing::info!("CORS: Configured with {} allowed origins", origins.len());
+                CorsLayer::new().allow_origin(origins)
+            };
+            cors_layer
                 .allow_methods([
                     axum::http::Method::GET,
                     axum::http::Method::POST,
@@ -553,6 +578,7 @@ pub async fn create_app(state: AppState) -> axum::Router {
                     axum::http::header::CONTENT_TYPE,
                     axum::http::header::ACCEPT,
                 ])
-                .allow_credentials(true),
-        )
+                .allow_credentials(true)
+                .max_age(std::time::Duration::from_secs(3600))
+        })
 }

@@ -1,50 +1,136 @@
-version: "3.8"
+# ERPQu Production Docker Compose
+# Usage: docker compose -f docker-compose.prod.yml up -d
+# Prerequisites: Copy .env.production.example → .env and fill in secrets
+
+name: erpqu-production
 
 services:
-  # PostgreSQL Database
-  postgres:
-    image: postgres:16-alpine
-    container_name: mgmt-db-prod
+  # ═══════════════════════════════════════════════════
+  # REVERSE PROXY & TLS TERMINATION
+  # ═══════════════════════════════════════════════════
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    container_name: erpqu-nginx
     restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - certbot_certs:/etc/letsencrypt
+      - certbot_www:/var/www/certbot
+    environment:
+      NGINX_HOST: ${NGINX_HOST:-localhost}
+    depends_on:
+      backend:
+        condition: service_healthy
+      frontend:
+        condition: service_started
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 256M
+    networks:
+      - erpqu-frontend
+      - erpqu-backend
+
+  # ═══════════════════════════════════════════════════
+  # POSTGRESQL DATABASE
+  # ═══════════════════════════════════════════════════
+  postgres:
+    image: postgres:17-alpine
+    container_name: erpqu-db
+    restart: unless-stopped
+    shm_size: 256mb
     environment:
       POSTGRES_USER: ${DB_USER:-postgres}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
       POSTGRES_DB: ${DB_NAME:-management_system}
       DB_APP_USER: ${DB_APP_USER:-erpqu_app}
-      DB_APP_PASSWORD: ${DB_APP_PASSWORD}
+      DB_APP_PASSWORD: ${DB_APP_PASSWORD:?DB_APP_PASSWORD is required}
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256 --auth-local=scram-sha-256"
     volumes:
-      - postgres_data_prod:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
       - ./postgres/init_app_user.sh:/docker-entrypoint-initdb.d/010-init-app-user.sh:ro
+      - ./postgres/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+      - ./scripts/backup.sh:/usr/local/bin/backup.sh:ro
+    command: >
+      postgres
+        -c hba_file=/etc/postgresql/pg_hba.conf
+        -c password_encryption=scram-sha-256
+        -c max_connections=200
+        -c shared_buffers=256MB
+        -c effective_cache_size=768MB
+        -c work_mem=8MB
+        -c maintenance_work_mem=128MB
+        -c wal_buffers=8MB
+        -c checkpoint_completion_target=0.9
+        -c random_page_cost=1.1
+        -c effective_io_concurrency=200
+        -c min_wal_size=1GB
+        -c max_wal_size=4GB
+        -c log_min_duration_statement=1000
+        -c log_checkpoints=on
+        -c log_connections=on
+        -c log_disconnections=on
+        -c log_lock_waits=on
+        -c log_statement=ddl
+        -c log_temp_files=0
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-management_system}"]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 10
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 1G
     networks:
-      - mgmt-network
+      - erpqu-database
 
-  # Redis Cache
+  # ═══════════════════════════════════════════════════
+  # REDIS CACHE & SESSION STORE
+  # ═══════════════════════════════════════════════════
   redis:
     image: redis:7-alpine
-    container_name: mgmt-redis-prod
+    container_name: erpqu-redis
     restart: unless-stopped
-    command: redis-server --appendonly yes
+    command: >
+      redis-server
+        --requirepass ${REDIS_PASSWORD:?REDIS_PASSWORD is required}
+        --appendonly yes
+        --maxmemory 256mb
+        --maxmemory-policy allkeys-lru
+        --tcp-keepalive 60
+        --timeout 300
     volumes:
-      - redis_data_prod:/data
+      - redis_data:/data
     healthcheck:
-      test: [ "CMD", "redis-cli", "ping" ]
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 384M
     networks:
-      - mgmt-network
+      - erpqu-backend
 
-  # Backend API
+  # ═══════════════════════════════════════════════════
+  # BACKEND API SERVER (Rust/Axum)
+  # ═══════════════════════════════════════════════════
   backend:
+    image: ghcr.io/rusdinsjs/erp-backend:${IMAGE_TAG:-latest}
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: mgmt-backend-prod
+    container_name: erpqu-backend
     restart: unless-stopped
     depends_on:
       postgres:
@@ -52,43 +138,172 @@ services:
       redis:
         condition: service_healthy
     environment:
-      MIGRATION_DATABASE_URL: postgres://${DB_USER:-postgres}:${DB_PASSWORD}@postgres:5432/${DB_NAME:-management_system}
-      DATABASE_URL: postgres://${DB_APP_USER:-erpqu_app}:${DB_APP_PASSWORD}@postgres:5432/${DB_NAME:-management_system}
-      REDIS_URL: redis://redis:6379
-      JWT_SECRET: ${JWT_SECRET}
+      # Database (migrations run as superuser, app runs as restricted user)
+      MIGRATION_DATABASE_URL: postgres://${DB_USER:-postgres}:${DB_PASSWORD}@postgres:5432/${DB_NAME:-management_system}?options=-c%20search_path=public,hr,crm,rental,inventory,commercial
+      DATABASE_URL: postgres://${DB_APP_USER:-erpqu_app}:${DB_APP_PASSWORD}@postgres:5432/${DB_NAME:-management_system}?options=-c%20search_path=public,hr,crm,rental,inventory,commercial
+      # Redis
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
+      # Auth
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required (min 32 chars)}
       JWT_EXPIRATION_HOURS: ${JWT_EXPIRATION_HOURS:-24}
+      # Server
       SERVER_HOST: 0.0.0.0
-      SERVER_PORT: 8080
+      SERVER_PORT: 8181
       ENVIRONMENT: production
-      RUST_LOG: info
+      # Logging
+      RUST_LOG: ${RUST_LOG:-management_system=info,tower_http=info,sqlx=warn}
+      LOG_FORMAT: json
+      # Security
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-https://${NGINX_HOST:-localhost}}
+      ALLOW_PUBLIC_REGISTRATION: "false"
+      ALLOW_DEV_TEST_ROUTES: "false"
+      # Upload
+      UPLOAD_MAX_SIZE_MB: ${UPLOAD_MAX_SIZE_MB:-10}
+      # SMTP
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      SMTP_FROM: ${SMTP_FROM:-noreply@erpqu.com}
     expose:
-      - "8080"
+      - "8181"
+    volumes:
+      - upload_data:/app/uploads
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8080/health" ]
-      interval: 30s
-      timeout: 10s
+      test: ["CMD", "curl", "-sf", "http://localhost:8181/health"]
+      interval: 15s
+      timeout: 5s
       retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 1G
     networks:
-      - mgmt-network
+      - erpqu-backend
+      - erpqu-database
 
-  # Frontend Web Admin
+  # ═══════════════════════════════════════════════════
+  # FRONTEND WEB ADMIN (React/Vite/Nginx)
+  # ═══════════════════════════════════════════════════
   frontend:
+    image: ghcr.io/rusdinsjs/erp-frontend:${IMAGE_TAG:-latest}
     build:
       context: ./web-admin
       dockerfile: Dockerfile
-    container_name: mgmt-frontend-prod
+    container_name: erpqu-frontend
     restart: unless-stopped
     depends_on:
-      - backend
-    ports:
-      - "8888:80"
+      backend:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 128M
     networks:
-      - mgmt-network
+      - erpqu-frontend
+
+  # ═══════════════════════════════════════════════════
+  # DATABASE MIGRATIONS (Run Once)
+  # ═══════════════════════════════════════════════════
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile.migrate
+    container_name: erpqu-migrate
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://${DB_USER:-postgres}:${DB_PASSWORD}@postgres:5432/${DB_NAME:-management_system}
+    profiles:
+      - migrate
+    networks:
+      - erpqu-database
+
+  # ═══════════════════════════════════════════════════
+  # DATABASE BACKUP (Cron-based)
+  # ═══════════════════════════════════════════════════
+  backup:
+    image: postgres:17-alpine
+    container_name: erpqu-backup
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PGHOST: postgres
+      PGPORT: 5432
+      PGUSER: ${DB_USER:-postgres}
+      PGPASSWORD: ${DB_PASSWORD}
+      PGDATABASE: ${DB_NAME:-management_system}
+      BACKUP_RETENTION_DAYS: ${BACKUP_RETENTION_DAYS:-30}
+    volumes:
+      - backup_data:/backups
+      - ./scripts/backup.sh:/usr/local/bin/backup.sh:ro
+    entrypoint: /bin/sh
+    command: >
+      -c "chmod +x /usr/local/bin/backup.sh &&
+          echo '0 2 * * * /usr/local/bin/backup.sh >> /var/log/backup.log 2>&1' | crontab - &&
+          crond -f -l 2"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 256M
+    networks:
+      - erpqu-database
+    profiles:
+      - backup
+
+  # ═══════════════════════════════════════════════════
+  # PROMETHEUS METRICS MONITORING (Optional Profile)
+  # ═══════════════════════════════════════════════════
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    container_name: erpqu-prometheus
+    restart: unless-stopped
+    volumes:
+      - ./docs/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    deploy:
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 512M
+    networks:
+      - erpqu-backend
+    profiles:
+      - monitoring
 
 volumes:
-  postgres_data_prod:
-  redis_data_prod:
+  postgres_data:
+    name: erpqu-pgdata
+  redis_data:
+    name: erpqu-redis
+  upload_data:
+    name: erpqu-uploads
+  certbot_certs:
+    name: erpqu-certs
+  certbot_www:
+    name: erpqu-certbot
+  backup_data:
+    name: erpqu-backups
+  prometheus_data:
+    name: erpqu-prometheus
 
 networks:
-  mgmt-network:
-    driver: bridge
+  erpqu-frontend:
+    name: erpqu-frontend
+  erpqu-backend:
+    name: erpqu-backend
+  erpqu-database:
+    name: erpqu-database
+    internal: true  # Database network is NOT accessible from outside

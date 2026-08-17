@@ -18,8 +18,12 @@ pub fn create_router(state: AppState) -> Router {
     // Public routes
     let public_routes = Router::new()
         .route("/health", get(health_check))
+        .route("/health/ready", get(health_handler::readiness_check))
+        .route("/health/detailed", get(health_handler::detailed_health_check))
+        .route("/metrics", get(metrics_handler::prometheus_metrics))
         .route("/api/auth/login", post(login))
         .route("/api/auth/register", post(register))
+        .route("/api/auth/refresh", post(auth_handler::refresh_token))
         .route("/api/uploads/*path", get(upload_handler::get_file))
         .route("/ws", get(notification_ws::ws_handler));
 
@@ -38,6 +42,7 @@ pub fn create_router(state: AppState) -> Router {
 
     // Protected routes (QSEC-006: Private file uploads & access)
     let protected_routes = Router::new()
+        .route("/api/auth/logout", post(auth_handler::logout))
         .route(
             "/api/upload",
             post(upload_handler::upload_file).layer(tower_http::limit::RequestBodyLimitLayer::new(

@@ -57,7 +57,7 @@ async-trait = "0.1"
 
 # Logging
 tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json", "fmt"] }
 deadpool-redis = "0.22.0"
 redis = { version = "0.32", features = ["tokio-comp", "json"] }
 csv = "1.4.0"

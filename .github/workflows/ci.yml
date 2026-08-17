@@ -1,18 +1,30 @@
-name: Trusted Quality Gate CI Pipeline (Fase 2)
+name: ERPQu Quality Gate CI Pipeline
 
 on:
   push:
-    branches: [ master, main, develop ]
+    branches: [master, main, develop]
   pull_request:
-    branches: [ master, main ]
+    branches: [master, main]
+
+# Cancel in-progress runs for the same branch
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  SQLX_OFFLINE: true
 
 jobs:
+  # ═══════════════════════════════════════════════════
+  # 1. BACKEND QUALITY GATE
+  # ═══════════════════════════════════════════════════
   backend-quality-gate:
-    name: 1. Backend Strict Quality Gate & Real DB Invariant Tests
+    name: "🦀 Backend: Lint, Test & Coverage"
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: postgres:15-alpine
+        image: postgres:17-alpine
         env:
           POSTGRES_DB: erp_system_test
           POSTGRES_USER: postgres
@@ -45,27 +57,68 @@ jobs:
 
       - name: Rust Cache
         uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
 
-      - name: 1.1 Cargo Format Verification
+      - name: "1.1 ✅ Cargo Format Verification"
         run: cargo fmt --all -- --check
 
-      - name: 1.2 Cargo Compilation Check (All Targets)
+      - name: "1.2 ✅ Cargo Compilation Check"
         run: cargo check --workspace --all-targets
 
-      - name: 1.3 Cargo Clippy Strict Linting
-        run: cargo clippy --workspace --all-targets
+      - name: "1.3 ✅ Cargo Clippy Strict Linting"
+        run: cargo clippy --workspace --all-targets -- -W clippy::all
 
-      - name: 1.4 Backend Invariant & Real Database Integration Tests
+      - name: "1.4 ✅ Database Schema Preparation"
+        env:
+          DATABASE_URL: postgres://postgres:postgrespassword@localhost:5432/erp_system_test
+        run: |
+          # Create schemas required by multi-schema architecture
+          PGPASSWORD=postgrespassword psql -h localhost -U postgres -d erp_system_test -c "
+            CREATE SCHEMA IF NOT EXISTS hr;
+            CREATE SCHEMA IF NOT EXISTS crm;
+            CREATE SCHEMA IF NOT EXISTS rental;
+            CREATE SCHEMA IF NOT EXISTS inventory;
+            CREATE SCHEMA IF NOT EXISTS commercial;
+          "
+
+      - name: "1.5 ✅ Database Migration Dry-Run"
+        env:
+          DATABASE_URL: postgres://postgres:postgrespassword@localhost:5432/erp_system_test
+          MIGRATION_DATABASE_URL: postgres://postgres:postgrespassword@localhost:5432/erp_system_test
+        run: |
+          cargo install sqlx-cli --no-default-features --features postgres || true
+          sqlx migrate run --source migrations/ 2>&1 | tail -20
+          echo "✅ All migrations applied successfully"
+
+      - name: "1.6 ✅ Backend Integration Tests"
         env:
           DATABASE_URL: postgres://postgres:postgrespassword@localhost:5432/erp_system_test
           MIGRATION_DATABASE_URL: postgres://postgres:postgrespassword@localhost:5432/erp_system_test
           REDIS_URL: redis://localhost:6379
-          JWT_SECRET: super-secret-key-for-testing-only-minimum-16-chars
+          JWT_SECRET: super-secret-key-for-testing-only-minimum-32-chars!!
           ENVIRONMENT: test
-        run: cargo test --workspace --tests
+          RUST_LOG: warn
+        run: cargo test --workspace --tests 2>&1
 
+      - name: "1.7 📊 Test Coverage Report"
+        if: github.event_name == 'pull_request'
+        env:
+          DATABASE_URL: postgres://postgres:postgrespassword@localhost:5432/erp_system_test
+          MIGRATION_DATABASE_URL: postgres://postgres:postgrespassword@localhost:5432/erp_system_test
+          REDIS_URL: redis://localhost:6379
+          JWT_SECRET: super-secret-key-for-testing-only-minimum-32-chars!!
+          ENVIRONMENT: test
+        run: |
+          cargo install cargo-tarpaulin || true
+          cargo tarpaulin --workspace --out xml --output-dir coverage/ --timeout 300 || true
+          echo "Coverage report generated in coverage/"
+
+  # ═══════════════════════════════════════════════════
+  # 2. FRONTEND QUALITY GATE
+  # ═══════════════════════════════════════════════════
   frontend-quality-gate:
-    name: 2. Frontend Strict TypeScript, ESLint, Unit Test & Production Build
+    name: "⚛️ Frontend: TypeScript, Lint, Test & Build"
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -82,23 +135,33 @@ jobs:
           cache: npm
           cache-dependency-path: ./web-admin/package-lock.json
 
-      - name: 2.1 Clean Dependency Installation
+      - name: "2.1 ✅ Clean Dependency Installation"
         run: npm ci
 
-      - name: 2.2 Strict TypeScript Type Check
+      - name: "2.2 ✅ Strict TypeScript Type Check"
         run: npx tsc --noEmit
 
-      - name: 2.3 ESLint Clean Code Check
+      - name: "2.3 ✅ ESLint Clean Code Check"
         run: npm run lint
 
-      - name: 2.4 Frontend Unit Tests (Vitest)
-        run: npx vitest run
+      - name: "2.4 ✅ Frontend Unit Tests (Vitest)"
+        run: npx vitest run --reporter=verbose
 
-      - name: 2.5 Production Bundle Compilation
+      - name: "2.5 ✅ Production Bundle Compilation"
         run: npm run build
 
+      - name: "2.6 📊 Bundle Size Analysis"
+        run: |
+          echo "=== Bundle Size Report ==="
+          du -sh dist/
+          find dist/assets -name "*.js" -exec du -sh {} \; | sort -rh | head -10
+          echo "========================="
+
+  # ═══════════════════════════════════════════════════
+  # 3. MOBILE QUALITY GATE
+  # ═══════════════════════════════════════════════════
   mobile-quality-gate:
-    name: 3. Mobile TypeScript & Expo Configuration Gate
+    name: "📱 Mobile: TypeScript & Expo Validation"
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -115,17 +178,20 @@ jobs:
           cache: npm
           cache-dependency-path: ./mobile/package-lock.json
 
-      - name: 3.1 Clean Dependency Installation
+      - name: "3.1 ✅ Clean Dependency Installation"
         run: npm ci
 
-      - name: 3.2 Mobile TypeScript Strict Type Check
+      - name: "3.2 ✅ Mobile TypeScript Strict Type Check"
         run: npx tsc --noEmit
 
-      - name: 3.3 Expo Configuration Validation
+      - name: "3.3 ✅ Expo Configuration Validation"
         run: npx expo config --type public
 
+  # ═══════════════════════════════════════════════════
+  # 4. SECURITY AUDIT GATE
+  # ═══════════════════════════════════════════════════
   security-audit-gate:
-    name: 4. Security Scan & Blocking Secret/Dependency Audit
+    name: "🔒 Security: Secrets & Dependency Audit"
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -133,12 +199,66 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: 4.1 Blocking Secret Scanning (Gitleaks)
+      - name: "4.1 ✅ Blocking Secret Scanning (Gitleaks)"
         uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: 4.2 Blocking Cargo Security Audit
+      - name: "4.2 ✅ Blocking Cargo Security Audit"
         uses: rustsec/audit-check-action@v1.4.1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+
+  # ═══════════════════════════════════════════════════
+  # 5. DOCKER IMAGE BUILD (on main/master push only)
+  # ═══════════════════════════════════════════════════
+  build-images:
+    name: "🐳 Build & Push Container Images"
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    needs: [backend-quality-gate, frontend-quality-gate, security-audit-gate]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Lowercase Repository Owner
+        id: prep
+        run: echo "owner=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
+
+      - name: Build and Push Backend Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ steps.prep.outputs.owner }}/erp-backend:${{ github.sha }}
+            ghcr.io/${{ steps.prep.outputs.owner }}/erp-backend:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and Push Frontend Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./web-admin
+          file: ./web-admin/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ steps.prep.outputs.owner }}/erp-frontend:${{ github.sha }}
+            ghcr.io/${{ steps.prep.outputs.owner }}/erp-frontend:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

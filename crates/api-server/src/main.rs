@@ -18,14 +18,32 @@ async fn main() {
     // Load .env file
     dotenvy::dotenv().ok();
 
-    // Initialize logging
-    tracing_subscriber::registry()
-        .with(
-            tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "management_system=debug,tower_http=debug".into()),
-        )
-        .with(tracing_subscriber::fmt::layer())
-        .init();
+    // Initialize logging — JSON in production, human-readable in development
+    let env_filter = tracing_subscriber::EnvFilter::try_from_default_env()
+        .unwrap_or_else(|_| "management_system=debug,tower_http=debug".into());
+
+    let log_format = std::env::var("LOG_FORMAT").unwrap_or_default();
+    if log_format.eq_ignore_ascii_case("json") {
+        // Production: JSON structured logging (for Loki, ELK, CloudWatch, etc.)
+        tracing_subscriber::registry()
+            .with(env_filter)
+            .with(
+                tracing_subscriber::fmt::layer()
+                    .json()
+                    .with_target(true)
+                    .with_thread_ids(true)
+                    .with_file(true)
+                    .with_line_number(true)
+                    .flatten_event(true),
+            )
+            .init();
+    } else {
+        // Development: human-readable colored output
+        tracing_subscriber::registry()
+            .with(env_filter)
+            .with(tracing_subscriber::fmt::layer())
+            .init();
+    }
 
     // Load configuration
     let config = AppConfig::from_env();
