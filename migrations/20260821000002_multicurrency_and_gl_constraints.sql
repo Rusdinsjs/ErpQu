@@ -32,15 +32,21 @@ COMMENT ON TABLE exchange_rates IS 'Daily exchange rates for multi-currency tran
 -- 2. GL ENTRY INTEGRITY CONSTRAINTS
 -- ═══════════════════════════════════════════════════
 
--- Ensure debit and credit are non-negative
-ALTER TABLE gl_entries ADD CONSTRAINT IF NOT EXISTS chk_gl_debit_non_negative CHECK (debit >= 0);
-ALTER TABLE gl_entries ADD CONSTRAINT IF NOT EXISTS chk_gl_credit_non_negative CHECK (credit >= 0);
-
--- Ensure at least one of debit or credit is non-zero
-ALTER TABLE gl_entries ADD CONSTRAINT IF NOT EXISTS chk_gl_debit_or_credit CHECK (debit > 0 OR credit > 0);
-
--- Ensure debit and credit are not both non-zero on the same line
-ALTER TABLE gl_entries ADD CONSTRAINT IF NOT EXISTS chk_gl_not_both_debit_credit CHECK (NOT (debit > 0 AND credit > 0));
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'chk_gl_debit_non_negative') THEN
+        ALTER TABLE gl_entries ADD CONSTRAINT chk_gl_debit_non_negative CHECK (debit >= 0);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'chk_gl_credit_non_negative') THEN
+        ALTER TABLE gl_entries ADD CONSTRAINT chk_gl_credit_non_negative CHECK (credit >= 0);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'chk_gl_debit_or_credit') THEN
+        ALTER TABLE gl_entries ADD CONSTRAINT chk_gl_debit_or_credit CHECK (debit > 0 OR credit > 0);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'chk_gl_not_both_debit_credit') THEN
+        ALTER TABLE gl_entries ADD CONSTRAINT chk_gl_not_both_debit_credit CHECK (NOT (debit > 0 AND credit > 0));
+    END IF;
+END $$;
 
 -- ═══════════════════════════════════════════════════
 -- 3. VOUCHER-LEVEL BALANCE ENFORCEMENT TRIGGER
@@ -89,11 +95,15 @@ COMMENT ON TRIGGER trg_check_voucher_balance ON gl_entries IS
 -- 4. FISCAL YEAR/PERIOD CONSTRAINTS
 -- ═══════════════════════════════════════════════════
 
--- Ensure fiscal year dates are valid
-ALTER TABLE fiscal_years ADD CONSTRAINT IF NOT EXISTS chk_fy_dates CHECK (end_date > start_date);
-
--- Ensure accounting period dates are valid
-ALTER TABLE accounting_periods ADD CONSTRAINT IF NOT EXISTS chk_ap_dates CHECK (end_date >= start_date);
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'chk_fy_dates') THEN
+        ALTER TABLE fiscal_years ADD CONSTRAINT chk_fy_dates CHECK (end_date > start_date);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'chk_ap_dates') THEN
+        ALTER TABLE accounting_periods ADD CONSTRAINT chk_ap_dates CHECK (end_date >= start_date);
+    END IF;
+END $$;
 
 -- ═══════════════════════════════════════════════════
 -- 5. AUDIT LOG IMMUTABILITY (Append-Only)
