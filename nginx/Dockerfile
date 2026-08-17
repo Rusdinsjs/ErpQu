@@ -1,7 +1,7 @@
 FROM nginx:1.27-alpine
 
 # Install certbot for automated TLS certificate renewal
-RUN apk add --no-cache certbot certbot-nginx bash curl
+RUN apk add --no-cache certbot certbot-nginx bash curl openssl
 
 # Copy Nginx configuration
 COPY nginx.conf /etc/nginx/conf.d/default.conf
