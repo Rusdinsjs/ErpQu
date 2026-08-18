@@ -129,6 +129,8 @@ fn get_module_prefix(path: &str) -> Option<&'static str> {
         Some("data_import")
     } else if path.starts_with("/api/sensors") {
         Some("sensor")
+    } else if path.starts_with("/api/rbac") {
+        Some("role")
     } else {
         None
     }
