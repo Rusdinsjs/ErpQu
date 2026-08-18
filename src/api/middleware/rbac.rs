@@ -129,7 +129,8 @@ pub async fn permission_middleware(
 pub async fn admin_only_middleware(request: Request, next: Next) -> Result<Response, StatusCode> {
     let claims = extract_user_claims(&request).ok_or(StatusCode::UNAUTHORIZED)?;
 
-    if claims.role == "admin" || claims.role == "super_admin" {
+    let role_lower = claims.role.to_lowercase();
+    if role_lower == "admin" || role_lower == "super_admin" || claims.role_level <= 2 {
         Ok(next.run(request).await)
     } else {
         Err(StatusCode::FORBIDDEN)
@@ -141,7 +142,7 @@ pub async fn org_scope_middleware(request: Request, next: Next) -> Result<Respon
     let claims = extract_user_claims(&request).ok_or(StatusCode::UNAUTHORIZED)?;
 
     // Super admin can access everything
-    if claims.role == "super_admin" {
+    if claims.role.to_lowercase() == "super_admin" || claims.role_level <= 1 {
         return Ok(next.run(request).await);
     }
 
@@ -152,3 +153,4 @@ pub async fn org_scope_middleware(request: Request, next: Next) -> Result<Respon
 
     Ok(next.run(request).await)
 }
+

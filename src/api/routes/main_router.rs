@@ -503,7 +503,7 @@ pub fn create_router(state: AppState) -> Router {
             post(leave_handler::reject_leave),
         )
         // Rental Billing routes moved to rental_routes.rs to avoid conflicts
-        // RBAC
+        // RBAC & DocPerms
         .route("/api/rbac/roles", get(list_roles))
         .route("/api/rbac/permissions", get(list_permissions))
         .route(
@@ -516,7 +516,19 @@ pub fn create_router(state: AppState) -> Router {
             "/api/users/:user_id/roles/:role_code",
             post(assign_role).delete(remove_role),
         )
+        .route("/api/rbac/doctypes", get(list_doctypes))
+        .route("/api/rbac/docperms", get(get_docperms).post(save_docperm))
+        .route("/api/rbac/docperms/:id", delete(delete_docperm))
+
+        // Frappe Workflows Builder Engine
+        .route("/api/workflows", get(list_frappe_workflows).post(create_frappe_workflow))
+        .route("/api/workflows/apply-action", post(apply_frappe_workflow_action))
+        .route("/api/workflows/:id", get(get_frappe_workflow_detail).delete(delete_frappe_workflow))
+        .route("/api/workflows/:id/states", post(save_frappe_workflow_state))
+        .route("/api/workflows/:id/transitions", post(save_frappe_workflow_transition))
+
         // Sensors
+
         .route(
             "/api/assets/:asset_id/sensors/readings",
             post(record_reading).get(get_latest_readings),

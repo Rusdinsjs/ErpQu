@@ -1,7 +1,7 @@
 //! RBAC Handler
 
 use axum::{
-    extract::{Path, State},
+    extract::{Path, Query, State},
     Extension, Json,
 };
 use serde::Deserialize;
@@ -9,12 +9,19 @@ use uuid::Uuid;
 
 use crate::api::server::AppState;
 use crate::application::dto::ApiResponse;
-use crate::domain::entities::{Permission, Role, UserClaims};
+use crate::domain::entities::{
+    CustomDocPerm, DocType, Permission, Role, SaveDocPermPayload, UserClaims,
+};
 use crate::shared::errors::AppError;
 
 #[derive(Debug, Deserialize)]
 pub struct UpdateRolePermissionsRequest {
     pub permission_ids: Vec<Uuid>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct GetDocPermsParams {
+    pub doctype_id: Option<Uuid>,
 }
 
 pub async fn list_roles(State(state): State<AppState>) -> Result<Json<Vec<Role>>, AppError> {
@@ -95,3 +102,37 @@ pub async fn remove_role(
     state.rbac_service.remove_role(user_id, &role_code).await?;
     Ok(Json(ApiResponse::success_with_message((), "Role removed")))
 }
+
+// Frappe DocType & DocPerm Handlers
+
+pub async fn list_doctypes(
+    State(state): State<AppState>,
+) -> Result<Json<Vec<DocType>>, AppError> {
+    let list = state.rbac_service.list_doctypes().await?;
+    Ok(Json(list))
+}
+
+pub async fn get_docperms(
+    State(state): State<AppState>,
+    Query(params): Query<GetDocPermsParams>,
+) -> Result<Json<Vec<CustomDocPerm>>, AppError> {
+    let list = state.rbac_service.get_docperms(params.doctype_id).await?;
+    Ok(Json(list))
+}
+
+pub async fn save_docperm(
+    State(state): State<AppState>,
+    Json(payload): Json<SaveDocPermPayload>,
+) -> Result<Json<CustomDocPerm>, AppError> {
+    let item = state.rbac_service.save_docperm(payload).await?;
+    Ok(Json(item))
+}
+
+pub async fn delete_docperm(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+) -> Result<Json<ApiResponse<()>>, AppError> {
+    state.rbac_service.delete_docperm(id).await?;
+    Ok(Json(ApiResponse::success_with_message((), "DocPerm deleted")))
+}
+

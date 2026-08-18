@@ -2,7 +2,9 @@
 
 use uuid::Uuid;
 
-use crate::domain::entities::{Permission, Role, UserRoleAssignment};
+use crate::domain::entities::{
+    CustomDocPerm, DocType, Permission, Role, SaveDocPermPayload, UserRoleAssignment,
+};
 use crate::domain::errors::{DomainError, DomainResult};
 use crate::infrastructure::repositories::RbacRepository;
 
@@ -162,4 +164,49 @@ impl RbacService {
                 message: e.to_string(),
             })
     }
+
+    /// List all DocTypes
+    pub async fn list_doctypes(&self) -> DomainResult<Vec<DocType>> {
+        self.repository
+            .list_doctypes()
+            .await
+            .map_err(|e| DomainError::ExternalServiceError {
+                service: "database".to_string(),
+                message: e.to_string(),
+            })
+    }
+
+    /// Get Custom DocPerms
+    pub async fn get_docperms(&self, doctype_id: Option<Uuid>) -> DomainResult<Vec<CustomDocPerm>> {
+        self.repository
+            .get_docperms(doctype_id)
+            .await
+            .map_err(|e| DomainError::ExternalServiceError {
+                service: "database".to_string(),
+                message: e.to_string(),
+            })
+    }
+
+    /// Save Custom DocPerm
+    pub async fn save_docperm(&self, payload: SaveDocPermPayload) -> DomainResult<CustomDocPerm> {
+        self.repository
+            .save_docperm(payload)
+            .await
+            .map_err(|e| DomainError::ExternalServiceError {
+                service: "database".to_string(),
+                message: e.to_string(),
+            })
+    }
+
+    /// Delete Custom DocPerm
+    pub async fn delete_docperm(&self, id: Uuid) -> DomainResult<bool> {
+        self.repository
+            .delete_docperm(id)
+            .await
+            .map_err(|e| DomainError::ExternalServiceError {
+                service: "database".to_string(),
+                message: e.to_string(),
+            })
+    }
 }
+

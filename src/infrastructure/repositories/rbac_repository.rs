@@ -1,6 +1,9 @@
-use crate::domain::entities::{Permission, Role, UserRoleAssignment};
+use crate::domain::entities::{
+    CustomDocPerm, DocType, Permission, Role, SaveDocPermPayload, UserRoleAssignment,
+};
 use sqlx::PgPool;
 use uuid::Uuid;
+
 
 #[derive(Clone)]
 pub struct RbacRepository {
@@ -230,4 +233,126 @@ impl RbacRepository {
         tx.commit().await?;
         Ok(())
     }
+
+    // --- DocType & Custom DocPerm Methods ---
+
+    pub async fn list_doctypes(&self) -> Result<Vec<DocType>, sqlx::Error> {
+        sqlx::query_as::<_, DocType>("SELECT * FROM doctypes ORDER BY module ASC, name ASC")
+            .fetch_all(&self.pool)
+            .await
+    }
+
+    pub async fn get_docperms(
+        &self,
+        doctype_id: Option<Uuid>,
+    ) -> Result<Vec<CustomDocPerm>, sqlx::Error> {
+        let mut query_str = String::from(
+            r#"
+            SELECT c.*, r.name as role_name
+            FROM custom_docperms c
+            LEFT JOIN roles r ON c.role_id = r.id
+            WHERE 1=1
+            "#,
+        );
+
+        if doctype_id.is_some() {
+            query_str.push_str(" AND c.doctype_id = $1");
+        }
+        query_str.push_str(" ORDER BY c.permlevel ASC, r.name ASC");
+
+        if let Some(dt_id) = doctype_id {
+            sqlx::query_as::<_, CustomDocPerm>(&query_str)
+                .bind(dt_id)
+                .fetch_all(&self.pool)
+                .await
+        } else {
+            sqlx::query_as::<_, CustomDocPerm>(&query_str)
+                .fetch_all(&self.pool)
+                .await
+        }
+    }
+
+    pub async fn save_docperm(
+        &self,
+        payload: SaveDocPermPayload,
+    ) -> Result<CustomDocPerm, sqlx::Error> {
+        let perm_id = payload.id.unwrap_or_else(Uuid::new_v4);
+        let permlevel = payload.permlevel.unwrap_or(0);
+        let read_perm = payload.read_perm.unwrap_or(true);
+        let write_perm = payload.write_perm.unwrap_or(false);
+        let create_perm = payload.create_perm.unwrap_or(false);
+        let delete_perm = payload.delete_perm.unwrap_or(false);
+        let submit_perm = payload.submit_perm.unwrap_or(false);
+        let cancel_perm = payload.cancel_perm.unwrap_or(false);
+        let amend_perm = payload.amend_perm.unwrap_or(false);
+        let print_perm = payload.print_perm.unwrap_or(true);
+        let email_perm = payload.email_perm.unwrap_or(false);
+        let export_perm = payload.export_perm.unwrap_or(false);
+        let import_perm = payload.import_perm.unwrap_or(false);
+        let share_perm = payload.share_perm.unwrap_or(false);
+        let report_perm = payload.report_perm.unwrap_or(true);
+        let if_owner = payload.if_owner.unwrap_or(false);
+
+        let row = sqlx::query_as::<_, CustomDocPerm>(
+            r#"
+            INSERT INTO custom_docperms (
+                id, doctype_id, role_id, permlevel, read_perm, write_perm, create_perm, delete_perm,
+                submit_perm, cancel_perm, amend_perm, print_perm, email_perm, export_perm, import_perm,
+                share_perm, report_perm, if_owner, updated_at
+            ) VALUES (
+                $1, $2, $3, $4, $5, $6, $7, $8,
+                $9, $10, $11, $12, $13, $14, $15,
+                $16, $17, $18, NOW()
+            )
+            ON CONFLICT ON CONSTRAINT uq_docperm_doctype_role_level DO UPDATE SET
+                read_perm = EXCLUDED.read_perm,
+                write_perm = EXCLUDED.write_perm,
+                create_perm = EXCLUDED.create_perm,
+                delete_perm = EXCLUDED.delete_perm,
+                submit_perm = EXCLUDED.submit_perm,
+                cancel_perm = EXCLUDED.cancel_perm,
+                amend_perm = EXCLUDED.amend_perm,
+                print_perm = EXCLUDED.print_perm,
+                email_perm = EXCLUDED.email_perm,
+                export_perm = EXCLUDED.export_perm,
+                import_perm = EXCLUDED.import_perm,
+                share_perm = EXCLUDED.share_perm,
+                report_perm = EXCLUDED.report_perm,
+                if_owner = EXCLUDED.if_owner,
+                updated_at = NOW()
+            RETURNING *, (SELECT name FROM roles WHERE id = custom_docperms.role_id) as role_name
+            "#,
+        )
+        .bind(perm_id)
+        .bind(payload.doctype_id)
+        .bind(payload.role_id)
+        .bind(permlevel)
+        .bind(read_perm)
+        .bind(write_perm)
+        .bind(create_perm)
+        .bind(delete_perm)
+        .bind(submit_perm)
+        .bind(cancel_perm)
+        .bind(amend_perm)
+        .bind(print_perm)
+        .bind(email_perm)
+        .bind(export_perm)
+        .bind(import_perm)
+        .bind(share_perm)
+        .bind(report_perm)
+        .bind(if_owner)
+        .fetch_one(&self.pool)
+        .await?;
+
+        Ok(row)
+    }
+
+    pub async fn delete_docperm(&self, id: Uuid) -> Result<bool, sqlx::Error> {
+        let res = sqlx::query("DELETE FROM custom_docperms WHERE id = $1")
+            .bind(id)
+            .execute(&self.pool)
+            .await?;
+        Ok(res.rows_affected() > 0)
+    }
 }
+
