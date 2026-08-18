@@ -186,6 +186,7 @@ const SupplierInvoiceImportView = lazy(() => import('../../pages/Buying/Supplier
 const SalesTargetVariancesView = lazy(() => import('../../pages/Selling/SalesTargetVariancesView'));
 const DunningsView = lazy(() => import('../../pages/Finance/DunningsView'));
 const AccountingDimensionsView = lazy(() => import('../../pages/Finance/AccountingDimensionsView'));
+const BuyingPricingView = lazy(() => import('../../pages/Buying/BuyingPricingView'));
 
 
 interface AdminContentRouterProps {
@@ -437,8 +438,8 @@ export function AdminContentRouter({
         'buying-price-lists': () => <PriceListsView buyingOnly />,
         'buying-product-bundles': () => <ProductBundles />,
         'buying-item-groups': () => <InventoryCategoriesView />,
-        'buying-promotional-schemes': () => <SalesPricingView />,
-        'buying-pricing-rules': () => <SalesPricingView />,
+        'buying-promotional-schemes': () => <BuyingPricingView mode="schemes" />,
+        'buying-pricing-rules': () => <BuyingPricingView mode="rules" />,
         'buying-settings': () => <BuyingSettingsView />,
         'purchase-tax-templates': () => <TaxTemplatesView />,
         'buying-terms-templates': () => <TermsTemplatesView buyingOnly />,
