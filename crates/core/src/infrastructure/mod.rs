@@ -19,3 +19,5 @@ pub mod pdf;
 pub use auth::*;
 pub mod tenant_db;
 pub use tenant_db::*;
+pub mod outbox;
+pub use outbox::*;

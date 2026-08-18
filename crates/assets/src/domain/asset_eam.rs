@@ -38,6 +38,30 @@ pub struct AssetDisposalRequest {
     pub reason: Option<String>,
 }
 
+/// Request for CWIP Capitalization to Fixed Asset
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AssetCapitalizationRequest {
+    pub asset_id: Uuid,
+    pub company_id: Uuid,
+    pub capitalization_date: NaiveDate,
+    pub capitalization_amount: Decimal,
+    pub cwip_account_id: Uuid,       // Credit: Capital Work-In-Progress Account
+    pub fixed_asset_account_id: Uuid, // Debit: Fixed Asset Account
+    pub notes: Option<String>,
+}
+
+/// Request for Asset Impairment Write-Down (IAS 36)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AssetImpairmentRequest {
+    pub asset_id: Uuid,
+    pub company_id: Uuid,
+    pub impairment_date: NaiveDate,
+    pub impairment_amount: Decimal,
+    pub impairment_loss_account_id: Uuid,        // Debit: Impairment Expense
+    pub accumulated_impairment_account_id: Uuid, // Credit: Accumulated Impairment
+    pub reason: String,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DepreciationScheduleItem {
     pub schedule_date: NaiveDate,
