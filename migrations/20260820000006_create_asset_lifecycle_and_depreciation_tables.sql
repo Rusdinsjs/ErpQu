@@ -63,7 +63,7 @@ CREATE TABLE IF NOT EXISTS public.asset_disposals (
     sale_amount NUMERIC(15, 4) NOT NULL DEFAULT 0,
     book_value NUMERIC(15, 4) NOT NULL CHECK (book_value >= 0),
     gain_loss_amount NUMERIC(15, 4) NOT NULL, -- Positive for Gain, Negative for Loss
-    destination_account_id UUID REFERENCES public.accounts(id),
+    destination_account_id UUID REFERENCES public.chart_of_accounts(id),
     journal_entry_id UUID REFERENCES public.journal_entries(id),
     reason TEXT,
     created_by UUID REFERENCES public.users(id),
