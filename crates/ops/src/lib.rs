@@ -27,3 +27,5 @@ pub use management_system_telemetry::{SensorRepository, SensorService};
 pub use quality_service::{CreateQualityInspectionRequest, QualityService};
 pub use tax_renewal_service::TaxRenewalService;
 pub use work_order_service::{CreateWorkOrderRequest, WorkOrderService};
+pub mod wo_settlement_service;
+pub use wo_settlement_service::*;

@@ -49,6 +49,26 @@ pub fn asset_routes() -> Router<AppState> {
             )),
         )
         .route(
+            "/capitalization",
+            post(asset_lifecycle_handler::capitalize_asset
+                .layer(axum_middleware::from_fn(require_permission("asset.edit")))),
+        )
+        .route(
+            "/transfer",
+            post(asset_lifecycle_handler::transfer_asset
+                .layer(axum_middleware::from_fn(require_permission("asset.edit")))),
+        )
+        .route(
+            "/impairment",
+            post(asset_lifecycle_handler::impair_asset
+                .layer(axum_middleware::from_fn(require_permission("asset.edit")))),
+        )
+        .route(
+            "/disposal",
+            post(asset_lifecycle_handler::dispose_asset
+                .layer(axum_middleware::from_fn(require_permission("asset.edit")))),
+        )
+        .route(
             "/search",
             get(search_assets.layer(axum_middleware::from_fn(require_permission("asset.view")))),
         )

@@ -5,6 +5,7 @@ pub mod approval_handler;
 pub mod approval_workflow_handler;
 pub mod asset_expense_handler;
 pub mod asset_handler;
+pub mod asset_lifecycle_handler;
 pub mod attendance_handler;
 pub mod audit_handler;
 pub mod auth_handler;
