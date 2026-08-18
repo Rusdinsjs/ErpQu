@@ -249,10 +249,13 @@ impl UserRepository {
     }
 
     pub async fn update_last_login(&self, id: Uuid) -> Result<(), sqlx::Error> {
-        sqlx::query("UPDATE users SET last_login_at = NOW(), updated_at = NOW() WHERE id = $1")
+        let res = sqlx::query("UPDATE users SET last_login_at = NOW(), updated_at = NOW() WHERE id = $1")
             .bind(id)
             .execute(&self.pool)
-            .await?;
+            .await;
+        if let Err(ref e) = res {
+            tracing::warn!(user_id = %id, error = %e, "Failed to update last_login_at timestamp");
+        }
         Ok(())
     }
 
