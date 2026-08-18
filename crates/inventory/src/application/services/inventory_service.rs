@@ -477,6 +477,7 @@ impl InventoryService {
             {
                 if total_cost > Decimal::ZERO {
                     let journal_req = CreateJournalEntryRequest {
+                        company_id: None,
                         date: Utc::now().date_naive(),
                         description: format!(
                             "Inventory Usage: {} for WO {} ({})",

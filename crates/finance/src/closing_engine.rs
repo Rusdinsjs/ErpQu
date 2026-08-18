@@ -11,7 +11,7 @@ use management_system_core::domain::errors::{DomainError, DomainResult};
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 use serde::{Deserialize, Serialize};
-use sqlx::{PgPool, Postgres, Transaction};
+use sqlx::PgPool;
 use uuid::Uuid;
 
 /// Result of a closing checklist validation

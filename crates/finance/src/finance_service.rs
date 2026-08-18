@@ -402,6 +402,7 @@ impl FinanceService {
 
         // 5. Create Draft Journal Entry in the SAME UnitOfWork
         let journal_req = CreateJournalEntryRequest {
+                company_id: None,
             date: created_invoice.date,
             description: format!(
                 "Penjualan: {} - {}",
@@ -606,6 +607,7 @@ impl FinanceService {
             })?;
 
             let journal_req = CreateJournalEntryRequest {
+                company_id: None,
                 date: updated_invoice.date,
                 description: format!(
                     "Penjualan: {} - {}",
@@ -741,6 +743,7 @@ impl FinanceService {
 
         if let (Some(ap), Some(exp)) = (ap_acc, exp_acc) {
             let journal_req = CreateJournalEntryRequest {
+                company_id: None,
                 date: created_bill.date,
                 description: format!("Tagihan Pembelian: {}", created_bill.bill_number),
                 reference: Some(created_bill.bill_number.clone()),
@@ -822,6 +825,7 @@ impl FinanceService {
 
         if let Some(exp) = exp_acc {
             let journal_req = CreateJournalEntryRequest {
+                company_id: None,
                 date: created_expense.date,
                 description: format!("Pengeluaran Beban: {}", created_expense.expense_number),
                 reference: Some(created_expense.expense_number.clone()),
@@ -900,6 +904,7 @@ impl FinanceService {
         // If transfer/inflow/outflow accounts provided, create Journal Entry
         if let (Some(from_acc), Some(to_acc)) = (req.from_account_id, req.to_account_id) {
             let journal_req = CreateJournalEntryRequest {
+                company_id: None,
                 date: created_tx.date,
                 description: format!("Transaksi Kas/Bank: {}", created_tx.transaction_number),
                 reference: Some(created_tx.transaction_number.clone()),

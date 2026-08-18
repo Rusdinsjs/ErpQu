@@ -1,6 +1,6 @@
 use crate::domain::entities::gl_entry::{PostingInstruction, PostingLineItem};
 use crate::domain::entities::journal::{
-    CreateJournalEntryRequest, JournalEntry, JournalEntryDetail,
+    CreateJournalEntryRequest, CreateJournalLineRequest, JournalEntry, JournalEntryDetail, JournalStatus,
 };
 use crate::posting_engine::AccountingPostingEngine;
 use crate::repositories::{FinanceRepository, JournalRepository};
@@ -91,19 +91,57 @@ impl JournalService {
         self.journal_repo.list_journal_entries().await
     }
 
-    pub async fn post_journal_entry(&self, id: Uuid, poster_id: Option<Uuid>) -> DomainResult<()> {
+    pub async fn submit_journal_entry(&self, id: Uuid) -> DomainResult<()> {
         let entry = self
             .journal_repo
             .get_journal_entry_detail(id)
             .await?
             .ok_or_else(|| DomainError::not_found("JournalEntry", id))?;
 
-        // Enforce Segregation of Duties (SoD / Four-Eyes Principle): Maker cannot post their own journal entry
+        if entry.header.status != JournalStatus::Draft {
+            return Err(DomainError::business_rule(
+                "InvalidState",
+                "Only Draft journal entries can be submitted",
+            ));
+        }
+
+        self.journal_repo.update_status(id, JournalStatus::Submitted).await
+    }
+
+    pub async fn approve_journal_entry(&self, id: Uuid, approver_id: Uuid) -> DomainResult<()> {
+        let entry = self
+            .journal_repo
+            .get_journal_entry_detail(id)
+            .await?
+            .ok_or_else(|| DomainError::not_found("JournalEntry", id))?;
+
+        if let Some(creator) = entry.header.created_by {
+            management_system_core::domain::sod::SodValidator::validate_journal_posting(creator, approver_id)?;
+        }
+
+        if entry.header.status != JournalStatus::Submitted {
+            return Err(DomainError::business_rule(
+                "InvalidState",
+                "Only Submitted journal entries can be approved",
+            ));
+        }
+
+        self.journal_repo.update_status(id, JournalStatus::Approved).await
+    }
+
+    pub async fn post_journal_entry(&self, id: Uuid, company_id: Uuid, poster_id: Option<Uuid>) -> DomainResult<()> {
+        let entry = self
+            .journal_repo
+            .get_journal_entry_detail(id)
+            .await?
+            .ok_or_else(|| DomainError::not_found("JournalEntry", id))?;
+
+        // Enforce Maker != Checker SoD
         if let (Some(creator), Some(poster)) = (entry.header.created_by, poster_id) {
             management_system_core::domain::sod::SodValidator::validate_journal_posting(creator, poster)?;
         }
 
-        if entry.header.status == crate::domain::entities::journal::JournalStatus::Posted {
+        if entry.header.status == JournalStatus::Posted {
             return Err(DomainError::business_rule(
                 "AlreadyPosted",
                 "Journal entry is already in Posted status",
@@ -124,108 +162,149 @@ impl JournalService {
             ));
         }
 
-        if entry.lines.is_empty() {
-            return Err(DomainError::business_rule(
-                "EmptyJournalEntry",
-                "Cannot post empty journal entry",
-            ));
-        }
+        let effective_company_id = entry.header.company_id.unwrap_or(company_id);
 
-        // Validate all accounts exist
-        for line in &entry.lines {
-            if self
-                .finance_repo
-                .find_by_id(line.account_id)
-                .await?
-                .is_none()
-            {
-                return Err(DomainError::not_found("ChartOfAccount", line.account_id));
-            }
-        }
+        let engine = self.posting_engine.as_ref().ok_or_else(|| {
+            DomainError::business_rule("MissingPostingEngine", "Mandatory AccountingPostingEngine is not initialized")
+        })?;
 
-        if let Some(ref engine) = self.posting_engine {
-            let company_id = Uuid::nil(); // Default company scope
-            let instruction = PostingInstruction {
-                company_id,
-                posting_date: entry.header.date,
-                voucher_type: "JOURNAL_ENTRY".to_string(),
-                voucher_no: entry.header.transaction_number.clone(),
-                voucher_id: entry.header.id,
-                lines: entry
-                    .lines
-                    .iter()
-                    .map(|l| PostingLineItem {
-                        account_id: l.account_id,
-                        debit: l.debit,
-                        credit: l.credit,
-                        party_type: None,
-                        party_id: None,
-                        cost_center_id: None,
-                        project_id: None,
-                        currency: Some("IDR".to_string()),
-                        exchange_rate: Some(rust_decimal::Decimal::from(1)),
-                    })
-                    .collect(),
-                created_by: entry.header.created_by,
-            };
+        let instruction = PostingInstruction {
+            company_id: effective_company_id,
+            posting_date: entry.header.date,
+            voucher_type: "JOURNAL_ENTRY".to_string(),
+            voucher_no: entry.header.transaction_number.clone(),
+            voucher_id: entry.header.id,
+            lines: entry
+                .lines
+                .iter()
+                .map(|l| PostingLineItem {
+                    account_id: l.account_id,
+                    debit: l.debit,
+                    credit: l.credit,
+                    party_type: None,
+                    party_id: None,
+                    cost_center_id: None,
+                    project_id: None,
+                    currency: Some("IDR".to_string()),
+                    exchange_rate: Some(rust_decimal::Decimal::from(1)),
+                })
+                .collect(),
+            created_by: poster_id.or(entry.header.created_by),
+        };
 
-            let mut uow = UnitOfWork::begin(self.journal_repo.pool()).await?;
-            engine.post_in_uow(uow.tx(), &instruction).await?;
-            JournalRepository::update_status_in_uow(
-                &mut uow,
-                id,
-                crate::domain::entities::journal::JournalStatus::Posted,
-            )
-            .await?;
-            uow.commit().await?;
-        } else {
-            self.journal_repo
-                .update_status(id, crate::domain::entities::journal::JournalStatus::Posted)
-                .await?;
-        }
+        let mut uow = UnitOfWork::begin(self.journal_repo.pool()).await?;
+        engine.post_in_uow(uow.tx(), &instruction).await?;
+        JournalRepository::update_status_in_uow(&mut uow, id, JournalStatus::Posted).await?;
+        uow.commit().await?;
 
         Ok(())
     }
 
-    pub async fn unpost_journal_entry(&self, id: Uuid) -> DomainResult<()> {
+    /// Reversal Voucher (Point A.9, A.10): Creates an explicit Reversal Voucher referencing original journal
+    pub async fn reverse_journal_entry(
+        &self,
+        id: Uuid,
+        company_id: Uuid,
+        reason: String,
+        reversed_by: Option<Uuid>,
+    ) -> DomainResult<JournalEntryDetail> {
+        let original_entry = self
+            .journal_repo
+            .get_journal_entry_detail(id)
+            .await?
+            .ok_or_else(|| DomainError::not_found("JournalEntry", id))?;
+
+        if original_entry.header.status != JournalStatus::Posted {
+            return Err(DomainError::business_rule(
+                "InvalidReversalState",
+                "Only Posted journal entries can be reversed",
+            ));
+        }
+
+        let effective_company_id = original_entry.header.company_id.unwrap_or(company_id);
+        let engine = self.posting_engine.as_ref().ok_or_else(|| {
+            DomainError::business_rule("MissingPostingEngine", "Mandatory AccountingPostingEngine is not initialized")
+        })?;
+
+        let mut uow = UnitOfWork::begin(self.journal_repo.pool()).await?;
+
+        // 1. Post exact GL Reversal inside UoW (Fail-Closed)
+        let reversal_date = chrono::Utc::now().date_naive();
+        engine
+            .reverse_voucher_in_uow(
+                uow.tx(),
+                effective_company_id,
+                "JOURNAL_ENTRY",
+                id,
+                reversal_date,
+                reversed_by,
+            )
+            .await?;
+
+        // 2. Create Reversal Journal Voucher
+        let reversal_seq = format!("REV-{}", original_entry.header.transaction_number);
+        let reversal_req = CreateJournalEntryRequest {
+            company_id: Some(effective_company_id),
+            date: reversal_date,
+            description: format!("Reversal of {}: {}", original_entry.header.transaction_number, reason),
+            reference: Some(original_entry.header.transaction_number.clone()),
+            lines: original_entry
+                .lines
+                .iter()
+                .map(|l| CreateJournalLineRequest {
+                    account_id: l.account_id,
+                    description: Some(format!("Reversal of {}", l.description.as_deref().unwrap_or(""))),
+                    debit: l.credit,
+                    credit: l.debit,
+                })
+                .collect(),
+        };
+
+        let reversal_detail = JournalRepository::create_journal_entry_with_uow(
+            &mut uow,
+            reversal_seq,
+            &reversal_req,
+            reversed_by,
+        )
+        .await?;
+
+        // Mark reversal voucher as Posted and original voucher as Reversed
+        JournalRepository::update_status_in_uow(&mut uow, reversal_detail.header.id, JournalStatus::Posted).await?;
+        JournalRepository::record_reversal_in_uow(
+            &mut uow,
+            id,
+            reversal_detail.header.id,
+            &reason,
+            reversed_by,
+        )
+        .await?;
+
+        uow.commit().await?;
+
+        tracing::info!(
+            "SECURITY AUDIT JOURNAL_REVERSED: OriginalID={} ReversalID={} Reason={}",
+            id,
+            reversal_detail.header.id,
+            reason
+        );
+
+        Ok(reversal_detail)
+    }
+
+    pub async fn cancel_journal_entry(&self, id: Uuid) -> DomainResult<()> {
         let entry = self
             .journal_repo
             .get_journal_entry_detail(id)
             .await?
             .ok_or_else(|| DomainError::not_found("JournalEntry", id))?;
 
-        if entry.header.status == crate::domain::entities::journal::JournalStatus::Draft {
+        if entry.header.status == JournalStatus::Posted {
             return Err(DomainError::business_rule(
-                "AlreadyDraft",
-                "Journal entry is already in Draft status",
+                "CannotCancelPosted",
+                "Posted journal entries cannot be cancelled directly. Use Reversal instead.",
             ));
         }
 
-        if let Some(ref engine) = self.posting_engine {
-            let mut uow = UnitOfWork::begin(self.journal_repo.pool()).await?;
-            let _ = engine
-                .reverse_voucher_in_uow(
-                    uow.tx(),
-                    Uuid::nil(),
-                    "JOURNAL_ENTRY",
-                    id,
-                    chrono::Utc::now().date_naive(),
-                    None,
-                )
-                .await;
-            JournalRepository::update_status_in_uow(
-                &mut uow,
-                id,
-                crate::domain::entities::journal::JournalStatus::Draft,
-            )
-            .await?;
-            uow.commit().await?;
-        } else {
-            self.journal_repo
-                .update_status(id, crate::domain::entities::journal::JournalStatus::Draft)
-                .await?;
-        }
-
-        Ok(())
+        self.journal_repo.update_status(id, JournalStatus::Cancelled).await
     }
 }

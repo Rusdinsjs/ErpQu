@@ -50,6 +50,8 @@ impl JwtConfig {
 
         Self {
             secret: std::env::var("JWT_SECRET")
+                .ok()
+                .filter(|s| !s.trim().is_empty())
                 .expect("FATAL SECURITY ERROR: JWT_SECRET environment variable is required"),
             expiry_hours,
             access_expiry_minutes: access_mins,

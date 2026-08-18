@@ -44,11 +44,10 @@ impl AccountingPostingEngine {
             ));
         }
 
-        // 2. Fiscal Period Check (QACC-002)
-        // If an accounting period exists for posting_date, ensure it is NOT closed.
-        let closed_period: Option<bool> = sqlx::query_scalar(
+        // 2. Fiscal Period Check (QACC-002: 3-state open, closed, permanently_closed)
+        let period_status: Option<(bool, Option<String>)> = sqlx::query_as(
             r#"
-            SELECT ap.is_closed
+            SELECT ap.is_closed, ap.period_status::text
             FROM accounting_periods ap
             JOIN fiscal_years fy ON ap.fiscal_year_id = fy.id
             WHERE fy.company_id = $1 AND $2 BETWEEN ap.start_date AND ap.end_date
@@ -60,14 +59,17 @@ impl AccountingPostingEngine {
         .await
         .map_err(|e| DomainError::internal(e.to_string()))?;
 
-        if let Some(true) = closed_period {
-            return Err(DomainError::business_rule(
-                "ClosedAccountingPeriod",
-                &format!(
-                    "Posting date {} falls into a closed accounting period",
-                    instruction.posting_date
-                ),
-            ));
+        if let Some((is_closed, status_opt)) = period_status {
+            let status = status_opt.unwrap_or_default().to_lowercase();
+            if is_closed || status == "closed" || status == "permanently_closed" {
+                return Err(DomainError::business_rule(
+                    "ClosedAccountingPeriod",
+                    &format!(
+                        "Posting date {} falls into a closed or permanently locked accounting period ({})",
+                        instruction.posting_date, status
+                    ),
+                ));
+            }
         }
 
         // 3. COA Validation (QACC-001)

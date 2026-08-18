@@ -1,6 +1,4 @@
-//! Pure Journal Entry Entities (3R.1.1-002)
-//!
-//! Owned strictly by `crates/finance`. Contains NO sqlx persistence attributes.
+//! Pure Journal Entry Entities (Fase 23: Complete Lifecycle & Reversal Voucher Tracking)
 
 use chrono::{DateTime, NaiveDate, Utc};
 use rust_decimal::Decimal;
@@ -11,18 +9,27 @@ use uuid::Uuid;
 #[serde(rename_all = "lowercase")]
 pub enum JournalStatus {
     Draft,
+    Submitted,
+    Approved,
     Posted,
+    Reversed,
+    Cancelled,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct JournalEntry {
     pub id: Uuid,
+    pub company_id: Option<Uuid>,
     pub transaction_number: String,
     pub date: NaiveDate,
     pub description: String,
     pub reference: Option<String>,
     pub status: JournalStatus,
     pub created_by: Option<Uuid>,
+    pub reversed_by: Option<Uuid>,
+    pub reversed_at: Option<DateTime<Utc>>,
+    pub reversal_reason: Option<String>,
+    pub reversal_source_id: Option<Uuid>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -58,8 +65,14 @@ pub struct CreateJournalLineRequest {
 
 #[derive(Debug, Deserialize)]
 pub struct CreateJournalEntryRequest {
+    pub company_id: Option<Uuid>,
     pub date: NaiveDate,
     pub description: String,
     pub reference: Option<String>,
     pub lines: Vec<CreateJournalLineRequest>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ReverseJournalRequest {
+    pub reason: String,
 }

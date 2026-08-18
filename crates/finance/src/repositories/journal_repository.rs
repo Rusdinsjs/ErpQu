@@ -1,47 +1,62 @@
-use rust_decimal::Decimal;
-use sqlx::PgPool;
-use uuid::Uuid;
-
 use crate::domain::entities::journal::{
     CreateJournalEntryRequest, JournalEntry, JournalEntryDetail, JournalLine, JournalStatus,
 };
+use chrono::{DateTime, NaiveDate, Utc};
 use management_system_core::domain::errors::{DomainError, DomainResult};
 use management_system_core::infrastructure::database::UnitOfWork;
+use rust_decimal::Decimal;
+use sqlx::{FromRow, PgPool};
+use uuid::Uuid;
 
-#[derive(Debug, sqlx::FromRow)]
+#[derive(FromRow)]
 struct JournalEntryRow {
     id: Uuid,
+    company_id: Option<Uuid>,
     transaction_number: String,
-    date: chrono::NaiveDate,
+    date: NaiveDate,
     description: String,
     reference: Option<String>,
     status: String,
     created_by: Option<Uuid>,
-    created_at: chrono::DateTime<chrono::Utc>,
-    updated_at: chrono::DateTime<chrono::Utc>,
+    reversed_by: Option<Uuid>,
+    reversed_at: Option<DateTime<Utc>>,
+    reversal_reason: Option<String>,
+    reversal_source_id: Option<Uuid>,
+    created_at: DateTime<Utc>,
+    updated_at: DateTime<Utc>,
 }
 
 impl From<JournalEntryRow> for JournalEntry {
     fn from(r: JournalEntryRow) -> Self {
         let status = match r.status.to_lowercase().as_str() {
+            "submitted" => JournalStatus::Submitted,
+            "approved" => JournalStatus::Approved,
             "posted" => JournalStatus::Posted,
+            "reversed" => JournalStatus::Reversed,
+            "cancelled" => JournalStatus::Cancelled,
             _ => JournalStatus::Draft,
         };
+
         Self {
             id: r.id,
+            company_id: r.company_id,
             transaction_number: r.transaction_number,
             date: r.date,
             description: r.description,
             reference: r.reference,
             status,
             created_by: r.created_by,
+            reversed_by: r.reversed_by,
+            reversed_at: r.reversed_at,
+            reversal_reason: r.reversal_reason,
+            reversal_source_id: r.reversal_source_id,
             created_at: r.created_at,
             updated_at: r.updated_at,
         }
     }
 }
 
-#[derive(Debug, sqlx::FromRow)]
+#[derive(FromRow)]
 struct JournalLineRow {
     id: Uuid,
     journal_entry_id: Uuid,
@@ -85,9 +100,7 @@ impl JournalRepository {
         created_by: Option<Uuid>,
     ) -> DomainResult<JournalEntryDetail> {
         let mut uow = UnitOfWork::begin(&self.pool).await?;
-        let detail =
-            Self::create_journal_entry_with_uow(&mut uow, transaction_number, req, created_by)
-                .await?;
+        let detail = Self::create_journal_entry_with_uow(&mut uow, transaction_number, req, created_by).await?;
         uow.commit().await?;
         Ok(detail)
     }
@@ -101,14 +114,15 @@ impl JournalRepository {
         let header_row = sqlx::query_as::<_, JournalEntryRow>(
             r#"
             INSERT INTO journal_entries (
-                transaction_number, date, description, reference, status, created_by
+                company_id, transaction_number, date, description, reference, status, created_by
             )
-            VALUES ($1, $2, $3, $4, 'draft'::journal_status, $5)
+            VALUES ($1, $2, $3, $4, $5, 'draft'::journal_status, $6)
             RETURNING 
-                id, transaction_number, date, description, reference, status::text AS status,
-                created_by, created_at, updated_at
+                id, company_id, transaction_number, date, description, reference, status::text AS status,
+                created_by, reversed_by, reversed_at, reversal_reason, reversal_source_id, created_at, updated_at
             "#,
         )
+        .bind(req.company_id)
         .bind(transaction_number)
         .bind(req.date)
         .bind(&req.description)
@@ -147,7 +161,7 @@ impl JournalRepository {
         Ok(JournalEntryDetail { header, lines })
     }
 
-    pub async fn update_journal_entry_with_uow(
+        pub async fn update_journal_entry_with_uow(
         uow: &mut UnitOfWork,
         journal_id: Uuid,
         req: &CreateJournalEntryRequest,
@@ -176,8 +190,8 @@ impl JournalRepository {
             SET date = $1, description = $2, reference = $3, updated_at = NOW()
             WHERE id = $4
             RETURNING 
-                id, transaction_number, date, description, reference, status::text AS status,
-                created_by, created_at, updated_at
+                id, company_id, transaction_number, date, description, reference, status::text AS status,
+                created_by, reversed_by, reversed_at, reversal_reason, reversal_source_id, created_at, updated_at
             "#,
         )
         .bind(req.date)
@@ -230,8 +244,8 @@ impl JournalRepository {
         let header_row = sqlx::query_as::<_, JournalEntryRow>(
             r#"
             SELECT 
-                id, transaction_number, date, description, reference, status::text AS status,
-                created_by, created_at, updated_at
+                id, company_id, transaction_number, date, description, reference, status::text AS status,
+                created_by, reversed_by, reversed_at, reversal_reason, reversal_source_id, created_at, updated_at
             FROM journal_entries
             WHERE id = $1
             "#,
@@ -267,8 +281,8 @@ impl JournalRepository {
         let rows = sqlx::query_as::<_, JournalEntryRow>(
             r#"
             SELECT 
-                id, transaction_number, date, description, reference, status::text AS status,
-                created_by, created_at, updated_at
+                id, company_id, transaction_number, date, description, reference, status::text AS status,
+                created_by, reversed_by, reversed_at, reversal_reason, reversal_source_id, created_at, updated_at
             FROM journal_entries
             ORDER BY created_at DESC
             "#,
@@ -283,7 +297,11 @@ impl JournalRepository {
     pub async fn update_status(&self, id: Uuid, status: JournalStatus) -> DomainResult<()> {
         let status_str = match status {
             JournalStatus::Draft => "draft",
+            JournalStatus::Submitted => "submitted",
+            JournalStatus::Approved => "approved",
             JournalStatus::Posted => "posted",
+            JournalStatus::Reversed => "reversed",
+            JournalStatus::Cancelled => "cancelled",
         };
         sqlx::query("UPDATE journal_entries SET status = $1::journal_status, updated_at = NOW() WHERE id = $2")
             .bind(status_str)
@@ -302,7 +320,11 @@ impl JournalRepository {
     ) -> DomainResult<()> {
         let status_str = match status {
             JournalStatus::Draft => "draft",
+            JournalStatus::Submitted => "submitted",
+            JournalStatus::Approved => "approved",
             JournalStatus::Posted => "posted",
+            JournalStatus::Reversed => "reversed",
+            JournalStatus::Cancelled => "cancelled",
         };
         sqlx::query("UPDATE journal_entries SET status = $1::journal_status, updated_at = NOW() WHERE id = $2")
             .bind(status_str)
@@ -310,6 +332,36 @@ impl JournalRepository {
             .execute(uow.conn())
             .await
             .map_err(|e| DomainError::Database(e.to_string()))?;
+
+        Ok(())
+    }
+
+    pub async fn record_reversal_in_uow(
+        uow: &mut UnitOfWork,
+        original_id: Uuid,
+        reversal_id: Uuid,
+        reason: &str,
+        reversed_by: Option<Uuid>,
+    ) -> DomainResult<()> {
+        sqlx::query(
+            r#"
+            UPDATE journal_entries 
+            SET status = 'reversed'::journal_status, 
+                reversed_by = $1, 
+                reversed_at = NOW(), 
+                reversal_reason = $2, 
+                reversal_source_id = $3,
+                updated_at = NOW() 
+            WHERE id = $4
+            "#
+        )
+        .bind(reversed_by)
+        .bind(reason)
+        .bind(reversal_id)
+        .bind(original_id)
+        .execute(uow.conn())
+        .await
+        .map_err(|e| DomainError::Database(e.to_string()))?;
 
         Ok(())
     }

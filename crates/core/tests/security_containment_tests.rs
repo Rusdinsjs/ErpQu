@@ -11,6 +11,9 @@
 use management_system_core::infrastructure::database::connection::DatabaseConfig;
 use management_system_core::shared::config::{sanitize_connection_string, AppConfig};
 use management_system_core::shared::utils::jwt::JwtConfig;
+use std::sync::Mutex;
+
+static ENV_LOCK: Mutex<()> = Mutex::new(());
 
 #[test]
 fn test_sanitize_connection_string_masks_password() {
@@ -28,37 +31,77 @@ fn test_sanitize_connection_string_masks_password() {
 }
 
 #[test]
-#[should_panic(expected = "JWT_SECRET environment variable is required")]
 fn test_app_config_panics_without_jwt_secret() {
-    std::env::remove_var("JWT_SECRET");
+    let _guard = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
     std::env::set_var("DATABASE_URL", "postgres://user:pass@localhost:5432/db");
+    std::env::set_var("JWT_SECRET", "");
 
-    let _ = AppConfig::from_env();
+    let result = std::panic::catch_unwind(|| {
+        let _ = AppConfig::from_env();
+    });
+    assert!(result.is_err());
+    let panic_msg = result.unwrap_err();
+    let msg = panic_msg
+        .downcast_ref::<&str>()
+        .copied()
+        .or_else(|| panic_msg.downcast_ref::<String>().map(|s| s.as_str()))
+        .unwrap_or("");
+    assert!(msg.contains("JWT_SECRET environment variable is required"));
 }
 
 #[test]
-#[should_panic(expected = "DATABASE_URL must be set")]
 fn test_app_config_panics_without_database_url() {
-    std::env::remove_var("DATABASE_URL");
+    let _guard = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
     std::env::set_var("JWT_SECRET", "valid-secret-key-32-chars-long-secure");
+    std::env::set_var("DATABASE_URL", "");
 
-    let _ = AppConfig::from_env();
+    let result = std::panic::catch_unwind(|| {
+        let _ = AppConfig::from_env();
+    });
+    assert!(result.is_err());
+    let panic_msg = result.unwrap_err();
+    let msg = panic_msg
+        .downcast_ref::<&str>()
+        .copied()
+        .or_else(|| panic_msg.downcast_ref::<String>().map(|s| s.as_str()))
+        .unwrap_or("");
+    assert!(msg.contains("DATABASE_URL must be set"));
 }
 
 #[test]
-#[should_panic(expected = "DATABASE_URL environment variable is required")]
 fn test_database_config_default_panics_without_database_url() {
-    std::env::remove_var("DATABASE_URL");
+    let _guard = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+    std::env::set_var("DATABASE_URL", "");
 
-    let _ = DatabaseConfig::default();
+    let result = std::panic::catch_unwind(|| {
+        let _ = DatabaseConfig::default();
+    });
+    assert!(result.is_err());
+    let panic_msg = result.unwrap_err();
+    let msg = panic_msg
+        .downcast_ref::<&str>()
+        .copied()
+        .or_else(|| panic_msg.downcast_ref::<String>().map(|s| s.as_str()))
+        .unwrap_or("");
+    assert!(msg.contains("DATABASE_URL environment variable is required"));
 }
 
 #[test]
-#[should_panic(expected = "JWT_SECRET environment variable is required")]
 fn test_jwt_config_from_env_panics_without_jwt_secret() {
-    std::env::remove_var("JWT_SECRET");
+    let _guard = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
+    std::env::set_var("JWT_SECRET", "");
 
-    let _ = JwtConfig::from_env();
+    let result = std::panic::catch_unwind(|| {
+        let _ = JwtConfig::from_env();
+    });
+    assert!(result.is_err());
+    let panic_msg = result.unwrap_err();
+    let msg = panic_msg
+        .downcast_ref::<&str>()
+        .copied()
+        .or_else(|| panic_msg.downcast_ref::<String>().map(|s| s.as_str()))
+        .unwrap_or("");
+    assert!(msg.contains("JWT_SECRET environment variable is required"));
 }
 
 #[test]
