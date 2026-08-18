@@ -33,6 +33,12 @@ fi
 
 log_info "Using Docker Compose CLI: $DOCKER_COMPOSE"
 
+# Check NTP / System Time Synchronization (N49)
+if command -v timedatectl >/dev/null 2>&1; then
+    log_info "Verifying system time synchronization (NTP)..."
+    timedatectl set-ntp true || log_warn "Failed to force NTP sync; proceeding with system clock."
+fi
+
 # 2. Check .env file
 if [ ! -f ".env" ]; then
     if [ -f ".env.production.example" ]; then

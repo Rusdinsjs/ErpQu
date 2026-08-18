@@ -25,6 +25,26 @@ fn test_qast_003_depreciation_straight_line_math() {
 }
 
 #[test]
+fn test_generate_straight_line_schedule_incremental_dates() {
+    use chrono::NaiveDate;
+    use management_system_assets::domain::asset_eam::AssetEamEngine;
+
+    let start_date = NaiveDate::from_ymd_opt(2026, 1, 1).unwrap();
+    let schedule = AssetEamEngine::generate_straight_line_schedule(
+        dec!(12000000.00),
+        dec!(0.00),
+        start_date,
+        3,
+    )
+    .unwrap();
+
+    assert_eq!(schedule.len(), 3);
+    assert_eq!(schedule[0].schedule_date, NaiveDate::from_ymd_opt(2026, 1, 1).unwrap());
+    assert_eq!(schedule[1].schedule_date, NaiveDate::from_ymd_opt(2026, 2, 1).unwrap());
+    assert_eq!(schedule[2].schedule_date, NaiveDate::from_ymd_opt(2026, 3, 1).unwrap());
+}
+
+#[test]
 fn test_qast_004_asset_disposal_gain_loss_calculation() {
     let cost = dec!(100000000.00);
     let accum_depr = dec!(60000000.00);

@@ -18,6 +18,7 @@ pub fn create_router(state: AppState) -> Router {
     // Public routes
     let public_routes = Router::new()
         .route("/health", get(health_check))
+        .route("/ready", get(health_handler::readiness_check))
         .route("/health/ready", get(health_handler::readiness_check))
         .route("/health/detailed", get(health_handler::detailed_health_check))
         .route("/metrics", get(metrics_handler::prometheus_metrics))

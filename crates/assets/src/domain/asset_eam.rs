@@ -87,8 +87,12 @@ impl AssetEamEngine {
             accum_depr += item_depr;
             let book_value = purchase_cost - accum_depr;
 
+            let schedule_date = start_date
+                .checked_add_months(chrono::Months::new((m - 1) as u32))
+                .unwrap_or(start_date);
+
             schedule.push(DepreciationScheduleItem {
-                schedule_date: start_date, // simplified date
+                schedule_date,
                 depreciation_amount: item_depr,
                 accumulated_depreciation: accum_depr,
                 remaining_book_value: book_value,

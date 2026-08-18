@@ -42,3 +42,34 @@ async fn test_health_check_endpoint() {
     assert_eq!(body_json["status"], "ok");
     assert_eq!(body_json["version"], "1.0.0");
 }
+
+async fn readiness_check() -> axum::Json<serde_json::Value> {
+    axum::Json(serde_json::json!({
+        "status": "ready",
+        "version": "1.0.0",
+        "database": {"status": "ok"},
+        "redis": {"status": "ok"}
+    }))
+}
+
+#[tokio::test]
+async fn test_ready_check_endpoint() {
+    let app = Router::new().route("/ready", get(readiness_check));
+
+    let response = app
+        .oneshot(
+            Request::builder()
+                .uri("/ready")
+                .body(axum::body::Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let body = response.into_body().collect().await.unwrap().to_bytes();
+    let body_json: serde_json::Value = serde_json::from_slice(&body).unwrap();
+
+    assert_eq!(body_json["status"], "ready");
+}

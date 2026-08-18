@@ -1,0 +1,92 @@
+groups:
+  - name: erpqu_alerting_rules
+    rules:
+      # 1. High HTTP Error Rate (> 5% errors)
+      - alert: HighErrorRate
+        expr: (sum(rate(http_requests_total{status=~"5.."}[5m])) / sum(rate(http_requests_total[5m]))) * 100 > 5
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High HTTP 5xx error rate detected ({{ $value }}%)"
+          description: "HTTP 5xx error rate exceeded 5% threshold over 5 minutes."
+
+      # 2. High Request Latency (p95 > 500ms)
+      - alert: HighRequestLatency
+        expr: histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le)) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High p95 API Latency ({{ $value }}s)"
+          description: "API 95th percentile latency exceeded 500ms over 5 minutes."
+
+      # 3. Database Connection Saturation (> 85% connection pool used)
+      - alert: DatabaseSaturation
+        expr: (db_pool_active_connections / db_pool_max_connections) * 100 > 85
+        for: 3m
+        labels:
+          severity: critical
+        annotations:
+          summary: "PostgreSQL Connection Pool Saturation ({{ $value }}%)"
+          description: "Database connection pool utilization exceeded 85%."
+
+      # 4. Redis Failure / Unreachable
+      - alert: RedisServiceDown
+        expr: redis_up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Redis Cache/Session Store is Down"
+          description: "Redis health probe failed or connection lost."
+
+      # 5. Outbox Lag Alert (Unprocessed events > 50 or oldest > 5m)
+      - alert: OutboxProcessingLag
+        expr: outbox_unprocessed_count > 50
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Outbox Queue Processing Lag ({{ $value }} pending events)"
+          description: "Transactional Outbox processing queue exceeds 50 pending events."
+
+      # 6. High Failed Logins (Security anomaly > 10 failures in 5m)
+      - alert: HighFailedLoginAttempts
+        expr: sum(rate(auth_failed_login_total[5m])) * 300 > 10
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Brute Force / High Failed Login Attempts Detected"
+          description: "More than 10 failed login attempts in 5 minutes."
+
+      # 7. Failed Payments Threshold
+      - alert: FailedPaymentSpike
+        expr: sum(rate(finance_payment_failures_total[5m])) * 300 > 3
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Payment Processing Failure Spike"
+          description: "More than 3 payment transaction failures recorded in 5 minutes."
+
+      # 8. General Ledger Imbalance Detected
+      - alert: GeneralLedgerImbalance
+        expr: gl_imbalance_amount != 0
+        for: 0m
+        labels:
+          severity: critical
+        annotations:
+          summary: "CRITICAL: General Ledger Imbalance Detected"
+          description: "Total GL Debit and Credit amounts do not balance (Diff: {{ $value }})."
+
+      # 9. Database Backup Failure
+      - alert: DatabaseBackupFailed
+        expr: db_backup_last_success_timestamp < (time() - 90000) # > 25 hours
+        for: 1h
+        labels:
+          severity: critical
+        annotations:
+          summary: "Automated Database Backup Failed"
+          description: "No successful database backup recorded in the last 25 hours."
