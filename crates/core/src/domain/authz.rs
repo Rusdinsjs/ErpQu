@@ -60,6 +60,36 @@ impl AuthzDecision {
     }
 }
 
+/// Emergency Override Request Contract (Point B.9)
+/// Requires mandatory reason, secondary approver (dual control), audit trail, and instant notification broadcast.
+#[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
+pub struct EmergencyOverrideRequest {
+    pub primary_user_id: Uuid,
+    pub secondary_approver_id: Uuid,
+    pub action: String,
+    pub resource_type: String,
+    pub resource_id: Option<Uuid>,
+    pub reason: String,
+}
+
+impl EmergencyOverrideRequest {
+    pub fn validate(&self) -> Result<(), crate::domain::errors::DomainError> {
+        if self.reason.trim().is_empty() || self.reason.trim().len() < 10 {
+            return Err(crate::domain::errors::DomainError::business_rule(
+                "invalid_emergency_override",
+                "Emergency override reason is mandatory and must be at least 10 characters",
+            ));
+        }
+        if self.primary_user_id == self.secondary_approver_id {
+            return Err(crate::domain::errors::DomainError::business_rule(
+                "invalid_emergency_override",
+                "Emergency override requires a distinct secondary approver (dual-control maker != checker)",
+            ));
+        }
+        Ok(())
+    }
+}
+
 /// Centralized AuthorizationEngine trait (DENY by default)
 pub trait AuthorizationEngine: Send + Sync {
     fn authorize(

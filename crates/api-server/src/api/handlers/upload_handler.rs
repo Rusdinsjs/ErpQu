@@ -29,6 +29,7 @@ const ALLOWED_EXTENSIONS: &[&str] = &["jpg", "jpeg", "png", "webp", "pdf", "csv"
 
 #[derive(Debug, Deserialize)]
 pub struct SignedUrlQuery {
+    #[allow(dead_code)]
     pub token: Option<String>,
     pub expires: Option<i64>,
     pub signature: Option<String>,

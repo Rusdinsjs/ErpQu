@@ -8,6 +8,7 @@ use axum::{
     Extension, Json,
 };
 use serde::Serialize;
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::api::server::AppState;
@@ -15,20 +16,36 @@ use management_system_core::domain::errors::DomainError;
 use management_system_core::domain::request_context::RequestContext;
 use management_system_core::shared::errors::AppResult;
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ToSchema)]
 pub struct OutboxRetryResponse {
     pub success: bool,
     pub outbox_id: Uuid,
     pub message: String,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ToSchema)]
 pub struct OutboxLagResponse {
     pub unprocessed_count: i64,
 }
 
 /// Manually retry a failed / DEAD_LETTER outbox event (M12)
 /// POST /api/v1/admin/outbox/:id/retry
+#[utoipa::path(
+    post,
+    path = "/api/v1/admin/outbox/{id}/retry",
+    params(
+        ("id" = Uuid, Path, description = "Outbox Event ID")
+    ),
+    responses(
+        (status = 200, description = "Outbox event reset to PENDING for retry", body = OutboxRetryResponse),
+        (status = 401, description = "Unauthorized"),
+        (status = 403, description = "Forbidden - Admin access required")
+    ),
+    security(
+        ("bearer_auth" = [])
+    ),
+    tag = "outbox"
+)]
 pub async fn retry_outbox_event(
     State(state): State<AppState>,
     Extension(ctx): Extension<RequestContext>,
@@ -80,6 +97,18 @@ pub async fn retry_outbox_event(
 
 /// Get current outbox lag / unprocessed event count (M7)
 /// GET /api/v1/admin/outbox/lag
+#[utoipa::path(
+    get,
+    path = "/api/v1/admin/outbox/lag",
+    responses(
+        (status = 200, description = "Current unprocessed outbox event count lag", body = OutboxLagResponse),
+        (status = 401, description = "Unauthorized")
+    ),
+    security(
+        ("bearer_auth" = [])
+    ),
+    tag = "outbox"
+)]
 pub async fn get_outbox_lag(
     State(state): State<AppState>,
     Extension(_ctx): Extension<RequestContext>,

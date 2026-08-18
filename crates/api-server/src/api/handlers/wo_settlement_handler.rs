@@ -8,6 +8,7 @@ use axum::{
     Extension, Json,
 };
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 use uuid::Uuid;
 
 use crate::api::server::AppState;
@@ -19,7 +20,7 @@ use management_system_finance::domain::entities::journal::{
 };
 use management_system_ops::{WorkOrderSettlementEngine, WorkOrderSettlementRequest};
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct SettleWorkOrderApiRequest {
     pub settlement_date: chrono::NaiveDate,
     pub settlement_type: String, // "capital" or "expense"
@@ -31,7 +32,7 @@ pub struct SettleWorkOrderApiRequest {
     pub notes: Option<String>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ToSchema)]
 pub struct WorkOrderSettlementResponse {
     pub success: bool,
     pub work_order_id: Uuid,
@@ -43,6 +44,23 @@ pub struct WorkOrderSettlementResponse {
 
 /// Settle Work Order costs to Asset Capitalization or Maintenance Expense (L5, L6)
 /// POST /api/v1/work-orders/:id/settle
+#[utoipa::path(
+    post,
+    path = "/api/v1/work-orders/{id}/settle",
+    params(
+        ("id" = Uuid, Path, description = "Work Order ID")
+    ),
+    request_body = SettleWorkOrderApiRequest,
+    responses(
+        (status = 200, description = "Work Order costs successfully settled to GL", body = WorkOrderSettlementResponse),
+        (status = 400, description = "Bad Request"),
+        (status = 401, description = "Unauthorized")
+    ),
+    security(
+        ("bearer_auth" = [])
+    ),
+    tag = "work-orders"
+)]
 pub async fn settle_work_order(
     State(state): State<AppState>,
     Extension(ctx): Extension<RequestContext>,

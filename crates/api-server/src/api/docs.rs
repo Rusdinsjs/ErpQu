@@ -31,6 +31,10 @@ use utoipa::OpenApi;
         crate::api::handlers::dashboard_handler::get_dashboard_stats,
         crate::api::handlers::dashboard_handler::get_recent_activities,
         crate::api::handlers::dashboard_handler::get_depreciation_summary,
+        // Work Orders & Outbox
+        crate::api::handlers::wo_settlement_handler::settle_work_order,
+        crate::api::handlers::outbox_admin_handler::retry_outbox_event,
+        crate::api::handlers::outbox_admin_handler::get_outbox_lag,
     ),
     components(
         schemas(
@@ -48,6 +52,12 @@ use utoipa::OpenApi;
             management_system_assets::AssetSummary,
             management_system_assets::AssetDetail,
             management_system_core::infrastructure::repositories::approval_repository::ApprovalRequest,
+
+            // Work Order & Outbox
+            crate::api::handlers::wo_settlement_handler::SettleWorkOrderApiRequest,
+            crate::api::handlers::wo_settlement_handler::WorkOrderSettlementResponse,
+            crate::api::handlers::outbox_admin_handler::OutboxRetryResponse,
+            crate::api::handlers::outbox_admin_handler::OutboxLagResponse,
 
             // Dashboard Schemas
             management_system_core::application::dto::dashboard_dto::DashboardStats,

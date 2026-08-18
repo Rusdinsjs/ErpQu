@@ -62,7 +62,6 @@ pub mod stock_document_handler;
 
 // Standard re-exports for main_router.rs
 pub use asset_handler::*;
-pub use asset_lifecycle_handler::*;
 pub use auth_handler::*;
 pub use dashboard_handler::*;
 pub use department_handler::*;
@@ -77,10 +76,7 @@ pub use report_handler::*;
 pub use sensor_handler::*;
 pub use user_handler::*;
 pub use work_order_handler::*;
-pub use wo_settlement_handler::*;
-pub use outbox_admin_handler::*;
 pub mod metrics_handler;
-pub use metrics_handler::*;
 pub mod ops_quality_trip_handler;
 
 pub mod hr_driver_p2h_safety_handler;
