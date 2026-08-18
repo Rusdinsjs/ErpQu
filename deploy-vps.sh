@@ -77,7 +77,7 @@ case "$ACTION" in
         ;;
     --full|*)
         log_info "Running pre-deployment database migration..."
-        $DOCKER_COMPOSE -f docker-compose.prod.yml --profile migrate up --build
+        $DOCKER_COMPOSE -f docker-compose.prod.yml --profile migrate up -d --build
 
         log_info "Starting full production container stack..."
         $DOCKER_COMPOSE -f docker-compose.prod.yml up -d --build
