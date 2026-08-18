@@ -1,10 +1,10 @@
 //! Tenant Middleware (QTEN-001 / QTEN-005)
 //!
-//! Provides multi-tenant resolution via:
-//! 1. `X-Company-ID` HTTP header (explicit selection)
+//! Provides strict multi-tenant resolution via:
+//! 1. `X-Company-ID` HTTP header (rejects malformed header with 400 Bad Request)
 //! 2. Subdomain resolution (`acme.erpqu.com` → resolves `acme` to company_id via `domain_slug`)
 //! 3. Mandatory UserClaims token tenant context extraction
-//! 4. Non-admin membership validation (prevents cross-tenant data access)
+//! 4. Non-admin and admin membership validation (prevents cross-tenant data access)
 
 use axum::{
     extract::{Request, State},
@@ -39,23 +39,27 @@ pub async fn tenant_middleware(
         StatusCode::UNAUTHORIZED
     })?;
 
-    let is_super_admin = claims.role == "super_admin" || claims.role_level <= 1;
     let mut resolved_company_id: Option<Uuid> = None;
 
-    // Method 1: Explicit X-Company-ID header
+    // Method 1: Explicit X-Company-ID header (Strict Validation: Malformed header returns 400 Bad Request)
     if let Some(company_header) = request.headers().get("x-company-id") {
-        if let Ok(company_str) = company_header.to_str() {
-            if let Ok(company_uuid) = Uuid::parse_str(company_str) {
-                resolved_company_id = Some(company_uuid);
-            }
-        }
+        let company_str = company_header.to_str().map_err(|_| {
+            tracing::warn!("Tenant Middleware: Malformed X-Company-ID header characters");
+            StatusCode::BAD_REQUEST
+        })?;
+
+        let company_uuid = Uuid::parse_str(company_str).map_err(|_| {
+            tracing::warn!("Tenant Middleware: Malformed X-Company-ID UUID format: {}", company_str);
+            StatusCode::BAD_REQUEST
+        })?;
+
+        resolved_company_id = Some(company_uuid);
     }
 
     // Method 2: Subdomain resolution from Host header if no X-Company-ID header
     if resolved_company_id.is_none() {
         if let Some(host_header) = request.headers().get("host") {
             if let Ok(host_str) = host_header.to_str() {
-                // E.g. "acme.erpqu.com:443" or "acme.localhost:3000"
                 let host_only = host_str.split(':').next().unwrap_or(host_str);
                 let parts: Vec<&str> = host_only.split('.').collect();
 
@@ -81,35 +85,35 @@ pub async fn tenant_middleware(
         }
     }
 
-    // Validate membership if a specific company was requested/resolved
+    // Validate company membership against user profile / permissions (Admin must also follow legal entity boundary)
     if let Some(company_uuid) = resolved_company_id {
-        if !is_super_admin {
-            let has_emp = sqlx::query_scalar::<_, bool>(
-                "SELECT EXISTS(SELECT 1 FROM hr.employees WHERE user_id = $1 AND company_id = $2)",
-            )
-            .bind(claims.user_id())
-            .bind(company_uuid)
-            .fetch_one(&state.pool)
-            .await
-            .unwrap_or(false);
+        let has_emp = sqlx::query_scalar::<_, bool>(
+            "SELECT EXISTS(SELECT 1 FROM hr.employees WHERE user_id = $1 AND company_id = $2)",
+        )
+        .bind(claims.user_id())
+        .bind(company_uuid)
+        .fetch_one(&state.pool)
+        .await
+        .unwrap_or(false);
 
-            let has_perm = sqlx::query_scalar::<_, bool>(
-                "SELECT EXISTS(SELECT 1 FROM public.user_permissions WHERE user_id = $1 AND allow_doctype = 'Company' AND for_value = $2)",
-            )
-            .bind(claims.user_id())
-            .bind(company_uuid.to_string())
-            .fetch_one(&state.pool)
-            .await
-            .unwrap_or(false);
+        let has_perm = sqlx::query_scalar::<_, bool>(
+            "SELECT EXISTS(SELECT 1 FROM public.user_permissions WHERE user_id = $1 AND allow_doctype = 'Company' AND for_value = $2)",
+        )
+        .bind(claims.user_id())
+        .bind(company_uuid.to_string())
+        .fetch_one(&state.pool)
+        .await
+        .unwrap_or(false);
 
-            if !has_emp && !has_perm {
-                tracing::warn!(
-                    "Tenant Middleware: Blocked user {} from selecting company {} outside membership",
-                    claims.sub,
-                    company_uuid
-                );
-                return Err(StatusCode::FORBIDDEN);
-            }
+        let is_global_company_admin = claims.permissions.iter().any(|p| p == "company.*" || p == "company.admin" || (claims.role == "super_admin" && p == "*"));
+
+        if !has_emp && !has_perm && !is_global_company_admin {
+            tracing::warn!(
+                "Tenant Middleware: Blocked user {} from selecting company {} outside membership",
+                claims.sub,
+                company_uuid
+            );
+            return Err(StatusCode::FORBIDDEN);
         }
 
         tenant_ctx.company_id = Some(company_uuid);

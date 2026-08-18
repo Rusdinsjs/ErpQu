@@ -91,12 +91,17 @@ impl JournalService {
         self.journal_repo.list_journal_entries().await
     }
 
-    pub async fn post_journal_entry(&self, id: Uuid) -> DomainResult<()> {
+    pub async fn post_journal_entry(&self, id: Uuid, poster_id: Option<Uuid>) -> DomainResult<()> {
         let entry = self
             .journal_repo
             .get_journal_entry_detail(id)
             .await?
             .ok_or_else(|| DomainError::not_found("JournalEntry", id))?;
+
+        // Enforce Segregation of Duties (SoD / Four-Eyes Principle): Maker cannot post their own journal entry
+        if let (Some(creator), Some(poster)) = (entry.header.created_by, poster_id) {
+            management_system_core::domain::sod::SodValidator::validate_journal_posting(creator, poster)?;
+        }
 
         if entry.header.status == crate::domain::entities::journal::JournalStatus::Posted {
             return Err(DomainError::business_rule(

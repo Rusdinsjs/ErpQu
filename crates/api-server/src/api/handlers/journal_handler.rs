@@ -62,3 +62,33 @@ pub async fn create_journal(
         .await?;
     Ok(Json(entry))
 }
+
+pub async fn post_journal(
+    State(state): State<AppState>,
+    Extension(claims): Extension<UserClaims>,
+    Path(id): Path<Uuid>,
+) -> AppResult<Json<serde_json::Value>> {
+    let user_id = Uuid::parse_str(&claims.sub).unwrap_or_else(|_| Uuid::nil());
+    state
+        .journal_service
+        .post_journal_entry(id, Some(user_id))
+        .await?;
+    Ok(Json(serde_json::json!({
+        "success": true,
+        "message": "Journal entry posted successfully"
+    })))
+}
+
+pub async fn unpost_journal(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+) -> AppResult<Json<serde_json::Value>> {
+    state
+        .journal_service
+        .unpost_journal_entry(id)
+        .await?;
+    Ok(Json(serde_json::json!({
+        "success": true,
+        "message": "Journal entry reverted to draft"
+    })))
+}

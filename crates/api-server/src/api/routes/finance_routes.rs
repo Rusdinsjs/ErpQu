@@ -40,6 +40,8 @@ pub fn finance_routes() -> Router<AppState> {
             get(journal_handler::list_journals).post(journal_handler::create_journal),
         )
         .route("/journals/:id", get(journal_handler::get_journal_details))
+        .route("/journals/:id/post", post(journal_handler::post_journal))
+        .route("/journals/:id/reverse", post(journal_handler::unpost_journal))
         // Sales Invoices, Quotes, Orders, Shipments
         .route(
             "/sales/invoices",

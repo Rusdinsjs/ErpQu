@@ -506,6 +506,17 @@ pub fn validate_approval_transition(
         ));
     }
 
+    // 3. Enforce Maker != Checker SoD (Four-Eyes Principle): Requester cannot approve their own request
+    if request.requested_by == actor_id {
+        return Err(DomainError::BusinessRuleViolation {
+            rule: "MakerCheckerViolation".to_string(),
+            message: format!(
+                "Self-approval rejected: Document maker ({}) cannot approve their own request. A separate checker is required (Segregation of Duties).",
+                request.requested_by
+            ),
+        });
+    }
+
     Ok(())
 }
 
