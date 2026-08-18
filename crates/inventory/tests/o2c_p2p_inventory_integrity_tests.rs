@@ -143,3 +143,93 @@ fn test_serial_number_duplicate_rejection() {
         SerialTrackingValidator::validate_unique_serials(&valid_batch, &existing_serials).is_ok()
     );
 }
+
+#[test]
+fn test_fifo_layer_consumption_chronological_order() {
+    use chrono::{Duration, Utc};
+    use management_system_inventory::domain::valuation::FifoLayer;
+    use uuid::Uuid;
+
+    let now = Utc::now();
+    let company_id = Uuid::new_v4();
+    let warehouse_id = Uuid::new_v4();
+    let item_id = Uuid::new_v4();
+
+    // Layer 1: 10 units @ 10,000 (Date: Now - 2 days)
+    let layer1 = FifoLayer {
+        id: Uuid::new_v4(),
+        company_id,
+        warehouse_id,
+        item_id,
+        voucher_type: "PURCHASE_RECEIPT".to_string(),
+        voucher_no: "REC-001".to_string(),
+        layer_date: now - Duration::days(2),
+        initial_qty: d("10.00"),
+        remaining_qty: d("10.00"),
+        unit_cost: d("10000.00"),
+    };
+
+    // Layer 2: 20 units @ 15,000 (Date: Now - 1 day)
+    let layer2 = FifoLayer {
+        id: Uuid::new_v4(),
+        company_id,
+        warehouse_id,
+        item_id,
+        voucher_type: "PURCHASE_RECEIPT".to_string(),
+        voucher_no: "REC-002".to_string(),
+        layer_date: now - Duration::days(1),
+        initial_qty: d("20.00"),
+        remaining_qty: d("20.00"),
+        unit_cost: d("15000.00"),
+    };
+
+    let mut layers = vec![layer1.clone(), layer2.clone()];
+
+    // Issue 15 units:
+    // Takes all 10 units from Layer 1 @ 10,000 = 100,000
+    // Takes 5 units from Layer 2 @ 15,000 = 75,000
+    // Total Cost = 175,000 -> Blended Effective Rate = 175,000 / 15 = 11,666.6666...
+    let result = InventoryValuationEngine::consume_fifo_layers(&mut layers, d("15.00")).unwrap();
+
+    assert_eq!(result.consumed_qty, d("15.00"));
+    assert_eq!(result.total_cost, d("175000.00"));
+    assert_eq!(layers[0].remaining_qty, d("0.00"));
+    assert_eq!(layers[1].remaining_qty, d("15.00"));
+}
+
+#[test]
+fn test_fifo_layer_consumption_insufficient_stock_fails() {
+    use chrono::{Duration, Utc};
+    use management_system_inventory::domain::valuation::FifoLayer;
+    use uuid::Uuid;
+
+    let now = Utc::now();
+    let company_id = Uuid::new_v4();
+    let warehouse_id = Uuid::new_v4();
+    let item_id = Uuid::new_v4();
+
+    let layer1 = FifoLayer {
+        id: Uuid::new_v4(),
+        company_id,
+        warehouse_id,
+        item_id,
+        voucher_type: "PURCHASE_RECEIPT".to_string(),
+        voucher_no: "REC-001".to_string(),
+        layer_date: now - Duration::days(1),
+        initial_qty: d("10.00"),
+        remaining_qty: d("10.00"),
+        unit_cost: d("10000.00"),
+    };
+
+    let mut layers = vec![layer1];
+
+    // Request 15 units when only 10 available -> Should fail
+    let result = InventoryValuationEngine::consume_fifo_layers(&mut layers, d("15.00"));
+    assert!(result.is_err());
+    match result.unwrap_err() {
+        DomainError::BusinessRuleViolation { rule, .. } => {
+            assert_eq!(rule, "insufficient_fifo_layers");
+        }
+        err => panic!("Expected BusinessRuleViolation, got {:?}", err),
+    }
+}

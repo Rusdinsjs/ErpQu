@@ -69,17 +69,21 @@ fn test_qacc_009_multi_invoice_payment_allocation() {
     let inv2_amount = dec!(2000000.00);
 
     let alloc1 = AllocatePaymentRequest {
+        company_id: Uuid::new_v4(),
         payment_entry_id: Uuid::new_v4(),
         invoice_type: "SALES_INVOICE".to_string(),
         invoice_id: Uuid::new_v4(),
         allocated_amount: inv1_amount,
+        created_by: None,
     };
 
     let alloc2 = AllocatePaymentRequest {
+        company_id: Uuid::new_v4(),
         payment_entry_id: Uuid::new_v4(),
         invoice_type: "SALES_INVOICE".to_string(),
         invoice_id: Uuid::new_v4(),
         allocated_amount: inv2_amount,
+        created_by: None,
     };
 
     let total_allocated: Decimal = alloc1.allocated_amount + alloc2.allocated_amount;

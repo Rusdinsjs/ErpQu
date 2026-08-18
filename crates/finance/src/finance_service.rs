@@ -92,14 +92,16 @@ impl FinanceService {
 
         let allocation = PaymentAllocation {
             id: Uuid::new_v4(),
+            company_id: req.company_id,
             payment_entry_id: req.payment_entry_id,
             invoice_type: req.invoice_type,
             invoice_id: req.invoice_id,
             allocated_amount: req.allocated_amount,
+            created_by: req.created_by,
             created_at: Utc::now(),
         };
 
-        Ok(allocation)
+        self.repo.create_payment_allocation(&allocation).await
     }
 
     /// Financial Report Provider: Trial Balance (QRPT-003)

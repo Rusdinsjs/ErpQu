@@ -1,3 +1,4 @@
+use rust_decimal::Decimal;
 use crate::domain::entities::inventory::{InventoryCategory, InventoryItem, InventoryMovement};
 use sqlx::PgPool;
 use uuid::Uuid;
@@ -494,5 +495,134 @@ impl InventoryRepository {
         .bind(item_id)
         .fetch_all(&self.pool)
         .await
+    }
+    // --- FIFO Layers Persistence (QSTK-007 / Perbaikan 3) ---
+
+    pub async fn create_fifo_layer(
+        &self,
+        layer: &crate::domain::valuation::FifoLayer,
+    ) -> Result<crate::domain::valuation::FifoLayer, sqlx::Error> {
+        #[derive(sqlx::FromRow)]
+        struct LayerRow {
+            id: Uuid,
+            company_id: Uuid,
+            warehouse_id: Uuid,
+            item_id: Uuid,
+            voucher_type: String,
+            voucher_no: String,
+            layer_date: chrono::DateTime<chrono::Utc>,
+            initial_qty: Decimal,
+            remaining_qty: Decimal,
+            unit_cost: Decimal,
+        }
+
+        let row = sqlx::query_as::<_, LayerRow>(
+            r#"
+            INSERT INTO public.stock_fifo_layers (
+                id, company_id, warehouse_id, item_id, voucher_type, voucher_no,
+                layer_date, initial_qty, remaining_qty, unit_cost, created_at
+            )
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW())
+            RETURNING id, company_id, warehouse_id, item_id, voucher_type, voucher_no,
+                      layer_date, initial_qty, remaining_qty, unit_cost
+            "#,
+        )
+        .bind(layer.id)
+        .bind(layer.company_id)
+        .bind(layer.warehouse_id)
+        .bind(layer.item_id)
+        .bind(&layer.voucher_type)
+        .bind(&layer.voucher_no)
+        .bind(layer.layer_date)
+        .bind(layer.initial_qty)
+        .bind(layer.remaining_qty)
+        .bind(layer.unit_cost)
+        .fetch_one(&self.pool)
+        .await?;
+
+        Ok(crate::domain::valuation::FifoLayer {
+            id: row.id,
+            company_id: row.company_id,
+            warehouse_id: row.warehouse_id,
+            item_id: row.item_id,
+            voucher_type: row.voucher_type,
+            voucher_no: row.voucher_no,
+            layer_date: row.layer_date,
+            initial_qty: row.initial_qty,
+            remaining_qty: row.remaining_qty,
+            unit_cost: row.unit_cost,
+        })
+    }
+
+    pub async fn get_available_fifo_layers(
+        &self,
+        company_id: Uuid,
+        warehouse_id: Uuid,
+        item_id: Uuid,
+    ) -> Result<Vec<crate::domain::valuation::FifoLayer>, sqlx::Error> {
+        #[derive(sqlx::FromRow)]
+        struct LayerRow {
+            id: Uuid,
+            company_id: Uuid,
+            warehouse_id: Uuid,
+            item_id: Uuid,
+            voucher_type: String,
+            voucher_no: String,
+            layer_date: chrono::DateTime<chrono::Utc>,
+            initial_qty: Decimal,
+            remaining_qty: Decimal,
+            unit_cost: Decimal,
+        }
+
+        let rows = sqlx::query_as::<_, LayerRow>(
+            r#"
+            SELECT id, company_id, warehouse_id, item_id, voucher_type, voucher_no,
+                   layer_date, initial_qty, remaining_qty, unit_cost
+            FROM public.stock_fifo_layers
+            WHERE company_id = $1 AND warehouse_id = $2 AND item_id = $3 AND remaining_qty > 0
+            ORDER BY layer_date ASC
+            "#,
+        )
+        .bind(company_id)
+        .bind(warehouse_id)
+        .bind(item_id)
+        .fetch_all(&self.pool)
+        .await?;
+
+        Ok(rows
+            .into_iter()
+            .map(|r| crate::domain::valuation::FifoLayer {
+                id: r.id,
+                company_id: r.company_id,
+                warehouse_id: r.warehouse_id,
+                item_id: r.item_id,
+                voucher_type: r.voucher_type,
+                voucher_no: r.voucher_no,
+                layer_date: r.layer_date,
+                initial_qty: r.initial_qty,
+                remaining_qty: r.remaining_qty,
+                unit_cost: r.unit_cost,
+            })
+            .collect())
+    }
+
+    pub async fn update_fifo_layer_remaining_qty(
+        &self,
+        layer_id: Uuid,
+        new_remaining_qty: Decimal,
+    ) -> Result<(), sqlx::Error> {
+        sqlx::query(
+            r#"
+            UPDATE public.stock_fifo_layers
+            SET remaining_qty = $1
+            WHERE id = $2
+            "#,
+        )
+        .bind(new_remaining_qty)
+        .bind(layer_id)
+        .execute(&self.pool)
+        .await?;
+
+        Ok(())
     }
 }

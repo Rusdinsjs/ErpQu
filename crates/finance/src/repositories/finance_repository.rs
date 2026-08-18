@@ -1726,4 +1726,98 @@ impl FinanceRepository {
             )
             .collect())
     }
+    pub async fn create_payment_allocation(
+        &self,
+        allocation: &crate::domain::entities::commercial_graph::PaymentAllocation,
+    ) -> DomainResult<crate::domain::entities::commercial_graph::PaymentAllocation> {
+        #[derive(sqlx::FromRow)]
+        #[allow(dead_code)]
+        struct AllocationRow {
+            id: Uuid,
+            company_id: Uuid,
+            payment_id: Uuid,
+            invoice_id: Uuid,
+            allocated_amount: Decimal,
+            allocated_at: DateTime<Utc>,
+            created_by: Option<Uuid>,
+            created_at: DateTime<Utc>,
+        }
+
+        let row = sqlx::query_as::<_, AllocationRow>(
+            r#"
+            INSERT INTO public.payment_allocations (
+                id, company_id, payment_id, invoice_id, allocated_amount, allocated_at, created_by, created_at
+            )
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            RETURNING id, company_id, payment_id, invoice_id, allocated_amount, allocated_at, created_by, created_at
+            "#,
+        )
+        .bind(allocation.id)
+        .bind(allocation.company_id)
+        .bind(allocation.payment_entry_id)
+        .bind(allocation.invoice_id)
+        .bind(allocation.allocated_amount)
+        .bind(allocation.created_at)
+        .bind(allocation.created_by)
+        .bind(allocation.created_at)
+        .fetch_one(&self.pool)
+        .await
+        .map_err(|e| DomainError::Database(e.to_string()))?;
+
+        Ok(crate::domain::entities::commercial_graph::PaymentAllocation {
+            id: row.id,
+            company_id: row.company_id,
+            payment_entry_id: row.payment_id,
+            invoice_type: allocation.invoice_type.clone(),
+            invoice_id: row.invoice_id,
+            allocated_amount: row.allocated_amount,
+            created_by: row.created_by,
+            created_at: row.created_at,
+        })
+    }
+
+    pub async fn list_payment_allocations_for_invoice(
+        &self,
+        invoice_id: Uuid,
+    ) -> DomainResult<Vec<crate::domain::entities::commercial_graph::PaymentAllocation>> {
+        #[derive(sqlx::FromRow)]
+        #[allow(dead_code)]
+        struct AllocationRow {
+            id: Uuid,
+            company_id: Uuid,
+            payment_id: Uuid,
+            invoice_id: Uuid,
+            allocated_amount: Decimal,
+            allocated_at: DateTime<Utc>,
+            created_by: Option<Uuid>,
+            created_at: DateTime<Utc>,
+        }
+
+        let rows = sqlx::query_as::<_, AllocationRow>(
+            r#"
+            SELECT id, company_id, payment_id, invoice_id, allocated_amount, allocated_at, created_by, created_at
+            FROM public.payment_allocations
+            WHERE invoice_id = $1
+            ORDER BY allocated_at ASC
+            "#,
+        )
+        .bind(invoice_id)
+        .fetch_all(&self.pool)
+        .await
+        .map_err(|e| DomainError::Database(e.to_string()))?;
+
+        Ok(rows
+            .into_iter()
+            .map(|r| crate::domain::entities::commercial_graph::PaymentAllocation {
+                id: r.id,
+                company_id: r.company_id,
+                payment_entry_id: r.payment_id,
+                invoice_type: "INVOICE".to_string(),
+                invoice_id: r.invoice_id,
+                allocated_amount: r.allocated_amount,
+                created_by: r.created_by,
+                created_at: r.created_at,
+            })
+            .collect())
+    }
 }

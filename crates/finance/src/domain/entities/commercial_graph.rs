@@ -48,20 +48,24 @@ pub struct PurchaseReceiptItem {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PaymentAllocation {
     pub id: Uuid,
+    pub company_id: Uuid,
     pub payment_entry_id: Uuid,
     pub invoice_type: String, // "SALES_INVOICE" or "PURCHASE_BILL"
     pub invoice_id: Uuid,
     pub allocated_amount: Decimal,
+    pub created_by: Option<Uuid>,
     pub created_at: DateTime<Utc>,
 }
 
 /// Request to allocate a payment across invoices
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AllocatePaymentRequest {
+    pub company_id: Uuid,
     pub payment_entry_id: Uuid,
     pub invoice_type: String,
     pub invoice_id: Uuid,
     pub allocated_amount: Decimal,
+    pub created_by: Option<Uuid>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
