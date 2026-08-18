@@ -19,11 +19,13 @@ export interface User {
 
 interface AuthState {
     token: string | null;
+    refreshToken: string | null;
     user: User | null;
     activeCompanyId: string | null;
     activeCompanyName: string | null;
     setActiveCompany: (id: string | null, name: string | null) => void;
-    login: (token: string, user: Omit<User, 'permissions' | 'role_level'>) => void;
+    setTokens: (token: string, refreshToken?: string | null) => void;
+    login: (token: string, user: Omit<User, 'permissions' | 'role_level'>, refreshToken?: string) => void;
     logout: () => void;
     refreshUser: () => Promise<void>;
     isAuthenticated: () => boolean;
@@ -43,11 +45,16 @@ export const useAuthStore = create<AuthState>()(
     persist(
         (set, get) => ({
             token: null,
+            refreshToken: null,
             user: null,
             activeCompanyId: null,
             activeCompanyName: null,
             setActiveCompany: (id, name) => set({ activeCompanyId: id, activeCompanyName: name }),
-            login: (token, baseUser) => {
+            setTokens: (token, refreshToken) => set((state) => ({
+                token,
+                refreshToken: refreshToken !== undefined ? refreshToken : state.refreshToken,
+            })),
+            login: (token, baseUser, refreshToken) => {
                 try {
                     const decoded = jwtDecode<JwtClaims>(token);
                     const permissions = decoded.permissions || [];
@@ -56,6 +63,7 @@ export const useAuthStore = create<AuthState>()(
 
                     set({
                         token,
+                        refreshToken: refreshToken || null,
                         user: {
                             ...baseUser,
                             permissions: isSuperAdminOrAdmin && !permissions.includes('*') ? ['*', ...permissions] : permissions,
@@ -66,9 +74,9 @@ export const useAuthStore = create<AuthState>()(
                     });
                 } catch (e) {
                     console.error("Failed to decode token", e);
-                    // Fallback to basic user if decode fails (shouldn't happen with valid token)
                     set({
                         token,
+                        refreshToken: refreshToken || null,
                         user: {
                             ...baseUser,
                             permissions: [],
@@ -77,12 +85,11 @@ export const useAuthStore = create<AuthState>()(
                     });
                 }
             },
-            logout: () => set({ token: null, user: null, activeCompanyId: null, activeCompanyName: null }),
+            logout: () => set({ token: null, refreshToken: null, user: null, activeCompanyId: null, activeCompanyName: null }),
             refreshUser: async () => {
                 const token = get().token;
                 if (!token) return;
                 try {
-                    // Backend returns ApiResponse<User> = { success, data: User }
                     const res = await api.get<{ success: boolean; data: User }>('/me');
                     const userData = res.data.data;
 
@@ -91,7 +98,7 @@ export const useAuthStore = create<AuthState>()(
                         set({
                             user: {
                                 ...currentUser,
-                                ...userData, // Update name, phone, avatar_url
+                                ...userData,
                             }
                         });
                     }
@@ -107,11 +114,10 @@ export const useAuthStore = create<AuthState>()(
             hasPermission: (permission: string) => {
                 const user = get().user;
                 if (!user) return false;
-                if (user.role === 'super_admin' || user.role === 'admin' || (user.role_level && user.role_level <= 2)) return true; // Admin and Super Admin bypass
-                if (user.permissions && user.permissions.includes('*')) return true; // Global wildcard bypass
+                if (user.role === 'super_admin' || user.role === 'admin' || (user.role_level && user.role_level <= 2)) return true;
+                if (user.permissions && user.permissions.includes('*')) return true;
                 if (user.permissions && user.permissions.includes(permission)) return true;
 
-                // Support wildcard matching e.g. "asset.read" matched if user has "asset.*"
                 const [resource] = permission.split('.');
                 if (resource && user.permissions && user.permissions.includes(`${resource}.*`)) return true;
 

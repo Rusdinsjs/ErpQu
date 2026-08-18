@@ -506,9 +506,16 @@ impl AppState {
             allow_public_registration: std::env::var("ALLOW_PUBLIC_REGISTRATION")
                 .map(|v| v.eq_ignore_ascii_case("true") || v == "1")
                 .unwrap_or(false),
-            session_tracker: management_system_core::infrastructure::auth::SessionTracker::new(),
-            lockout_tracker: management_system_core::infrastructure::auth::LoginLockoutTracker::new(
-            ),
+            session_tracker: {
+                let redis_config = management_system_core::infrastructure::cache::RedisConfig::from_env();
+                let redis_cache = std::sync::Arc::new(management_system_core::infrastructure::cache::RedisCache::new(&redis_config));
+                management_system_core::infrastructure::auth::SessionTracker::with_cache(redis_cache)
+            },
+            lockout_tracker: {
+                let redis_config = management_system_core::infrastructure::cache::RedisConfig::from_env();
+                let redis_cache = std::sync::Arc::new(management_system_core::infrastructure::cache::RedisCache::new(&redis_config));
+                management_system_core::infrastructure::auth::LoginLockoutTracker::with_cache(redis_cache)
+            },
         }
     }
 }

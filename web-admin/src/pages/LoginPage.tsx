@@ -47,8 +47,8 @@ export default function LoginPage() {
 
         try {
             const response = await api.post('/auth/login', { email, password }, { headers: { 'X-Suppress-Toast': 'true' } });
-            const { token, user } = response.data;
-            login(token, user);
+            const { token, user, refresh_token } = response.data;
+            login(token, user, refresh_token);
             navigate('/');
         } catch (err: any) {
             const apiMsg = err.response?.data?.error || err.response?.data?.message;

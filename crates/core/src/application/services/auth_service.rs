@@ -1,4 +1,4 @@
-//! Auth Service
+//! Auth Service (Fase 22: Short Access Token, Rotating Refresh Token, Fail-Closed Security)
 
 use chrono::{Duration, Utc};
 use uuid::Uuid;
@@ -6,7 +6,7 @@ use uuid::Uuid;
 use crate::domain::entities::{User, UserClaims, UserRole};
 use crate::domain::errors::{DomainError, DomainResult};
 use crate::infrastructure::repositories::{RbacRepository, UserRepository};
-use crate::shared::utils::crypto::{hash_password, verify_password};
+use crate::shared::utils::crypto::{generate_secure_token, hash_password, verify_password};
 use crate::shared::utils::jwt::{create_token, JwtConfig};
 
 /// Auth service
@@ -30,8 +30,8 @@ impl AuthService {
         }
     }
 
-    /// Login user
-    pub async fn login(&self, email: &str, password: &str) -> DomainResult<(User, String)> {
+    /// Login user: returns (User, AccessToken, RefreshToken)
+    pub async fn login(&self, email: &str, password: &str) -> DomainResult<(User, String, String)> {
         let user = match self.repository.find_by_email(email).await {
             Ok(Some(u)) => u,
             Ok(None) => return Err(DomainError::unauthorized("Invalid credentials")),
@@ -52,56 +52,66 @@ impl AuthService {
             return Err(DomainError::unauthorized("Invalid credentials"));
         }
 
-        // Update last login
-        let _ = self.repository.update_last_login(user.id).await;
+        // Update last login (Do not ignore error - Fail-Closed audit)
+        if let Err(e) = self.repository.update_last_login(user.id).await {
+            tracing::error!("Failed to update last login for user {}: {}", user.id, e);
+        }
 
-        // Fetch permissions from DB for all user roles
-        let user_perms = self.rbac_repository.get_user_permissions(user.id).await;
-        let permissions = if let Ok(perms) = user_perms {
-            if !perms.is_empty() {
+        // Fetch permissions from DB for all user roles (Fail-Closed: Do not fallback silently on DB error)
+        let permissions = match self.rbac_repository.get_user_permissions(user.id).await {
+            Ok(perms) if !perms.is_empty() => {
                 let mut codes: Vec<String> = perms.into_iter().map(|p| p.code).collect();
                 if user.role.as_str() == "super_admin" && !codes.iter().any(|c| c == "*") {
                     codes.push("*".to_string());
                 }
                 codes
-            } else if let Some(role_id) = user.role_id {
-                self.rbac_repository
-                    .get_permissions_for_role(role_id)
-                    .await
-                    .unwrap_or_default()
-            } else {
-                user.role
-                    .parse::<UserRole>()
-                    .unwrap_or(UserRole::User)
-                    .default_permissions()
-                    .iter()
-                    .map(|s| s.to_string())
-                    .collect()
             }
-        } else if let Some(role_id) = user.role_id {
-            self.rbac_repository
-                .get_permissions_for_role(role_id)
-                .await
-                .unwrap_or_default()
-        } else {
-            user.role
-                .parse::<UserRole>()
-                .unwrap_or(UserRole::User)
-                .default_permissions()
-                .iter()
-                .map(|s| s.to_string())
-                .collect()
+            Ok(_) => {
+                // If user has no specific permissions in user_permissions, check role_permissions
+                if let Some(role_id) = user.role_id {
+                    match self.rbac_repository.get_permissions_for_role(role_id).await {
+                        Ok(role_perms) if !role_perms.is_empty() => role_perms,
+                        Ok(_) => user
+                            .role
+                            .parse::<UserRole>()
+                            .unwrap_or(UserRole::User)
+                            .default_permissions()
+                            .iter()
+                            .map(|s| s.to_string())
+                            .collect(),
+                        Err(e) => {
+                            return Err(DomainError::ExternalServiceError {
+                                service: "database".to_string(),
+                                message: format!("Failed to load role permissions: {}", e),
+                            });
+                        }
+                    }
+                } else {
+                    user.role
+                        .parse::<UserRole>()
+                        .unwrap_or(UserRole::User)
+                        .default_permissions()
+                        .iter()
+                        .map(|s| s.to_string())
+                        .collect()
+                }
+            }
+            Err(e) => {
+                return Err(DomainError::ExternalServiceError {
+                    service: "database".to_string(),
+                    message: format!("Failed to fetch user permissions: {}", e),
+                });
+            }
         };
+
         tracing::info!(
-            "User {} login with permissions: {:?}",
+            "User {} login successfully with permissions: {:?}",
             user.email,
             permissions
         );
 
-        // Use employee_id directly from user record
-        let employee_id = user.employee_id;
-
-        // Generate JWT token
+        // Short-lived Access Token (Default: 15 minutes)
+        let access_expiry = Utc::now() + Duration::minutes(self.jwt_config.access_expiry_minutes);
         let claims = UserClaims {
             sub: user.id.to_string(),
             email: user.email.clone(),
@@ -111,21 +121,24 @@ impl AuthService {
             department: user.department.clone(),
             allowed_asset_group: user.allowed_asset_group.clone(),
             org: user.organization_id.map(|id| id.to_string()),
-            employee_id,
+            employee_id: user.employee_id,
             permissions,
-            exp: (Utc::now() + Duration::hours(24)).timestamp(),
+            exp: access_expiry.timestamp(),
             iat: Utc::now().timestamp(),
             jti: Uuid::new_v4().to_string(),
         };
 
-        let token = create_token(&claims, &self.jwt_config).map_err(|e| {
+        let access_token = create_token(&claims, &self.jwt_config).map_err(|e| {
             DomainError::ExternalServiceError {
                 service: "jwt".to_string(),
                 message: e,
             }
         })?;
 
-        Ok((user, token))
+        // Rotating Refresh Token (Default: 7 days)
+        let raw_refresh_token = generate_secure_token();
+
+        Ok((user, access_token, raw_refresh_token))
     }
 
     /// Register new user

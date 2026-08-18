@@ -18,7 +18,50 @@ use management_system_core::shared::{AppError, AppResult};
 const MAX_UPLOAD_SIZE: u64 = 10 * 1024 * 1024; // 10MB
 const ALLOWED_EXTENSIONS: &[&str] = &["jpg", "jpeg", "png", "webp", "pdf", "csv", "xlsx", "docx"];
 
-/// Upload a file (QSEC-006: Authenticated file upload with fail-closed metadata tracking)
+/// Validate real file content using Magic Bytes header inspection (Point B.1)
+fn detect_and_validate_magic_bytes(data: &[u8], claimed_ext: &str) -> Result<&'static str, AppError> {
+    if data.len() < 4 {
+        return Err(AppError::BadRequest("File is empty or truncated".to_string()));
+    }
+
+    // JPEG: FF D8 FF
+    if data.starts_with(&[0xFF, 0xD8, 0xFF]) {
+        return Ok("image/jpeg");
+    }
+    // PNG: 89 50 4E 47
+    if data.starts_with(&[0x89, 0x50, 0x4E, 0x47]) {
+        return Ok("image/png");
+    }
+    // WebP: RIFF .... WEBP
+    if data.len() >= 12 && &data[0..4] == b"RIFF" && &data[8..12] == b"WEBP" {
+        return Ok("image/webp");
+    }
+    // PDF: %PDF-
+    if data.starts_with(b"%PDF-") {
+        return Ok("application/pdf");
+    }
+    // ZIP-based Office Open XML (DOCX / XLSX): 50 4B 03 04
+    if data.starts_with(&[0x50, 0x4B, 0x03, 0x04]) {
+        if claimed_ext == "docx" {
+            return Ok("application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+        } else if claimed_ext == "xlsx" {
+            return Ok("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        }
+        return Ok("application/zip");
+    }
+    // CSV / Text: UTF-8 check without null bytes
+    if claimed_ext == "csv" {
+        if !data.contains(&0) && std::str::from_utf8(data).is_ok() {
+            return Ok("text/csv");
+        }
+    }
+
+    Err(AppError::BadRequest(
+        "File signature (magic bytes) does not match permitted file types or MIME spoofing detected".to_string()
+    ))
+}
+
+/// Upload a file (QSEC-006: Authenticated file upload with fail-closed metadata tracking & Magic Byte verification)
 pub async fn upload_file(
     Extension(claims): Extension<UserClaims>,
     Extension(tenant_ctx): Extension<TenantContext>,
@@ -40,10 +83,6 @@ pub async fn upload_file(
 
         if name == "file" {
             let file_name = field.file_name().unwrap_or("unknown").to_string();
-            let content_type = field
-                .content_type()
-                .unwrap_or("application/octet-stream")
-                .to_string();
             let data = field
                 .bytes()
                 .await
@@ -70,37 +109,39 @@ pub async fn upload_file(
                 )));
             }
 
-            // Compress if image
+            // Point B.1: Validate file magic bytes against actual payload
+            let verified_content_type = detect_and_validate_magic_bytes(&data, &ext)?;
+
+            // Point B.2: Decode and re-encode image (Reject corrupted/malicious payloads - Fail Closed)
             let (final_data, final_ext) = if ["jpg", "jpeg", "png", "webp"].contains(&ext.as_str())
             {
                 let data_clone = data.clone();
-                let ext_clone = ext.clone();
 
                 let result = tokio::task::spawn_blocking(move || {
-                    match image::load_from_memory(&data_clone) {
-                        Ok(img) => {
-                            let resized = if img.width() > 1280 || img.height() > 1280 {
-                                img.resize(1280, 1280, image::imageops::FilterType::Lanczos3)
-                            } else {
-                                img
-                            };
+                    let img = image::load_from_memory(&data_clone)
+                        .map_err(|e| format!("Corrupted image payload or decoding failed: {}", e))?;
 
-                            let mut comp_bytes: Vec<u8> = Vec::new();
-                            let mut cursor = std::io::Cursor::new(&mut comp_bytes);
-                            match resized.write_to(&mut cursor, image::ImageFormat::WebP) {
-                                Ok(_) => (comp_bytes.into(), "webp".to_string()),
-                                Err(_) => (data_clone, ext_clone),
-                            }
-                        }
-                        Err(_) => (data_clone, ext_clone),
-                    }
+                    let resized = if img.width() > 1280 || img.height() > 1280 {
+                        img.resize(1280, 1280, image::imageops::FilterType::Lanczos3)
+                    } else {
+                        img
+                    };
+
+                    let mut comp_bytes: Vec<u8> = Vec::new();
+                    let mut cursor = std::io::Cursor::new(&mut comp_bytes);
+                    resized
+                        .write_to(&mut cursor, image::ImageFormat::WebP)
+                        .map_err(|e| format!("Failed to encode image: {}", e))?;
+
+                    Ok::<_, String>((comp_bytes, "webp".to_string()))
                 })
                 .await
-                .map_err(|e| AppError::Internal(format!("Blocking task failed: {}", e)))?;
+                .map_err(|e| AppError::Internal(format!("Blocking task failed: {}", e)))?
+                .map_err(|e| AppError::BadRequest(e))?;
 
                 result
             } else {
-                (data.clone(), ext)
+                (data.to_vec(), ext)
             };
 
             // Generate path: uploads/YYYY/MM/DD/uuid.ext
@@ -134,7 +175,7 @@ pub async fn upload_file(
             .bind(file_id)
             .bind(&file_path)
             .bind(&file_name)
-            .bind(&content_type)
+            .bind(verified_content_type)
             .bind(final_data.len() as i32)
             .bind(claims.user_id())
             .bind(tenant_ctx.company_id)
@@ -156,7 +197,7 @@ pub async fn upload_file(
                 "id": file_id,
                 "url": url,
                 "original_name": file_name,
-                "content_type": content_type,
+                "content_type": verified_content_type,
                 "size": final_data.len(),
                 "uploaded_by": claims.user_id()
             }));
@@ -216,24 +257,20 @@ pub async fn get_private_file(
         }
     };
 
-    let is_admin = claims.role == "super_admin"
-        || claims.role == "admin"
-        || claims.role.starts_with("admin_")
-        || claims.role_level <= 2;
+    // Point B.8: Admin TIDAK boleh otomatis mengakses file lintas company tanpa membership sah
+    if tenant_ctx.enforce_company_boundary(company_id).is_err() {
+        return Err(AppError::Forbidden(
+            "Cross-company file access denied".to_string(),
+        ));
+    }
 
-    if !is_admin {
-        // Owner or matching role level required
-        if uploaded_by != claims.user_id() && claims.role_level > role_level_required {
-            return Err(AppError::Forbidden(
-                "Access denied to requested file".to_string(),
-            ));
-        }
-        // Enforce company boundary
-        if tenant_ctx.enforce_company_boundary(company_id).is_err() {
-            return Err(AppError::Forbidden(
-                "Cross-company file access denied".to_string(),
-            ));
-        }
+    let is_owner = uploaded_by == claims.user_id();
+    let has_role_access = claims.role_level <= role_level_required;
+
+    if !is_owner && !has_role_access {
+        return Err(AppError::Forbidden(
+            "Access denied to requested file".to_string(),
+        ));
     }
 
     let contents = fs::read(&full_path)

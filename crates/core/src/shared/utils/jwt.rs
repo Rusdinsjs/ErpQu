@@ -1,4 +1,4 @@
-//! JWT Utilities
+//! JWT Utilities (Short-lived Access Token & Configurable Expiry)
 
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
@@ -18,6 +18,8 @@ pub struct Claims {
 pub struct JwtConfig {
     pub secret: String,
     pub expiry_hours: i64,
+    pub access_expiry_minutes: i64,
+    pub refresh_expiry_days: i64,
 }
 
 impl JwtConfig {
@@ -25,17 +27,33 @@ impl JwtConfig {
         Self {
             secret,
             expiry_hours,
+            access_expiry_minutes: 15, // Default short-lived access token: 15 minutes (Fase 22)
+            refresh_expiry_days: 7,   // Default rotating refresh token: 7 days
         }
     }
 
     pub fn from_env() -> Self {
+        let access_mins = std::env::var("JWT_ACCESS_EXPIRY_MINUTES")
+            .ok()
+            .and_then(|s| s.parse().ok())
+            .unwrap_or(15);
+
+        let refresh_days = std::env::var("JWT_REFRESH_EXPIRY_DAYS")
+            .ok()
+            .and_then(|s| s.parse().ok())
+            .unwrap_or(7);
+
+        let expiry_hours = std::env::var("JWT_EXPIRY_HOURS")
+            .unwrap_or_else(|_| "24".to_string())
+            .parse()
+            .unwrap_or(24);
+
         Self {
             secret: std::env::var("JWT_SECRET")
                 .expect("FATAL SECURITY ERROR: JWT_SECRET environment variable is required"),
-            expiry_hours: std::env::var("JWT_EXPIRY_HOURS")
-                .unwrap_or_else(|_| "24".to_string())
-                .parse()
-                .unwrap_or(24),
+            expiry_hours,
+            access_expiry_minutes: access_mins,
+            refresh_expiry_days: refresh_days,
         }
     }
 }

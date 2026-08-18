@@ -43,6 +43,7 @@ pub fn create_router(state: AppState) -> Router {
     // Protected routes (QSEC-006: Private file uploads & access)
     let protected_routes = Router::new()
         .route("/api/auth/logout", post(auth_handler::logout))
+        .route("/api/auth/logout-all", post(auth_handler::logout_all))
         .route(
             "/api/upload",
             post(upload_handler::upload_file).layer(tower_http::limit::RequestBodyLimitLayer::new(

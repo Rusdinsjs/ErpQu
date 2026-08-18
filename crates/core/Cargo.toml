@@ -15,6 +15,7 @@ rust_decimal_macros = { workspace = true }
 uuid = { workspace = true }
 jsonwebtoken = { workspace = true }
 argon2 = { workspace = true }
+sha2 = { workspace = true }
 dotenvy = { workspace = true }
 async-trait = { workspace = true }
 tracing = { workspace = true }
