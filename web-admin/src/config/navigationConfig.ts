@@ -253,6 +253,7 @@ export const ALL_NAV_ITEMS: Record<string, NavItem> = {
     'approval-workflow-settings': { id: 'approval-workflow-settings', icon: Layers, label: 'Workflows', minLevel: 1 },
     'webhooks': { id: 'webhooks', icon: Radio, label: 'Outbound Webhooks', minLevel: 1 },
     'audit': { id: 'audit', icon: History, label: 'Audit Logs', minLevel: 2 },
+    'outbox-management': { id: 'outbox-management', icon: RefreshCw, label: 'Outbox & DLQ Management', path: '/admin/outbox', minLevel: 2 },
     'companies': { id: 'companies', icon: Building2, label: 'Companies (Entitas)', minLevel: 2 },
     'company': { id: 'company', icon: Building2, label: 'Company Management', minLevel: 2 },
     'branch': { id: 'branch', icon: Building2, label: 'Branch Management', minLevel: 2 },

@@ -31,6 +31,7 @@ pub async fn request_context_middleware(
         .and_then(|h| h.to_str().ok())
         .map(|s| s.to_string())
         .unwrap_or_else(|| Uuid::new_v4().to_string());
+    let corr_header_str = correlation_id.clone();
 
     let active_company_id = request
         .headers()
@@ -67,5 +68,10 @@ pub async fn request_context_middleware(
 
     request.extensions_mut().insert(req_ctx);
 
-    Ok(next.run(request).await)
+    let mut response = next.run(request).await;
+    if let Ok(header_val) = axum::http::HeaderValue::from_str(&corr_header_str) {
+        response.headers_mut().insert("x-correlation-id", header_val);
+    }
+
+    Ok(response)
 }

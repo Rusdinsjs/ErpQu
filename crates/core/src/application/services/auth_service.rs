@@ -52,10 +52,11 @@ impl AuthService {
             return Err(DomainError::unauthorized("Invalid credentials"));
         }
 
-        // Update last login (Do not ignore error - Fail-Closed audit)
-        if let Err(e) = self.repository.update_last_login(user.id).await {
-            tracing::error!("Failed to update last login for user {}: {}", user.id, e);
-        }
+        // Update last login (Fail-Closed: Failure to update last_login timestamp rejects login)
+        self.repository
+            .update_last_login(user.id)
+            .await
+            .map_err(|e| DomainError::Database(format!("Failed to record last login timestamp: {}", e)))?;
 
         // Fetch permissions from DB for all user roles (Fail-Closed: Do not fallback silently on DB error)
         let permissions = match self.rbac_repository.get_user_permissions(user.id).await {

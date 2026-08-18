@@ -76,7 +76,7 @@ Kriteria lulus: Operator dapat menemukan penyebab kegagalan transaksi dari corre
 
 Dari point L, M dan N di atas :
 
-1. Riset dan Teliti apakah aplikasi Erpqu saat ini sudah memenuhi item2 di point A, B dan C di atas? 
+1. Riset dan Teliti apakah aplikasi Erpqu saat ini sudah memenuhi item2 di point L, M dan N di atas? 
 2. List yang sudah dan belum memenuhi kriteria.
 3. Jika belum Memenuhi, buatkan Implementation Plan-nya  
 4. Jangan mengarang, mengada-ada atau berhalusinasi. Riset dan teliti dengan Jujur dan Tepat, laporkan sesuai kondisi yang sebenarnya.

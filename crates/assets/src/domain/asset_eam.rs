@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 /// Append-Only Asset Custody & Location History Entity (QAST-005)
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct AssetCustodyHistory {
     pub id: Uuid,
     pub asset_id: Uuid,

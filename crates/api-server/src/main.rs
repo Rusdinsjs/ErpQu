@@ -136,6 +136,17 @@ async fn main() {
     // Start scheduler
     let _ = state.scheduler_service.start().await;
 
+    // Spawn Production Transactional Outbox Dispatcher Worker (M1, M2-M6)
+    let outbox_dispatcher = std::sync::Arc::new(
+        management_system_core::infrastructure::outbox::OutboxDispatcher::new(
+            state.pool.clone(),
+            5,  // poll every 5 seconds
+            50, // batch size of 50 events
+        ),
+    );
+    outbox_dispatcher.start();
+    tracing::info!("Production Transactional Outbox Dispatcher spawned successfully.");
+
     // Create application
     let app = create_app(state).await;
 

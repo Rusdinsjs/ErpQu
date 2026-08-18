@@ -249,7 +249,7 @@ impl UserRepository {
     }
 
     pub async fn update_last_login(&self, id: Uuid) -> Result<(), sqlx::Error> {
-        sqlx::query("UPDATE users SET updated_at = NOW() WHERE id = $1")
+        sqlx::query("UPDATE users SET last_login_at = NOW(), updated_at = NOW() WHERE id = $1")
             .bind(id)
             .execute(&self.pool)
             .await?;

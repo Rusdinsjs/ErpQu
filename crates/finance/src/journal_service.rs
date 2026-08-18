@@ -36,6 +36,10 @@ impl JournalService {
         }
     }
 
+    pub fn pool(&self) -> &sqlx::PgPool {
+        self.journal_repo.pool()
+    }
+
     pub async fn create_journal_entry(
         &self,
         transaction_number: String,

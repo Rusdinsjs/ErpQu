@@ -50,23 +50,48 @@ pub fn asset_routes() -> Router<AppState> {
         )
         .route(
             "/capitalization",
-            post(asset_lifecycle_handler::capitalize_asset
-                .layer(axum_middleware::from_fn(require_permission("asset.edit")))),
+            post(asset_lifecycle_handler::capitalize_asset)
+                .layer(axum_middleware::from_fn(require_permission("asset.edit"))),
         )
         .route(
             "/transfer",
-            post(asset_lifecycle_handler::transfer_asset
-                .layer(axum_middleware::from_fn(require_permission("asset.edit")))),
+            post(asset_lifecycle_handler::transfer_asset)
+                .layer(axum_middleware::from_fn(require_permission("asset.edit"))),
         )
         .route(
             "/impairment",
-            post(asset_lifecycle_handler::impair_asset
-                .layer(axum_middleware::from_fn(require_permission("asset.edit")))),
+            post(asset_lifecycle_handler::impair_asset)
+                .layer(axum_middleware::from_fn(require_permission("asset.edit"))),
         )
         .route(
             "/disposal",
-            post(asset_lifecycle_handler::dispose_asset
-                .layer(axum_middleware::from_fn(require_permission("asset.edit")))),
+            post(asset_lifecycle_handler::dispose_asset)
+                .layer(axum_middleware::from_fn(require_permission("asset.edit"))),
+        )
+        .route(
+            "/:id/capitalize",
+            post(asset_lifecycle_handler::capitalize_asset)
+                .layer(axum_middleware::from_fn(require_permission("asset.edit"))),
+        )
+        .route(
+            "/:id/transfer",
+            post(asset_lifecycle_handler::transfer_asset)
+                .layer(axum_middleware::from_fn(require_permission("asset.edit"))),
+        )
+        .route(
+            "/:id/impairment",
+            post(asset_lifecycle_handler::impair_asset)
+                .layer(axum_middleware::from_fn(require_permission("asset.edit"))),
+        )
+        .route(
+            "/:id/disposal",
+            post(asset_lifecycle_handler::dispose_asset)
+                .layer(axum_middleware::from_fn(require_permission("asset.edit"))),
+        )
+        .route(
+            "/:id/custody-history",
+            get(asset_lifecycle_handler::get_custody_history)
+                .layer(axum_middleware::from_fn(require_permission("asset.view"))),
         )
         .route(
             "/search",

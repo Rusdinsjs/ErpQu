@@ -67,6 +67,8 @@ image = { version = "0.24", features = ["webp"] }
 # Validation
 regex = "1.10"
 sha2 = "0.10"
+hmac = "0.12"
+hex = "0.4"
 
 # OpenAPI
 utoipa = { version = "4.2", features = ["axum_extras", "uuid", "chrono"] }

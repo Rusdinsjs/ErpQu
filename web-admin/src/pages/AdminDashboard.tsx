@@ -227,6 +227,7 @@ export default function AdminDashboard() {
                             if (!ids.includes('users')) ids.push('users');
                             if (!ids.includes('roles')) ids.push('roles');
                             if (!ids.includes('webhooks')) ids.push('webhooks');
+                            if (!ids.includes('outbox-management')) ids.push('outbox-management');
                             return { ...m, menuIds: ids };
                         }
                         return m;

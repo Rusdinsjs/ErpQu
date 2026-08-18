@@ -187,16 +187,35 @@ impl DepreciationService {
                 .create_journal_entry(tx_num, journal_req, None)
                 .await?;
 
-            // 5. Log it (TODO: Create logs table repository/method, for now just log to stdout/tracing)
+            let new_accum = (purchase_price - current_value) + actual_amount;
+            let new_rem = current_value - actual_amount;
+
+            // Persist depreciation schedule row linked to GL journal entry (L1, L2)
+            let _ = sqlx::query(
+                r#"
+                INSERT INTO asset_depreciation_schedules
+                    (id, asset_id, company_id, schedule_date, depreciation_amount,
+                     accumulated_depreciation, remaining_book_value, journal_entry_id, status, posted_at, created_at)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'posted', NOW(), NOW())
+                "#,
+            )
+            .bind(Uuid::new_v4())
+            .bind(asset.id)
+            .bind(asset.company_id)
+            .bind(date)
+            .bind(actual_amount)
+            .bind(new_accum)
+            .bind(new_rem)
+            .bind(entry.header.id)
+            .execute(self.journal_service.pool())
+            .await;
+
             tracing::info!(
-                "Depreciated Asset {} for amount {}. Journal: {}",
+                "Depreciated Asset {} for amount {}. Journal: {}, Schedule linked",
                 asset.asset_code,
                 actual_amount,
                 entry.header.id
             );
-
-            // TODO: Insert into asset_depreciation_logs
-            // self.repo.log_depreciation(...)
         } else {
             tracing::warn!(
                 "Skipping depreciation for Asset {}: Category {} missing GL accounts",

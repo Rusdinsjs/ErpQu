@@ -34,10 +34,10 @@ export type MenuId =
     | 'budgets-view' | 'sales-tax-templates' | 'purchase-tax-templates-view' | 'tax-categories' | 'tax-rules'
     | 'credit-notes' | 'debit-notes' | 'dunnings' | 'balance-sheet' | 'profit-loss' | 'cash-flow' | 'trial-balance'
     | 'general-ledger-report' | 'ar-aging' | 'ap-aging'
-    | 'employees' | 'departments' | 'hr-workspace' | 'attendance' | 'leaves' | 'designations' | 'employee-lifecycle' | 'employee-360' | 'shifts' | 'attendance-logs' | 'overtime' | 'attendance-requests' | 'salary-slips' | 'payroll-processing' | 'salary-assignments' | 'salary-structures'
+    | 'employees' | 'departments' | 'hr-workspace' | 'attendance' | 'leaves' | 'designations' | 'employee-lifecycle' | 'employee-360' | 'shifts' | 'attendance-logs' | 'overtime' | 'attendance-requests' | 'salary-slips' | 'payroll-processing' | 'salary-assignments' | 'salary-structures' | 'employee-loans' | 'expense-claims' | 'appraisal' | 'recruitment' | 'training-certifications' | 'disciplinary-actions' | 'driver-assignments' | 'p2h-inspections' | 'driver-safety-incidents'
     | 'approvals'
     | 'company' | 'branch' | 'email-account'
-    | 'users' | 'roles' | 'approval-workflow-settings' | 'audit' | 'settings' | 'profile';
+    | 'users' | 'roles' | 'approval-workflow-settings' | 'audit' | 'webhooks' | 'outbox-management' | 'period-closing' | 'exchange-rates' | 'settings' | 'profile';
 
 // ─── Launchpad Module Config Shape ───────────────────────────────────────────
 export interface LaunchpadModuleConfig {
@@ -268,6 +268,15 @@ export const MENU_LABELS: Record<MenuId, string> = {
     'payroll-processing': 'Proses Penggajian',
     'salary-assignments': 'Penetapan Gaji',
     'salary-structures': 'Struktur Gaji',
+    'employee-loans': 'Pinjaman & Kasbon',
+    'expense-claims': 'Klaim Reimbursement',
+    'appraisal': 'Evaluasi Kinerja (KPI)',
+    'recruitment': 'Rekrutmen & ATS',
+    'training-certifications': 'Pelatihan & Sertifikasi',
+    'disciplinary-actions': 'Surat Peringatan & Disiplin',
+    'driver-assignments': 'Penugasan Driver & Alat',
+    'p2h-inspections': 'Inspeksi Harian (P2H)',
+    'driver-safety-incidents': 'Insiden & Pelanggaran Driver',
     'departments': 'Departments',
     'attendance': 'Attendance',
     'leaves': 'Leaves',
@@ -279,6 +288,10 @@ export const MENU_LABELS: Record<MenuId, string> = {
     'roles': 'Access Rights',
     'approval-workflow-settings': 'Workflows',
     'audit': 'Audit Logs',
+    'webhooks': 'Outbound Webhooks',
+    'outbox-management': 'Outbox & DLQ Management',
+    'period-closing': 'Period Closing (Tutup Buku)',
+    'exchange-rates': 'Multi-Currency Exchange Rates',
     'settings': 'App Settings',
     'profile': 'My Profile',
 };
@@ -510,6 +523,10 @@ export const MENU_TO_RESOURCE: Record<MenuId, string> = {
     'roles': 'role',
     'approval-workflow-settings': 'approval_workflow',
     'audit': 'audit_log',
+    'webhooks': 'webhook',
+    'outbox-management': 'outbox',
+    'period-closing': 'accounting',
+    'exchange-rates': 'accounting',
     'settings': 'settings',
     'profile': 'profile',
 };
@@ -630,6 +647,7 @@ export const DEFAULT_LAUNCHPAD_CONFIG: LaunchpadConfig = {
             iconBg: 'bg-gradient-to-br from-orange-500 to-red-400',
             defaultRoute: '/stock-workspace',
             minLevel: 3,
+            features: ['Stock Ledger & Warehouse', 'Stock Opname & Receipts', 'Item & Batch Tracking'],
             menuIds: [
                 'stock-workspace', 'stock-entry', 'delivery-notes', 'purchase-receipt',
                 'material-request', 'pick-lists', 'delivery-trip', 'stock-opname',
@@ -654,6 +672,7 @@ export const DEFAULT_LAUNCHPAD_CONFIG: LaunchpadConfig = {
             iconBg: 'bg-gradient-to-br from-green-500 to-emerald-500',
             defaultRoute: '/accounting-workspace',
             minLevel: 2,
+            features: ['Chart of Accounts & GL', 'Payment Reconciliation', 'Financial Statements & Reports'],
             menuIds: [
                 'accounting-workspace', 'chart-of-accounts', 'journal-entries-view',
                 'payment-entries', 'payment-reconciliation', 'bank-accounts',

@@ -144,7 +144,8 @@ export type TabId =
     | 'profile'
     | 'period-closing'
     | 'exchange-rates'
-    | 'webhooks';
+    | 'webhooks'
+    | 'outbox-management';
 
 export interface NavItem {
     id: TabId;
