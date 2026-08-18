@@ -187,6 +187,7 @@ const SalesTargetVariancesView = lazy(() => import('../../pages/Selling/SalesTar
 const DunningsView = lazy(() => import('../../pages/Finance/DunningsView'));
 const AccountingDimensionsView = lazy(() => import('../../pages/Finance/AccountingDimensionsView'));
 const BuyingPricingView = lazy(() => import('../../pages/Buying/BuyingPricingView'));
+const WebhooksManagementView = lazy(() => import('../../pages/Settings/WebhooksManagementView'));
 
 
 interface AdminContentRouterProps {
@@ -528,6 +529,7 @@ export function AdminContentRouter({
         'metadata-editor': () => <MetadataEditorView />,
         'tax-renewals': () => <TaxRenewalsView />,
         'settings': () => <SettingsView />,
+        'webhooks': () => <WebhooksManagementView />,
         'profile': () => <ProfileView />,
     };
 
