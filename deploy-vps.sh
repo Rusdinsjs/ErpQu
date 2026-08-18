@@ -69,6 +69,12 @@ case "$ACTION" in
         log_info "System Container Status:"
         $DOCKER_COMPOSE -f docker-compose.prod.yml ps
         ;;
+    --quick|--fast)
+        log_info "Starting existing containers instantly (no re-build)..."
+        $DOCKER_COMPOSE -f docker-compose.prod.yml up -d
+        log_info "System containers started instantly."
+        $DOCKER_COMPOSE -f docker-compose.prod.yml ps
+        ;;
     --full|*)
         log_info "Running pre-deployment database migration..."
         $DOCKER_COMPOSE -f docker-compose.prod.yml --profile migrate up --build
