@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { useAuthStore } from '../../store/useAuthStore';
 import { NotificationBell } from '../Header/NotificationBell';
+import { CompanySwitcher } from '../Header/CompanySwitcher';
 import { AvatarUpload } from '../AvatarUpload';
 import { AIChatWidget } from '../AI/AIChatWidget';
 
@@ -614,7 +615,8 @@ export function MainLayout() {
                         {/* Breadcrumbs or Page Title could go here */}
                     </div>
 
-                    <div className="flex items-center gap-6">
+                    <div className="flex items-center gap-4 sm:gap-6">
+                        <CompanySwitcher />
                         <NotificationBell />
 
                         <div className="flex items-center gap-3 text-sm">

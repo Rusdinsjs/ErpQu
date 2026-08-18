@@ -26,6 +26,8 @@ export interface UserSummary {
     employee_nik?: string;
     employee_photo_url?: string;
     allowed_asset_group?: string;
+    company_id?: string;
+    company_name?: string;
     roles?: Array<{ id?: string; code: string; name: string; role_level: number }> | string;
     last_login_at?: string;
 }

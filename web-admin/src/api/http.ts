@@ -7,9 +7,12 @@ export const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
-    const token = useAuthStore.getState().token;
+    const { token, activeCompanyId } = useAuthStore.getState();
     if (token) {
         config.headers.set('Authorization', 'Bearer ' + token);
+    }
+    if (activeCompanyId && !config.headers.get('X-Company-ID')) {
+        config.headers.set('X-Company-ID', activeCompanyId);
     }
 
     const method = config.method?.toUpperCase();

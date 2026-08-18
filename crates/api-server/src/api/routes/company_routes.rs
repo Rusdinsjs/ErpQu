@@ -11,6 +11,10 @@ pub fn company_routes() -> Router<AppState> {
             get(company_handler::list_companies).post(company_handler::create_company),
         )
         .route(
+            "/api/companies/accessible",
+            get(company_handler::list_accessible_companies),
+        )
+        .route(
             "/api/companies/tree",
             get(company_handler::get_company_tree),
         )

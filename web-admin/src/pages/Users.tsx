@@ -412,6 +412,9 @@ export default function Users() {
                                         )}
                                     </div>
                                 </TableTh>
+                                <TableTh>
+                                    <span>Company</span>
+                                </TableTh>
                                 <TableTh onClick={() => handleSort('department')} className="cursor-pointer hover:text-white transition-colors">
                                     <div className="flex items-center gap-1.5">
                                         <span>Access Scope</span>
@@ -460,6 +463,13 @@ export default function Users() {
                                                  </Badge>
                                              );
                                          })()}
+                                    </TableTd>
+                                    <TableTd>
+                                        {user.company_name ? (
+                                            <Badge variant="warning">{user.company_name}</Badge>
+                                        ) : (
+                                            <span className="text-xs text-muted-foreground italic">—</span>
+                                        )}
                                     </TableTd>
                                     <TableTd>
                                         <span className="text-sm text-muted-foreground">
@@ -528,7 +538,7 @@ export default function Users() {
                                     </TableTd>
                                 </TableRow>
                             )) : (
-                                <TableEmpty colSpan={7} message={users.length === 0 ? "No users found" : "No users match the selected filters"} />
+                                <TableEmpty colSpan={8} message={users.length === 0 ? "No users found" : "No users match the selected filters"} />
                             )}
                         </TableBody>
                     </Table>
@@ -538,6 +548,17 @@ export default function Users() {
             {/* Edit Modal */}
             <Modal isOpen={editOpened} onClose={() => setEditOpened(false)} title="Edit User">
                 <div className="space-y-4">
+                    {editingUser?.company_name && (
+                        <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-between">
+                            <div>
+                                <span className="text-xs text-muted-foreground block font-medium">Company (via Linked Employee)</span>
+                                <span className="text-sm font-semibold text-amber-400">{editingUser.company_name}</span>
+                            </div>
+                            {editingUser.employee_name && (
+                                <Badge variant="info">Pegawai: {editingUser.employee_name}</Badge>
+                            )}
+                        </div>
+                    )}
                     <Input
                         label="User Name"
                         placeholder="Enter user name"
@@ -651,6 +672,15 @@ export default function Users() {
 
                         {/* Details Grid */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="p-3.5 rounded-lg bg-slate-950/40 border border-slate-800/80">
+                                <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider block mb-1">Company / Perusahaan</span>
+                                {selectedUser.company_name ? (
+                                    <p className="text-sm font-semibold text-amber-400">{selectedUser.company_name}</p>
+                                ) : (
+                                    <span className="text-sm text-muted-foreground italic">No Company Assigned</span>
+                                )}
+                            </div>
+
                             <div className="p-3.5 rounded-lg bg-slate-950/40 border border-slate-800/80">
                                 <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider block mb-1">Role & Access Level</span>
                                 <p className="text-sm font-semibold text-white">{getAccessScope(selectedUser.role_code)}</p>

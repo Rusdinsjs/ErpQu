@@ -20,6 +20,9 @@ export interface User {
 interface AuthState {
     token: string | null;
     user: User | null;
+    activeCompanyId: string | null;
+    activeCompanyName: string | null;
+    setActiveCompany: (id: string | null, name: string | null) => void;
     login: (token: string, user: Omit<User, 'permissions' | 'role_level'>) => void;
     logout: () => void;
     refreshUser: () => Promise<void>;
@@ -41,6 +44,9 @@ export const useAuthStore = create<AuthState>()(
         (set, get) => ({
             token: null,
             user: null,
+            activeCompanyId: null,
+            activeCompanyName: null,
+            setActiveCompany: (id, name) => set({ activeCompanyId: id, activeCompanyName: name }),
             login: (token, baseUser) => {
                 try {
                     const decoded = jwtDecode<JwtClaims>(token);
@@ -71,7 +77,7 @@ export const useAuthStore = create<AuthState>()(
                     });
                 }
             },
-            logout: () => set({ token: null, user: null }),
+            logout: () => set({ token: null, user: null, activeCompanyId: null, activeCompanyName: null }),
             refreshUser: async () => {
                 const token = get().token;
                 if (!token) return;

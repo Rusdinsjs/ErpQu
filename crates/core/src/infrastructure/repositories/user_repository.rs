@@ -67,6 +67,8 @@ impl UserRepository {
                 u.department, u.department_id, u.is_active, NULL::timestamptz as last_login_at,
                 e.id as employee_id, e.name as employee_name, e.nik as employee_nik, e.photo_url as employee_photo_url,
                 u.allowed_asset_group,
+                e.company_id as company_id,
+                comp.name as company_name,
                 COALESCE((
                     SELECT JSONB_AGG(DISTINCT JSONB_BUILD_OBJECT('id', r_all.id, 'code', r_all.code, 'name', r_all.name, 'role_level', r_all.role_level))
                     FROM user_roles ur_all
@@ -76,6 +78,7 @@ impl UserRepository {
             FROM users u
             LEFT JOIN roles r ON u.role_id = r.id
             LEFT JOIN hr.employees e ON u.id = e.user_id
+            LEFT JOIN companies comp ON e.company_id = comp.id
             ORDER BY u.name
             LIMIT $1 OFFSET $2
             "#,
@@ -101,6 +104,8 @@ impl UserRepository {
                 employee_nik: r.get("employee_nik"),
                 employee_photo_url: r.get("employee_photo_url"),
                 allowed_asset_group: r.get("allowed_asset_group"),
+                company_id: r.get("company_id"),
+                company_name: r.get("company_name"),
                 roles: r.try_get::<serde_json::Value, _>("roles").ok(),
                 last_login_at: r.get("last_login_at"),
             })

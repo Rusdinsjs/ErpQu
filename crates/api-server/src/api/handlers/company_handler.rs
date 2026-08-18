@@ -665,3 +665,70 @@ pub async fn delete_company(
         "message": "Company deleted successfully"
     })))
 }
+
+/// GET /api/companies/accessible - List companies accessible to the authenticated user
+pub async fn list_accessible_companies(
+    State(state): State<AppState>,
+    axum::Extension(claims): axum::Extension<management_system_core::domain::entities::UserClaims>,
+) -> Result<Json<serde_json::Value>, (StatusCode, String)> {
+    let pool = &state.pool;
+    let is_admin = claims.role == "super_admin"
+        || claims.role_level <= 1
+        || claims.permissions.iter().any(|p| p == "*" || p == "company.*" || p == "company.admin");
+
+    let rows = if is_admin {
+        sqlx::query_as::<_, CompanyRow>(
+            r#"
+            SELECT 
+                c.id, c.tenant_id, c.code, c.name, c.legal_name, c.tax_id, c.base_currency, c.country,
+                c.address, c.phone, c.email, c.logo_url, c.domain, c.website, c.parent_company_id,
+                p.name AS parent_company_name,
+                c.incorporation_date, c.registration_no,
+                c.establishment_deed_no, c.establishment_deed_date, c.establishment_notary_name, c.establishment_approval_no,
+                c.default_bank_account_id,
+                c.default_cash_account_id, c.default_income_account_id, c.default_expense_account_id,
+                c.default_receivable_account_id, c.default_payable_account_id,
+                c.fiscal_year_start_month, c.is_group, c.status, c.created_at, c.updated_at
+            FROM public.companies c
+            LEFT JOIN public.companies p ON c.parent_company_id = p.id
+            WHERE c.deleted_at IS NULL AND c.status = 'ACTIVE'
+            ORDER BY c.name
+            "#
+        )
+        .fetch_all(pool)
+        .await
+    } else {
+        let user_id = claims.user_id();
+        sqlx::query_as::<_, CompanyRow>(
+            r#"
+            SELECT 
+                c.id, c.tenant_id, c.code, c.name, c.legal_name, c.tax_id, c.base_currency, c.country,
+                c.address, c.phone, c.email, c.logo_url, c.domain, c.website, c.parent_company_id,
+                p.name AS parent_company_name,
+                c.incorporation_date, c.registration_no,
+                c.establishment_deed_no, c.establishment_deed_date, c.establishment_notary_name, c.establishment_approval_no,
+                c.default_bank_account_id,
+                c.default_cash_account_id, c.default_income_account_id, c.default_expense_account_id,
+                c.default_receivable_account_id, c.default_payable_account_id,
+                c.fiscal_year_start_month, c.is_group, c.status, c.created_at, c.updated_at
+            FROM public.companies c
+            LEFT JOIN public.companies p ON c.parent_company_id = p.id
+            WHERE c.deleted_at IS NULL AND c.status = 'ACTIVE'
+              AND (
+                  c.id IN (SELECT company_id FROM hr.employees WHERE user_id = $1 AND company_id IS NOT NULL)
+                  OR c.id::text IN (SELECT for_value FROM public.user_permissions WHERE user_id = $1 AND allow_doctype = 'Company')
+              )
+            ORDER BY c.name
+            "#
+        )
+        .bind(user_id)
+        .fetch_all(pool)
+        .await
+    };
+
+    let companies = rows.map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("Failed to list accessible companies: {}", e)))?;
+    Ok(Json(serde_json::json!({
+        "success": true,
+        "data": companies
+    })))
+}

@@ -224,6 +224,8 @@ pub struct UserSummary {
     pub employee_nik: Option<String>,
     pub employee_photo_url: Option<String>,
     pub allowed_asset_group: Option<String>,
+    pub company_id: Option<Uuid>,
+    pub company_name: Option<String>,
     pub roles: Option<serde_json::Value>,
     pub last_login_at: Option<DateTime<Utc>>,
 }

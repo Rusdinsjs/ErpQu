@@ -199,6 +199,18 @@ impl StockDocumentService {
             ));
         }
 
+        // Enforce Segregation of Duties (Maker != Checker)
+        if let (Some(creator), Some(actor)) = (entry.created_by, updated_by) {
+            management_system_core::domain::sod::SodValidator::validate_stock_adjustment(creator, actor)?;
+        }
+
+        // Apply PostgreSQL RLS Company Isolation to Transaction
+        let tenant_ctx = management_system_core::domain::tenant::TenantContext::new(
+            uuid::Uuid::nil(),
+            Some(entry.company_id),
+        );
+        tenant_ctx.apply_to_transaction(&mut tx).await?;
+
         let items = self
             .repository
             .get_stock_entry_items(id)
@@ -454,6 +466,22 @@ impl StockDocumentService {
             ));
         }
 
+        // Enforce Segregation of Duties (Maker != Checker)
+        if let (Some(creator), Some(actor)) = (req.created_by, updated_by) {
+            management_system_core::domain::sod::SodValidator::validate_maker_checker(
+                creator,
+                actor,
+                "Material Request Approval",
+            )?;
+        }
+
+        // Apply PostgreSQL RLS Company Isolation to Transaction
+        let tenant_ctx = management_system_core::domain::tenant::TenantContext::new(
+            uuid::Uuid::nil(),
+            Some(req.company_id),
+        );
+        tenant_ctx.apply_to_transaction(&mut tx).await?;
+
         let updated_req = self
             .repository
             .update_material_request_status(&mut tx, id, "APPROVED", updated_by)
@@ -494,6 +522,13 @@ impl StockDocumentService {
                 "Only draft purchase receipts can be submitted",
             ));
         }
+
+        // Apply PostgreSQL RLS Company Isolation to Transaction
+        let tenant_ctx = management_system_core::domain::tenant::TenantContext::new(
+            uuid::Uuid::nil(),
+            Some(receipt.company_id),
+        );
+        tenant_ctx.apply_to_transaction(&mut tx).await?;
 
         let items = finance_repo.get_purchase_receipt_items(id).await?;
         if items.is_empty() {
