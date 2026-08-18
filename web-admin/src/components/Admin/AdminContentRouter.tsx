@@ -176,6 +176,16 @@ const LoyaltyPointEntriesView = lazy(() => import('../../pages/Selling/LoyaltyPo
 const OutboxManagementView = lazy(() => import('../../pages/Settings/OutboxManagementView'));
 const PeriodClosingView = lazy(() => import('../../pages/Finance/PeriodClosingView'));
 const ExchangeRatesView = lazy(() => import('../../pages/Finance/ExchangeRatesView'));
+const ItemPricesView = lazy(() => import('../../pages/Selling/ItemPricesView'));
+const PriceListsView = lazy(() => import('../../pages/Selling/PriceListsView'));
+const SellingSettingsView = lazy(() => import('../../pages/Selling/SellingSettingsView'));
+const BuyingSettingsView = lazy(() => import('../../pages/Buying/BuyingSettingsView'));
+const TermsTemplatesView = lazy(() => import('../../pages/Selling/TermsTemplatesView'));
+const SubcontractingView = lazy(() => import('../../pages/Buying/SubcontractingView'));
+const SupplierInvoiceImportView = lazy(() => import('../../pages/Buying/SupplierInvoiceImportView'));
+const SalesTargetVariancesView = lazy(() => import('../../pages/Selling/SalesTargetVariancesView'));
+const DunningsView = lazy(() => import('../../pages/Finance/DunningsView'));
+const AccountingDimensionsView = lazy(() => import('../../pages/Finance/AccountingDimensionsView'));
 
 
 interface AdminContentRouterProps {
@@ -377,16 +387,16 @@ export function AdminContentRouter({
         'loyalty-programs': () => <PointOfSaleView />,
         'loyalty-points': () => <LoyaltyPointEntriesView />,
         'items': () => <InventoryItemsView />,
-        'item-prices': () => <SellingGenericView title="Item Price" description="Harga khusus produk per price list" type="table" />,
-        'price-lists': () => <SellingGenericView title="Price List" description="Daftar harga standar penjualan & pembelian" type="table" />,
+        'item-prices': () => <ItemPricesView />,
+        'price-lists': () => <PriceListsView />,
         'item-groups': () => <InventoryCategoriesView />,
-        'product-bundles': () => <SellingGenericView title="Product Bundle" description="Paket bundling produk & komponen" type="table" />,
+        'product-bundles': () => <ProductBundles />,
         'promotional-schemes': () => <SalesPricingView />,
         'pricing-rules': () => <SalesPricingView />,
         'shipping-rules': () => <SalesPricingView />,
         'coupon-codes': () => <SalesPricingView />,
-        'selling-settings': () => <SellingGenericView title="Selling Settings" description="Pengaturan umum modul penjualan" type="settings" />,
-        'terms-templates': () => <SellingGenericView title="Terms & Conditions Template" description="Template syarat & ketentuan legal" type="table" />,
+        'selling-settings': () => <SellingSettingsView />,
+        'terms-templates': () => <TermsTemplatesView />,
         'tax-templates': () => <TaxTemplatesView />,
         'utm-sources': () => <SalesMasterExtendedView />,
         'customer-groups': () => <SalesMasterExtendedView />,
@@ -411,9 +421,9 @@ export function AdminContentRouter({
         'customer-credit-balance': () => <SalesReportsView />,
         'dormant-customers': () => <SalesReportsView />,
         'partner-commissions': () => <SalesTeamView />,
-        'territory-target-variance': () => <SellingGenericView title="Territory Target Variance" description="Varian target wilayah vs realisasi" type="report" />,
-        'salesperson-target-variance': () => <SellingGenericView title="Sales Person Target Variance" description="Varian target sales vs realisasi" type="report" />,
-        'partner-target-variance': () => <SellingGenericView title="Sales Partner Target Variance" description="Varian target mitra vs realisasi" type="report" />,
+        'territory-target-variance': () => <SalesTargetVariancesView type="territory" />,
+        'salesperson-target-variance': () => <SalesTargetVariancesView type="salesperson" />,
+        'partner-target-variance': () => <SalesTargetVariancesView type="partner" />,
         'purchase-overview': () => <PurchaseOverviewView />,
         'purchase-quotes': () => <PurchaseQuotesView />,
         'purchase-orders': () => <PurchaseOrdersView />,
@@ -423,15 +433,15 @@ export function AdminContentRouter({
         'material-requests': () => <MaterialRequestView />,
         'rfqs': () => <RequestsForQuotationView />,
         'supplier-quotations': () => <SupplierQuotationsView />,
-        'buying-item-prices': () => <BuyingGenericView title="Item Price (Buying)" description="Harga beli khusus barang per supplier" type="table" />,
-        'buying-price-lists': () => <BuyingGenericView title="Price List (Buying)" description="Master daftar harga beli" type="table" />,
-        'buying-product-bundles': () => <BuyingGenericView title="Product Bundle" description="Paket bundling komponen pembelian" type="table" />,
+        'buying-item-prices': () => <ItemPricesView buyingOnly />,
+        'buying-price-lists': () => <PriceListsView buyingOnly />,
+        'buying-product-bundles': () => <ProductBundles />,
         'buying-item-groups': () => <InventoryCategoriesView />,
-        'buying-promotional-schemes': () => <BuyingGenericView title="Promotional Scheme (Buying)" description="Skema diskon & promosi supplier" type="table" />,
-        'buying-pricing-rules': () => <BuyingGenericView title="Pricing Rule (Buying)" description="Aturan otomatisasi harga beli" type="table" />,
-        'buying-settings': () => <BuyingGenericView title="Buying Settings" description="Pengaturan umum modul pembelian" type="settings" />,
+        'buying-promotional-schemes': () => <SalesPricingView />,
+        'buying-pricing-rules': () => <SalesPricingView />,
+        'buying-settings': () => <BuyingSettingsView />,
         'purchase-tax-templates': () => <TaxTemplatesView />,
-        'buying-terms-templates': () => <BuyingGenericView title="Terms & Conditions (Buying)" description="Template syarat & ketentuan pembelian" type="table" />,
+        'buying-terms-templates': () => <TermsTemplatesView buyingOnly />,
         'suppliers': () => <SuppliersView />,
         'supplier-groups': () => <SupplierMasterExtendedView />,
         'supplier-contacts': () => <SupplierMasterExtendedView />,
@@ -450,12 +460,12 @@ export function AdminContentRouter({
         'item-purchase-history': () => <PurchaseReportsView />,
         'purchase-receipt-trends': () => <PurchaseReportsView />,
         'purchase-invoice-trends': () => <PurchaseReportsView />,
-        'subcontract-materials': () => <BuyingGenericView title="Subcontract Material Order" description="Order bahan baku ke subkontraktor" type="table" />,
-        'subcontract-received': () => <BuyingGenericView title="Subcontract Material Received" description="Penerimaan hasil subkontrak" type="table" />,
+        'subcontract-materials': () => <SubcontractingView mode="order" />,
+        'subcontract-received': () => <SubcontractingView mode="received" />,
         'rfq-comparison': () => <SupplierQuotationsView />,
         'pr-to-rfq': () => <RequestsForQuotationView />,
         'supplier-directory': () => <SuppliersView />,
-        'import-supplier-invoice': () => <BuyingGenericView title="Import Supplier Invoice" description="Impor massal faktur supplier" type="settings" />,
+        'import-supplier-invoice': () => <SupplierInvoiceImportView />,
         'stock-workspace': () => <StockWorkspaceView />,
         'delivery-notes': () => <DeliveryNotesView />,
         'pick-lists': () => <PickListsView />,
@@ -494,7 +504,7 @@ export function AdminContentRouter({
         'bank-clearance': () => <BankAccountsView />,
         'cashier-closing': () => <CashBankView />,
         'cost-centers': () => <CostCentersView />,
-        'accounting-dimensions': () => <CostCentersView />,
+        'accounting-dimensions': () => <AccountingDimensionsView />,
         'budgets-view': () => <BudgetsView />,
         'budgets': () => <BudgetsView />,
         'sales-tax-templates': () => <TaxTemplatesView />,
@@ -503,7 +513,7 @@ export function AdminContentRouter({
         'tax-rules': () => <TaxTemplatesView />,
         'credit-notes': () => <CreditDebitNotesView />,
         'debit-notes': () => <CreditDebitNotesView />,
-        'dunnings': () => <AgingReportsView />,
+        'dunnings': () => <DunningsView />,
         'balance-sheet': () => <FinancialReportsView />,
         'profit-loss': () => <FinancialReportsView />,
         'cash-flow': () => <CashFlowReportView />,
