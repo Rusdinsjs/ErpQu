@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { buyingQuotationDataApi, type SupplierQuotation } from '../../api/buying-quotation-data';
 import { vendorApi } from '../../api/vendors';
 import { Button, Input, Table, TableHead, TableBody, TableRow, TableTh, TableTd, TableSkeleton, Modal } from '../../components/ui';
-import { Plus, Search, FileSpreadsheet, CheckCircle2, ArrowRight, DollarSign } from 'lucide-react';
+import { Plus, Search, FileSpreadsheet, CheckCircle2 } from 'lucide-react';
 import { formatCurrencyIDR } from '../../utils/decimal';
 import { toast } from 'sonner';
 
@@ -15,7 +15,7 @@ export default function SupplierQuotations() {
     const [quotationNo, setQuotationNo] = useState('');
     const [vendorId, setVendorId] = useState('');
     const [transactionDate, setTransactionDate] = useState(new Date().toISOString().split('T')[0]);
-    const [validTill, setValidTill] = useState(new Date(Date.now() + 30*24*3600*1000).toISOString().split('T')[0]);
+    const [validTill, setValidTill] = useState(new Date(Date.now() + 30 * 24 * 3600 * 1000).toISOString().split('T')[0]);
     const [grandTotal, setGrandTotal] = useState('');
 
     const { data: quotations, isLoading } = useQuery({
@@ -38,7 +38,7 @@ export default function SupplierQuotations() {
             toast.success('Penawaran Harga Supplier berhasil dicatat.');
         },
         onError: (err: any) => {
-            toast.error('Gagal mencatat penawaran: ' + (err.message || 'Terjadi kesalahan'));
+            toast.error('Gagal mencatat penawaran: ' + (err?.message || 'Terjadi kesalahan'));
         }
     });
 
@@ -63,17 +63,30 @@ export default function SupplierQuotations() {
         });
     };
 
-    const vendorsList = vendorsData?.data || [];
+    const vendorsList = Array.isArray(vendorsData?.data)
+        ? vendorsData.data
+        : Array.isArray(vendorsData)
+        ? vendorsData
+        : [];
 
-    const getVendorName = (id: string) => {
+    const getVendorName = (id?: string) => {
+        if (!id) return 'Supplier General';
         const v = vendorsList.find(item => item.id === id);
         return v ? v.name : 'Supplier General';
     };
 
-    const filtered = (quotations || []).filter((q: SupplierQuotation) => 
-        (q.quotation_number || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-        getVendorName(q.vendor_id).toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const quotationList: SupplierQuotation[] = Array.isArray(quotations)
+        ? quotations
+        : Array.isArray((quotations as any)?.data)
+        ? (quotations as any).data
+        : [];
+
+    const filtered = quotationList.filter((q: SupplierQuotation) => {
+        const qNum = q.quotation_number || q.quote_number || '';
+        const vName = getVendorName(q.vendor_id);
+        const search = searchTerm.toLowerCase();
+        return qNum.toLowerCase().includes(search) || vName.toLowerCase().includes(search);
+    });
 
     return (
         <div className="p-8 space-y-6">
@@ -126,20 +139,29 @@ export default function SupplierQuotations() {
                             </TableRow>
                         </TableHead>
                         <TableBody>
-                            {filtered.map((row: SupplierQuotation) => (
-                                <TableRow key={row.id} className="hover:bg-muted/30">
-                                    <TableTd className="font-semibold text-foreground">{row.quotation_number}</TableTd>
-                                    <TableTd className="font-medium text-foreground">{getVendorName(row.vendor_id)}</TableTd>
-                                    <TableTd className="text-muted-foreground">{row.transaction_date}</TableTd>
-                                    <TableTd className="text-muted-foreground">{row.valid_till || '-'}</TableTd>
-                                    <TableTd align="right" className="font-bold text-foreground">{formatCurrencyIDR(Number(row.grand_total || 0))}</TableTd>
-                                    <TableTd align="center">
-                                        <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-600 inline-flex items-center gap-1">
-                                            <CheckCircle2 size={12} /> {row.status || 'Submitted'}
-                                        </span>
-                                    </TableTd>
-                                </TableRow>
-                            ))}
+                            {filtered.map((row: SupplierQuotation, index: number) => {
+                                const qNumber = row.quotation_number || row.quote_number || `SQ-${index + 1}`;
+                                const dateStr = row.transaction_date || row.date || '-';
+                                const validStr = row.valid_till || row.expiry_date || '-';
+                                const totalVal = row.grand_total ?? row.total_amount ?? row.subtotal ?? 0;
+
+                                return (
+                                    <TableRow key={row.id || index} className="hover:bg-muted/30">
+                                        <TableTd className="font-semibold text-foreground">{qNumber}</TableTd>
+                                        <TableTd className="font-medium text-foreground">{getVendorName(row.vendor_id)}</TableTd>
+                                        <TableTd className="text-muted-foreground">{dateStr}</TableTd>
+                                        <TableTd className="text-muted-foreground">{validStr}</TableTd>
+                                        <TableTd align="right" className="font-bold text-foreground">
+                                            {formatCurrencyIDR(Number(totalVal) || 0)}
+                                        </TableTd>
+                                        <TableTd align="center">
+                                            <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-600 inline-flex items-center gap-1">
+                                                <CheckCircle2 size={12} /> {row.status || 'Submitted'}
+                                            </span>
+                                        </TableTd>
+                                    </TableRow>
+                                );
+                            })}
                         </TableBody>
                     </Table>
                 )}

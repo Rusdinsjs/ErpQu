@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { vendorApi, type Vendor, type CreateVendorRequest } from '../../api/vendors';
 import { Button, Input, Table, TableHead, TableBody, TableRow, TableTh, TableTd, TableSkeleton, Modal } from '../../components/ui';
-import { Plus, Search, Truck, CheckCircle2, Phone, Mail, MapPin } from 'lucide-react';
+import { Plus, Search, Truck, CheckCircle2, Phone } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function SuppliersView() {
@@ -31,7 +31,7 @@ export default function SuppliersView() {
             toast.success('Pemasok / Vendor baru berhasil didaftarkan.');
         },
         onError: (err: any) => {
-            toast.error('Gagal menambahkan Vendor: ' + (err.message || 'Terjadi kesalahan'));
+            toast.error('Gagal menambahkan Vendor: ' + (err?.message || 'Terjadi kesalahan'));
         }
     });
 
@@ -62,12 +62,21 @@ export default function SuppliersView() {
         });
     };
 
-    const vendors = vendorsData?.data || [];
-    const filtered = vendors.filter(v => 
-        (v.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (v.code || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (v.contact_person || '').toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const vendors: Vendor[] = Array.isArray(vendorsData?.data)
+        ? vendorsData.data
+        : Array.isArray(vendorsData)
+        ? vendorsData
+        : [];
+
+    const filtered = vendors.filter(v => {
+        const vName = v.name || '';
+        const vCode = v.code || '';
+        const vPic = v.contact_person || '';
+        const search = searchTerm.toLowerCase();
+        return vName.toLowerCase().includes(search) ||
+            vCode.toLowerCase().includes(search) ||
+            vPic.toLowerCase().includes(search);
+    });
 
     return (
         <div className="p-8 space-y-6">

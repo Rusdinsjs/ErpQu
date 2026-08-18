@@ -15,10 +15,7 @@ interface State {
 }
 
 /**
- * Error Boundary Component
- * 
- * Catches JavaScript errors anywhere in the child component tree,
- * logs those errors, and displays a fallback UI instead of crashing.
+ * Error Boundary Component with user-friendly recovery and technical diagnostics
  */
 export class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
@@ -31,7 +28,6 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   static getDerivedStateFromError(error: Error): State {
-    // Update state so the next render will show the fallback UI
     return {
       hasError: true,
       error,
@@ -40,14 +36,7 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    // Log error to console in development
-    if (import.meta.env.DEV) {
-      console.error('ErrorBoundary caught an error:', error, errorInfo);
-    }
-
-    // TODO: Log to error reporting service (e.g., Sentry) in production
-    // Example: Sentry.captureException(error, { contexts: { react: errorInfo } });
-
+    console.error('ErrorBoundary caught an error:', error, errorInfo);
     this.setState({
       error,
       errorInfo,
@@ -66,22 +55,24 @@ export class ErrorBoundary extends Component<Props, State> {
     window.location.reload();
   };
 
+  handleGoDashboard = () => {
+    window.location.href = '/';
+  };
+
   render() {
     if (this.state.hasError) {
-      // Custom fallback UI
       if (this.props.fallback) {
         return this.props.fallback;
       }
 
-      // Default fallback UI
       return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-          <Card className="max-w-2xl w-full">
-            <div className="p-6">
+        <div className="min-h-screen flex items-center justify-center bg-background p-4">
+          <Card className="max-w-xl w-full border border-border shadow-xl rounded-2xl bg-card p-6">
+            <div>
               <div className="flex items-center gap-3 mb-4">
-                <div className="shrink-0">
+                <div className="shrink-0 p-3 bg-red-500/10 rounded-2xl text-red-500">
                   <svg
-                    className="h-12 w-12 text-red-500"
+                    className="h-8 w-8"
                     fill="none"
                     viewBox="0 0 24 24"
                     stroke="currentColor"
@@ -95,26 +86,26 @@ export class ErrorBoundary extends Component<Props, State> {
                   </svg>
                 </div>
                 <div>
-                  <h1 className="text-2xl font-bold text-gray-900">
-                    Oops! Terjadi Kesalahan
+                  <h1 className="text-xl font-bold text-foreground">
+                    Oops! Terjadi Kendala Tampilan
                   </h1>
-                  <p className="text-gray-600 mt-1">
-                    Aplikasi mengalami error yang tidak terduga
+                  <p className="text-sm text-muted-foreground mt-0.5">
+                    Modul ini mengalami kesalahan saat memproses data.
                   </p>
                 </div>
               </div>
 
-              {import.meta.env.DEV && this.state.error && (
-                <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-                  <p className="text-sm font-mono text-red-800 mb-2">
-                    <strong>Error:</strong> {this.state.error.toString()}
+              {this.state.error && (
+                <div className="mt-4 p-3 bg-red-500/5 border border-red-500/20 rounded-xl text-left">
+                  <p className="text-xs font-mono text-red-600 dark:text-red-400 break-words">
+                    <strong>Pesan:</strong> {this.state.error.message || this.state.error.toString()}
                   </p>
                   {this.state.errorInfo && (
-                    <details className="mt-2">
-                      <summary className="text-sm font-semibold text-red-700 cursor-pointer">
-                        Stack Trace
+                    <details className="mt-2 text-xs">
+                      <summary className="text-xs font-semibold text-red-500 cursor-pointer">
+                        Detail Teknis
                       </summary>
-                      <pre className="mt-2 text-xs text-red-600 overflow-auto max-h-64">
+                      <pre className="mt-1.5 p-2 bg-black/5 dark:bg-white/5 rounded text-[10px] text-muted-foreground overflow-auto max-h-36">
                         {this.state.errorInfo.componentStack}
                       </pre>
                     </details>
@@ -122,24 +113,32 @@ export class ErrorBoundary extends Component<Props, State> {
                 </div>
               )}
 
-              <div className="mt-6 flex gap-3">
+              <div className="mt-6 flex flex-wrap gap-2.5">
                 <Button
                   onClick={this.handleReset}
-                  variant="primary"
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl text-sm px-4 py-2"
                 >
                   Coba Lagi
                 </Button>
                 <Button
                   onClick={this.handleReload}
-                  variant="secondary"
+                  variant="outline"
+                  className="rounded-xl text-sm px-4 py-2"
                 >
                   Muat Ulang Halaman
                 </Button>
+                <Button
+                  onClick={this.handleGoDashboard}
+                  variant="secondary"
+                  className="rounded-xl text-sm px-4 py-2"
+                >
+                  Ke Dashboard Utama
+                </Button>
               </div>
 
-              <div className="mt-4 text-sm text-gray-500">
+              <div className="mt-4 text-xs text-muted-foreground border-t border-border/40 pt-3">
                 <p>
-                  Jika masalah berlanjut, silakan hubungi administrator sistem.
+                  Jika kendala terus berlanjut, silakan hubungi tim administrator ERPQu.
                 </p>
               </div>
             </div>
@@ -152,9 +151,6 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 }
 
-/**
- * Higher-Order Component untuk wrap components dengan ErrorBoundary
- */
 export function withErrorBoundary<P extends object>(
   Component: React.ComponentType<P>,
   fallback?: ReactNode

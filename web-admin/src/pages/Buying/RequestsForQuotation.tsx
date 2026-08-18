@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { buyingQuotationDataApi, type RequestForQuotation } from '../../api/buying-quotation-data';
 import { Button, Input, Table, TableHead, TableBody, TableRow, TableTh, TableTd, TableSkeleton, Modal } from '../../components/ui';
-import { Plus, Search, FileQuestion, CheckCircle2, Building, Calendar, ArrowRight } from 'lucide-react';
+import { Plus, Search, FileQuestion, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function RequestsForQuotation() {
@@ -29,7 +29,7 @@ export default function RequestsForQuotation() {
             toast.success('Request for Quotation (RFQ) berhasil dibuat.');
         },
         onError: (err: any) => {
-            toast.error('Gagal membuat RFQ: ' + (err.message || 'Terjadi kesalahan'));
+            toast.error('Gagal membuat RFQ: ' + (err?.message || 'Terjadi kesalahan'));
         }
     });
 
@@ -45,10 +45,18 @@ export default function RequestsForQuotation() {
         });
     };
 
-    const filtered = (rfqs || []).filter((r: RequestForQuotation) => 
-        (r.rfq_number || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (r.tc_name || '').toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const rfqList: RequestForQuotation[] = Array.isArray(rfqs)
+        ? rfqs
+        : Array.isArray((rfqs as any)?.data)
+        ? (rfqs as any).data
+        : [];
+
+    const filtered = rfqList.filter((r: RequestForQuotation) => {
+        const rNum = r.rfq_number || '';
+        const tc = r.tc_name || '';
+        const search = searchTerm.toLowerCase();
+        return rNum.toLowerCase().includes(search) || tc.toLowerCase().includes(search);
+    });
 
     return (
         <div className="p-8 space-y-6">
@@ -100,10 +108,10 @@ export default function RequestsForQuotation() {
                             </TableRow>
                         </TableHead>
                         <TableBody>
-                            {filtered.map((row: RequestForQuotation) => (
-                                <TableRow key={row.id} className="hover:bg-muted/30">
-                                    <TableTd className="font-semibold text-foreground">{row.rfq_number}</TableTd>
-                                    <TableTd className="text-muted-foreground">{row.transaction_date}</TableTd>
+                            {filtered.map((row: RequestForQuotation, idx: number) => (
+                                <TableRow key={row.id || idx} className="hover:bg-muted/30">
+                                    <TableTd className="font-semibold text-foreground">{row.rfq_number || `RFQ-${idx + 1}`}</TableTd>
+                                    <TableTd className="text-muted-foreground">{row.transaction_date || '-'}</TableTd>
                                     <TableTd className="font-medium text-foreground">{row.tc_name || 'Standard Terms'}</TableTd>
                                     <TableTd className="text-muted-foreground max-w-xs truncate">{row.terms || '-'}</TableTd>
                                     <TableTd align="center">
