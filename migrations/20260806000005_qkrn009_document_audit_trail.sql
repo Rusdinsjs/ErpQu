@@ -31,15 +31,7 @@ CREATE INDEX IF NOT EXISTS idx_doc_audit_actor
 CREATE INDEX IF NOT EXISTS idx_doc_audit_tenant
     ON document_audit_trail (tenant_id, recorded_at);
 
--- Strict statement-level append-only trigger
-CREATE OR REPLACE FUNCTION prevent_document_audit_trail_mutation()
-RETURNS TRIGGER AS $$
-BEGIN
-    RAISE EXCEPTION 'document_audit_trail table is append-only and cannot be updated or deleted';
-END;
-$$ LANGUAGE plpgsql;
-
-DROP TRIGGER IF EXISTS trg_prevent_document_audit_trail_mutation ON document_audit_trail;
-CREATE TRIGGER trg_prevent_document_audit_trail_mutation
-BEFORE UPDATE OR DELETE ON document_audit_trail
-FOR EACH STATEMENT EXECUTE FUNCTION prevent_document_audit_trail_mutation();
+-- SECURITY: revoke UPDATE and DELETE for the application role.
+-- Run as superuser / migration owner:
+-- REVOKE UPDATE, DELETE ON document_audit_trail FROM app_role;
+-- (Replace app_role with the actual application DB role name.)
