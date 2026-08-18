@@ -1,8 +1,9 @@
 use crate::api::server::AppState;
 use crate::application::dto::ApiResponse;
 use crate::domain::entities::{
-    ApplyWorkflowActionPayload, ApprovalWorkflow, CreateWorkflowPayload, SaveWorkflowStatePayload,
-    SaveWorkflowTransitionPayload, UserClaims,
+    ApplyWorkflowActionPayload, ApprovalEntityType, ApprovalWorkflow, CreateApprovalEntityTypePayload,
+    CreateWorkflowPayload, SaveWorkflowStatePayload, SaveWorkflowTransitionPayload,
+    UpdateApprovalEntityTypePayload, UserClaims,
 };
 use crate::shared::errors::AppError;
 use axum::{
@@ -132,4 +133,39 @@ pub async fn apply_frappe_workflow_action(
     state.approval_workflow_service.apply_frappe_workflow_action(payload, user_id).await?;
     Ok(Json(ApiResponse::success_with_message((), "Workflow action applied")))
 }
+
+// === Approval Entity Type Handlers ===
+
+pub async fn list_approval_entity_types(
+    State(state): State<AppState>,
+) -> Result<Json<ApiResponse<Vec<ApprovalEntityType>>>, AppError> {
+    let list = state.approval_workflow_service.list_entity_types().await?;
+    Ok(Json(ApiResponse::success(list)))
+}
+
+pub async fn create_approval_entity_type(
+    State(state): State<AppState>,
+    Json(payload): Json<CreateApprovalEntityTypePayload>,
+) -> Result<Json<ApiResponse<ApprovalEntityType>>, AppError> {
+    let item = state.approval_workflow_service.create_entity_type(payload).await?;
+    Ok(Json(ApiResponse::success(item)))
+}
+
+pub async fn update_approval_entity_type(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+    Json(payload): Json<UpdateApprovalEntityTypePayload>,
+) -> Result<Json<ApiResponse<ApprovalEntityType>>, AppError> {
+    let item = state.approval_workflow_service.update_entity_type(id, payload).await?;
+    Ok(Json(ApiResponse::success(item)))
+}
+
+pub async fn delete_approval_entity_type(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+) -> Result<Json<ApiResponse<()>>, AppError> {
+    state.approval_workflow_service.delete_entity_type(id).await?;
+    Ok(Json(ApiResponse::success_with_message((), "Entity type deleted")))
+}
+
 

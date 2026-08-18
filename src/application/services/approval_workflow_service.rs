@@ -2,8 +2,9 @@ use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::domain::entities::{
-    ApplyWorkflowActionPayload, ApprovalWorkflow, CreateWorkflowPayload, SaveWorkflowStatePayload,
-    SaveWorkflowTransitionPayload, WorkflowDetailResponse, WorkflowStateEntity,
+    ApplyWorkflowActionPayload, ApprovalEntityType, ApprovalWorkflow, CreateApprovalEntityTypePayload,
+    CreateWorkflowPayload, SaveWorkflowStatePayload, SaveWorkflowTransitionPayload,
+    UpdateApprovalEntityTypePayload, WorkflowDetailResponse, WorkflowStateEntity,
     WorkflowTransitionDetail, WorkflowWithDocType,
 };
 use crate::domain::errors::{DomainError, DomainResult};
@@ -100,5 +101,31 @@ impl ApprovalWorkflowService {
     ) -> DomainResult<()> {
         self.repo.apply_frappe_workflow_action(payload, user_id).await
     }
+
+    // === Approval Entity Type Methods ===
+
+    pub async fn list_entity_types(&self) -> DomainResult<Vec<ApprovalEntityType>> {
+        self.repo.list_entity_types().await
+    }
+
+    pub async fn create_entity_type(
+        &self,
+        payload: CreateApprovalEntityTypePayload,
+    ) -> DomainResult<ApprovalEntityType> {
+        self.repo.create_entity_type(payload).await
+    }
+
+    pub async fn update_entity_type(
+        &self,
+        id: Uuid,
+        payload: UpdateApprovalEntityTypePayload,
+    ) -> DomainResult<ApprovalEntityType> {
+        self.repo.update_entity_type(id, payload).await
+    }
+
+    pub async fn delete_entity_type(&self, id: Uuid) -> DomainResult<()> {
+        self.repo.delete_entity_type(id).await
+    }
 }
+
 

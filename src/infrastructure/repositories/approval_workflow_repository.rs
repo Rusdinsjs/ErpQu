@@ -3,11 +3,14 @@ use sqlx::PgPool;
 use uuid::Uuid;
 
 use crate::domain::entities::{
-    ApplyWorkflowActionPayload, ApprovalWorkflow, CreateWorkflowPayload, SaveWorkflowStatePayload,
-    SaveWorkflowTransitionPayload, WorkflowDetailResponse, WorkflowStateEntity,
+    ApplyWorkflowActionPayload, ApprovalEntityType, ApprovalWorkflow, CreateApprovalEntityTypePayload,
+    CreateWorkflowPayload, SaveWorkflowStatePayload, SaveWorkflowTransitionPayload,
+    UpdateApprovalEntityTypePayload, WorkflowDetailResponse, WorkflowStateEntity,
     WorkflowTransitionDetail, WorkflowWithDocType,
 };
 use crate::domain::errors::{DomainError, DomainResult};
+
+
 
 
 #[derive(Clone)]
@@ -402,5 +405,85 @@ impl ApprovalWorkflowRepository {
         tx.commit().await.map_err(|e| DomainError::Database(e.to_string()))?;
         Ok(())
     }
+
+    // === Approval Entity Type Methods ===
+
+    pub async fn list_entity_types(&self) -> DomainResult<Vec<ApprovalEntityType>> {
+        let recs = sqlx::query_as::<_, ApprovalEntityType>(
+            "SELECT * FROM approval_entity_types WHERE is_active = true ORDER BY label ASC",
+        )
+        .fetch_all(&self.pool)
+        .await
+        .map_err(|e| DomainError::Database(e.to_string()))?;
+
+        Ok(recs)
+    }
+
+    pub async fn create_entity_type(
+        &self,
+        payload: CreateApprovalEntityTypePayload,
+    ) -> DomainResult<ApprovalEntityType> {
+        let rec = sqlx::query_as::<_, ApprovalEntityType>(
+            r#"
+            INSERT INTO approval_entity_types (id, value, label, icon, color, description, backend_module, is_active, is_system)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, true, false)
+            RETURNING *
+            "#,
+        )
+        .bind(Uuid::new_v4())
+        .bind(payload.value)
+        .bind(payload.label)
+        .bind(payload.icon)
+        .bind(payload.color)
+        .bind(payload.description)
+        .bind(payload.backend_module)
+        .fetch_one(&self.pool)
+        .await
+        .map_err(|e| DomainError::Database(e.to_string()))?;
+
+        Ok(rec)
+    }
+
+    pub async fn update_entity_type(
+        &self,
+        id: Uuid,
+        payload: UpdateApprovalEntityTypePayload,
+    ) -> DomainResult<ApprovalEntityType> {
+        let rec = sqlx::query_as::<_, ApprovalEntityType>(
+            r#"
+            UPDATE approval_entity_types
+            SET label = COALESCE($1, label),
+                icon = COALESCE($2, icon),
+                color = COALESCE($3, color),
+                description = COALESCE($4, description),
+                backend_module = COALESCE($5, backend_module),
+                updated_at = NOW()
+            WHERE id = $6
+            RETURNING *
+            "#,
+        )
+        .bind(payload.label)
+        .bind(payload.icon)
+        .bind(payload.color)
+        .bind(payload.description)
+        .bind(payload.backend_module)
+        .bind(id)
+        .fetch_one(&self.pool)
+        .await
+        .map_err(|e| DomainError::Database(e.to_string()))?;
+
+        Ok(rec)
+    }
+
+    pub async fn delete_entity_type(&self, id: Uuid) -> DomainResult<()> {
+        sqlx::query("DELETE FROM approval_entity_types WHERE id = $1 AND is_system = false")
+            .bind(id)
+            .execute(&self.pool)
+            .await
+            .map_err(|e| DomainError::Database(e.to_string()))?;
+
+        Ok(())
+    }
 }
+
 

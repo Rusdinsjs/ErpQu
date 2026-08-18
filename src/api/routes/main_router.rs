@@ -4,9 +4,10 @@ use axum::{
     extract::Path,
     handler::Handler,
     middleware as axum_middleware,
-    routing::{delete, get, post, put},
+    routing::{delete, get, patch, post, put},
     Extension, Router,
 };
+
 
 use crate::api::handlers::finance_handler;
 use crate::api::handlers::purchase_receipt_handler;
@@ -527,7 +528,12 @@ pub fn create_router(state: AppState) -> Router {
         .route("/api/workflows/:id/states", post(save_frappe_workflow_state))
         .route("/api/workflows/:id/transitions", post(save_frappe_workflow_transition))
 
+        // Approval Entity Types
+        .route("/api/approval/entity-types", get(list_approval_entity_types).post(create_approval_entity_type))
+        .route("/api/approval/entity-types/:id", patch(update_approval_entity_type).delete(delete_approval_entity_type))
+
         // Sensors
+
 
         .route(
             "/api/assets/:asset_id/sensors/readings",
