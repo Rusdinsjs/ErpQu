@@ -169,6 +169,13 @@ const BankAccountsView = lazy(() => import('../../pages/Finance/BankAccounts'));
 const CreditDebitNotesView = lazy(() => import('../../pages/Finance/CreditDebitNotes'));
 const CashFlowReportView = lazy(() => import('../../pages/Finance/CashFlowReport'));
 const TaxTemplatesView = lazy(() => import('../../pages/Finance/TaxTemplates'));
+const POSSettingsView = lazy(() => import('../../pages/Selling/POSSettingsView'));
+const PosOpeningEntriesView = lazy(() => import('../../pages/Selling/PosOpeningEntriesView'));
+const PosClosingEntriesView = lazy(() => import('../../pages/Selling/PosClosingEntriesView'));
+const LoyaltyPointEntriesView = lazy(() => import('../../pages/Selling/LoyaltyPointEntriesView'));
+const OutboxManagementView = lazy(() => import('../../pages/Settings/OutboxManagementView'));
+const PeriodClosingView = lazy(() => import('../../pages/Finance/PeriodClosingView'));
+const ExchangeRatesView = lazy(() => import('../../pages/Finance/ExchangeRatesView'));
 
 
 interface AdminContentRouterProps {
@@ -340,15 +347,15 @@ export function AdminContentRouter({
         'email-account': () => <EmailAccountView />,
         'audit': () => <AuditLogsView />,
         'system-audit': () => <AuditLogsView />,
-        'outbox-management': () => <AuditLogsView />,
+        'outbox-management': () => <OutboxManagementView />,
         'finance': () => <ChartOfAccountsView />,
         'journal-entries': () => <JournalEntriesView />,
         'journal-form': () => <JournalEntryFormView />,
         'general-ledger': () => <GeneralLedgerView />,
         'trial-balance': () => <TrialBalanceView />,
         'financial-reports': () => <FinancialReportsView />,
-        'period-closing': () => <FinancialReportsView />,
-        'exchange-rates': () => <TaxTemplatesView />,
+        'period-closing': () => <PeriodClosingView />,
+        'exchange-rates': () => <ExchangeRatesView />,
         'cash-bank': () => <CashBankView />,
         'expenses': () => <ExpensesView />,
         'sales': () => <SalesOverviewView />,
@@ -364,11 +371,11 @@ export function AdminContentRouter({
         'sales-partners': () => <SalesTeamView />,
         'sales-persons': () => <SalesTeamView />,
         'pos-profiles': () => <PointOfSaleView />,
-        'pos-settings': () => <PointOfSaleView />,
-        'pos-opening': () => <PointOfSaleView />,
-        'pos-closing': () => <PointOfSaleView />,
+        'pos-settings': () => <POSSettingsView />,
+        'pos-opening': () => <PosOpeningEntriesView />,
+        'pos-closing': () => <PosClosingEntriesView />,
         'loyalty-programs': () => <PointOfSaleView />,
-        'loyalty-points': () => <PointOfSaleView />,
+        'loyalty-points': () => <LoyaltyPointEntriesView />,
         'items': () => <InventoryItemsView />,
         'item-prices': () => <SellingGenericView title="Item Price" description="Harga khusus produk per price list" type="table" />,
         'price-lists': () => <SellingGenericView title="Price List" description="Daftar harga standar penjualan & pembelian" type="table" />,

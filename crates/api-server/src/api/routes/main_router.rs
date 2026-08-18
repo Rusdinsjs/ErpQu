@@ -388,6 +388,37 @@ pub fn create_router(state: AppState) -> Router {
             "/api/data-imports/:id/map-columns",
             put(crate::api::handlers::data_import_handler::map_data_import_columns),
         )
+        // POS Module Routes
+        .route(
+            "/api/sales-pos/pos-profiles",
+            get(crate::api::handlers::pos_handler::list_pos_profiles)
+                .post(crate::api::handlers::pos_handler::create_pos_profile),
+        )
+        .route(
+            "/api/sales-pos/pos-settings",
+            get(crate::api::handlers::pos_handler::list_pos_settings)
+                .post(crate::api::handlers::pos_handler::create_pos_settings),
+        )
+        .route(
+            "/api/sales-pos/pos-opening-entries",
+            get(crate::api::handlers::pos_handler::list_pos_opening_entries)
+                .post(crate::api::handlers::pos_handler::create_pos_opening_entry),
+        )
+        .route(
+            "/api/sales-pos/pos-closing-entries",
+            get(crate::api::handlers::pos_handler::list_pos_closing_entries)
+                .post(crate::api::handlers::pos_handler::create_pos_closing_entry),
+        )
+        .route(
+            "/api/sales-pos/loyalty-programs",
+            get(crate::api::handlers::pos_handler::list_loyalty_programs)
+                .post(crate::api::handlers::pos_handler::create_loyalty_program),
+        )
+        .route(
+            "/api/sales-pos/loyalty-point-entries",
+            get(crate::api::handlers::pos_handler::list_loyalty_point_entries)
+                .post(crate::api::handlers::pos_handler::create_loyalty_point_entry),
+        )
         // Sensors (Moved to asset_routes)
         .route("/api/sensors/alerts", get(list_active_alerts))
         .route(

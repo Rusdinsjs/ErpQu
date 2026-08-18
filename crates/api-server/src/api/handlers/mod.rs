@@ -57,6 +57,7 @@ pub mod work_order_handler;
 pub mod workflow_handler;
 pub mod wo_settlement_handler;
 pub mod outbox_admin_handler;
+pub mod pos_handler;
 
 pub mod stock_document_handler;
 
