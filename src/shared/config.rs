@@ -33,6 +33,7 @@ impl AppConfig {
             jwt_secret: env::var("JWT_SECRET")
                 .unwrap_or_else(|_| "super-secret-key-change-in-production".to_string()),
             jwt_expiry_hours: env::var("JWT_EXPIRY_HOURS")
+                .or_else(|_| env::var("JWT_EXPIRATION_HOURS"))
                 .unwrap_or_else(|_| "24".to_string())
                 .parse()
                 .unwrap_or(24),

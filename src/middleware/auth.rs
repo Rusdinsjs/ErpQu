@@ -31,7 +31,7 @@ impl From<Claims> for CurrentUser {
 pub async fn auth_middleware(mut request: Request, next: Next) -> Result<Response, StatusCode> {
     // Get JWT secret from environment
     let jwt_secret = std::env::var("JWT_SECRET")
-        .unwrap_or_else(|_| "your-super-secret-key-change-in-production".to_string());
+        .unwrap_or_else(|_| "super-secret-key-change-in-production".to_string());
 
     // Extract token from Authorization header
     let auth_header = request

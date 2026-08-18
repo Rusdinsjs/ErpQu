@@ -30,7 +30,8 @@ impl JwtConfig {
 
     pub fn from_env() -> Self {
         Self {
-            secret: std::env::var("JWT_SECRET").unwrap_or_else(|_| "super-secret-key".to_string()),
+            secret: std::env::var("JWT_SECRET")
+                .unwrap_or_else(|_| "super-secret-key-change-in-production".to_string()),
             expiry_hours: std::env::var("JWT_EXPIRY_HOURS")
                 .unwrap_or_else(|_| "24".to_string())
                 .parse()

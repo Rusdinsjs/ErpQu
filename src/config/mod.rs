@@ -16,7 +16,7 @@ impl AppConfig {
         Self {
             database_url: env::var("DATABASE_URL").expect("DATABASE_URL must be set"),
             jwt_secret: env::var("JWT_SECRET")
-                .unwrap_or_else(|_| "your-super-secret-key-change-in-production".to_string()),
+                .unwrap_or_else(|_| "super-secret-key-change-in-production".to_string()),
             jwt_expiration_hours: env::var("JWT_EXPIRATION_HOURS")
                 .unwrap_or_else(|_| "24".to_string())
                 .parse()
