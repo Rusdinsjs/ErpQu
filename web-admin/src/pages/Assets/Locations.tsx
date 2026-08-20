@@ -297,12 +297,11 @@ export default function Locations() {
         { value: 'other', label: 'Other' },
     ];
 
-    // Build OpenStreetMap Iframe URL
+    // Build Google Maps Iframe URL
     const getMapUrl = (lat: string, lng: string) => {
         const latitude = parseFloat(lat) || -6.2088;
         const longitude = parseFloat(lng) || 106.8456;
-        const bbox = `${longitude - 0.01}%2C${latitude - 0.01}%2C${longitude + 0.01}%2C${latitude + 0.01}`;
-        return `https://www.openstreetmap.org/export/embed.html?bbox=${bbox}&layer=mapnik&marker=${latitude}%2C${longitude}`;
+        return `https://maps.google.com/maps?q=${latitude},${longitude}&hl=id&z=16&output=embed`;
     };
 
     return (
@@ -662,10 +661,10 @@ export default function Locations() {
                             />
                         </div>
 
-                        {/* Embedded OpenStreetMap Preview */}
+                        {/* Embedded Google Maps Preview */}
                         <div className="rounded-xl overflow-hidden border border-border/80 h-44 bg-card relative shadow-inner">
                             <iframe
-                                title="OpenStreetMap Geolocation Preview"
+                                title="Google Maps Geolocation Preview"
                                 width="100%"
                                 height="100%"
                                 frameBorder="0"
@@ -701,7 +700,7 @@ export default function Locations() {
                         </div>
                         <div className="rounded-xl overflow-hidden border border-border/80 h-80 bg-background relative shadow-inner">
                             <iframe
-                                title="OpenStreetMap Interactive Full View"
+                                title="Google Maps Interactive Full View"
                                 width="100%"
                                 height="100%"
                                 frameBorder="0"
@@ -711,12 +710,12 @@ export default function Locations() {
                         </div>
                         <div className="flex items-center justify-between pt-2">
                             <a
-                                href={`https://www.openstreetmap.org/?mlat=${mapPreviewModal.latitude || '-6.2088'}&mlon=${mapPreviewModal.longitude || '106.8456'}#map=15/${mapPreviewModal.latitude || '-6.2088'}/${mapPreviewModal.longitude || '106.8456'}`}
+                                href={`https://www.google.com/maps/search/?api=1&query=${mapPreviewModal.latitude || '-6.2088'},${mapPreviewModal.longitude || '106.8456'}`}
                                 target="_blank"
                                 rel="noreferrer"
                                 className="text-xs text-cyan-500 hover:underline flex items-center gap-1 font-medium"
                             >
-                                <ExternalLink size={13} /> Buka di OpenStreetMap Full Tab
+                                <ExternalLink size={13} /> Buka di Google Maps Full Tab
                             </a>
                             <Button size="sm" variant="outline" className="rounded-xl" onClick={() => setMapPreviewModal(null)}>
                                 Tutup Peta

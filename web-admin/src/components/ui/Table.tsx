@@ -124,13 +124,19 @@ export function TableTd({ children, className = '', align = 'left', colSpan }: T
 interface TableEmptyProps {
     colSpan: number;
     message?: string;
+    description?: ReactNode;
+    action?: ReactNode;
 }
 
-export function TableEmpty({ colSpan, message = 'No data found' }: TableEmptyProps) {
+export function TableEmpty({ colSpan, message = 'No data found', description, action }: TableEmptyProps) {
     return (
         <tr>
             <td colSpan={colSpan} className="px-4 py-12 text-center text-muted-foreground">
-                {message}
+                <div className="flex flex-col items-center justify-center space-y-3">
+                    <p className="font-medium text-foreground">{message}</p>
+                    {description && <p className="text-sm">{description}</p>}
+                    {action && <div className="mt-2">{action}</div>}
+                </div>
             </td>
         </tr>
     );
