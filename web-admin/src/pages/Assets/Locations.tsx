@@ -297,11 +297,53 @@ export default function Locations() {
         { value: 'other', label: 'Other' },
     ];
 
-    // Build Google Maps Iframe URL
-    const getMapUrl = (lat: string, lng: string) => {
+    // Generate Leaflet Map HTML for iframe srcDoc
+    const getMapSrcDoc = (lat: string, lng: string) => {
         const latitude = parseFloat(lat) || -6.2088;
         const longitude = parseFloat(lng) || 106.8456;
-        return `https://maps.google.com/maps?q=${latitude},${longitude}&hl=id&z=16&output=embed`;
+        return `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+                <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+                <style>body, html, #map { height: 100%; margin: 0; padding: 0; }</style>
+            </head>
+            <body>
+                <div id="map"></div>
+                <script>
+                    var map = L.map('map').setView([${latitude}, ${longitude}], 15);
+                    
+                    // Define base layers
+                    var osmLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        attribution: '© OpenStreetMap'
+                    });
+                    
+                    var satelliteLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                        attribution: '© Esri'
+                    });
+                    
+                    var darkLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                        attribution: '© CARTO'
+                    });
+
+                    // Add default layer
+                    osmLayer.addTo(map);
+
+                    // Add layer control (Peta, Satelit, Dark)
+                    var baseMaps = {
+                        "Peta": osmLayer,
+                        "Satelit": satelliteLayer,
+                        "Dark": darkLayer
+                    };
+                    L.control.layers(baseMaps).addTo(map);
+
+                    // Add marker
+                    L.marker([${latitude}, ${longitude}]).addTo(map);
+                </script>
+            </body>
+            </html>
+        `;
     };
 
     return (
@@ -654,22 +696,18 @@ export default function Locations() {
                                 onChange={(e) => setFormData({ ...formData, latitude: e.target.value })}
                             />
                             <Input
-                                label="Longitude"
-                                placeholder="106.8456"
-                                value={formData.longitude}
-                                onChange={(e) => setFormData({ ...formData, longitude: e.target.value })}
-                            />
-                        </div>
-
-                        {/* Embedded Google Maps Preview */}
+                            value={formData.longitude}
+                            onChange={(e) => setFormData({ ...formData, longitude: e.target.value })}
+                        />
+                        {/* Embedded Leaflet Preview */}
                         <div className="rounded-xl overflow-hidden border border-border/80 h-44 bg-card relative shadow-inner">
                             <iframe
-                                title="Google Maps Geolocation Preview"
+                                title="Geolocation Preview"
                                 width="100%"
                                 height="100%"
                                 frameBorder="0"
                                 scrolling="no"
-                                src={getMapUrl(formData.latitude, formData.longitude)}
+                                srcDoc={getMapSrcDoc(formData.latitude, formData.longitude)}
                             />
                         </div>
                     </div>
@@ -705,7 +743,7 @@ export default function Locations() {
                                 height="100%"
                                 frameBorder="0"
                                 scrolling="no"
-                                src={getMapUrl(mapPreviewModal.latitude || '-6.2088', mapPreviewModal.longitude || '106.8456')}
+                                srcDoc={getMapSrcDoc(mapPreviewModal.latitude || '-6.2088', mapPreviewModal.longitude || '106.8456')}
                             />
                         </div>
                         <div className="flex items-center justify-between pt-2">
@@ -727,4 +765,3 @@ export default function Locations() {
         </div>
     );
 }
-
