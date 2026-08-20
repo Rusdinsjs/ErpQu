@@ -696,9 +696,13 @@ export default function Locations() {
                                 onChange={(e) => setFormData({ ...formData, latitude: e.target.value })}
                             />
                             <Input
-                            value={formData.longitude}
-                            onChange={(e) => setFormData({ ...formData, longitude: e.target.value })}
-                        />
+                                label="Longitude"
+                                placeholder="106.8456"
+                                value={formData.longitude}
+                                onChange={(e) => setFormData({ ...formData, longitude: e.target.value })}
+                            />
+                        </div>
+
                         {/* Embedded Leaflet Preview */}
                         <div className="rounded-xl overflow-hidden border border-border/80 h-44 bg-card relative shadow-inner">
                             <iframe
