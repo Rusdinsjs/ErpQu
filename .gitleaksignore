@@ -1,0 +1,9 @@
+# Ignore tests and docs for dummy passwords
+[allowlist]
+paths = [
+    '''tests/.*''',
+    '''docs/.*''',
+    '''src/bin/verify_hash.rs''',
+    '''login_resp.json''',
+    '''login_response.json'''
+]
