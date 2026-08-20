@@ -84,7 +84,10 @@ impl LoginLockoutTracker {
 
         if let Some(ref cache) = self.cache {
             let failed_key = format!("login:failed:{}", key_lower);
-            if let Ok(c) = cache.incr(&failed_key, std::time::Duration::from_secs(900)).await {
+            if let Ok(c) = cache
+                .incr(&failed_key, std::time::Duration::from_secs(900))
+                .await
+            {
                 count = c as u32;
                 if count >= MAX_FAILED_ATTEMPTS {
                     let lock_key = format!("login:lockout:{}", key_lower);

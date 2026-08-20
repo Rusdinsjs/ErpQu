@@ -12,58 +12,82 @@ pub fn extract_user_claims(request: &Request) -> Option<UserClaims> {
 pub struct RequirePermission;
 
 impl RequirePermission {
-    pub fn new(permission: &'static str) -> impl Fn(Request, Next) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<Response, StatusCode>> + Send>> + Clone {
-        move |request: Request, next: Next| Box::pin(async move {
-            let claims = extract_user_claims(&request).ok_or(StatusCode::UNAUTHORIZED)?;
+    pub fn new(
+        permission: &'static str,
+    ) -> impl Fn(
+        Request,
+        Next,
+    ) -> std::pin::Pin<
+        Box<dyn std::future::Future<Output = Result<Response, StatusCode>> + Send>,
+    > + Clone {
+        move |request: Request, next: Next| {
+            Box::pin(async move {
+                let claims = extract_user_claims(&request).ok_or(StatusCode::UNAUTHORIZED)?;
 
-            let has_permission = claims.permissions.iter().any(|p| {
-                if *p == "*" && !permission.ends_with(".approve") && !permission.ends_with(".post") && !permission.ends_with(".disburse") {
-                    return true;
-                }
-                if *p == permission {
-                    return true;
-                }
-                if let Some(p_prefix) = p.strip_suffix(".*") {
-                    if permission.starts_with(p_prefix) && !permission.ends_with(".approve") && !permission.ends_with(".post") && !permission.ends_with(".disburse") {
+                let has_permission = claims.permissions.iter().any(|p| {
+                    if *p == "*"
+                        && !permission.ends_with(".approve")
+                        && !permission.ends_with(".post")
+                        && !permission.ends_with(".disburse")
+                    {
                         return true;
                     }
-                }
-                let norm_user = p.replace(".view", ".read").replace(".edit", ".update");
-                let norm_req = permission
-                    .replace(".view", ".read")
-                    .replace(".edit", ".update");
-                norm_user == norm_req
-            });
-
-            if has_permission {
-                Ok(next.run(request).await)
-            } else {
-                tracing::warn!(
-                    "Permission denied. Required: {}, User Has: {:?}",
-                    permission,
-                    claims.permissions
-                );
-
-                let body = serde_json::json!({
-                    "error": format!("Permission denied: {}", permission),
-                    "code": "FORBIDDEN"
+                    if *p == permission {
+                        return true;
+                    }
+                    if let Some(p_prefix) = p.strip_suffix(".*") {
+                        if permission.starts_with(p_prefix)
+                            && !permission.ends_with(".approve")
+                            && !permission.ends_with(".post")
+                            && !permission.ends_with(".disburse")
+                        {
+                            return true;
+                        }
+                    }
+                    let norm_user = p.replace(".view", ".read").replace(".edit", ".update");
+                    let norm_req = permission
+                        .replace(".view", ".read")
+                        .replace(".edit", ".update");
+                    norm_user == norm_req
                 });
 
-                let response = axum::response::Response::builder()
-                    .status(StatusCode::FORBIDDEN)
-                    .header(axum::http::header::CONTENT_TYPE, "application/json")
-                    .body(axum::body::Body::from(
-                        serde_json::to_string(&body).unwrap(),
-                    ))
-                    .unwrap();
+                if has_permission {
+                    Ok(next.run(request).await)
+                } else {
+                    tracing::warn!(
+                        "Permission denied. Required: {}, User Has: {:?}",
+                        permission,
+                        claims.permissions
+                    );
 
-                Ok(response)
-            }
-        })
+                    let body = serde_json::json!({
+                        "error": format!("Permission denied: {}", permission),
+                        "code": "FORBIDDEN"
+                    });
+
+                    let response = axum::response::Response::builder()
+                        .status(StatusCode::FORBIDDEN)
+                        .header(axum::http::header::CONTENT_TYPE, "application/json")
+                        .body(axum::body::Body::from(
+                            serde_json::to_string(&body).unwrap(),
+                        ))
+                        .unwrap();
+
+                    Ok(response)
+                }
+            })
+        }
     }
 }
 
-pub fn require_permission(permission: &'static str) -> impl Fn(Request, Next) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<Response, StatusCode>> + Send>> + Clone {
+pub fn require_permission(
+    permission: &'static str,
+) -> impl Fn(
+    Request,
+    Next,
+) -> std::pin::Pin<
+    Box<dyn std::future::Future<Output = Result<Response, StatusCode>> + Send>,
+> + Clone {
     RequirePermission::new(permission)
 }
 

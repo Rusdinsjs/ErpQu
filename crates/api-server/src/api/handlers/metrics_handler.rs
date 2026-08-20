@@ -54,9 +54,10 @@ pub async fn prometheus_metrics(
     body.push_str(&format!("erpqu_db_pool_active {}\n\n", pool_active));
 
     // Outbox Lag Metric (M7, N10)
-    let outbox_lag = management_system_core::infrastructure::repositories::OutboxStore::get_outbox_lag(pool)
-        .await
-        .unwrap_or(0);
+    let outbox_lag =
+        management_system_core::infrastructure::repositories::OutboxStore::get_outbox_lag(pool)
+            .await
+            .unwrap_or(0);
 
     body.push_str("# HELP outbox_unprocessed_count Number of pending or failed outbox events\n");
     body.push_str("# TYPE outbox_unprocessed_count gauge\n");
@@ -87,13 +88,23 @@ pub async fn prometheus_metrics(
             let vm_size = parts[0].parse::<u64>().unwrap_or(0) * page_size;
             let rss_size = parts[1].parse::<u64>().unwrap_or(0) * page_size;
 
-            body.push_str("# HELP erpqu_process_virtual_memory_bytes Process virtual memory size\n");
+            body.push_str(
+                "# HELP erpqu_process_virtual_memory_bytes Process virtual memory size\n",
+            );
             body.push_str("# TYPE erpqu_process_virtual_memory_bytes gauge\n");
-            body.push_str(&format!("erpqu_process_virtual_memory_bytes {}\n\n", vm_size));
+            body.push_str(&format!(
+                "erpqu_process_virtual_memory_bytes {}\n\n",
+                vm_size
+            ));
 
-            body.push_str("# HELP erpqu_process_resident_memory_bytes Process resident memory size (RSS)\n");
+            body.push_str(
+                "# HELP erpqu_process_resident_memory_bytes Process resident memory size (RSS)\n",
+            );
             body.push_str("# TYPE erpqu_process_resident_memory_bytes gauge\n");
-            body.push_str(&format!("erpqu_process_resident_memory_bytes {}\n\n", rss_size));
+            body.push_str(&format!(
+                "erpqu_process_resident_memory_bytes {}\n\n",
+                rss_size
+            ));
         }
     }
 

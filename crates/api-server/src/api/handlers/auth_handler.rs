@@ -82,8 +82,14 @@ pub async fn login(
             // Store hashed refresh token in database (Fail-Closed)
             let refresh_hash = hash_token(&raw_refresh_token);
             let refresh_expiry = Utc::now() + Duration::days(state.jwt_config.refresh_expiry_days);
-            let user_agent = headers.get(header::USER_AGENT).and_then(|h| h.to_str().ok()).map(|s| s.to_string());
-            let ip_address = headers.get("x-forwarded-for").and_then(|h| h.to_str().ok()).map(|s| s.to_string());
+            let user_agent = headers
+                .get(header::USER_AGENT)
+                .and_then(|h| h.to_str().ok())
+                .map(|s| s.to_string());
+            let ip_address = headers
+                .get("x-forwarded-for")
+                .and_then(|h| h.to_str().ok())
+                .map(|s| s.to_string());
 
             let _ = sqlx::query(
                 r#"
@@ -194,23 +200,35 @@ pub async fn refresh_token(
         SELECT id, user_id, expires_at, revoked
         FROM public.refresh_tokens
         WHERE token_hash = $1
-        "#
+        "#,
     )
     .bind(&token_hash)
     .fetch_optional(&state.pool)
     .await
-    .map_err(|e| AppError::Internal(format!("Database error during refresh token lookup: {}", e)))?;
+    .map_err(|e| {
+        AppError::Internal(format!("Database error during refresh token lookup: {}", e))
+    })?;
 
     if let Some((record_id, user_id, expires_at, revoked)) = row {
         if revoked {
             // Token reuse detection! Invalidate all user sessions immediately (RFC 6819)
-            state.session_tracker.invalidate_user_sessions(user_id).await;
-            tracing::warn!("SECURITY ALERT: Refresh token reuse detected for user {}. All sessions revoked!", user_id);
-            return Err(AppError::Unauthorized("Refresh token has been revoked".to_string()));
+            state
+                .session_tracker
+                .invalidate_user_sessions(user_id)
+                .await;
+            tracing::warn!(
+                "SECURITY ALERT: Refresh token reuse detected for user {}. All sessions revoked!",
+                user_id
+            );
+            return Err(AppError::Unauthorized(
+                "Refresh token has been revoked".to_string(),
+            ));
         }
 
         if expires_at < Utc::now() {
-            return Err(AppError::Unauthorized("Refresh token has expired".to_string()));
+            return Err(AppError::Unauthorized(
+                "Refresh token has expired".to_string(),
+            ));
         }
 
         // Fetch user info for new access token
@@ -231,7 +249,7 @@ pub async fn refresh_token(
 
         // Mark old token as revoked & replaced
         let _ = sqlx::query(
-            "UPDATE public.refresh_tokens SET revoked = TRUE, replaced_by_token = $1 WHERE id = $2"
+            "UPDATE public.refresh_tokens SET revoked = TRUE, replaced_by_token = $1 WHERE id = $2",
         )
         .bind(&new_refresh_hash)
         .bind(record_id)
@@ -243,7 +261,7 @@ pub async fn refresh_token(
             r#"
             INSERT INTO public.refresh_tokens (id, user_id, token_hash, expires_at, revoked)
             VALUES ($1, $2, $3, $4, FALSE)
-            "#
+            "#,
         )
         .bind(Uuid::new_v4())
         .bind(user_id)
@@ -273,7 +291,10 @@ pub async fn refresh_token(
         let new_access_token = create_token(&new_claims, &state.jwt_config)
             .map_err(|e| AppError::Internal(format!("Access token generation failed: {}", e)))?;
 
-        tracing::info!("SECURITY AUDIT: Refresh token rotated successfully for user {}", user_id);
+        tracing::info!(
+            "SECURITY AUDIT: Refresh token rotated successfully for user {}",
+            user_id
+        );
 
         Ok(Json(RefreshResponse {
             success: true,
@@ -305,11 +326,16 @@ pub async fn logout(
     // Revoke the current access token JTI
     let expiry = chrono::DateTime::from_timestamp(claims.exp, 0)
         .unwrap_or_else(|| Utc::now() + Duration::hours(24));
-    state.session_tracker.revoke_jti(claims.jti.clone(), expiry).await;
+    state
+        .session_tracker
+        .revoke_jti(claims.jti.clone(), expiry)
+        .await;
 
     tracing::info!(
         "SECURITY AUDIT LOGOUT: UserID={} Email={} JTI={}",
-        claims.sub, claims.email, claims.jti
+        claims.sub,
+        claims.email,
+        claims.jti
     );
 
     Ok(Json(LogoutResponse {
@@ -326,15 +352,23 @@ pub async fn logout_all(
     let user_id = claims.user_id();
 
     // 1. Invalidate all active JWT tokens across Redis cluster
-    state.session_tracker.invalidate_user_sessions(user_id).await;
-
-    // 2. Revoke all refresh tokens in database
-    let _ = sqlx::query("UPDATE public.refresh_tokens SET revoked = TRUE WHERE user_id = $1 AND revoked = FALSE")
-        .bind(user_id)
-        .execute(&state.pool)
+    state
+        .session_tracker
+        .invalidate_user_sessions(user_id)
         .await;
 
-    tracing::warn!("SECURITY AUDIT LOGOUT_ALL: All sessions and refresh tokens revoked for user {}", user_id);
+    // 2. Revoke all refresh tokens in database
+    let _ = sqlx::query(
+        "UPDATE public.refresh_tokens SET revoked = TRUE WHERE user_id = $1 AND revoked = FALSE",
+    )
+    .bind(user_id)
+    .execute(&state.pool)
+    .await;
+
+    tracing::warn!(
+        "SECURITY AUDIT LOGOUT_ALL: All sessions and refresh tokens revoked for user {}",
+        user_id
+    );
 
     Ok(Json(LogoutResponse {
         success: true,

@@ -68,10 +68,7 @@ pub async fn settle_work_order(
     Json(req): Json<SettleWorkOrderApiRequest>,
 ) -> AppResult<Json<WorkOrderSettlementResponse>> {
     // 1. Fetch Work Order
-    let wo = state
-        .work_order_service
-        .get_by_id(wo_id)
-        .await?;
+    let wo = state.work_order_service.get_by_id(wo_id).await?;
 
     // 2. Fetch actual parts cost from work_order_parts if not explicitly overridden
     let parts_cost = match req.parts_cost {
@@ -124,7 +121,10 @@ pub async fn settle_work_order(
         lines: vec![
             CreateJournalLineRequest {
                 account_id: req.target_account_id,
-                description: Some(format!("WO Settlement Debit ({}): {}", req.settlement_type, wo.wo_number)),
+                description: Some(format!(
+                    "WO Settlement Debit ({}): {}",
+                    req.settlement_type, wo.wo_number
+                )),
                 debit: total_cost,
                 credit: rust_decimal::Decimal::ZERO,
             },
@@ -156,13 +156,11 @@ pub async fn settle_work_order(
     }
 
     // Update Work Order status to 'completed' / 'settled'
-    sqlx::query(
-        "UPDATE work_orders SET status = 'completed', updated_at = NOW() WHERE id = $1",
-    )
-    .bind(wo_id)
-    .execute(&state.pool)
-    .await
-    .map_err(|e| DomainError::Database(e.to_string()))?;
+    sqlx::query("UPDATE work_orders SET status = 'completed', updated_at = NOW() WHERE id = $1")
+        .bind(wo_id)
+        .execute(&state.pool)
+        .await
+        .map_err(|e| DomainError::Database(e.to_string()))?;
 
     Ok(Json(WorkOrderSettlementResponse {
         success: true,

@@ -46,16 +46,14 @@ pub async fn capitalize_asset(
     Path(asset_id): Path<Uuid>,
     Json(req): Json<AssetCapitalizationRequest>,
 ) -> AppResult<Json<LifecycleActionResponse>> {
-    let asset = state
-        .asset_service
-        .get_by_id(asset_id)
-        .await?;
+    let asset = state.asset_service.get_by_id(asset_id).await?;
 
     if req.capitalization_amount <= rust_decimal::Decimal::ZERO {
         return Err(DomainError::business_rule(
             "invalid_capitalization_amount",
             "Capitalization amount must be greater than zero",
-        ).into());
+        )
+        .into());
     }
 
     // Post GL Journal Entry: Debit Fixed Asset Account, Credit CWIP Account
@@ -112,10 +110,7 @@ pub async fn transfer_asset(
     Path(asset_id): Path<Uuid>,
     Json(req): Json<TransferAssetApiRequest>,
 ) -> AppResult<Json<LifecycleActionResponse>> {
-    let asset = state
-        .asset_service
-        .get_by_id(asset_id)
-        .await?;
+    let asset = state.asset_service.get_by_id(asset_id).await?;
 
     let eam_repo = AssetEamRepository::new(state.pool.clone());
     let transfer_id = eam_repo
@@ -149,23 +144,24 @@ pub async fn impair_asset(
     Path(asset_id): Path<Uuid>,
     Json(req): Json<AssetImpairmentRequest>,
 ) -> AppResult<Json<LifecycleActionResponse>> {
-    let asset = state
-        .asset_service
-        .get_by_id(asset_id)
-        .await?;
+    let asset = state.asset_service.get_by_id(asset_id).await?;
 
     if req.impairment_amount <= rust_decimal::Decimal::ZERO {
         return Err(DomainError::business_rule(
             "invalid_impairment_amount",
             "Impairment amount must be greater than zero",
-        ).into());
+        )
+        .into());
     }
 
     // Post GL Journal Entry: Debit Impairment Expense Account, Credit Accumulated Impairment Account
     let journal_req = CreateJournalEntryRequest {
         company_id: asset.company_id,
         date: req.impairment_date,
-        description: format!("Impairment IAS36: {} ({}) - {}", asset.name, asset.asset_code, req.reason),
+        description: format!(
+            "Impairment IAS36: {} ({}) - {}",
+            asset.name, asset.asset_code, req.reason
+        ),
         reference: Some(asset.asset_code.clone()),
         lines: vec![
             CreateJournalLineRequest {
@@ -218,10 +214,7 @@ pub async fn dispose_asset(
     Path(asset_id): Path<Uuid>,
     Json(req): Json<AssetDisposalRequest>,
 ) -> AppResult<Json<LifecycleActionResponse>> {
-    let asset = state
-        .asset_service
-        .get_by_id(asset_id)
-        .await?;
+    let asset = state.asset_service.get_by_id(asset_id).await?;
 
     let cost = asset.purchase_price.unwrap_or(rust_decimal::Decimal::ZERO);
     let book_val = asset.calculate_book_value().unwrap_or(cost);
@@ -229,13 +222,14 @@ pub async fn dispose_asset(
 
     let gain_loss = AssetEamEngine::calculate_disposal_gain_loss(cost, accum_depr, req.sale_amount);
 
-    let category = state
-        .category_service
-        .get_by_id(asset.category_id)
-        .await?;
+    let category = state.category_service.get_by_id(asset.category_id).await?;
 
-    let fixed_asset_acc = category.asset_account_id.unwrap_or(req.destination_account_id);
-    let accum_depr_acc = category.accumulated_depreciation_account_id.unwrap_or(req.destination_account_id);
+    let fixed_asset_acc = category
+        .asset_account_id
+        .unwrap_or(req.destination_account_id);
+    let accum_depr_acc = category
+        .accumulated_depreciation_account_id
+        .unwrap_or(req.destination_account_id);
 
     // Build GL Lines
     let mut lines = Vec::new();
@@ -268,7 +262,10 @@ pub async fn dispose_asset(
     let journal_req = CreateJournalEntryRequest {
         company_id: asset.company_id,
         date: req.disposal_date,
-        description: format!("Disposal: {} ({}) - Gain/Loss: {}", asset.name, asset.asset_code, gain_loss),
+        description: format!(
+            "Disposal: {} ({}) - Gain/Loss: {}",
+            asset.name, asset.asset_code, gain_loss
+        ),
         reference: Some(asset.asset_code.clone()),
         lines,
     };
@@ -298,7 +295,10 @@ pub async fn dispose_asset(
 
     Ok(Json(LifecycleActionResponse {
         success: true,
-        message: format!("Asset {} disposal processed (Gain/Loss: {})", asset.asset_code, gain_loss),
+        message: format!(
+            "Asset {} disposal processed (Gain/Loss: {})",
+            asset.asset_code, gain_loss
+        ),
         record_id,
         journal_entry_id: Some(journal.header.id),
     }))

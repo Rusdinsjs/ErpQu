@@ -404,7 +404,7 @@ impl FinanceService {
 
         // 5. Create Draft Journal Entry in the SAME UnitOfWork
         let journal_req = CreateJournalEntryRequest {
-                company_id: None,
+            company_id: None,
             date: created_invoice.date,
             description: format!(
                 "Penjualan: {} - {}",

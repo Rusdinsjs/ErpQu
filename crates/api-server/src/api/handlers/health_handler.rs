@@ -92,9 +92,7 @@ pub async fn readiness_check(State(state): State<AppState>) -> Json<ReadinessRes
 
 /// Detailed health check — `/health/detailed`
 /// Returns comprehensive diagnostics. Should be protected in production.
-pub async fn detailed_health_check(
-    State(state): State<AppState>,
-) -> Json<DetailedHealthResponse> {
+pub async fn detailed_health_check(State(state): State<AppState>) -> Json<DetailedHealthResponse> {
     let db_status = check_database(&state).await;
     let redis_status = check_redis(&state).await;
 

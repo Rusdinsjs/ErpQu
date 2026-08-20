@@ -1,5 +1,5 @@
-use rust_decimal::Decimal;
 use crate::domain::entities::inventory::{InventoryCategory, InventoryItem, InventoryMovement};
+use rust_decimal::Decimal;
 use sqlx::PgPool;
 use uuid::Uuid;
 

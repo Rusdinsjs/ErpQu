@@ -20,7 +20,10 @@ pub fn create_router(state: AppState) -> Router {
         .route("/health", get(health_check))
         .route("/ready", get(health_handler::readiness_check))
         .route("/health/ready", get(health_handler::readiness_check))
-        .route("/health/detailed", get(health_handler::detailed_health_check))
+        .route(
+            "/health/detailed",
+            get(health_handler::detailed_health_check),
+        )
         .route("/metrics", get(metrics_handler::prometheus_metrics))
         .route("/api/auth/login", post(login))
         .route("/api/auth/register", post(register))
@@ -50,7 +53,10 @@ pub fn create_router(state: AppState) -> Router {
                 10 * 1024 * 1024,
             )),
         )
-        .route("/api/uploads/download/:id", get(upload_handler::get_private_file))
+        .route(
+            "/api/uploads/download/:id",
+            get(upload_handler::get_private_file),
+        )
         .nest(
             "/api/assets",
             crate::api::routes::asset_routes::asset_routes(),
@@ -76,9 +82,18 @@ pub fn create_router(state: AppState) -> Router {
         .route("/api/work-orders/:id/verify", post(verify_work_order))
         .route("/api/work-orders/:id/finalize", post(finalize_work_order))
         .route("/api/work-orders/:id/cancel", post(cancel_work_order))
-        .route("/api/work-orders/:id/settle", post(wo_settlement_handler::settle_work_order))
-        .route("/api/admin/outbox/:id/retry", post(outbox_admin_handler::retry_outbox_event))
-        .route("/api/admin/outbox/lag", get(outbox_admin_handler::get_outbox_lag))
+        .route(
+            "/api/work-orders/:id/settle",
+            post(wo_settlement_handler::settle_work_order),
+        )
+        .route(
+            "/api/admin/outbox/:id/retry",
+            post(outbox_admin_handler::retry_outbox_event),
+        )
+        .route(
+            "/api/admin/outbox/lag",
+            get(outbox_admin_handler::get_outbox_lag),
+        )
         .route(
             "/api/work-orders/:id/signoff",
             post(work_order_handler::submit_signoff),

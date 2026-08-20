@@ -47,9 +47,14 @@ pub struct UploadResponse {
 }
 
 /// Validate real file content using Magic Bytes header inspection (Point B.1)
-fn detect_and_validate_magic_bytes(data: &[u8], claimed_ext: &str) -> Result<&'static str, AppError> {
+fn detect_and_validate_magic_bytes(
+    data: &[u8],
+    claimed_ext: &str,
+) -> Result<&'static str, AppError> {
     if data.len() < 4 {
-        return Err(AppError::BadRequest("File is empty or truncated".to_string()));
+        return Err(AppError::BadRequest(
+            "File is empty or truncated".to_string(),
+        ));
     }
 
     // JPEG: FF D8 FF
@@ -93,23 +98,29 @@ fn detect_and_validate_magic_bytes(data: &[u8], claimed_ext: &str) -> Result<&'s
 fn scan_file_for_malware(data: &[u8]) -> Result<(), AppError> {
     // Check for Windows executable PE headers (MZ header: 0x4D 0x5A)
     if data.len() >= 2 && data[0] == 0x4D && data[1] == 0x5A {
-        return Err(AppError::BadRequest("Security Violation: Executable binary payload (PE header) detected".to_string()));
+        return Err(AppError::BadRequest(
+            "Security Violation: Executable binary payload (PE header) detected".to_string(),
+        ));
     }
     // Check for ELF binary header (0x7F 'E' 'L' 'F')
     if data.len() >= 4 && data[0] == 0x7F && &data[1..4] == b"ELF" {
-        return Err(AppError::BadRequest("Security Violation: Linux ELF executable payload detected".to_string()));
+        return Err(AppError::BadRequest(
+            "Security Violation: Linux ELF executable payload detected".to_string(),
+        ));
     }
     // Check for Shell script headers (#! /bin/sh or #! /bin/bash)
     if data.len() >= 2 && &data[0..2] == b"#!" {
-        return Err(AppError::BadRequest("Security Violation: Shell script payload detected".to_string()));
+        return Err(AppError::BadRequest(
+            "Security Violation: Shell script payload detected".to_string(),
+        ));
     }
     Ok(())
 }
 
 /// Generate HMAC-SHA256 Signed Download URL with short TTL (15 minutes) (Point B.6)
 fn generate_signed_url(secret: &str, file_id: Uuid, file_path: &str, expires_at: i64) -> String {
-    let mut mac = Hmac::<Sha256>::new_from_slice(secret.as_bytes())
-        .expect("HMAC can take key of any size");
+    let mut mac =
+        Hmac::<Sha256>::new_from_slice(secret.as_bytes()).expect("HMAC can take key of any size");
     mac.update(format!("{}:{}:{}", file_id, file_path, expires_at).as_bytes());
     let signature = hex::encode(mac.finalize().into_bytes());
 
@@ -120,7 +131,13 @@ fn generate_signed_url(secret: &str, file_id: Uuid, file_path: &str, expires_at:
 }
 
 /// Verify HMAC-SHA256 Signed Download URL (Point B.6 & B.14)
-fn verify_signed_url(secret: &str, file_id: Uuid, file_path: &str, expires_at: i64, signature: &str) -> bool {
+fn verify_signed_url(
+    secret: &str,
+    file_id: Uuid,
+    file_path: &str,
+    expires_at: i64,
+    signature: &str,
+) -> bool {
     if Utc::now().timestamp() > expires_at {
         return false;
     }
@@ -162,7 +179,9 @@ pub async fn upload_file(
                 .map_err(|e| AppError::Internal(e.to_string()))?;
 
             if data.len() as u64 > MAX_UPLOAD_SIZE {
-                return Err(AppError::BadRequest("File too large (max 10MB)".to_string()));
+                return Err(AppError::BadRequest(
+                    "File too large (max 10MB)".to_string(),
+                ));
             }
 
             // Point B.12: Check Tenant Storage Quota (Fail-Closed)
@@ -173,7 +192,9 @@ pub async fn upload_file(
                 .bind(company_id)
                 .fetch_one(&state.pool)
                 .await
-                .map_err(|e| AppError::Internal(format!("Failed to query tenant storage quota: {}", e)))?
+                .map_err(|e| {
+                    AppError::Internal(format!("Failed to query tenant storage quota: {}", e))
+                })?
                 .unwrap_or(0);
 
                 if current_usage + (data.len() as i64) > DEFAULT_TENANT_STORAGE_QUOTA {
@@ -206,24 +227,26 @@ pub async fn upload_file(
 
             // Point B.4: Quarantine Staging First
             let quarantine_dir = "uploads/quarantine";
-            fs::create_dir_all(quarantine_dir)
-                .await
-                .map_err(|e| AppError::Internal(format!("Failed to create quarantine dir: {}", e)))?;
+            fs::create_dir_all(quarantine_dir).await.map_err(|e| {
+                AppError::Internal(format!("Failed to create quarantine dir: {}", e))
+            })?;
 
             let file_id = Uuid::new_v4();
             let quarantine_path = format!("{}/{}.tmp", quarantine_dir, file_id);
 
-            fs::write(&quarantine_path, &data)
-                .await
-                .map_err(|e| AppError::Internal(format!("Failed to stage file in quarantine: {}", e)))?;
+            fs::write(&quarantine_path, &data).await.map_err(|e| {
+                AppError::Internal(format!("Failed to stage file in quarantine: {}", e))
+            })?;
 
             // Point B.2: Decode and re-encode image (Reject corrupted/malicious payloads - Fail Closed)
-            let (final_data, final_ext) = if ["jpg", "jpeg", "png", "webp"].contains(&ext.as_str()) {
+            let (final_data, final_ext) = if ["jpg", "jpeg", "png", "webp"].contains(&ext.as_str())
+            {
                 let data_clone = data.clone();
 
                 let result = tokio::task::spawn_blocking(move || {
-                    let img = image::load_from_memory(&data_clone)
-                        .map_err(|e| format!("Corrupted image payload or decoding failed: {}", e))?;
+                    let img = image::load_from_memory(&data_clone).map_err(|e| {
+                        format!("Corrupted image payload or decoding failed: {}", e)
+                    })?;
 
                     let resized = if img.width() > 1280 || img.height() > 1280 {
                         img.resize(1280, 1280, image::imageops::FilterType::Lanczos3)
@@ -296,7 +319,11 @@ pub async fn upload_file(
             if let Err(e) = insert_res {
                 // If metadata insert fails, delete written file to remain fail-closed (Point B.10)
                 if let Err(del_err) = fs::remove_file(&file_path).await {
-                    tracing::error!("Point B.11: Orphan file deletion failed for {}: {}", file_path, del_err);
+                    tracing::error!(
+                        "Point B.11: Orphan file deletion failed for {}: {}",
+                        file_path,
+                        del_err
+                    );
                 }
                 return Err(AppError::Internal(format!(
                     "Failed to register upload metadata in database: {}",
@@ -306,7 +333,8 @@ pub async fn upload_file(
 
             // Point B.6: Generate signed download URL with 15-minute TTL
             let expires_at = (Utc::now() + Duration::minutes(15)).timestamp();
-            let signed_url = generate_signed_url(&state.jwt_config.secret, file_id, &file_path, expires_at);
+            let signed_url =
+                generate_signed_url(&state.jwt_config.secret, file_id, &file_path, expires_at);
             let url = format!("/api/{}", file_path);
 
             // Point B.13: Security Audit Log
@@ -353,9 +381,21 @@ pub async fn get_private_file(
     .await
     .map_err(|e| AppError::Internal(format!("Database error during authorization: {}", e)))?;
 
-    let (file_path, original_name, content_type, _file_size, uploaded_by, company_id, role_level_required) = match record {
+    let (
+        file_path,
+        original_name,
+        content_type,
+        _file_size,
+        uploaded_by,
+        company_id,
+        role_level_required,
+    ) = match record {
         Some(r) => r,
-        None => return Err(AppError::NotFound("File metadata not found in database".to_string())),
+        None => {
+            return Err(AppError::NotFound(
+                "File metadata not found in database".to_string(),
+            ))
+        }
     };
 
     // Prevent directory traversal
@@ -365,7 +405,9 @@ pub async fn get_private_file(
 
     // Point B.8: Admin cannot cross company boundaries without explicit membership
     if tenant_ctx.enforce_company_boundary(company_id).is_err() {
-        return Err(AppError::Forbidden("Cross-company file access denied".to_string()));
+        return Err(AppError::Forbidden(
+            "Cross-company file access denied".to_string(),
+        ));
     }
 
     // Authorization check
@@ -375,10 +417,14 @@ pub async fn get_private_file(
     // Check signed URL if provided or check authorization
     if let (Some(expires), Some(sig)) = (query.expires, query.signature) {
         if !verify_signed_url(&state.jwt_config.secret, file_id, &file_path, expires, &sig) {
-            return Err(AppError::Unauthorized("Invalid or expired signed URL".to_string()));
+            return Err(AppError::Unauthorized(
+                "Invalid or expired signed URL".to_string(),
+            ));
         }
     } else if !is_owner && !has_role_access {
-        return Err(AppError::Forbidden("Access denied to requested file".to_string()));
+        return Err(AppError::Forbidden(
+            "Access denied to requested file".to_string(),
+        ));
     }
 
     let full_path = PathBuf::from(&file_path);
@@ -393,7 +439,9 @@ pub async fn get_private_file(
     // Point B.13: Audit log download operation
     tracing::info!(
         "SECURITY AUDIT FILE_DOWNLOAD: FileID={} UserID={} CompanyID={:?}",
-        file_id, claims.user_id(), tenant_ctx.company_id
+        file_id,
+        claims.user_id(),
+        tenant_ctx.company_id
     );
 
     let mut headers = HeaderMap::new();

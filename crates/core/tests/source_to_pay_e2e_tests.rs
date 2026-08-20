@@ -47,8 +47,14 @@ async fn setup_s2p_db_env(pool: &PgPool) -> S2pDbTestEnv {
     let _ = sqlx::query(
         "DO $$ BEGIN IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'erpqu_app') THEN CREATE ROLE erpqu_app LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE; END IF; END $$;"
     ).execute(pool).await;
-    let _ = sqlx::query("GRANT USAGE ON SCHEMA public TO erpqu_app").execute(pool).await;
-    let _ = sqlx::query("GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO erpqu_app").execute(pool).await;
+    let _ = sqlx::query("GRANT USAGE ON SCHEMA public TO erpqu_app")
+        .execute(pool)
+        .await;
+    let _ = sqlx::query(
+        "GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO erpqu_app",
+    )
+    .execute(pool)
+    .await;
 
     let mut tx = pool.begin().await.unwrap();
     TenantContext::super_tenant()
@@ -67,7 +73,13 @@ async fn setup_s2p_db_env(pool: &PgPool) -> S2pDbTestEnv {
     .unwrap();
 
     for (id, code, name, acct_type, norm_bal) in [
-        (env.acc_grir, "2115", "Hutang GRIR Interim", "liability", "credit"),
+        (
+            env.acc_grir,
+            "2115",
+            "Hutang GRIR Interim",
+            "liability",
+            "credit",
+        ),
         (env.acc_ap, "2110", "Hutang Usaha AP", "liability", "credit"),
         (env.acc_bank, "1020", "Bank Operasional", "asset", "debit"),
     ] {
@@ -161,10 +173,7 @@ async fn test_s2p_gl_posting_debit_equals_credit(pool: PgPool) {
         .await
         .unwrap();
 
-    let entries: Vec<GLEntry> = gl_engine
-        .post_in_uow(&mut tx, &posting_inst)
-        .await
-        .unwrap();
+    let entries: Vec<GLEntry> = gl_engine.post_in_uow(&mut tx, &posting_inst).await.unwrap();
     tx.commit().await.unwrap();
 
     let total_debit: Decimal = entries.iter().map(|e| e.debit).sum();

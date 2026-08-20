@@ -56,7 +56,9 @@ impl AuthService {
         self.repository
             .update_last_login(user.id)
             .await
-            .map_err(|e| DomainError::Database(format!("Failed to record last login timestamp: {}", e)))?;
+            .map_err(|e| {
+                DomainError::Database(format!("Failed to record last login timestamp: {}", e))
+            })?;
 
         // Fetch permissions from DB for all user roles (Fail-Closed: Do not fallback silently on DB error)
         let permissions = match self.rbac_repository.get_user_permissions(user.id).await {

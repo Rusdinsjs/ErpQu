@@ -19,7 +19,10 @@ pub struct DatabaseConfig {
 impl Default for DatabaseConfig {
     fn default() -> Self {
         Self {
-            url: std::env::var("DATABASE_URL").ok().filter(|s| !s.trim().is_empty()).expect("DATABASE_URL environment variable is required"),
+            url: std::env::var("DATABASE_URL")
+                .ok()
+                .filter(|s| !s.trim().is_empty())
+                .expect("DATABASE_URL environment variable is required"),
             max_connections: 10,
             min_connections: 2,
             acquire_timeout: Duration::from_secs(30),

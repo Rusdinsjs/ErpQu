@@ -22,10 +22,7 @@ use axum::{
 ///   - `GET /api/v1/assets`  (versioned, forwards to /api/assets)
 ///
 /// The `X-API-Version` response header indicates the actual API version served.
-pub async fn api_version_rewrite_middleware(
-    mut req: Request<Body>,
-    next: Next,
-) -> Response<Body> {
+pub async fn api_version_rewrite_middleware(mut req: Request<Body>, next: Next) -> Response<Body> {
     let original_uri = req.uri().clone();
     let path = original_uri.path();
 

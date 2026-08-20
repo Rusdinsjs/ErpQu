@@ -200,10 +200,12 @@ impl UserRepository {
     }
 
     pub async fn unlink_employee(&self, user_id: Uuid) -> Result<(), sqlx::Error> {
-        sqlx::query("UPDATE hr.employees SET user_id = NULL, updated_at = NOW() WHERE user_id = $1")
-            .bind(user_id)
-            .execute(&self.pool)
-            .await?;
+        sqlx::query(
+            "UPDATE hr.employees SET user_id = NULL, updated_at = NOW() WHERE user_id = $1",
+        )
+        .bind(user_id)
+        .execute(&self.pool)
+        .await?;
         Ok(())
     }
 
@@ -249,10 +251,11 @@ impl UserRepository {
     }
 
     pub async fn update_last_login(&self, id: Uuid) -> Result<(), sqlx::Error> {
-        let res = sqlx::query("UPDATE users SET last_login_at = NOW(), updated_at = NOW() WHERE id = $1")
-            .bind(id)
-            .execute(&self.pool)
-            .await;
+        let res =
+            sqlx::query("UPDATE users SET last_login_at = NOW(), updated_at = NOW() WHERE id = $1")
+                .bind(id)
+                .execute(&self.pool)
+                .await;
         if let Err(ref e) = res {
             tracing::warn!(user_id = %id, error = %e, "Failed to update last_login_at timestamp");
         }

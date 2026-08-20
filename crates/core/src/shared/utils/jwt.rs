@@ -28,7 +28,7 @@ impl JwtConfig {
             secret,
             expiry_hours,
             access_expiry_minutes: 15, // Default short-lived access token: 15 minutes (Fase 22)
-            refresh_expiry_days: 7,   // Default rotating refresh token: 7 days
+            refresh_expiry_days: 7,    // Default rotating refresh token: 7 days
         }
     }
 

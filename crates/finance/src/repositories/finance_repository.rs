@@ -1764,16 +1764,18 @@ impl FinanceRepository {
         .await
         .map_err(|e| DomainError::Database(e.to_string()))?;
 
-        Ok(crate::domain::entities::commercial_graph::PaymentAllocation {
-            id: row.id,
-            company_id: row.company_id,
-            payment_entry_id: row.payment_id,
-            invoice_type: allocation.invoice_type.clone(),
-            invoice_id: row.invoice_id,
-            allocated_amount: row.allocated_amount,
-            created_by: row.created_by,
-            created_at: row.created_at,
-        })
+        Ok(
+            crate::domain::entities::commercial_graph::PaymentAllocation {
+                id: row.id,
+                company_id: row.company_id,
+                payment_entry_id: row.payment_id,
+                invoice_type: allocation.invoice_type.clone(),
+                invoice_id: row.invoice_id,
+                allocated_amount: row.allocated_amount,
+                created_by: row.created_by,
+                created_at: row.created_at,
+            },
+        )
     }
 
     pub async fn list_payment_allocations_for_invoice(
@@ -1808,16 +1810,18 @@ impl FinanceRepository {
 
         Ok(rows
             .into_iter()
-            .map(|r| crate::domain::entities::commercial_graph::PaymentAllocation {
-                id: r.id,
-                company_id: r.company_id,
-                payment_entry_id: r.payment_id,
-                invoice_type: "INVOICE".to_string(),
-                invoice_id: r.invoice_id,
-                allocated_amount: r.allocated_amount,
-                created_by: r.created_by,
-                created_at: r.created_at,
-            })
+            .map(
+                |r| crate::domain::entities::commercial_graph::PaymentAllocation {
+                    id: r.id,
+                    company_id: r.company_id,
+                    payment_entry_id: r.payment_id,
+                    invoice_type: "INVOICE".to_string(),
+                    invoice_id: r.invoice_id,
+                    allocated_amount: r.allocated_amount,
+                    created_by: r.created_by,
+                    created_at: r.created_at,
+                },
+            )
             .collect())
     }
 }

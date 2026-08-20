@@ -125,12 +125,11 @@ impl OutboxStore {
 
     /// Get outbox lag metric (unprocessed count) (M27)
     pub async fn get_outbox_lag(pool: &sqlx::PgPool) -> DomainResult<i64> {
-        let count: i64 = sqlx::query_scalar(
-            "SELECT COUNT(*) FROM outbox WHERE status IN ('PENDING', 'FAILED')",
-        )
-        .fetch_one(pool)
-        .await
-        .map_err(|e: sqlx::Error| DomainError::Database(e.to_string()))?;
+        let count: i64 =
+            sqlx::query_scalar("SELECT COUNT(*) FROM outbox WHERE status IN ('PENDING', 'FAILED')")
+                .fetch_one(pool)
+                .await
+                .map_err(|e: sqlx::Error| DomainError::Database(e.to_string()))?;
         Ok(count)
     }
 }

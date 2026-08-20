@@ -20,9 +20,9 @@ use uuid::Uuid;
 pub struct WebhookSubscription {
     pub id: Uuid,
     pub company_id: Uuid,
-    pub event_type: String,          // e.g. "asset.created", "work_order.completed"
-    pub target_url: String,          // HTTPS endpoint
-    pub secret: Option<String>,      // HMAC-SHA256 signing secret
+    pub event_type: String,     // e.g. "asset.created", "work_order.completed"
+    pub target_url: String,     // HTTPS endpoint
+    pub secret: Option<String>, // HMAC-SHA256 signing secret
     pub is_active: bool,
     pub description: Option<String>,
     pub created_at: DateTime<Utc>,
@@ -36,7 +36,7 @@ pub struct WebhookDeliveryLog {
     pub subscription_id: Uuid,
     pub event_type: String,
     pub payload: serde_json::Value,
-    pub status: String,              // "pending", "delivered", "failed", "retrying"
+    pub status: String, // "pending", "delivered", "failed", "retrying"
     pub http_status: Option<i32>,
     pub response_body: Option<String>,
     pub attempt_count: i32,
@@ -115,7 +115,9 @@ impl WebhookService {
         }
 
         // Validate URL
-        if !req.target_url.starts_with("https://") && !req.target_url.starts_with("http://localhost") {
+        if !req.target_url.starts_with("https://")
+            && !req.target_url.starts_with("http://localhost")
+        {
             return Err(DomainError::validation(
                 "target_url",
                 "Webhook target URL must use HTTPS (http://localhost allowed for development)",
@@ -141,7 +143,10 @@ impl WebhookService {
 
         tracing::info!(
             "WEBHOOK_CREATED: id={} company={} event={} url={}",
-            sub.id, company_id, req.event_type, req.target_url
+            sub.id,
+            company_id,
+            req.event_type,
+            req.target_url
         );
 
         Ok(sub)
@@ -169,18 +174,20 @@ impl WebhookService {
         subscription_id: Uuid,
         company_id: Uuid,
     ) -> DomainResult<()> {
-        let rows = sqlx::query(
-            "DELETE FROM webhook_subscriptions WHERE id = $1 AND company_id = $2",
-        )
-        .bind(subscription_id)
-        .bind(company_id)
-        .execute(&self.pool)
-        .await
-        .map_err(|e| DomainError::internal(e.to_string()))?
-        .rows_affected();
+        let rows =
+            sqlx::query("DELETE FROM webhook_subscriptions WHERE id = $1 AND company_id = $2")
+                .bind(subscription_id)
+                .bind(company_id)
+                .execute(&self.pool)
+                .await
+                .map_err(|e| DomainError::internal(e.to_string()))?
+                .rows_affected();
 
         if rows == 0 {
-            return Err(DomainError::not_found("WebhookSubscription", subscription_id));
+            return Err(DomainError::not_found(
+                "WebhookSubscription",
+                subscription_id,
+            ));
         }
 
         Ok(())
@@ -239,8 +246,8 @@ impl WebhookService {
             data,
             company_id: company_id.to_string(),
         };
-        let payload_json = serde_json::to_value(&payload)
-            .map_err(|e| DomainError::internal(e.to_string()))?;
+        let payload_json =
+            serde_json::to_value(&payload).map_err(|e| DomainError::internal(e.to_string()))?;
 
         let mut enqueued = 0;
         for sub in &subs {
@@ -262,7 +269,10 @@ impl WebhookService {
 
         tracing::info!(
             "WEBHOOK_EMITTED: event={} company={} subscribers={} enqueued={}",
-            event_type, company_id, subs.len(), enqueued
+            event_type,
+            company_id,
+            subs.len(),
+            enqueued
         );
 
         Ok(enqueued)

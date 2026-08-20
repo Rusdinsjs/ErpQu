@@ -70,7 +70,9 @@ pub async fn request_context_middleware(
 
     let mut response = next.run(request).await;
     if let Ok(header_val) = axum::http::HeaderValue::from_str(&corr_header_str) {
-        response.headers_mut().insert("x-correlation-id", header_val);
+        response
+            .headers_mut()
+            .insert("x-correlation-id", header_val);
     }
 
     Ok(response)

@@ -140,7 +140,9 @@ impl TenantContext {
                 .map_err(|e| DomainError::internal(e.to_string()))?;
         } else if let Some(cid) = self.company_id {
             // Switch to non-superuser runtime role locally within the transaction so PostgreSQL RLS policies are enforced without leaking across connection pool
-            let _ = sqlx::query("SET LOCAL ROLE erpqu_app").execute(&mut *executor).await;
+            let _ = sqlx::query("SET LOCAL ROLE erpqu_app")
+                .execute(&mut *executor)
+                .await;
             sqlx::query(&format!("SET LOCAL app.current_company_id = '{}'", cid))
                 .execute(&mut *executor)
                 .await

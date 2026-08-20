@@ -162,7 +162,9 @@ impl MultiCurrencyService {
         to_currency: &str,
         date: NaiveDate,
     ) -> DomainResult<ConversionResult> {
-        let rate_record = self.get_rate(company_id, from_currency, to_currency, date).await?;
+        let rate_record = self
+            .get_rate(company_id, from_currency, to_currency, date)
+            .await?;
         let converted = (amount * rate_record.exchange_rate).round_dp(4);
 
         Ok(ConversionResult {

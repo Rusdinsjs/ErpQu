@@ -223,7 +223,11 @@ impl AssetEamRepository {
         .map_err(|e| DomainError::Database(e.to_string()))?;
 
         // Update asset status to 'disposed' or 'sold'
-        let new_status = if disposal_type == "sale" { "sold" } else { "disposed" };
+        let new_status = if disposal_type == "sale" {
+            "sold"
+        } else {
+            "disposed"
+        };
         sqlx::query("UPDATE assets SET status = $1, updated_at = NOW() WHERE id = $2")
             .bind(new_status)
             .bind(asset_id)
@@ -239,7 +243,10 @@ impl AssetEamRepository {
     }
 
     /// List append-only custody history for an asset
-    pub async fn get_custody_history(&self, asset_id: Uuid) -> DomainResult<Vec<AssetCustodyHistory>> {
+    pub async fn get_custody_history(
+        &self,
+        asset_id: Uuid,
+    ) -> DomainResult<Vec<AssetCustodyHistory>> {
         let rows = sqlx::query_as::<_, AssetCustodyHistory>(
             r#"
             SELECT id, asset_id, custodian_user_id, department_id, location_id, assigned_at, assigned_by, notes

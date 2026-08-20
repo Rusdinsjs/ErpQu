@@ -20,7 +20,16 @@ use management_system_core::domain::tenant::TenantContext;
 
 /// List of reserved subdomains that do NOT represent tenant slugs
 const RESERVED_SUBDOMAINS: &[&str] = &[
-    "app", "api", "admin", "www", "mail", "localhost", "127", "staging", "dev", "prod",
+    "app",
+    "api",
+    "admin",
+    "www",
+    "mail",
+    "localhost",
+    "127",
+    "staging",
+    "dev",
+    "prod",
 ];
 
 pub async fn tenant_middleware(
@@ -49,7 +58,10 @@ pub async fn tenant_middleware(
         })?;
 
         let company_uuid = Uuid::parse_str(company_str).map_err(|_| {
-            tracing::warn!("Tenant Middleware: Malformed X-Company-ID UUID format: {}", company_str);
+            tracing::warn!(
+                "Tenant Middleware: Malformed X-Company-ID UUID format: {}",
+                company_str
+            );
             StatusCode::BAD_REQUEST
         })?;
 
@@ -77,7 +89,11 @@ pub async fn tenant_middleware(
 
                         if let Some(c_id) = company {
                             resolved_company_id = Some(c_id);
-                            tracing::debug!("Subdomain '{}' resolved to company {}", subdomain, c_id);
+                            tracing::debug!(
+                                "Subdomain '{}' resolved to company {}",
+                                subdomain,
+                                c_id
+                            );
                         }
                     }
                 }
@@ -105,7 +121,9 @@ pub async fn tenant_middleware(
         .await
         .unwrap_or(false);
 
-        let is_global_company_admin = claims.permissions.iter().any(|p| p == "company.*" || p == "company.admin" || (claims.role == "super_admin" && p == "*"));
+        let is_global_company_admin = claims.permissions.iter().any(|p| {
+            p == "company.*" || p == "company.admin" || (claims.role == "super_admin" && p == "*")
+        });
 
         if !has_emp && !has_perm && !is_global_company_admin {
             tracing::warn!(

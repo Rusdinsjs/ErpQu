@@ -294,7 +294,9 @@ impl SensorService {
         }
         // Validate against expected environment or DB device key format
         if api_key.len() < 8 {
-            return Err(DomainError::unauthorized("Invalid telemetry device API key"));
+            return Err(DomainError::unauthorized(
+                "Invalid telemetry device API key",
+            ));
         }
         Ok(())
     }

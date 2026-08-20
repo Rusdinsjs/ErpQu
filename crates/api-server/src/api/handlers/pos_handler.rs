@@ -96,7 +96,10 @@ pub async fn create_pos_profile(
     State(_state): State<AppState>,
     Json(payload): Json<serde_json::Value>,
 ) -> Result<Json<ApiResponse<PosProfileDto>>, AppError> {
-    let name = payload.get("profile_name").and_then(|v| v.as_str()).unwrap_or("Profil POS");
+    let name = payload
+        .get("profile_name")
+        .and_then(|v| v.as_str())
+        .unwrap_or("Profil POS");
     let dto = PosProfileDto {
         id: uuid::Uuid::new_v4().to_string(),
         profile_name: name.to_string(),
@@ -168,9 +171,15 @@ pub async fn create_pos_opening_entry(
     State(_state): State<AppState>,
     Json(payload): Json<serde_json::Value>,
 ) -> Result<Json<ApiResponse<PosOpeningEntryDto>>, AppError> {
-    let float_amt = payload.get("opening_amount").and_then(|v| v.as_f64()).unwrap_or(500000.0);
+    let float_amt = payload
+        .get("opening_amount")
+        .and_then(|v| v.as_f64())
+        .unwrap_or(500000.0);
     let dto = PosOpeningEntryDto {
-        id: format!("POS-OPEN-{}", uuid::Uuid::new_v4().to_string()[..8].to_uppercase()),
+        id: format!(
+            "POS-OPEN-{}",
+            uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
+        ),
         pos_profile_id: "00000000-0000-0000-0000-000000000001".to_string(),
         user_id: "user-kasir-01".to_string(),
         period_start_date: Some(chrono::Utc::now().to_rfc3339()),
@@ -211,9 +220,15 @@ pub async fn create_pos_closing_entry(
     State(_state): State<AppState>,
     Json(payload): Json<serde_json::Value>,
 ) -> Result<Json<ApiResponse<PosClosingEntryDto>>, AppError> {
-    let grand = payload.get("grand_total").and_then(|v| v.as_f64()).unwrap_or(1250000.0);
+    let grand = payload
+        .get("grand_total")
+        .and_then(|v| v.as_f64())
+        .unwrap_or(1250000.0);
     let dto = PosClosingEntryDto {
-        id: format!("POS-CLOSE-{}", uuid::Uuid::new_v4().to_string()[..8].to_uppercase()),
+        id: format!(
+            "POS-CLOSE-{}",
+            uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
+        ),
         pos_profile_id: "00000000-0000-0000-0000-000000000001".to_string(),
         user_id: "user-kasir-01".to_string(),
         pos_opening_entry_id: Some("opening-001".to_string()),
@@ -260,7 +275,10 @@ pub async fn create_loyalty_program(
     State(_state): State<AppState>,
     Json(payload): Json<serde_json::Value>,
 ) -> Result<Json<ApiResponse<LoyaltyProgramDto>>, AppError> {
-    let name = payload.get("program_name").and_then(|v| v.as_str()).unwrap_or("Program Loyalitas Baru");
+    let name = payload
+        .get("program_name")
+        .and_then(|v| v.as_str())
+        .unwrap_or("Program Loyalitas Baru");
     let dto = LoyaltyProgramDto {
         id: uuid::Uuid::new_v4().to_string(),
         program_name: name.to_string(),
@@ -278,17 +296,15 @@ pub async fn create_loyalty_program(
 pub async fn list_loyalty_point_entries(
     State(_state): State<AppState>,
 ) -> Result<Json<ApiResponse<Vec<LoyaltyPointEntryDto>>>, AppError> {
-    let entries = vec![
-        LoyaltyPointEntryDto {
-            id: "point-log-001".to_string(),
-            loyalty_program_id: Some("loyalty-001".to_string()),
-            client_id: "client-001".to_string(),
-            sales_invoice_id: Some("INV-2026-0001".to_string()),
-            loyalty_points: 150.0,
-            purchase_amount: 150000.0,
-            posting_date: Some(chrono::Utc::now().to_rfc3339()),
-        },
-    ];
+    let entries = vec![LoyaltyPointEntryDto {
+        id: "point-log-001".to_string(),
+        loyalty_program_id: Some("loyalty-001".to_string()),
+        client_id: "client-001".to_string(),
+        sales_invoice_id: Some("INV-2026-0001".to_string()),
+        loyalty_points: 150.0,
+        purchase_amount: 150000.0,
+        posting_date: Some(chrono::Utc::now().to_rfc3339()),
+    }];
     Ok(Json(ApiResponse {
         success: true,
         message: None,
@@ -300,7 +316,10 @@ pub async fn create_loyalty_point_entry(
     State(_state): State<AppState>,
     Json(payload): Json<serde_json::Value>,
 ) -> Result<Json<ApiResponse<LoyaltyPointEntryDto>>, AppError> {
-    let points = payload.get("loyalty_points").and_then(|v| v.as_f64()).unwrap_or(10.0);
+    let points = payload
+        .get("loyalty_points")
+        .and_then(|v| v.as_f64())
+        .unwrap_or(10.0);
     let dto = LoyaltyPointEntryDto {
         id: uuid::Uuid::new_v4().to_string(),
         loyalty_program_id: Some("loyalty-001".to_string()),

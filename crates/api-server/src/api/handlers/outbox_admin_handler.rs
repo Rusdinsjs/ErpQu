@@ -56,7 +56,8 @@ pub async fn retry_outbox_event(
     if role != "admin" && role != "super_admin" {
         return Err(DomainError::unauthorized(
             "Admin authorization required for outbox DLQ manual retry",
-        ).into());
+        )
+        .into());
     }
 
     // 2. Reset Outbox Status to 'PENDING', next_attempt_at to NOW(), attempt_count to 0
@@ -91,7 +92,10 @@ pub async fn retry_outbox_event(
     Ok(Json(OutboxRetryResponse {
         success: true,
         outbox_id,
-        message: format!("Outbox event {} reset to PENDING for re-dispatch", outbox_id),
+        message: format!(
+            "Outbox event {} reset to PENDING for re-dispatch",
+            outbox_id
+        ),
     }))
 }
 
@@ -113,7 +117,10 @@ pub async fn get_outbox_lag(
     State(state): State<AppState>,
     Extension(_ctx): Extension<RequestContext>,
 ) -> AppResult<Json<OutboxLagResponse>> {
-    let lag = management_system_core::infrastructure::repositories::OutboxStore::get_outbox_lag(&state.pool).await?;
+    let lag = management_system_core::infrastructure::repositories::OutboxStore::get_outbox_lag(
+        &state.pool,
+    )
+    .await?;
     Ok(Json(OutboxLagResponse {
         unprocessed_count: lag,
     }))

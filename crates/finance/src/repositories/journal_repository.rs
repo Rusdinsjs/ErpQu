@@ -100,7 +100,9 @@ impl JournalRepository {
         created_by: Option<Uuid>,
     ) -> DomainResult<JournalEntryDetail> {
         let mut uow = UnitOfWork::begin(&self.pool).await?;
-        let detail = Self::create_journal_entry_with_uow(&mut uow, transaction_number, req, created_by).await?;
+        let detail =
+            Self::create_journal_entry_with_uow(&mut uow, transaction_number, req, created_by)
+                .await?;
         uow.commit().await?;
         Ok(detail)
     }
@@ -161,7 +163,7 @@ impl JournalRepository {
         Ok(JournalEntryDetail { header, lines })
     }
 
-        pub async fn update_journal_entry_with_uow(
+    pub async fn update_journal_entry_with_uow(
         uow: &mut UnitOfWork,
         journal_id: Uuid,
         req: &CreateJournalEntryRequest,
@@ -353,7 +355,7 @@ impl JournalRepository {
                 reversal_source_id = $3,
                 updated_at = NOW() 
             WHERE id = $4
-            "#
+            "#,
         )
         .bind(reversed_by)
         .bind(reason)

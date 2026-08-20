@@ -201,7 +201,9 @@ impl StockDocumentService {
 
         // Enforce Segregation of Duties (Maker != Checker)
         if let (Some(creator), Some(actor)) = (entry.created_by, updated_by) {
-            management_system_core::domain::sod::SodValidator::validate_stock_adjustment(creator, actor)?;
+            management_system_core::domain::sod::SodValidator::validate_stock_adjustment(
+                creator, actor,
+            )?;
         }
 
         // Apply PostgreSQL RLS Company Isolation to Transaction

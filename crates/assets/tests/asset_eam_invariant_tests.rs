@@ -39,9 +39,18 @@ fn test_generate_straight_line_schedule_incremental_dates() {
     .unwrap();
 
     assert_eq!(schedule.len(), 3);
-    assert_eq!(schedule[0].schedule_date, NaiveDate::from_ymd_opt(2026, 1, 1).unwrap());
-    assert_eq!(schedule[1].schedule_date, NaiveDate::from_ymd_opt(2026, 2, 1).unwrap());
-    assert_eq!(schedule[2].schedule_date, NaiveDate::from_ymd_opt(2026, 3, 1).unwrap());
+    assert_eq!(
+        schedule[0].schedule_date,
+        NaiveDate::from_ymd_opt(2026, 1, 1).unwrap()
+    );
+    assert_eq!(
+        schedule[1].schedule_date,
+        NaiveDate::from_ymd_opt(2026, 2, 1).unwrap()
+    );
+    assert_eq!(
+        schedule[2].schedule_date,
+        NaiveDate::from_ymd_opt(2026, 3, 1).unwrap()
+    );
 }
 
 #[test]

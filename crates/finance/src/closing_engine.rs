@@ -77,9 +77,8 @@ impl AccountingClosingEngine {
         .await
         .map_err(|e| DomainError::internal(e.to_string()))?;
 
-        let (period_name, start_date, end_date, is_closed) = period.ok_or_else(|| {
-            DomainError::not_found("AccountingPeriod", period_id)
-        })?;
+        let (period_name, start_date, end_date, is_closed) =
+            period.ok_or_else(|| DomainError::not_found("AccountingPeriod", period_id))?;
 
         if is_closed {
             return Err(DomainError::business_rule(
@@ -109,7 +108,8 @@ impl AccountingClosingEngine {
                     name: "GL Balance".to_string(),
                     status: ClosingCheckStatus::Passed,
                     message: format!(
-                        "Total Debit ({}) == Total Credit ({})", total_debit, total_credit
+                        "Total Debit ({}) == Total Credit ({})",
+                        total_debit, total_credit
                     ),
                 });
             } else {
@@ -195,7 +195,9 @@ impl AccountingClosingEngine {
             });
         }
 
-        let all_passed = checks.iter().all(|c| c.status == ClosingCheckStatus::Passed);
+        let all_passed = checks
+            .iter()
+            .all(|c| c.status == ClosingCheckStatus::Passed);
 
         Ok(ClosingChecklistResult {
             company_id,
@@ -303,9 +305,8 @@ impl AccountingClosingEngine {
         .await
         .map_err(|e| DomainError::internal(e.to_string()))?;
 
-        let (fy_start, fy_end) = fy.ok_or_else(|| {
-            DomainError::not_found("FiscalYear", fiscal_year_id)
-        })?;
+        let (fy_start, fy_end) =
+            fy.ok_or_else(|| DomainError::not_found("FiscalYear", fiscal_year_id))?;
 
         // Calculate P&L for the fiscal year
         // Revenue accounts (account_type = 'Income' or 'Revenue') → credit balances

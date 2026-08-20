@@ -33,8 +33,14 @@ async fn setup_test_companies(pool: &PgPool) -> (Uuid, Uuid, Uuid) {
     let _ = sqlx::query(
         "DO $$ BEGIN IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'erpqu_app') THEN CREATE ROLE erpqu_app LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE; END IF; END $$;"
     ).execute(pool).await;
-    let _ = sqlx::query("GRANT USAGE ON SCHEMA public TO erpqu_app").execute(pool).await;
-    let _ = sqlx::query("GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO erpqu_app").execute(pool).await;
+    let _ = sqlx::query("GRANT USAGE ON SCHEMA public TO erpqu_app")
+        .execute(pool)
+        .await;
+    let _ = sqlx::query(
+        "GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO erpqu_app",
+    )
+    .execute(pool)
+    .await;
 
     sqlx::query("INSERT INTO public.companies (id, tenant_id, name, code) VALUES ($1, $3, 'Company Alpha', 'ALPHA'), ($2, $3, 'Company Beta', 'BETA') ON CONFLICT DO NOTHING")
         .bind(company_a)
@@ -228,7 +234,9 @@ async fn test_background_job_without_context_fails_closed(pool: PgPool) {
 
     // Executing query without setting app.current_company_id or app.is_super_tenant (unscoped background job as runtime role)
     let mut tx_unscoped = pool.begin().await.unwrap();
-    let _ = sqlx::query("SET ROLE erpqu_app").execute(&mut *tx_unscoped).await;
+    let _ = sqlx::query("SET ROLE erpqu_app")
+        .execute(&mut *tx_unscoped)
+        .await;
     let rows: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM public.assets")
         .fetch_one(&mut *tx_unscoped)
         .await

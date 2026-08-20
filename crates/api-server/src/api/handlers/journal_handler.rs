@@ -39,9 +39,7 @@ pub async fn get_journal_details(
         .journal_service
         .get_journal_entry_detail(id)
         .await?
-        .ok_or_else(|| {
-            AppError::NotFound("Journal entry not found".to_string())
-        })?;
+        .ok_or_else(|| AppError::NotFound("Journal entry not found".to_string()))?;
     Ok(Json(entry))
 }
 
@@ -55,10 +53,7 @@ pub async fn create_journal(
     if req.company_id.is_none() {
         req.company_id = tenant_ctx.company_id;
     }
-    let tx_num = format!(
-        "JE-{}",
-        Uuid::new_v4().to_string()[..8].to_uppercase()
-    );
+    let tx_num = format!("JE-{}", Uuid::new_v4().to_string()[..8].to_uppercase());
     let entry = state
         .journal_service
         .create_journal_entry(tx_num, req, Some(user_id))
@@ -83,7 +78,10 @@ pub async fn approve_journal(
     Path(id): Path<Uuid>,
 ) -> AppResult<Json<serde_json::Value>> {
     let user_id = claims.user_id();
-    state.journal_service.approve_journal_entry(id, user_id).await?;
+    state
+        .journal_service
+        .approve_journal_entry(id, user_id)
+        .await?;
     Ok(Json(serde_json::json!({
         "success": true,
         "message": "Journal entry approved successfully"
@@ -121,9 +119,9 @@ pub async fn reverse_journal(
     Json(payload): Json<ReverseJournalRequest>,
 ) -> AppResult<Json<JournalEntryDetail>> {
     let user_id = claims.user_id();
-    let company_id = tenant_ctx.company_id.unwrap_or_else(|| {
-        Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap()
-    });
+    let company_id = tenant_ctx
+        .company_id
+        .unwrap_or_else(|| Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap());
 
     let reversal_detail = state
         .journal_service

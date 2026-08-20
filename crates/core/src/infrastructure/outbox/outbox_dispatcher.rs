@@ -59,9 +59,15 @@ impl OutboxDispatcher {
             match self.dispatch_event(&entry).await {
                 Ok(()) => {
                     if let Err(e) = OutboxStore::mark_completed(&self.pool, event_id).await {
-                        error!("Failed to mark outbox entry {} as COMPLETED: {}", event_id, e);
+                        error!(
+                            "Failed to mark outbox entry {} as COMPLETED: {}",
+                            event_id, e
+                        );
                     } else {
-                        info!("Outbox entry {} successfully dispatched and COMPLETED", event_id);
+                        info!(
+                            "Outbox entry {} successfully dispatched and COMPLETED",
+                            event_id
+                        );
                     }
                 }
                 Err(err_msg) => {
@@ -90,7 +96,10 @@ impl OutboxDispatcher {
         Ok(total)
     }
 
-    async fn dispatch_event(&self, entry: &crate::domain::outbox::OutboxEntry) -> Result<(), String> {
+    async fn dispatch_event(
+        &self,
+        entry: &crate::domain::outbox::OutboxEntry,
+    ) -> Result<(), String> {
         // Idempotent event side-effect delivery simulation & routing
         tracing::debug!(
             "Dispatching outbox event type: {}, correlation_id: {}",

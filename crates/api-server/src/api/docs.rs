@@ -105,9 +105,7 @@ impl utoipa::Modify for SecurityAddon {
                     utoipa::openapi::security::HttpBuilder::new()
                         .scheme(utoipa::openapi::security::HttpAuthScheme::Bearer)
                         .bearer_format("JWT")
-                        .description(Some(
-                            "JWT Bearer token. Obtain from POST /api/auth/login",
-                        ))
+                        .description(Some("JWT Bearer token. Obtain from POST /api/auth/login"))
                         .build(),
                 ),
             );

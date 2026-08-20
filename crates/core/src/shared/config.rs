@@ -22,14 +22,20 @@ impl AppConfig {
         dotenvy::dotenv().ok();
 
         let config = Self {
-            database_url: env::var("DATABASE_URL").ok().filter(|s| !s.trim().is_empty()).expect("DATABASE_URL must be set"),
+            database_url: env::var("DATABASE_URL")
+                .ok()
+                .filter(|s| !s.trim().is_empty())
+                .expect("DATABASE_URL must be set"),
             redis_url: env::var("REDIS_URL").ok(),
             server_host: env::var("SERVER_HOST").unwrap_or_else(|_| "0.0.0.0".to_string()),
             server_port: env::var("SERVER_PORT")
                 .unwrap_or_else(|_| env::var("PORT").unwrap_or_else(|_| "8181".to_string()))
                 .parse()
                 .expect("SERVER_PORT must be a number"),
-            jwt_secret: env::var("JWT_SECRET").ok().filter(|s| !s.trim().is_empty()).expect("JWT_SECRET environment variable is required and must not be empty"),
+            jwt_secret: env::var("JWT_SECRET")
+                .ok()
+                .filter(|s| !s.trim().is_empty())
+                .expect("JWT_SECRET environment variable is required and must not be empty"),
             jwt_expiry_hours: env::var("JWT_EXPIRY_HOURS")
                 .unwrap_or_else(|_| "24".to_string())
                 .parse()

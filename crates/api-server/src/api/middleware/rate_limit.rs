@@ -151,7 +151,9 @@ pub async fn rate_limit_middleware(
         Err(()) => {
             tracing::warn!(
                 "RATE_LIMIT_EXCEEDED: IP={} Path={} Limit={}",
-                ip, path, max_requests
+                ip,
+                path,
+                max_requests
             );
             let mut response = (
                 StatusCode::TOO_MANY_REQUESTS,
@@ -162,10 +164,9 @@ pub async fn rate_limit_middleware(
                 })),
             )
                 .into_response();
-            response.headers_mut().insert(
-                "retry-after",
-                axum::http::HeaderValue::from_static("60"),
-            );
+            response
+                .headers_mut()
+                .insert("retry-after", axum::http::HeaderValue::from_static("60"));
             response
         }
     }

@@ -674,7 +674,10 @@ pub async fn list_accessible_companies(
     let pool = &state.pool;
     let is_admin = claims.role == "super_admin"
         || claims.role_level <= 1
-        || claims.permissions.iter().any(|p| p == "*" || p == "company.*" || p == "company.admin");
+        || claims
+            .permissions
+            .iter()
+            .any(|p| p == "*" || p == "company.*" || p == "company.admin");
 
     let rows = if is_admin {
         sqlx::query_as::<_, CompanyRow>(
@@ -726,7 +729,12 @@ pub async fn list_accessible_companies(
         .await
     };
 
-    let companies = rows.map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("Failed to list accessible companies: {}", e)))?;
+    let companies = rows.map_err(|e| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("Failed to list accessible companies: {}", e),
+        )
+    })?;
     Ok(Json(serde_json::json!({
         "success": true,
         "data": companies

@@ -1,6 +1,7 @@
 use crate::domain::entities::gl_entry::{PostingInstruction, PostingLineItem};
 use crate::domain::entities::journal::{
-    CreateJournalEntryRequest, CreateJournalLineRequest, JournalEntry, JournalEntryDetail, JournalStatus,
+    CreateJournalEntryRequest, CreateJournalLineRequest, JournalEntry, JournalEntryDetail,
+    JournalStatus,
 };
 use crate::posting_engine::AccountingPostingEngine;
 use crate::repositories::{FinanceRepository, JournalRepository};
@@ -109,7 +110,9 @@ impl JournalService {
             ));
         }
 
-        self.journal_repo.update_status(id, JournalStatus::Submitted).await
+        self.journal_repo
+            .update_status(id, JournalStatus::Submitted)
+            .await
     }
 
     pub async fn approve_journal_entry(&self, id: Uuid, approver_id: Uuid) -> DomainResult<()> {
@@ -120,7 +123,10 @@ impl JournalService {
             .ok_or_else(|| DomainError::not_found("JournalEntry", id))?;
 
         if let Some(creator) = entry.header.created_by {
-            management_system_core::domain::sod::SodValidator::validate_journal_posting(creator, approver_id)?;
+            management_system_core::domain::sod::SodValidator::validate_journal_posting(
+                creator,
+                approver_id,
+            )?;
         }
 
         if entry.header.status != JournalStatus::Submitted {
@@ -130,10 +136,17 @@ impl JournalService {
             ));
         }
 
-        self.journal_repo.update_status(id, JournalStatus::Approved).await
+        self.journal_repo
+            .update_status(id, JournalStatus::Approved)
+            .await
     }
 
-    pub async fn post_journal_entry(&self, id: Uuid, company_id: Uuid, poster_id: Option<Uuid>) -> DomainResult<()> {
+    pub async fn post_journal_entry(
+        &self,
+        id: Uuid,
+        company_id: Uuid,
+        poster_id: Option<Uuid>,
+    ) -> DomainResult<()> {
         let entry = self
             .journal_repo
             .get_journal_entry_detail(id)
@@ -142,7 +155,9 @@ impl JournalService {
 
         // Enforce Maker != Checker SoD
         if let (Some(creator), Some(poster)) = (entry.header.created_by, poster_id) {
-            management_system_core::domain::sod::SodValidator::validate_journal_posting(creator, poster)?;
+            management_system_core::domain::sod::SodValidator::validate_journal_posting(
+                creator, poster,
+            )?;
         }
 
         if entry.header.status == JournalStatus::Posted {
@@ -169,7 +184,10 @@ impl JournalService {
         let effective_company_id = entry.header.company_id.unwrap_or(company_id);
 
         let engine = self.posting_engine.as_ref().ok_or_else(|| {
-            DomainError::business_rule("MissingPostingEngine", "Mandatory AccountingPostingEngine is not initialized")
+            DomainError::business_rule(
+                "MissingPostingEngine",
+                "Mandatory AccountingPostingEngine is not initialized",
+            )
         })?;
 
         let instruction = PostingInstruction {
@@ -227,7 +245,10 @@ impl JournalService {
 
         let effective_company_id = original_entry.header.company_id.unwrap_or(company_id);
         let engine = self.posting_engine.as_ref().ok_or_else(|| {
-            DomainError::business_rule("MissingPostingEngine", "Mandatory AccountingPostingEngine is not initialized")
+            DomainError::business_rule(
+                "MissingPostingEngine",
+                "Mandatory AccountingPostingEngine is not initialized",
+            )
         })?;
 
         let mut uow = UnitOfWork::begin(self.journal_repo.pool()).await?;
@@ -250,14 +271,20 @@ impl JournalService {
         let reversal_req = CreateJournalEntryRequest {
             company_id: Some(effective_company_id),
             date: reversal_date,
-            description: format!("Reversal of {}: {}", original_entry.header.transaction_number, reason),
+            description: format!(
+                "Reversal of {}: {}",
+                original_entry.header.transaction_number, reason
+            ),
             reference: Some(original_entry.header.transaction_number.clone()),
             lines: original_entry
                 .lines
                 .iter()
                 .map(|l| CreateJournalLineRequest {
                     account_id: l.account_id,
-                    description: Some(format!("Reversal of {}", l.description.as_deref().unwrap_or(""))),
+                    description: Some(format!(
+                        "Reversal of {}",
+                        l.description.as_deref().unwrap_or("")
+                    )),
                     debit: l.credit,
                     credit: l.debit,
                 })
@@ -273,7 +300,12 @@ impl JournalService {
         .await?;
 
         // Mark reversal voucher as Posted and original voucher as Reversed
-        JournalRepository::update_status_in_uow(&mut uow, reversal_detail.header.id, JournalStatus::Posted).await?;
+        JournalRepository::update_status_in_uow(
+            &mut uow,
+            reversal_detail.header.id,
+            JournalStatus::Posted,
+        )
+        .await?;
         JournalRepository::record_reversal_in_uow(
             &mut uow,
             id,
@@ -309,6 +341,8 @@ impl JournalService {
             ));
         }
 
-        self.journal_repo.update_status(id, JournalStatus::Cancelled).await
+        self.journal_repo
+            .update_status(id, JournalStatus::Cancelled)
+            .await
     }
 }

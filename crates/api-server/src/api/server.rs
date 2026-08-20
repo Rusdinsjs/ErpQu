@@ -4,7 +4,6 @@ use sqlx::PgPool;
 use tower_http::cors::CorsLayer;
 use utoipa::OpenApi;
 
-
 use crate::api::routes::create_router;
 use crate::application::services::scheduler_service::SchedulerService;
 use crate::application::services::{AnalyticsService, ReportService};
@@ -507,14 +506,24 @@ impl AppState {
                 .map(|v| v.eq_ignore_ascii_case("true") || v == "1")
                 .unwrap_or(false),
             session_tracker: {
-                let redis_config = management_system_core::infrastructure::cache::RedisConfig::from_env();
-                let redis_cache = std::sync::Arc::new(management_system_core::infrastructure::cache::RedisCache::new(&redis_config));
-                management_system_core::infrastructure::auth::SessionTracker::with_cache(redis_cache)
+                let redis_config =
+                    management_system_core::infrastructure::cache::RedisConfig::from_env();
+                let redis_cache = std::sync::Arc::new(
+                    management_system_core::infrastructure::cache::RedisCache::new(&redis_config),
+                );
+                management_system_core::infrastructure::auth::SessionTracker::with_cache(
+                    redis_cache,
+                )
             },
             lockout_tracker: {
-                let redis_config = management_system_core::infrastructure::cache::RedisConfig::from_env();
-                let redis_cache = std::sync::Arc::new(management_system_core::infrastructure::cache::RedisCache::new(&redis_config));
-                management_system_core::infrastructure::auth::LoginLockoutTracker::with_cache(redis_cache)
+                let redis_config =
+                    management_system_core::infrastructure::cache::RedisConfig::from_env();
+                let redis_cache = std::sync::Arc::new(
+                    management_system_core::infrastructure::cache::RedisCache::new(&redis_config),
+                );
+                management_system_core::infrastructure::auth::LoginLockoutTracker::with_cache(
+                    redis_cache,
+                )
             },
         }
     }
@@ -547,13 +556,12 @@ pub async fn create_app(state: AppState) -> axum::Router {
             let cors_layer = if cors_origins.is_empty() {
                 // Development mode: allow common localhost ports
                 tracing::warn!("CORS: No CORS_ALLOWED_ORIGINS set, allowing localhost dev origins");
-                CorsLayer::new()
-                    .allow_origin([
-                        axum::http::HeaderValue::from_static("http://localhost:3000"),
-                        axum::http::HeaderValue::from_static("http://localhost:5173"),
-                        axum::http::HeaderValue::from_static("http://localhost:5174"),
-                        axum::http::HeaderValue::from_static("http://localhost:5175"),
-                    ])
+                CorsLayer::new().allow_origin([
+                    axum::http::HeaderValue::from_static("http://localhost:3000"),
+                    axum::http::HeaderValue::from_static("http://localhost:5173"),
+                    axum::http::HeaderValue::from_static("http://localhost:5174"),
+                    axum::http::HeaderValue::from_static("http://localhost:5175"),
+                ])
             } else {
                 // Production mode: parse origins from env
                 let origins: Vec<axum::http::HeaderValue> = cors_origins

@@ -48,9 +48,9 @@ pub async fn security_headers_middleware(req: Request<Body>, next: Next) -> Resp
     );
 
     // Permissions-Policy: Disable unnecessary browser features
-    if let Ok(val) = HeaderValue::from_str(
-        "camera=(), microphone=(), geolocation=(self), payment=(), usb=()",
-    ) {
+    if let Ok(val) =
+        HeaderValue::from_str("camera=(), microphone=(), geolocation=(self), payment=(), usb=()")
+    {
         headers.insert(
             axum::http::HeaderName::from_static("permissions-policy"),
             val,
@@ -68,16 +68,13 @@ pub async fn security_headers_middleware(req: Request<Body>, next: Next) -> Resp
              style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; \
              font-src 'self' data: https://fonts.gstatic.com; \
              connect-src 'self' ws: wss:; \
-             frame-ancestors 'none'"
+             frame-ancestors 'none'",
         ),
     );
 
     // X-Request-ID for distributed tracing
     if let Ok(val) = HeaderValue::from_str(&request_id) {
-        headers.insert(
-            axum::http::HeaderName::from_static("x-request-id"),
-            val,
-        );
+        headers.insert(axum::http::HeaderName::from_static("x-request-id"), val);
     }
 
     response

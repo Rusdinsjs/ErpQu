@@ -156,7 +156,7 @@ impl DepreciationService {
         if let (Some(debit_id), Some(credit_id)) = (expense_acc, accumulated_acc) {
             // 4. Create Journal Entry
             let journal_req = CreateJournalEntryRequest {
-            company_id: None,
+                company_id: None,
                 date,
                 description: format!(
                     "Depreciation: {} ({}) - {}",

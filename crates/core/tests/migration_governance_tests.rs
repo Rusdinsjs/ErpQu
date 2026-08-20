@@ -85,12 +85,7 @@ async fn test_runtime_role_dml_allowed_ddl_denied(pool: PgPool) {
     sqlx::query(&format!("SET ROLE {}", role))
         .execute(&mut *conn)
         .await
-        .unwrap_or_else(|e| {
-            panic!(
-                "Failed to set role to application role '{}': {}",
-                role, e
-            )
-        });
+        .unwrap_or_else(|e| panic!("Failed to set role to application role '{}': {}", role, e));
 
     // 3. DML SELECT must be allowed as runtime role
     let dml_res = sqlx::query("SELECT COUNT(*) FROM public.companies")
@@ -103,10 +98,9 @@ async fn test_runtime_role_dml_allowed_ddl_denied(pool: PgPool) {
     );
 
     // 4. DDL CREATE TABLE must be denied as runtime role
-    let ddl_res =
-        sqlx::query("CREATE TABLE public.unauthorized_test_table_fase21 (id INT)")
-            .execute(&mut *conn)
-            .await;
+    let ddl_res = sqlx::query("CREATE TABLE public.unauthorized_test_table_fase21 (id INT)")
+        .execute(&mut *conn)
+        .await;
 
     // Reset role back to postgres before asserting
     let _ = sqlx::query("RESET ROLE").execute(&mut *conn).await;

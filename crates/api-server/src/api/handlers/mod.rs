@@ -43,6 +43,8 @@ pub mod profile_handler;
 pub mod rbac_handler;
 pub mod role_permission_handler;
 
+pub mod outbox_admin_handler;
+pub mod pos_handler;
 pub mod rental_billing_handler;
 pub mod rental_handler;
 pub mod report_handler;
@@ -53,11 +55,9 @@ pub mod test_handler;
 pub mod timesheet_handler;
 pub mod upload_handler;
 pub mod user_handler;
+pub mod wo_settlement_handler;
 pub mod work_order_handler;
 pub mod workflow_handler;
-pub mod wo_settlement_handler;
-pub mod outbox_admin_handler;
-pub mod pos_handler;
 
 pub mod stock_document_handler;
 
