@@ -2,7 +2,7 @@
 import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Shield, Settings, Plus, Edit, Trash2, Save, Eye, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
-import { Card, Modal, Input, Button, useToast, Skeleton, Table, TableHead, TableBody, TableRow, TableTh, TableTd, TableEmpty, SearchInput, Badge, ActionIcon } from '../components/ui';
+import { Card, Modal, Input, Button, useToast, Skeleton, Table, TableHead, TableBody, TableRow, TableTh, TableTd, TableEmpty, SearchInput, Badge, ActionIcon, PageHeader } from '../components/ui';
 import { rbacApi } from '../api/rbac';
 
 import type { Role } from '../types';
@@ -353,14 +353,10 @@ export default function Roles() {
 
     return (
         <div className="space-y-4">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold text-white">Role Management</h1>
-                    <p className="text-muted-foreground text-sm mt-1">
-                        Kelola Peran (Roles) & Matriks Hak Akses Dokumen ERPQu
-                    </p>
-                </div>
-            </div>
+            <PageHeader
+                title="Role Management"
+                description="Kelola Peran (Roles) & Matriks Hak Akses Dokumen ERPQu"
+            />
 
             {/* Tabs */}
             <Card padding="none">

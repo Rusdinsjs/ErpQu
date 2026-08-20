@@ -1097,10 +1097,8 @@ export default function AdminDashboard() {
 
             {/* Sidebar */}
             <aside
-                className={`flex-none bg-card/80 backdrop-blur-xl border-r border-border transition-all duration-300 ease-in-out flex flex-col relative z-20 shadow-[4px_0_24px_-12px_rgba(0,0,0,0.1)]
-                ${sidebarOpen ? 'w-64' : 'w-20'} 
-                ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'} 
-                absolute lg:relative h-full`}
+                className={`flex-none bg-card backdrop-blur-xl border-r border-border transition-all duration-300 ease-in-out flex flex-col fixed lg:relative inset-y-0 left-0 z-50 lg:z-20 h-full shadow-2xl lg:shadow-[4px_0_24px_-12px_rgba(0,0,0,0.1)]
+                ${sidebarOpen ? 'w-64 translate-x-0' : 'w-64 lg:w-20 -translate-x-full lg:translate-x-0'}`}
             >
                 {/* Brand / Logo & Toggle */}
                 <div className="h-16 flex items-center px-4 border-b border-border gap-2">
@@ -1203,7 +1201,7 @@ export default function AdminDashboard() {
                 />
 
                 {/* Content Area */}
-                <main className="flex-1 overflow-x-hidden overflow-y-auto bg-transparent relative z-10 global-scrollbar p-6 lg:p-8">
+                <main className="flex-1 overflow-x-hidden overflow-y-auto bg-transparent relative z-10 global-scrollbar p-3 sm:p-6 lg:p-8">
                     <AdminContentRouter
                         activeTab={activeTab}
                         selectedAssetId={selectedAssetId}

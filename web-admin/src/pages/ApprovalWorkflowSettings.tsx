@@ -5,7 +5,7 @@ import { rbacApi } from '../api/rbac';
 import type { Role } from '../types';
 import type { ApprovalWorkflow, ApprovalWorkflowRequest } from '../types/contract';
 import { Plus, Edit2, Trash2, X, Save, Search, Settings, Sparkles } from 'lucide-react';
-import { Card } from '../components/ui';
+import { Card, Button, PageHeader, SearchInput } from '../components/ui';
 import { APPROVAL_ENTITY_TYPES as FALLBACK_ENTITY_TYPES } from '../config/approvalEntities';
 import * as LucideIcons from 'lucide-react';
 
@@ -350,37 +350,38 @@ const ApprovalWorkflowSettings: React.FC = () => {
 
     return (
         <div className="p-6 space-y-6">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold text-foreground">Approval Workflows</h1>
-                    <p className="text-muted-foreground mt-1">Configure multi-level approval steps for documents & resources</p>
-                </div>
-                
-                <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
-                    <div className="relative flex-1 md:w-64">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
-                        <input
-                            type="text"
-                            placeholder="Search workflows..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full bg-background border border-border rounded-lg pl-10 pr-4 py-2 text-sm outline-none focus:ring-2 focus:ring-primary"
-                        />
-                    </div>
-                    <button
+            <PageHeader
+                title="Approval Workflows"
+                description="Configure multi-level approval steps for documents & resources"
+                actions={
+                    <Button
+                        variant="secondary"
                         onClick={() => setShowEntityManagerModal(true)}
-                        className="flex items-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80 transition-colors whitespace-nowrap text-sm font-medium border border-border"
+                        leftIcon={<Settings size={18} />}
                     >
-                        <Settings size={18} /> Manage Entity Types
-                    </button>
-                    <button
+                        Manage Entity Types
+                    </Button>
+                }
+                action={
+                    <Button
+                        variant="primary"
                         onClick={handleCreate}
-                        className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors whitespace-nowrap text-sm font-medium shadow-md shadow-primary/20"
+                        leftIcon={<Plus size={18} />}
                     >
-                        <Plus size={20} /> Create Workflow
-                    </button>
+                        Create Workflow
+                    </Button>
+                }
+            />
+
+            <Card padding="md">
+                <div className="max-w-md">
+                    <SearchInput
+                        placeholder="Search workflows..."
+                        value={searchTerm}
+                        onChange={setSearchTerm}
+                    />
                 </div>
-            </div>
+            </Card>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredWorkflows.map((workflow) => {

@@ -19,6 +19,7 @@ import {
     Tabs,
     TabsList,
     TabsTrigger,
+    PageHeader,
 } from '../../components/ui';
 
 export default function WorkOrders() {
@@ -163,23 +164,20 @@ export default function WorkOrders() {
     return (
         <div>
             {/* Header Section */}
-            <div className="flex justify-between items-end mb-8">
-                <div>
-                    <h1 className="text-3xl font-bold text-foreground tracking-tight">Work Orders</h1>
-                    <p className="text-muted-foreground mt-2">Manage maintenance, repairs, and service schedules</p>
-                </div>
-                <div className="flex gap-3">
+            <PageHeader
+                title="Work Orders"
+                description="Manage maintenance, repairs, and service schedules"
+                action={
                     <PermissionGate resource="work_order" action="create" fallbackLevel={3}>
                         <Button
-                            leftIcon={<Plus size={20} />}
+                            leftIcon={<Plus size={18} />}
                             onClick={handleCreate}
-                            className="rounded-xl shadow-lg shadow-blue-500/20"
                         >
                             New Work Order
                         </Button>
                     </PermissionGate>
-                </div>
-            </div>
+                }
+            />
 
             {/* Stats Overview */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">

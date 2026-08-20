@@ -21,6 +21,7 @@ import {
     Textarea,
     LoadingOverlay,
     useToast,
+    PageHeader,
 } from '../components/ui';
 import { Fuel, FileText } from 'lucide-react';
 
@@ -649,13 +650,25 @@ export default function ApprovalCenter() {
         <div className="space-y-8 p-8 relative">
             <div className="absolute top-0 left-1/4 w-96 h-96 bg-indigo-500/100/10 rounded-full blur-[120px] pointer-events-none" />
 
-            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 relative z-10">
-                <div>
-                    <h1 className="text-4xl font-black text-foreground tracking-tighter">Approval Center</h1>
-                    <p className="text-muted-foreground mt-2 font-medium">Review and manage pending requests</p>
-                </div>
-
-                <div className="flex items-center gap-3">
+            <PageHeader
+                title="Approval Center"
+                description="Review and manage pending requests across all modules"
+                badge={`${pendingRequests.length} Pending`}
+                actions={
+                    <Button
+                        onClick={() => {
+                            queryClient.invalidateQueries({ queryKey: ['approvals'] });
+                            queryClient.invalidateQueries({ queryKey: ['conversions'] });
+                            queryClient.invalidateQueries({ queryKey: ['fuel'] });
+                            queryClient.invalidateQueries({ queryKey: ['tax-renewals'] });
+                        }}
+                        variant="secondary"
+                        leftIcon={<RefreshCw size={16} />}
+                    >
+                        Refresh Data
+                    </Button>
+                }
+                action={
                     <Button
                         onClick={() => {
                             setCreateFormData({
@@ -667,15 +680,12 @@ export default function ApprovalCenter() {
                             });
                             setShowCreateModal(true);
                         }}
-                        className="flex items-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90 font-semibold px-4 py-2 rounded-xl shadow-lg shadow-primary/20"
+                        leftIcon={<Plus size={18} />}
                     >
-                        <Plus size={18} /> New Request
+                        New Request
                     </Button>
-                    <Badge variant="warning" className="text-lg px-4 py-2 shadow-lg shadow-amber-500/20 font-bold uppercase tracking-widest animate-pulse">
-                        {pendingRequests.length} Pending
-                    </Badge>
-                </div>
-            </div>
+                }
+            />
 
             {/* Stats */}
             {activeTab === 'pending' && (

@@ -20,6 +20,8 @@ import {
     useToast,
     Tabs, TabsList, TabsTrigger, TabsContent,
     DateInput,
+    PageHeader,
+    SearchInput,
 } from '../../components/ui';
 import dayjs from 'dayjs';
 
@@ -367,25 +369,28 @@ export default function Employees() {
 
     return (
         <div className="space-y-4">
-            <div className="flex items-center justify-between">
-                <h1 className="text-2xl font-bold text-white">Data Pegawai</h1>
-                <Button leftIcon={<Plus size={16} />} onClick={openCreateModal}>
-                    Tambah Pegawai
-                </Button>
-            </div>
+            <PageHeader
+                title="Data Pegawai"
+                description="Kelola data induk karyawan, informasi personal, status hubungan kerja & akun login"
+                badge={`${filteredEmployees.length} Karyawan`}
+                action={
+                    <Button leftIcon={<Plus size={16} />} onClick={openCreateModal}>
+                        Tambah Pegawai
+                    </Button>
+                }
+            />
+
+            <Card padding="md">
+                <div className="max-w-md">
+                    <SearchInput
+                        placeholder="Cari nama, NIK, atau email..."
+                        value={search}
+                        onChange={setSearch}
+                    />
+                </div>
+            </Card>
 
             <Card padding="lg">
-                <div className="mb-4">
-                    <div className="relative max-w-md">
-                        <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                        <Input
-                            placeholder="Cari nama, NIK, atau email..."
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            className="pl-10"
-                        />
-                    </div>
-                </div>
 
                 <div className="relative">
                     <LoadingOverlay visible={loading} />

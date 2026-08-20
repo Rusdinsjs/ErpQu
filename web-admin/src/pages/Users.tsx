@@ -16,6 +16,7 @@ import {
     LoadingOverlay,
     useToast,
     SearchInput,
+    PageHeader,
 } from '../components/ui';
 
 interface Role {
@@ -317,12 +318,11 @@ export default function Users() {
 
     return (
         <div className="space-y-4">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold text-white">User Operations</h1>
-                    <p className="text-xs text-muted-foreground mt-1">Manage system user accounts and their linked employee profiles.</p>
-                </div>
-            </div>
+            <PageHeader
+                title="User Operations"
+                description="Manage system user accounts and their linked employee profiles."
+                badge={`${filteredUsers.length} Users`}
+            />
 
             {/* Filters & Search */}
             <Card padding="md">

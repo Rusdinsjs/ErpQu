@@ -4,12 +4,13 @@ import React, { type ReactNode } from 'react';
 interface TableProps {
     children: ReactNode;
     className?: string;
+    minWidth?: string;
 }
 
-export function Table({ children, className = '' }: TableProps) {
+export function Table({ children, className = '', minWidth = 'min-w-[750px]' }: TableProps) {
     return (
-        <div className="overflow-x-auto rounded-xl border border-border shadow-md">
-            <table className={`w-full text-sm ${className}`}>
+        <div className="overflow-x-auto rounded-xl border border-border shadow-md w-full">
+            <table className={`w-full text-sm ${minWidth} ${className}`}>
                 {children}
             </table>
         </div>
@@ -86,7 +87,7 @@ export function TableTh({ children, className = '', align = 'left', onClick }: T
 
     return (
         <th
-            className={`px-4 py-3 font-semibold text-muted-foreground uppercase tracking-wider text-xs ${alignClass[align]} ${className} ${onClick ? 'cursor-pointer' : ''}`}
+            className={`px-4 py-3 font-semibold text-muted-foreground uppercase tracking-wider text-xs whitespace-nowrap ${alignClass[align]} ${className} ${onClick ? 'cursor-pointer' : ''}`}
             onClick={onClick}
         >
             {children}

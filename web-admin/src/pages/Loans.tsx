@@ -19,6 +19,7 @@ import {
     LoadingOverlay,
     useToast,
     SearchInput,
+    PageHeader,
 } from '../components/ui';
 
 interface Asset {
@@ -265,15 +266,15 @@ export default function Loans() {
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div className="flex items-start justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold text-white">Manajemen Peminjaman (Internal Loan)</h1>
-                    <p className="text-sm text-muted-foreground">Kelola peminjaman aset kantor oleh karyawan</p>
-                </div>
-                <Button leftIcon={<Plus size={16} />} onClick={() => setCreateModalOpen(true)}>
-                    Request Pinjaman Baru
-                </Button>
-            </div>
+            <PageHeader
+                title="Manajemen Peminjaman (Internal Loan)"
+                description="Kelola peminjaman aset kantor oleh karyawan"
+                action={
+                    <Button leftIcon={<Plus size={16} />} onClick={() => setCreateModalOpen(true)}>
+                        Request Pinjaman Baru
+                    </Button>
+                }
+            />
 
             {/* Stats */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

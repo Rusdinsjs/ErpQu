@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Card } from '../../components/ui/Card';
+import { Card, Button, PageHeader } from '../../components/ui';
 import {
     Building2, Plus, Search, Phone, Mail,
     ChevronRight, ChevronDown, Edit, Trash2,
@@ -255,39 +255,31 @@ export const CompanyManagement: React.FC = () => {
     return (
         <div className="p-6 max-w-7xl mx-auto space-y-6">
             {/* Top Header */}
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                <div>
-                    <div className="flex items-center gap-3">
-                        <div className="p-2.5 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl text-white shadow-lg shadow-indigo-500/20">
-                            <Building2 className="w-6 h-6" />
-                        </div>
-                        <div>
-                            <h1 className="text-2xl font-bold text-foreground tracking-tight">Company Management</h1>
-                            <p className="text-sm text-muted-foreground">
-                                Multi-Company Setup, Akta Legalitas & Hierarki Organisasi
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="flex items-center gap-3">
-                    <button
+            <PageHeader
+                title="Company Management"
+                description="Multi-Company Setup, Akta Legalitas & Hierarki Organisasi"
+                actions={
+                    <Button
+                        variant="secondary"
+                        size="md"
                         onClick={() => loadData()}
-                        className="p-2.5 text-muted-foreground bg-card border border-border rounded-xl hover:bg-muted/30 transition-colors shadow-sm"
-                        title="Refresh Data"
+                        loading={loading}
+                        leftIcon={<RefreshCw className="w-4 h-4" />}
                     >
-                        <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-                    </button>
-
-                    <button
+                        Refresh
+                    </Button>
+                }
+                action={
+                    <Button
+                        variant="primary"
+                        size="md"
                         onClick={handleOpenCreateModal}
-                        className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors shadow-md shadow-indigo-600/20 font-medium text-sm"
+                        leftIcon={<Plus className="w-4 h-4" />}
                     >
-                        <Plus className="w-4 h-4" />
                         Tambah Perusahaan
-                    </button>
-                </div>
-            </div>
+                    </Button>
+                }
+            />
 
             {/* Stats Dashboard Widgets */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

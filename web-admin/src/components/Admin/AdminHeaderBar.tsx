@@ -30,16 +30,23 @@ export function AdminHeaderBar({
     const [notifOpen, setNotifOpen] = useState(false);
 
     return (
-        <header className="h-16 bg-card/80 backdrop-blur-md border-b border-border flex items-center justify-between px-6 gap-4 relative z-10 shadow-sm">
+        <header className="h-16 bg-card/80 backdrop-blur-md border-b border-border flex items-center justify-between px-3 sm:px-6 gap-2 sm:gap-4 relative z-10 shadow-sm">
             {/* Sidebar Toggle Button (Mobile Only) */}
             <button
                 onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="p-2 -ml-2 hover:bg-muted rounded-lg text-muted-foreground hover:text-foreground transition-colors lg:hidden"
+                className="p-1.5 sm:p-2 -ml-1 sm:-ml-2 hover:bg-muted rounded-lg text-muted-foreground hover:text-foreground transition-colors lg:hidden"
             >
-                <Menu size={24} />
+                <Menu size={22} />
             </button>
 
-            <Logo className="lg:hidden" collapsed={false} />
+            <div className="lg:hidden">
+                <div className="hidden sm:block">
+                    <Logo collapsed={false} />
+                </div>
+                <div className="sm:hidden">
+                    <Logo collapsed={true} />
+                </div>
+            </div>
 
             {/* Back to Launchpad Button & Breadcrumb */}
             <div className="flex items-center gap-2">

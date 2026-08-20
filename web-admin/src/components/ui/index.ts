@@ -27,4 +27,5 @@ export { Logo } from './Logo';
 export { MultiSelect } from './MultiSelect';
 export { Progress } from './Progress';
 export { GlobalSearch } from './GlobalSearch';
+export { PageHeader } from './PageHeader';
 

@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import { showToast } from '../../components/ui/Toast';
 import {
-    Card, Button, Table, TableHead, TableBody, TableRow, TableTh, TableTd, TableEmpty, TableSkeleton
+    Card, Button, Table, TableHead, TableBody, TableRow, TableTh, TableTd, TableEmpty, TableSkeleton, PageHeader
 } from '../../components/ui';
 
 const DEFAULT_COMPANY_ID = '00000000-0000-0000-0000-000000000001';
@@ -132,22 +132,18 @@ const DeliveryTripsPage: React.FC = () => {
 
     return (
         <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div>
-                    <h1 className="text-2xl font-bold tracking-tight bg-gradient-to-r from-teal-400 to-emerald-400 bg-clip-text text-transparent">
-                        Delivery Trips
-                    </h1>
-                    <p className="text-muted-foreground">
-                        Plan fleet routes, dispatch drivers, and monitor shipment stops.
-                    </p>
-                </div>
-                <Button
-                    onClick={() => setIsCreateOpen(true)}
-                    className="flex items-center gap-2 bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 shadow-lg shadow-teal-500/10"
-                >
-                    <Plus className="h-4 w-4" /> Plan Route & Dispatch
-                </Button>
-            </div>
+            <PageHeader
+                title="Delivery Trips"
+                description="Plan fleet routes, dispatch drivers, and monitor shipment stops."
+                action={
+                    <Button
+                        onClick={() => setIsCreateOpen(true)}
+                        leftIcon={<Plus className="h-4 w-4" />}
+                    >
+                        Plan Route & Dispatch
+                    </Button>
+                }
+            />
 
             <Card className="p-6 bg-card/40 backdrop-blur-md border-border/40">
                 {tripsLoading ? (
