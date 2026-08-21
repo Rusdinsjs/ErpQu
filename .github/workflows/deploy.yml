@@ -2,7 +2,7 @@ name: ERPQu Production Deployment
 
 on:
   push:
-    branches: [master, main]
+    branches: [main]
   workflow_dispatch:
     inputs:
       environment:
@@ -91,7 +91,7 @@ jobs:
     environment: production
     if: >
       (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production') ||
-      (github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'))
+      (github.event_name == 'push' && github.ref == 'refs/heads/main')
 
     steps:
       - name: Deploy to Production Server
@@ -121,7 +121,7 @@ jobs:
 
             # Sync code
             git fetch --all --prune
-            git reset --hard origin/master || git reset --hard origin/main
+            git reset --hard origin/main
 
             # Verify production .env
             [ -f .env ] || { echo "CRITICAL: .env missing on production!"; exit 1; }
