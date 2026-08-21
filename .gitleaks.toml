@@ -1,0 +1,17 @@
+# Gitleaks configuration
+# See: https://github.com/gitleaks/gitleaks
+
+title = "ERPQu Gitleaks Config"
+
+[allowlist]
+  description = "Allow test credentials and CI config"
+  paths = [
+    '''.github/workflows/ci\.yml''',
+    '''crates/core/tests/.*''',
+    '''crates/core/src/shared/utils/crypto\.rs''',
+    '''docs/.*''',
+    '''src/bin/verify_hash\.rs''',
+    '''login_resp\.json''',
+    '''login_response\.json''',
+    '''\.env\.example''',
+  ]

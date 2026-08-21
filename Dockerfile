@@ -1,5 +1,5 @@
 # --- Chef Stage ---
-FROM lukemathwalker/cargo-chef:latest-rust-latest AS chef
+FROM lukemathwalker/cargo-chef:latest-rust-1.94.1 AS chef
 WORKDIR /app
 # Install system dependencies needed for compilation
 RUN apt-get update && apt-get install -y pkg-config libssl-dev protobuf-compiler && rm -rf /var/lib/apt/lists/*
