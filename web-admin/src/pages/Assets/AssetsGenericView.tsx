@@ -237,7 +237,7 @@ export default function AssetsGenericView({ title, description, type }: Props) {
 
             {/* View Detail Modal */}
             {selectedItem && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-md p-4">
                     <div className="bg-card border border-border/80 rounded-2xl max-w-lg w-full p-6 shadow-xl space-y-4">
                         <div className="flex items-center justify-between border-b border-border/60 pb-3">
                             <h3 className="text-lg font-bold text-foreground flex items-center gap-2">

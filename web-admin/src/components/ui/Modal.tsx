@@ -58,42 +58,40 @@ export function Modal({
     };
 
     return (
-        <div className="fixed inset-0 z-50 overflow-y-auto">
+        <div className="fixed inset-0 z-[9999] overflow-hidden flex items-center justify-center p-2 sm:p-4 md:p-6">
             {/* Backdrop */}
             <div
-                className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
+                className="fixed inset-0 bg-black/70 backdrop-blur-md transition-opacity"
                 onClick={onClose}
             />
 
-            {/* Modal Container */}
-            <div className="flex min-h-full items-center justify-center p-4">
-                <div
-                    className={`relative w-full ${sizes[size]} rounded-2xl bg-card border border-border/80 shadow-2xl p-6 transition-all transform scale-100 z-10`}
-                    onClick={(e) => e.stopPropagation()}
-                >
-                    {/* Header */}
-                    {(title || showCloseButton) && (
-                        <div className="flex items-center justify-between pb-4 mb-4 border-b border-border/60">
-                            {title && (
-                                <h3 className="text-lg font-semibold text-foreground">
-                                    {title}
-                                </h3>
-                            )}
-                            {showCloseButton && (
-                                <button
-                                    onClick={onClose}
-                                    className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
-                                >
-                                    <X className="w-5 h-5" />
-                                </button>
-                            )}
-                        </div>
-                    )}
-
-                    {/* Content */}
-                    <div>
-                        {children}
+            {/* Modal Dialog Container */}
+            <div
+                className={`relative w-full ${sizes[size]} max-h-[92vh] sm:max-h-[90vh] flex flex-col rounded-2xl bg-card border border-border/80 shadow-2xl transition-all transform scale-100 z-10 overflow-hidden`}
+                onClick={(e) => e.stopPropagation()}
+            >
+                {/* Header */}
+                {(title || showCloseButton) && (
+                    <div className="flex items-center justify-between px-4 py-3.5 sm:px-6 sm:py-4 border-b border-border/60 bg-muted/20 shrink-0">
+                        {title && (
+                            <h3 className="text-base sm:text-lg font-semibold text-foreground truncate pr-2">
+                                {title}
+                            </h3>
+                        )}
+                        {showCloseButton && (
+                            <button
+                                onClick={onClose}
+                                className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors ml-auto shrink-0"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        )}
                     </div>
+                )}
+
+                {/* Content Body with scroll */}
+                <div className="flex-1 overflow-y-auto p-4 sm:p-6 custom-scrollbar">
+                    {children}
                 </div>
             </div>
         </div>

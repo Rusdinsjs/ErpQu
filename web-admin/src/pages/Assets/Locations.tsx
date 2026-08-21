@@ -724,7 +724,7 @@ export default function Locations() {
 
             {/* Map Interactive Full Modal View */}
             {mapPreviewModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-md p-4">
                     <div className="bg-card border border-border/80 rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-4">
                         <div className="flex items-center justify-between border-b border-border/60 pb-3">
                             <div>
