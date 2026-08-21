@@ -1,5 +1,6 @@
 // Modal Component - Clean, Modern ERP UI Design (Matching Image 1 Left)
 import { type ReactNode, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 
 interface ModalProps {
@@ -57,17 +58,17 @@ export function Modal({
         '75p': 'w-full md:w-[75%] max-w-none',
     };
 
-    return (
+    return createPortal(
         <div className="fixed inset-0 z-[9999] overflow-hidden flex items-center justify-center p-2 sm:p-4 md:p-6">
             {/* Backdrop */}
             <div
-                className="fixed inset-0 bg-black/70 backdrop-blur-md transition-opacity"
+                className="fixed inset-0 bg-black/75 backdrop-blur-md transition-opacity z-[9999]"
                 onClick={onClose}
             />
 
             {/* Modal Dialog Container */}
             <div
-                className={`relative w-full ${sizes[size]} max-h-[92vh] sm:max-h-[90vh] flex flex-col rounded-2xl bg-card border border-border/80 shadow-2xl transition-all transform scale-100 z-10 overflow-hidden`}
+                className={`relative w-full ${sizes[size]} max-h-[92vh] sm:max-h-[90vh] flex flex-col rounded-2xl bg-card border border-border/80 shadow-2xl transition-all transform scale-100 z-[10000] overflow-hidden`}
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Header */}
@@ -94,6 +95,7 @@ export function Modal({
                     {children}
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     );
 }
