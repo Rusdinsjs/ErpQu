@@ -58,6 +58,8 @@ pub struct Employee {
     pub employment_status: String,
     #[sqlx(default)]
     pub user_id: Option<Uuid>,
+    #[sqlx(default)]
+    pub company_id: Option<Uuid>,
     pub is_active: bool,
 
     // Biodata
@@ -168,6 +170,8 @@ pub struct Employee {
     // Optional joined fields
     #[sqlx(default)]
     pub department_name: Option<String>,
+    #[sqlx(default)]
+    pub company_name: Option<String>,
     #[sqlx(default)]
     pub assigned_asset_id: Option<Uuid>,
     #[sqlx(default)]

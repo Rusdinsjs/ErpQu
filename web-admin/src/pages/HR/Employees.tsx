@@ -1,8 +1,9 @@
 // Employees Page - Pure Tailwind
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Edit, Trash2, Search, UserPlus, UserCheck, Eye, Camera, Loader2 } from 'lucide-react';
+import { Plus, Edit, Trash2, Search, UserPlus, UserCheck, Eye, Camera, Loader2, RefreshCw, Building2 } from 'lucide-react';
 import { employeeApi, type Employee, type EmploymentStatus } from '../../api/employee';
+import { fetchCompanies, type Company } from '../../api/companyApi';
 import { usersApi } from '../../api/users';
 import { api } from '../../api/http';
 import { uploadApi } from '../../api/upload';
@@ -32,6 +33,7 @@ interface Department {
 
 const initialFormState: Partial<Employee> = {
     nik: '',
+    company_id: '',
     name: '',
     email: '',
     phone: '',
@@ -84,6 +86,7 @@ export default function Employees() {
     const navigate = useNavigate();
     const [employees, setEmployees] = useState<Employee[]>([]);
     const [departments, setDepartments] = useState<Department[]>([]);
+    const [companies, setCompanies] = useState<Company[]>([]);
     const [loading, setLoading] = useState(false);
     const [search, setSearch] = useState('');
 
@@ -108,11 +111,16 @@ export default function Employees() {
 
     const { success, error: showError } = useToast();
 
-    useEffect(() => {
-        loadData();
-        fetchDepartments();
-        fetchRoles();
-    }, []);
+    const fetchCompaniesList = async () => {
+        try {
+            const data = await fetchCompanies();
+            const list = Array.isArray(data) ? data : ((data as any)?.data || []);
+            setCompanies(list);
+        } catch (error) {
+            console.error('Failed to fetch companies:', error);
+            setCompanies([]);
+        }
+    };
 
     const fetchRoles = async () => {
         try {
@@ -122,21 +130,6 @@ export default function Employees() {
         } catch (error) {
             console.error('Failed to fetch roles:', error);
             setRoles([]);
-        }
-    };
-
-    const loadData = async () => {
-        setLoading(true);
-        try {
-            const data = await employeeApi.list();
-            const list = Array.isArray(data) ? data : ((data as any)?.data || []);
-            setEmployees(list);
-        } catch (error) {
-            console.error(error);
-            showError('Failed to load employees', 'Error');
-            setEmployees([]);
-        } finally {
-            setLoading(false);
         }
     };
 
@@ -150,6 +143,30 @@ export default function Employees() {
             setDepartments([]);
         }
     };
+
+    const loadData = async () => {
+        setLoading(true);
+        try {
+            const [empData] = await Promise.all([
+                employeeApi.list(),
+                fetchCompaniesList(),
+                fetchDepartments()
+            ]);
+            const list = Array.isArray(empData) ? empData : ((empData as any)?.data || []);
+            setEmployees(list);
+        } catch (error) {
+            console.error(error);
+            showError('Failed to load employees', 'Error');
+            setEmployees([]);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        loadData();
+        fetchRoles();
+    }, []);
 
     const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -270,7 +287,10 @@ export default function Employees() {
     };
 
     const openCreateModal = () => {
-        setFormData(initialFormState);
+        setFormData({
+            ...initialFormState,
+            company_id: companies[0]?.id || '',
+        });
         setEditingEmployee(null);
         setIsEditing(false);
         setCreateUser(false);
@@ -285,6 +305,7 @@ export default function Employees() {
         setFormData({
             ...initialFormState,
             ...employee,
+            company_id: employee.company_id || companies[0]?.id || '',
             basic_salary: Number(employee.basic_salary) || 0,
         });
         setCreateUser(false);
@@ -348,6 +369,7 @@ export default function Employees() {
     );
 
     const deptOptions = (Array.isArray(departments) ? departments : []).map(d => ({ value: d.id, label: d.name }));
+    const companyOptions = [{ value: '', label: 'Pilih Perusahaan...' }, ...(Array.isArray(companies) ? companies : []).map(c => ({ value: c.id, label: `${c.name} (${c.code})` }))];
     const statusOptions = [
         { value: 'pkwt', label: 'PKWT' },
         { value: 'pkwtt', label: 'PKWTT' },
@@ -373,6 +395,18 @@ export default function Employees() {
                 title="Data Pegawai"
                 description="Kelola data induk karyawan, informasi personal, status hubungan kerja & akun login"
                 badge={`${filteredEmployees.length} Karyawan`}
+                actions={
+                    <Button
+                        variant="outline"
+                        size="md"
+                        onClick={() => loadData()}
+                        loading={loading}
+                        leftIcon={<RefreshCw className={`w-4 h-4 text-indigo-500 ${loading ? 'animate-spin' : ''}`} />}
+                        className="bg-card text-foreground hover:bg-muted border border-border shadow-sm font-medium"
+                    >
+                        Segarkan Data
+                    </Button>
+                }
                 action={
                     <Button leftIcon={<Plus size={16} />} onClick={openCreateModal}>
                         Tambah Pegawai
@@ -398,7 +432,7 @@ export default function Employees() {
                         <TableHead>
                             <TableRow>
                                 <TableTh>Nama / NIK</TableTh>
-                                <TableTh>Email</TableTh>
+                                <TableTh>Perusahaan</TableTh>
                                 <TableTh>Departemen</TableTh>
                                 <TableTh>Jabatan</TableTh>
                                 <TableTh>Status Kerja</TableTh>
@@ -627,29 +661,48 @@ export default function Employees() {
                         <TabsContent value="employment" className="space-y-4">
                             <div className="grid grid-cols-2 gap-4">
                                 <Select
+                                    label="Perusahaan (Company) *"
+                                    value={formData.company_id}
+                                    onChange={(val) => setFormData({ ...formData, company_id: val || undefined })}
+                                    options={companyOptions}
+                                    placeholder="Pilih Perusahaan..."
+                                    required
+                                />
+                                <Select
                                     label="Departemen"
                                     value={formData.department_id}
                                     onChange={(val) => setFormData({ ...formData, department_id: val || undefined })}
                                     options={deptOptions}
-                                />
-                                <Input
-                                    label="Jabatan / Posisi"
-                                    value={formData.position}
-                                    onChange={(e) => setFormData({ ...formData, position: e.target.value })}
+                                    placeholder="Pilih Departemen..."
                                 />
                             </div>
                             <div className="grid grid-cols-2 gap-4">
+                                <Input
+                                    label="Jabatan / Posisi"
+                                    placeholder="Contoh: Operation Supervisor"
+                                    value={formData.position}
+                                    onChange={(e) => setFormData({ ...formData, position: e.target.value })}
+                                />
                                 <Select
                                     label="Status Kepegawaian"
                                     value={formData.employment_status}
                                     onChange={(val) => setFormData({ ...formData, employment_status: val as any })}
                                     options={statusOptions}
                                 />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
                                 <DateInput
                                     label="Tanggal Mulai Kerja"
                                     value={formData.start_date}
                                     onChange={(val) => setFormData({ ...formData, start_date: val ? dayjs(val).format('YYYY-MM-DD') : '' })}
                                 />
+                                {formData.employment_status === 'pkwt' ? (
+                                    <DateInput
+                                        label="Tanggal Akhir Kontrak"
+                                        value={formData.end_contract_date}
+                                        onChange={(val) => setFormData({ ...formData, end_contract_date: val ? dayjs(val).format('YYYY-MM-DD') : '' })}
+                                    />
+                                ) : <div />}
                             </div>
                             {formData.employment_status === 'pkwt' && (
                                 <DateInput

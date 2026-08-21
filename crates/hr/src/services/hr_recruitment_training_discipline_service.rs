@@ -80,6 +80,8 @@ impl HrRecruitmentTrainingDisciplineService {
             position: Some(job.title),
             employment_status: "pkwt".into(),
             user_id: None,
+            company_id: None,
+            company_name: None,
             is_active: true,
             ktp_number: None,
             place_of_birth: None,

@@ -14,6 +14,8 @@ use crate::api::middleware::{auth_middleware, rbac::admin_only_middleware};
 use crate::api::server::AppState;
 use management_system_core::domain::entities::UserClaims;
 
+use tower_http::services::ServeDir;
+
 pub fn create_router(state: AppState) -> Router {
     // Public routes
     let public_routes = Router::new()
@@ -28,7 +30,9 @@ pub fn create_router(state: AppState) -> Router {
         .route("/api/auth/login", post(login))
         .route("/api/auth/register", post(register))
         .route("/api/auth/refresh", post(auth_handler::refresh_token))
-        .route("/ws", get(notification_ws::ws_handler));
+        .route("/ws", get(notification_ws::ws_handler))
+        .nest_service("/api/uploads", ServeDir::new("uploads"))
+        .nest_service("/uploads", ServeDir::new("uploads"));
 
     // Lookup routes
     let lookup_routes: Router<AppState> = Router::new()

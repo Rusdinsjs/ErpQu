@@ -23,7 +23,8 @@ impl EmployeeRepository {
                 start_date, end_contract_date, is_manager, manager_id,
                 bank_account, bank_name, basic_salary,
                 leave_balance, leave_used,
-                assigned_asset_id, work_area_id, is_account_requested
+                assigned_asset_id, work_area_id, is_account_requested,
+                company_id
             )
             VALUES (
                 $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11,
@@ -31,7 +32,8 @@ impl EmployeeRepository {
                 $19, $20, $21, $22,
                 $23, $24, $25,
                 $26, $27,
-                $28, $29, $30
+                $28, $29, $30,
+                $31
             )
             RETURNING *
             "#,
@@ -67,6 +69,7 @@ impl EmployeeRepository {
         .bind(employee.assigned_asset_id)
         .bind(employee.work_area_id)
         .bind(employee.is_account_requested.unwrap_or(false))
+        .bind(employee.company_id)
         .fetch_one(&self.pool)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;
@@ -77,9 +80,10 @@ impl EmployeeRepository {
     pub async fn get_by_id(&self, id: Uuid) -> Result<Employee, AppError> {
         let employee = sqlx::query_as::<_, Employee>(
             r#"
-            SELECT e.*, d.name as department_name
+            SELECT e.*, d.name as department_name, c.name as company_name
             FROM employees e
             LEFT JOIN departments d ON e.department_id = d.id
+            LEFT JOIN companies c ON e.company_id = c.id
             WHERE e.id = $1
             "#,
         )
@@ -120,9 +124,10 @@ impl EmployeeRepository {
         let offset = (page - 1) * per_page;
         let employees = sqlx::query_as::<_, Employee>(
             r#"
-            SELECT e.*, d.name as department_name
+            SELECT e.*, d.name as department_name, c.name as company_name
             FROM employees e
             LEFT JOIN departments d ON e.department_id = d.id
+            LEFT JOIN companies c ON e.company_id = c.id
             ORDER BY e.name ASC
             LIMIT $1 OFFSET $2
             "#,
@@ -153,6 +158,7 @@ impl EmployeeRepository {
                     leave_balance = $34, leave_used = $35,
                     assigned_asset_id = $36, work_area_id = $37,
                     is_account_requested = COALESCE($38, is_account_requested),
+                    company_id = COALESCE($39, company_id),
                     updated_at = NOW()
                 WHERE id = $1
                 RETURNING *
@@ -206,6 +212,7 @@ impl EmployeeRepository {
         .bind(employee.assigned_asset_id)
         .bind(employee.work_area_id)
         .bind(employee.is_account_requested)
+        .bind(employee.company_id)
         .fetch_one(&self.pool)
         .await
         .map_err(|e| AppError::Database(e.to_string()))?;

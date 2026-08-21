@@ -11,6 +11,8 @@ export interface Employee {
     department_id?: string;
     department_name?: string;
     position?: string;
+    company_id?: string;
+    company_name?: string;
     employment_status: EmploymentStatus;
     user_id?: string;
     is_account_requested?: boolean;

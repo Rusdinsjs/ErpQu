@@ -35,9 +35,14 @@ export REDIS_URL=${REDIS_URL:-redis://localhost:6379}
 export JWT_SECRET=${JWT_SECRET:-management-system-secret-key-change-in-production}
 
 # 1. Bersihkan sisa proses lama di port 8181 & Vite
-echo -e "${GREEN}1. Membersihkan proses lama pada port 8181...${NC}"
+echo -e "${GREEN}1. Membersihkan proses lama pada port 8181 & Vite...${NC}"
 fuser -k -9 8181/tcp > /dev/null 2>&1 || true
+fuser -k -9 5174/tcp > /dev/null 2>&1 || true
+fuser -k -9 5175/tcp > /dev/null 2>&1 || true
+fuser -k -9 5176/tcp > /dev/null 2>&1 || true
 pkill -9 -f management-system > /dev/null 2>&1 || true
+pkill -9 -f "bun dev" > /dev/null 2>&1 || true
+pkill -9 -f "vite" > /dev/null 2>&1 || true
 sleep 1
 
 # 2. Pastikan Docker Containers (DB & Redis) berjalan
@@ -55,9 +60,9 @@ echo -e "${GREEN}   PostgreSQL Siap!${NC}"
 echo -e "${GREEN}3.5. Menjalankan Database Migrations...${NC}"
 export SQLX_OFFLINE=false
 
-# Fix: Hapus entry migration yang checksumnya tidak cocok (akibat file migration yang dimodifikasi)
+# Fix: Hapus entry migration orphan yang tidak ada di repositori
 docker exec -e PGPASSWORD=${POSTGRES_PASSWORD:-postgres} mgmt-db psql -U ${POSTGRES_USER:-postgres} -d ${DB_NAME:-management_system} -c "
-  DELETE FROM _sqlx_migrations WHERE version IN (20260806000003, 20260808000001, 20260808140000, 20260808150000, 20260808190000, 20260808200000, 20260808210000, 20260809220000, 20260820000001);
+  DELETE FROM _sqlx_migrations WHERE version > 20260824000001;
 " > /dev/null 2>&1 || true
 
 cargo sqlx migrate run > migrate.log 2>&1 || true

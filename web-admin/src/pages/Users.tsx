@@ -1,6 +1,6 @@
 // Users Page - Pure Tailwind
 import { useEffect, useState } from 'react';
-import { Edit, Trash2, Link, UserCheck, Eye, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { Edit, Trash2, Link, UserCheck, Eye, ArrowUpDown, ArrowUp, ArrowDown, RefreshCw } from 'lucide-react';
 import { usersApi, type UserSummary, type UpdateUserRequest } from '../api/users';
 import { departmentApi, type Department } from '../api/departments';
 import { getImageUrl } from '../utils/image';
@@ -322,6 +322,18 @@ export default function Users() {
                 title="User Operations"
                 description="Manage system user accounts and their linked employee profiles."
                 badge={`${filteredUsers.length} Users`}
+                actions={
+                    <Button
+                        variant="outline"
+                        size="md"
+                        onClick={() => fetchUsers()}
+                        loading={loading}
+                        leftIcon={<RefreshCw className={`w-4 h-4 text-indigo-500 ${loading ? 'animate-spin' : ''}`} />}
+                        className="bg-card text-foreground hover:bg-muted border border-border shadow-sm font-medium"
+                    >
+                        Segarkan Data
+                    </Button>
+                }
             />
 
             {/* Filters & Search */}

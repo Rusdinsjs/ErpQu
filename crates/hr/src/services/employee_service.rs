@@ -42,6 +42,7 @@ impl EmployeeService {
             position: req.position,
             employment_status: req.employment_status,
             user_id: req.user_id,
+            company_id: req.company_id,
             is_account_requested: Some(
                 req.is_account_requested
                     .unwrap_or(req.user_creation.is_some()),
@@ -106,6 +107,7 @@ impl EmployeeService {
             created_at: Utc::now(),
             updated_at: Utc::now(),
             department_name: None,
+            company_name: None,
             assigned_asset_id: None,
             work_area_id: None,
         };
@@ -166,6 +168,9 @@ impl EmployeeService {
         }
         if let Some(user_id) = req.user_id {
             employee.user_id = Some(user_id);
+        }
+        if let Some(comp_id) = req.company_id {
+            employee.company_id = Some(comp_id);
         }
         if let Some(active) = req.is_active {
             employee.is_active = active;
