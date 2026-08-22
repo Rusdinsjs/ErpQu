@@ -2,6 +2,7 @@
 //!
 //! Accumulates timesheet data into billing periods with calculations.
 
+use management_system_macros::DocType;
 use chrono::{DateTime, NaiveDate, Utc};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
@@ -135,7 +136,8 @@ impl RateBasis {
 }
 
 /// Rental billing period
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "Rentals", description = "Entity RentalBillingPeriod")]
 pub struct RentalBillingPeriod {
     pub id: Uuid,
     pub rental_id: Uuid,
@@ -477,7 +479,8 @@ impl RentalBillingPeriod {
 }
 
 /// Summary for billing calculation
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, DocType)]
+#[doctype(module = "Rentals", description = "Entity BillingCalculationSummary")]
 pub struct BillingCalculationSummary {
     pub period: String,
     pub total_operating_hours: Decimal,

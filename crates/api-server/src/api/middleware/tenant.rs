@@ -4,7 +4,8 @@
 //! 1. `X-Company-ID` HTTP header (rejects malformed header with 400 Bad Request)
 //! 2. Subdomain resolution (`acme.erpqu.com` → resolves `acme` to company_id via `domain_slug`)
 //! 3. Mandatory UserClaims token tenant context extraction
-//! 4. Non-admin and admin membership validation (prevents cross-tenant data access)
+//! 4. Strict company context enforcement: non-exempt routes MUST carry company context
+//! 5. Only super_admin bypasses company membership checks (A2 enforcement)
 
 use axum::{
     extract::{Request, State},
@@ -32,6 +33,38 @@ const RESERVED_SUBDOMAINS: &[&str] = &[
     "prod",
 ];
 
+/// Paths that are exempt from mandatory company context requirement.
+/// These are system-level or user-personal endpoints that operate outside company scope.
+const COMPANY_EXEMPT_PREFIXES: &[&str] = &[
+    "/api/setup-wizard",
+    "/api/companies/accessible",
+    "/api/companies/tree",
+    "/api/auth",
+    "/api/me",
+    "/api/settings",
+    "/api/public-settings",
+    "/api/rbac",
+    "/api/lookups",
+    "/api/uploads",
+    "/api/upload",
+    "/api/users",
+    "/api/roles",
+    "/api/doctypes",
+    "/api/docperms",
+    "/api/notifications",
+    "/api/audit/sessions",
+    "/api/loans/my",
+];
+
+/// Check if a path is exempt from mandatory company context
+fn is_company_exempt(path: &str) -> bool {
+    // Exact matches for company list endpoint (but not company CRUD with ID)
+    if path == "/api/companies" {
+        return true;
+    }
+    COMPANY_EXEMPT_PREFIXES.iter().any(|prefix| path.starts_with(prefix))
+}
+
 pub async fn tenant_middleware(
     State(state): State<AppState>,
     mut request: Request,
@@ -48,6 +81,7 @@ pub async fn tenant_middleware(
         StatusCode::UNAUTHORIZED
     })?;
 
+    let request_path = request.uri().path().to_string();
     let mut resolved_company_id: Option<Uuid> = None;
 
     // Method 1: Explicit X-Company-ID header (Strict Validation: Malformed header returns 400 Bad Request)
@@ -101,37 +135,46 @@ pub async fn tenant_middleware(
         }
     }
 
-    // Validate company membership against user profile / permissions (Admin must also follow legal entity boundary)
+    // A1 ENFORCEMENT: Mandatory company context for non-exempt paths
+    if resolved_company_id.is_none() && !is_company_exempt(&request_path) {
+        tracing::warn!(
+            "Tenant Middleware: Rejected request to {} — missing company context (no X-Company-ID header)",
+            request_path
+        );
+        return Err(StatusCode::BAD_REQUEST);
+    }
+
+    // A2 ENFORCEMENT: Validate company membership (only super_admin bypasses membership check)
     if let Some(company_uuid) = resolved_company_id {
-        let has_emp = sqlx::query_scalar::<_, bool>(
-            "SELECT EXISTS(SELECT 1 FROM hr.employees WHERE user_id = $1 AND company_id = $2)",
-        )
-        .bind(claims.user_id())
-        .bind(company_uuid)
-        .fetch_one(&state.pool)
-        .await
-        .unwrap_or(false);
+        let is_super_admin = claims.role == "super_admin";
 
-        let has_perm = sqlx::query_scalar::<_, bool>(
-            "SELECT EXISTS(SELECT 1 FROM public.user_permissions WHERE user_id = $1 AND allow_doctype = 'Company' AND for_value = $2)",
-        )
-        .bind(claims.user_id())
-        .bind(company_uuid.to_string())
-        .fetch_one(&state.pool)
-        .await
-        .unwrap_or(false);
+        if !is_super_admin {
+            let has_emp = sqlx::query_scalar::<_, bool>(
+                "SELECT EXISTS(SELECT 1 FROM hr.employees WHERE user_id = $1 AND company_id = $2)",
+            )
+            .bind(claims.user_id())
+            .bind(company_uuid)
+            .fetch_one(&state.pool)
+            .await
+            .unwrap_or(false);
 
-        let is_global_company_admin = claims.permissions.iter().any(|p| {
-            p == "company.*" || p == "company.admin" || (claims.role == "super_admin" && p == "*")
-        });
+            let has_perm = sqlx::query_scalar::<_, bool>(
+                "SELECT EXISTS(SELECT 1 FROM public.user_permissions WHERE user_id = $1 AND allow_doctype = 'Company' AND for_value = $2)",
+            )
+            .bind(claims.user_id())
+            .bind(company_uuid.to_string())
+            .fetch_one(&state.pool)
+            .await
+            .unwrap_or(false);
 
-        if !has_emp && !has_perm && !is_global_company_admin {
-            tracing::warn!(
-                "Tenant Middleware: Blocked user {} from selecting company {} outside membership",
-                claims.sub,
-                company_uuid
-            );
-            return Err(StatusCode::FORBIDDEN);
+            if !has_emp && !has_perm {
+                tracing::warn!(
+                    "Tenant Middleware: Blocked user {} from selecting company {} — no membership (A2 enforced)",
+                    claims.sub,
+                    company_uuid
+                );
+                return Err(StatusCode::FORBIDDEN);
+            }
         }
 
         tenant_ctx.company_id = Some(company_uuid);
@@ -141,3 +184,4 @@ pub async fn tenant_middleware(
 
     Ok(next.run(request).await)
 }
+

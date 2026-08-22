@@ -4,7 +4,7 @@ use crate::api::middleware::rbac::admin_only_middleware;
 use crate::api::server::AppState;
 use axum::middleware as axum_middleware;
 use axum::{
-    routing::{get, put},
+    routing::{get, put, post},
     Router,
 };
 
@@ -17,6 +17,15 @@ pub fn settings_routes(state: AppState) -> Router<AppState> {
         .route(
             "/api/settings",
             get(settings_handler::get_all_settings)
+                .layer(axum_middleware::from_fn(admin_only_middleware))
+                .layer(axum_middleware::from_fn_with_state(
+                    state.clone(),
+                    auth_middleware,
+                )),
+        )
+        .route(
+            "/api/settings/reset-database",
+            post(settings_handler::reset_database)
                 .layer(axum_middleware::from_fn(admin_only_middleware))
                 .layer(axum_middleware::from_fn_with_state(
                     state.clone(),

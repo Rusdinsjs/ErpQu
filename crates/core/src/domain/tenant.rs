@@ -158,8 +158,21 @@ impl TenantContext {
         }
         Ok(())
     }
-}
 
+    /// Clear RLS context after transaction (fail-safe for connection pool).
+    /// While SET LOCAL automatically resets on transaction end, this method provides
+    /// an explicit cleanup path for defensive programming.
+    pub async fn clear_context(executor: &mut sqlx::PgConnection) -> DomainResult<()> {
+        let _ = sqlx::query("RESET ROLE").execute(&mut *executor).await;
+        let _ = sqlx::query("RESET app.current_company_id")
+            .execute(&mut *executor)
+            .await;
+        let _ = sqlx::query("RESET app.is_super_tenant")
+            .execute(&mut *executor)
+            .await;
+        Ok(())
+    }
+}
 /// Query Scoping Rule for tenant isolation and soft-delete filtering (QTEN-002)
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct QueryScope {

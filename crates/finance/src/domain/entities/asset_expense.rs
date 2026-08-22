@@ -1,8 +1,10 @@
+use management_system_macros::DocType;
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-#[derive(Debug, Clone, Serialize, Deserialize, utoipa::ToSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, utoipa::ToSchema, DocType)]
+#[doctype(module = "Finance", description = "Entity AssetExpense")]
 pub struct AssetExpense {
     pub id: Uuid,
     pub asset_id: Uuid,
@@ -24,7 +26,8 @@ pub struct AssetExpense {
     pub items: Vec<AssetExpenseItem>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, utoipa::ToSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, utoipa::ToSchema, DocType)]
+#[doctype(module = "Finance", description = "Entity AssetExpenseItem")]
 pub struct AssetExpenseItem {
     pub id: Uuid,
     pub expense_id: Uuid,

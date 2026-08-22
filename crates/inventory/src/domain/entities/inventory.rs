@@ -1,9 +1,11 @@
+use management_system_macros::DocType;
 use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow, DocType)]
+#[doctype(module = "Inventory", description = "Entity InventoryCategory")]
 pub struct InventoryCategory {
     pub id: Uuid,
     pub code: String,
@@ -15,7 +17,8 @@ pub struct InventoryCategory {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow, DocType)]
+#[doctype(module = "Inventory", description = "Entity InventoryItem")]
 pub struct InventoryItem {
     pub id: Uuid,
     pub category_id: Uuid,
@@ -47,7 +50,8 @@ pub enum InventoryMovementType {
     OutTransfer,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow, DocType)]
+#[doctype(module = "Inventory", description = "Entity InventoryMovement")]
 pub struct InventoryMovement {
     pub id: Uuid,
     pub item_id: Uuid,
@@ -62,7 +66,8 @@ pub struct InventoryMovement {
     pub created_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow, DocType)]
+#[doctype(module = "Inventory", description = "Entity ProductBundle")]
 pub struct ProductBundle {
     pub id: Uuid,
     pub parent_item_id: Uuid,
@@ -70,7 +75,8 @@ pub struct ProductBundle {
     pub created_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow, DocType)]
+#[doctype(module = "Inventory", description = "Entity ProductBundleItem")]
 pub struct ProductBundleItem {
     pub id: Uuid,
     pub bundle_id: Uuid,
@@ -78,7 +84,8 @@ pub struct ProductBundleItem {
     pub qty: Decimal,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow, DocType)]
+#[doctype(module = "Inventory", description = "Entity ItemAlternative")]
 pub struct ItemAlternative {
     pub id: Uuid,
     pub item_id: Uuid,

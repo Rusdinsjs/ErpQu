@@ -118,3 +118,13 @@ export const deleteCompany = async (id: string) => {
     const res = await api.delete(`/companies/${id}`);
     return res.data;
 };
+
+export const fetchAccessibleCompanies = async () => {
+    const res = await api.get('/companies/accessible');
+    return res.data;
+};
+
+export const setupWizardCreateCompany = async (payload: CompanyPayload) => {
+    const res = await api.post('/setup-wizard/company', payload);
+    return res.data;
+};

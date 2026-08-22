@@ -2,6 +2,7 @@
 //!
 //! Vendor/Supplier management with performance scoring and contract tracking.
 
+use management_system_macros::DocType;
 use chrono::{DateTime, NaiveDate, Utc};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
@@ -9,7 +10,8 @@ use sqlx::FromRow;
 use uuid::Uuid;
 
 /// Vendor entity
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "CRM", description = "Entity Vendor")]
 pub struct Vendor {
     pub id: Uuid,
     pub code: String,
@@ -93,7 +95,8 @@ impl Vendor {
 }
 
 /// Vendor summary for list views
-#[derive(Debug, Clone, Serialize, FromRow)]
+#[derive(Debug, Clone, Serialize, FromRow, DocType)]
+#[doctype(module = "CRM", description = "Entity VendorSummary")]
 pub struct VendorSummary {
     pub id: Uuid,
     pub code: String,

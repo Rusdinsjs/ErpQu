@@ -1,9 +1,11 @@
+use management_system_macros::DocType;
 use chrono::{DateTime, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
 
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "Rentals", description = "Entity ContractRenewal")]
 pub struct ContractRenewal {
     pub id: Uuid,
     pub original_contract_id: Uuid,

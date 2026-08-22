@@ -1,0 +1,8 @@
+BEGIN;
+CREATE TABLE t_dept (id int PRIMARY KEY);
+CREATE TABLE t_user (id int PRIMARY KEY, dept_id int REFERENCES t_dept(id));
+INSERT INTO t_dept VALUES (1);
+INSERT INTO t_user VALUES (1, NULL);
+TRUNCATE t_dept CASCADE;
+SELECT * FROM t_user;
+ROLLBACK;

@@ -1,5 +1,6 @@
 //! Asset Conversion Entity
 
+use management_system_macros::DocType;
 use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
@@ -7,7 +8,8 @@ use serde_json::Value as JsonValue;
 use sqlx::FromRow;
 use uuid::Uuid;
 
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "Inventory", description = "Entity AssetConversion")]
 pub struct AssetConversion {
     pub id: Uuid,
     pub request_number: String,

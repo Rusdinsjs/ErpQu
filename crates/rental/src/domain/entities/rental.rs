@@ -4,6 +4,7 @@
 //! Supports Multi-Asset Rentals (1 Rental Agreement -> Many Rental Items).
 //!
 
+use management_system_macros::DocType;
 use chrono::{DateTime, NaiveDate, Utc};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
@@ -85,7 +86,8 @@ impl RentalStatus {
 }
 
 /// Main Rental entity (Rental Agreement Header)
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "Rentals", description = "Entity Rental")]
 pub struct Rental {
     pub id: Uuid,
     pub rental_number: String,
@@ -131,7 +133,8 @@ pub struct Rental {
 }
 
 /// Rental Item (Asset Line Item)
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "Rentals", description = "Entity RentalItem")]
 pub struct RentalItem {
     pub id: Uuid,
     pub rental_id: Uuid,
@@ -258,7 +261,8 @@ impl Rental {
 }
 
 /// Rental Rate Template
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "Rentals", description = "Entity RentalRate")]
 pub struct RentalRate {
     pub id: Uuid,
     pub name: Option<String>,
@@ -319,7 +323,8 @@ impl RentalRate {
 }
 
 /// Rental Handover Record (Dispatch/Return)
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "Rentals", description = "Entity RentalHandover")]
 pub struct RentalHandover {
     pub id: Uuid,
     pub rental_id: Uuid,

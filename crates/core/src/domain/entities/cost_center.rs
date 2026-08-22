@@ -1,10 +1,12 @@
 //! Cost Center Entity Dimension (QTEN-005)
 
+use management_system_macros::DocType;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, sqlx::FromRow, DocType)]
+#[doctype(module = "Core", description = "Entity CostCenter")]
 pub struct CostCenter {
     pub id: Uuid,
     pub tenant_id: Uuid,

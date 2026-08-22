@@ -17,6 +17,7 @@ import { getImageUrl } from '../utils/image';
 import { Logo } from '../components/ui';
 import { useQuery } from '@tanstack/react-query';
 import { settingsApi } from '../api/settings';
+import { rbacApi } from '../api/rbac';
 import { useTheme } from '../contexts/ThemeContext';
 import { AIChatWidget } from '../components/AI/AIChatWidget';
 import { AdminContentRouter } from '../components/Admin/AdminContentRouter';
@@ -83,6 +84,12 @@ export default function AdminDashboard() {
             document.title = 'Asset Management System';
         }
     }, [activeTab, publicSettings]);
+
+    // Fetch dynamic doctypes
+    const { data: dynamicDoctypes = [] } = useQuery({
+        queryKey: ['doctypes'],
+        queryFn: rbacApi.listDocTypes,
+    });
 
     // Sync backend launchpad_config with navigation store
     useEffect(() => {
@@ -546,6 +553,40 @@ export default function AdminDashboard() {
             return result;
         };
 
+        const getDynamicDocTypes = (moduleName: string) => {
+            const items = dynamicDoctypes
+                .filter((dt: any) => dt.module === moduleName)
+                .map((dt: any) => {
+                    const id = dt.name.toLowerCase().replace(/\s+/g, '-');
+                    // Check if this doctype is already in ALL_NAV_ITEMS (mapped statically)
+                    const isAlreadyMapped = Object.values(ALL_NAV_ITEMS).some(
+                        (nav) => nav.label.toLowerCase() === dt.name.toLowerCase()
+                    );
+                    
+                    if (isAlreadyMapped) return null;
+
+                    return {
+                        id,
+                        label: dt.name,
+                        icon: FileText,
+                        path: `/app/${id}`,
+                        minLevel: 5,
+                    } as NavItem;
+                })
+                .filter(Boolean) as NavItem[];
+                
+            if (items.length > 0) {
+                return {
+                    id: `dynamic_${moduleName.toLowerCase()}_subgroup`,
+                    label: 'Other Forms',
+                    icon: Layers,
+                    minLevel: 5,
+                    children: items
+                };
+            }
+            return null;
+        };
+
         return [
             ALL_NAV_ITEMS['dashboard'],
             ALL_NAV_ITEMS['assets-workspace'],
@@ -620,8 +661,9 @@ export default function AdminDashboard() {
                         icon: Activity,
                         minLevel: 5,
                         children: getGroupItems(assetIds, ['iot-sensor-stream', 'asset-health-telemetry', 'threshold-alerts'])
-                    }
-                ]
+                    },
+                    getDynamicDocTypes('Assets')
+                ].filter(Boolean) as NavGroup[]
             },
             {
                 id: 'inventory_group',
@@ -670,15 +712,19 @@ export default function AdminDashboard() {
                         icon: FileText,
                         minLevel: 3,
                         children: getGroupItems(supplyChainIds, ['stock-analytics', 'batch-wise-balance', 'serial-no-status', 'item-shortage-report'])
-                    }
-                ]
+                    },
+                    getDynamicDocTypes('Inventory')
+                ].filter(Boolean) as (NavItem | NavHeader | NavGroup)[]
             },
             {
                 id: 'rental_module',
                 label: 'Rental & Contracts',
                 icon: Truck,
                 minLevel: 4,
-                children: getGroupItems(rentalIds, ['rentals', 'contracts', 'contract-templates'])
+                children: [
+                    ...getGroupItems(rentalIds, ['rentals', 'contracts', 'contract-templates']),
+                    getDynamicDocTypes('Rentals')
+                ].filter(Boolean) as (NavItem | NavHeader | NavGroup)[]
             },
             {
                 id: 'procurement_group',
@@ -734,8 +780,9 @@ export default function AdminDashboard() {
                         icon: FileText,
                         minLevel: 3,
                         children: getGroupItems(procurementIds, ['items-to-request', 'item-purchase-history', 'purchase-receipt-trends', 'purchase-invoice-trends', 'subcontract-materials', 'subcontract-received', 'rfq-comparison', 'pr-to-rfq', 'supplier-directory', 'import-supplier-invoice', 'purchase-receipt'])
-                    }
-                ]
+                    },
+                    getDynamicDocTypes('Purchase')
+                ].filter(Boolean) as (NavItem | NavHeader | NavGroup)[]
             },
             {
                 id: 'commercial_group',
@@ -784,8 +831,9 @@ export default function AdminDashboard() {
                         icon: FileText,
                         minLevel: 3,
                         children: getGroupItems(commercialIds, ['customer-directory', 'packing-stock', 'pending-so-pr', 'delivery-trends', 'invoice-trends', 'customer-credit-balance', 'dormant-customers', 'partner-commissions', 'territory-target-variance', 'salesperson-target-variance', 'partner-target-variance'])
-                    }
-                ]
+                    },
+                    getDynamicDocTypes('Sales')
+                ].filter(Boolean) as (NavItem | NavHeader | NavGroup)[]
             },
             {
                 id: 'finance_group',
@@ -834,8 +882,9 @@ export default function AdminDashboard() {
                         icon: FileText,
                         minLevel: 2,
                         children: getGroupItems(financeIds, ['balance-sheet', 'profit-loss', 'cash-flow', 'trial-balance', 'general-ledger-report'])
-                    }
-                ]
+                    },
+                    getDynamicDocTypes('Finance')
+                ].filter(Boolean) as (NavItem | NavHeader | NavGroup)[]
             },
             {
                 id: 'hr_group',
@@ -855,7 +904,8 @@ export default function AdminDashboard() {
                     ...getGroupItems(hrIds, ['recruitment', 'training-certifications', 'disciplinary-actions']),
                     { type: 'header', label: 'Operasional Driver & P2H' },
                     ...getGroupItems(hrIds, ['driver-assignments', 'p2h-inspections', 'driver-safety-incidents']),
-                ]
+                    getDynamicDocTypes('HR')
+                ].filter(Boolean) as (NavItem | NavHeader)[]
             },
             {
                 id: 'settings_group',
@@ -866,7 +916,7 @@ export default function AdminDashboard() {
                     { type: 'header', label: 'Operational Templates' },
                     ...getGroupItems(adminIds, ['contract-templates'], ['contract-templates']),
                     { type: 'header', label: 'System & Security' },
-                    ...getGroupItems(adminIds.filter(id => id !== 'contract-templates'), ['approvals', 'audit', 'settings']),
+                    ...getGroupItems(adminIds.filter(id => id !== 'contract-templates'), ['approvals', 'audit', 'settings', 'system-reset']),
                 ]
             },
         ];

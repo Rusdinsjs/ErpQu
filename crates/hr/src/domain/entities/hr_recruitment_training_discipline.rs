@@ -1,3 +1,4 @@
+use management_system_macros::DocType;
 use chrono::{DateTime, NaiveDate, Utc};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
@@ -5,7 +6,8 @@ use sqlx::FromRow;
 use uuid::Uuid;
 
 // ---- RECRUITMENT & ATS ----
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "HR", description = "Entity HrJobOpening")]
 pub struct HrJobOpening {
     pub id: Uuid,
     pub title: String,
@@ -32,7 +34,8 @@ pub struct HrJobOpening {
     pub applicant_count: Option<i64>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "HR", description = "Entity HrJobApplicant")]
 pub struct HrJobApplicant {
     pub id: Uuid,
     pub job_opening_id: Uuid,
@@ -53,7 +56,8 @@ pub struct HrJobApplicant {
 }
 
 // ---- TRAINING & CERTIFICATIONS ----
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "HR", description = "Entity HrTrainingProgram")]
 pub struct HrTrainingProgram {
     pub id: Uuid,
     pub title: String,
@@ -67,7 +71,8 @@ pub struct HrTrainingProgram {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "HR", description = "Entity HrTrainingEvent")]
 pub struct HrTrainingEvent {
     pub id: Uuid,
     pub program_id: Uuid,
@@ -86,7 +91,8 @@ pub struct HrTrainingEvent {
     pub participant_count: Option<i64>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "HR", description = "Entity HrTrainingParticipant")]
 pub struct HrTrainingParticipant {
     pub id: Uuid,
     pub event_id: Uuid,
@@ -104,7 +110,8 @@ pub struct HrTrainingParticipant {
     pub employee_nik: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "HR", description = "Entity HrEmployeeCertification")]
 pub struct HrEmployeeCertification {
     pub id: Uuid,
     pub employee_id: Uuid,
@@ -124,7 +131,8 @@ pub struct HrEmployeeCertification {
 }
 
 // ---- DISCIPLINARY ACTIONS ----
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "HR", description = "Entity HrDisciplinaryAction")]
 pub struct HrDisciplinaryAction {
     pub id: Uuid,
     pub employee_id: Uuid,

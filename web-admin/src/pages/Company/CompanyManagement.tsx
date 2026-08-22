@@ -205,11 +205,19 @@ export const CompanyManagement: React.FC = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
+            // Sanitize payload: convert empty strings to undefined to avoid 422 errors on UUID/Date fields
+            const sanitizedData = Object.fromEntries(
+                Object.entries(formData).map(([key, value]) => [
+                    key, 
+                    value === '' ? undefined : value
+                ])
+            );
+
             if (editingCompany) {
-                await updateCompany(editingCompany.id, formData);
+                await updateCompany(editingCompany.id, sanitizedData);
                 showToast('Perusahaan & Akta Legalitas berhasil diperbarui', 'success');
             } else {
-                await createCompany(formData);
+                await createCompany(sanitizedData);
                 showToast('Perusahaan baru berhasil ditambahkan', 'success');
             }
             setIsModalOpen(false);

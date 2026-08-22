@@ -10,3 +10,4 @@ pub mod shared;
 pub use domain::errors::{DomainError, DomainResult};
 pub use infrastructure::bus::EventBus;
 pub use shared::utils::jwt::JwtConfig;
+pub use inventory;

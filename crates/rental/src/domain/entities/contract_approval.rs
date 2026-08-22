@@ -1,10 +1,12 @@
+use management_system_macros::DocType;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
 
 /// Contract Approval entity for tracking approval history
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "Rentals", description = "Entity ContractApproval")]
 pub struct ContractApproval {
     pub id: Uuid,
     pub contract_id: Uuid,

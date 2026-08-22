@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+management-system-macros = { workspace = true }
 tokio = { workspace = true }
 sqlx = { workspace = true }
 serde = { workspace = true }
@@ -29,6 +30,7 @@ mime_guess = { workspace = true }
 axum = { workspace = true }
 csv = { workspace = true }
 tokio-cron-scheduler = { workspace = true }
+inventory = { workspace = true }
 
 [dev-dependencies]
 management-system-finance = { workspace = true }

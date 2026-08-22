@@ -1,8 +1,10 @@
+use management_system_macros::DocType;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow, DocType)]
+#[doctype(module = "Core", description = "Entity DataImport")]
 pub struct DataImport {
     pub id: Uuid,
     pub doctype_name: String,
@@ -17,7 +19,8 @@ pub struct DataImport {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow, DocType)]
+#[doctype(module = "Core", description = "Entity DataImportLog")]
 pub struct DataImportLog {
     pub id: Uuid,
     pub data_import_id: Uuid,

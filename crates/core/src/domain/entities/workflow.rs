@@ -1,9 +1,11 @@
+use management_system_macros::DocType;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
 
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "Core", description = "Entity Workflow")]
 pub struct Workflow {
     pub id: Uuid,
     pub workflow_name: String,
@@ -14,7 +16,8 @@ pub struct Workflow {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "Core", description = "Entity WorkflowState")]
 pub struct WorkflowState {
     pub id: Uuid,
     pub workflow_id: Uuid,
@@ -25,7 +28,8 @@ pub struct WorkflowState {
     pub created_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "Core", description = "Entity WorkflowTransition")]
 pub struct WorkflowTransition {
     pub id: Uuid,
     pub workflow_id: Uuid,
@@ -36,7 +40,8 @@ pub struct WorkflowTransition {
     pub created_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "Core", description = "Entity WorkflowActionLog")]
 pub struct WorkflowActionLog {
     pub id: Uuid,
     pub workflow_id: Uuid,

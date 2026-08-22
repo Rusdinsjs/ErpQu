@@ -1,8 +1,10 @@
+use management_system_macros::DocType;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow, DocType)]
+#[doctype(module = "Maintenance", description = "Entity MaintenanceTemplate")]
 pub struct MaintenanceTemplate {
     pub id: Uuid,
     pub name: String,
@@ -17,7 +19,8 @@ pub struct MaintenanceTemplate {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow, DocType)]
+#[doctype(module = "Maintenance", description = "Entity TemplateTask")]
 pub struct TemplateTask {
     pub id: Uuid,
     pub template_id: Uuid,
@@ -28,7 +31,8 @@ pub struct TemplateTask {
     pub created_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, DocType)]
+#[doctype(module = "Maintenance", description = "Entity MaintenanceTemplateWithTasks")]
 pub struct MaintenanceTemplateWithTasks {
     #[serde(flatten)]
     pub template: MaintenanceTemplate,

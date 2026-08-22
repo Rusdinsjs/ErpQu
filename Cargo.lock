@@ -108,6 +108,7 @@ dependencies = [
  "hmac",
  "http-body-util",
  "image 0.25.10",
+ "inventory",
  "management-system-assets",
  "management-system-core",
  "management-system-crm",
@@ -1816,6 +1817,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "inventory"
+version = "0.3.24"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a4f0c30c76f2f4ccee3fe55a2435f691ca00c0e4bd87abe4f4a851b1d4dac39b"
+dependencies = [
+ "rustversion",
+]
+
+[[package]]
 name = "itertools"
 version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2039,6 +2049,7 @@ dependencies = [
  "chrono",
  "csv",
  "management-system-core",
+ "management-system-macros",
  "management-system-rental",
  "management-system-telemetry",
  "rust_decimal",
@@ -2081,10 +2092,12 @@ dependencies = [
  "dotenvy",
  "futures",
  "genpdf",
+ "inventory",
  "jsonwebtoken",
  "lettre",
  "management-system-finance",
  "management-system-inventory",
+ "management-system-macros",
  "mime_guess",
  "redis",
  "rust_decimal",
@@ -2107,6 +2120,7 @@ dependencies = [
  "async-trait",
  "chrono",
  "management-system-core",
+ "management-system-macros",
  "rust_decimal",
  "serde",
  "serde_json",
@@ -2125,6 +2139,7 @@ dependencies = [
  "management-system-assets",
  "management-system-core",
  "management-system-crm",
+ "management-system-macros",
  "management-system-rental",
  "rust_decimal",
  "rust_decimal_macros",
@@ -2146,6 +2161,7 @@ dependencies = [
  "chrono",
  "chrono-tz",
  "management-system-core",
+ "management-system-macros",
  "management-system-ops",
  "rust_decimal",
  "serde",
@@ -2165,6 +2181,7 @@ dependencies = [
  "management-system-assets",
  "management-system-core",
  "management-system-finance",
+ "management-system-macros",
  "rust_decimal",
  "serde",
  "serde_json",
@@ -2172,6 +2189,15 @@ dependencies = [
  "tracing",
  "utoipa",
  "uuid",
+]
+
+[[package]]
+name = "management-system-macros"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.119",
 ]
 
 [[package]]
@@ -2186,6 +2212,7 @@ dependencies = [
  "management-system-crm",
  "management-system-finance",
  "management-system-inventory",
+ "management-system-macros",
  "management-system-telemetry",
  "rust_decimal",
  "rust_decimal_macros",
@@ -2206,6 +2233,7 @@ dependencies = [
  "chrono",
  "management-system-core",
  "management-system-crm",
+ "management-system-macros",
  "rust_decimal",
  "serde",
  "serde_json",
@@ -2226,6 +2254,7 @@ dependencies = [
  "management-system-core",
  "management-system-crm",
  "management-system-hr",
+ "management-system-macros",
  "management-system-ops",
  "rust_decimal",
  "serde",
@@ -2244,6 +2273,7 @@ dependencies = [
  "chrono",
  "management-system-assets",
  "management-system-core",
+ "management-system-macros",
  "rust_decimal",
  "rust_decimal_macros",
  "serde",

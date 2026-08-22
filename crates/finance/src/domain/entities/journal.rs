@@ -1,5 +1,6 @@
 //! Pure Journal Entry Entities (Fase 23: Complete Lifecycle & Reversal Voucher Tracking)
 
+use management_system_macros::DocType;
 use chrono::{DateTime, NaiveDate, Utc};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
@@ -16,7 +17,8 @@ pub enum JournalStatus {
     Cancelled,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, DocType)]
+#[doctype(module = "Finance", description = "Entity JournalEntry")]
 pub struct JournalEntry {
     pub id: Uuid,
     pub company_id: Option<Uuid>,
@@ -34,7 +36,8 @@ pub struct JournalEntry {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, DocType)]
+#[doctype(module = "Finance", description = "Entity JournalLine")]
 pub struct JournalLine {
     pub id: Uuid,
     pub journal_entry_id: Uuid,
@@ -46,14 +49,16 @@ pub struct JournalLine {
     pub credit: Decimal,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, DocType)]
+#[doctype(module = "Finance", description = "Entity JournalEntryDetail")]
 pub struct JournalEntryDetail {
     #[serde(flatten)]
     pub header: JournalEntry,
     pub lines: Vec<JournalLine>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, DocType)]
+#[doctype(module = "Finance", description = "Entity CreateJournalLineRequest")]
 pub struct CreateJournalLineRequest {
     pub account_id: Uuid,
     pub description: Option<String>,
@@ -63,7 +68,8 @@ pub struct CreateJournalLineRequest {
     pub credit: Decimal,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, DocType)]
+#[doctype(module = "Finance", description = "Entity CreateJournalEntryRequest")]
 pub struct CreateJournalEntryRequest {
     pub company_id: Option<Uuid>,
     pub date: NaiveDate,
@@ -72,7 +78,8 @@ pub struct CreateJournalEntryRequest {
     pub lines: Vec<CreateJournalLineRequest>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, DocType)]
+#[doctype(module = "Finance", description = "Entity ReverseJournalRequest")]
 pub struct ReverseJournalRequest {
     pub reason: String,
 }

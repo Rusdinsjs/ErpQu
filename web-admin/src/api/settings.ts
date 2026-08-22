@@ -73,3 +73,8 @@ export const settingsApi = {
         return response.json();
     }
 };
+
+export const resetDatabase = async () => {
+    const res = await api.post('/settings/reset-database');
+    return res.data;
+};

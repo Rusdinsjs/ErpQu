@@ -1,10 +1,12 @@
+use management_system_macros::DocType;
 use chrono::{DateTime, NaiveDate, Utc};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 /// Traceable link between commercial graph documents (QSELL-002, QBUY-002)
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, DocType)]
+#[doctype(module = "Finance", description = "Entity CommercialDocumentLink")]
 pub struct CommercialDocumentLink {
     pub id: Uuid,
     pub source_type: String,
@@ -15,7 +17,8 @@ pub struct CommercialDocumentLink {
 }
 
 /// Purchase Receipt Entity (QBUY-002)
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, DocType)]
+#[doctype(module = "Finance", description = "Entity PurchaseReceipt")]
 pub struct PurchaseReceipt {
     pub id: Uuid,
     pub company_id: Uuid,
@@ -31,7 +34,8 @@ pub struct PurchaseReceipt {
 }
 
 /// Purchase Receipt Item Line Entity (QBUY-002)
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, DocType)]
+#[doctype(module = "Finance", description = "Entity PurchaseReceiptItem")]
 pub struct PurchaseReceiptItem {
     pub id: Uuid,
     pub receipt_id: Uuid,
@@ -45,7 +49,8 @@ pub struct PurchaseReceiptItem {
 }
 
 /// Payment Allocation for Multi-Invoice & Partial Payments (QACC-009, QSELL-003)
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, DocType)]
+#[doctype(module = "Finance", description = "Entity PaymentAllocation")]
 pub struct PaymentAllocation {
     pub id: Uuid,
     pub company_id: Uuid,
@@ -58,7 +63,8 @@ pub struct PaymentAllocation {
 }
 
 /// Request to allocate a payment across invoices
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, DocType)]
+#[doctype(module = "Finance", description = "Entity AllocatePaymentRequest")]
 pub struct AllocatePaymentRequest {
     pub company_id: Uuid,
     pub payment_entry_id: Uuid,
@@ -68,7 +74,8 @@ pub struct AllocatePaymentRequest {
     pub created_by: Option<Uuid>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, DocType)]
+#[doctype(module = "Finance", description = "Entity CreatePurchaseReceiptItemRequest")]
 pub struct CreatePurchaseReceiptItemRequest {
     pub item_id: Uuid,
     pub qty_received: Decimal,
@@ -78,7 +85,8 @@ pub struct CreatePurchaseReceiptItemRequest {
     pub serial_no: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, DocType)]
+#[doctype(module = "Finance", description = "Entity CreatePurchaseReceiptRequest")]
 pub struct CreatePurchaseReceiptRequest {
     pub company_id: Uuid,
     pub receipt_number: String,

@@ -1,10 +1,12 @@
+use management_system_macros::DocType;
 use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
 
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow, utoipa::ToSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, utoipa::ToSchema, DocType)]
+#[doctype(module = "Purchase", description = "Entity PurchaseBill")]
 pub struct PurchaseBill {
     pub id: Uuid,
     pub bill_number: String,
@@ -21,7 +23,8 @@ pub struct PurchaseBill {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Deserialize, utoipa::ToSchema)]
+#[derive(Debug, Deserialize, utoipa::ToSchema, DocType)]
+#[doctype(module = "Purchase", description = "Entity CreatePurchaseBillRequest")]
 pub struct CreatePurchaseBillRequest {
     pub vendor_id: Uuid,
     pub bill_date: chrono::NaiveDate,

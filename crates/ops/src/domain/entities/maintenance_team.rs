@@ -1,5 +1,6 @@
 //! Maintenance Team Domain Entity
 
+use management_system_macros::DocType;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
@@ -7,7 +8,8 @@ use utoipa::ToSchema;
 use uuid::Uuid;
 
 /// Maintenance Team Entity
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema, DocType)]
+#[doctype(module = "Maintenance", description = "Entity MaintenanceTeam")]
 pub struct MaintenanceTeam {
     pub id: Uuid,
     pub team_code: String,
@@ -26,7 +28,8 @@ pub struct MaintenanceTeam {
 }
 
 /// Maintenance Team Member Entity
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema, DocType)]
+#[doctype(module = "Maintenance", description = "Entity MaintenanceTeamMember")]
 pub struct MaintenanceTeamMember {
     pub id: Uuid,
     pub team_id: Uuid,
@@ -41,7 +44,8 @@ pub struct MaintenanceTeamMember {
 }
 
 /// Maintenance Team with Detail (including members list)
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema, DocType)]
+#[doctype(module = "Maintenance", description = "Entity MaintenanceTeamDetail")]
 pub struct MaintenanceTeamDetail {
     #[serde(flatten)]
     pub team: MaintenanceTeam,

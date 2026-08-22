@@ -1,3 +1,4 @@
+use management_system_macros::DocType;
 use chrono::{DateTime, NaiveDate, Utc};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
@@ -5,7 +6,8 @@ use sqlx::FromRow;
 use uuid::Uuid;
 
 // ---- LOANS & KASBON ----
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "HR", description = "Entity HrLoanType")]
 pub struct HrLoanType {
     pub id: Uuid,
     pub name: String,
@@ -19,7 +21,8 @@ pub struct HrLoanType {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "HR", description = "Entity HrEmployeeLoan")]
 pub struct HrEmployeeLoan {
     pub id: Uuid,
     pub employee_id: Uuid,
@@ -46,7 +49,8 @@ pub struct HrEmployeeLoan {
     pub loan_type_name: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "HR", description = "Entity HrLoanRepaymentSchedule")]
 pub struct HrLoanRepaymentSchedule {
     pub id: Uuid,
     pub loan_id: Uuid,
@@ -62,7 +66,8 @@ pub struct HrLoanRepaymentSchedule {
 }
 
 // ---- EXPENSE CLAIMS / REIMBURSEMENT ----
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "HR", description = "Entity HrExpenseClaimType")]
 pub struct HrExpenseClaimType {
     pub id: Uuid,
     pub name: String,
@@ -74,7 +79,8 @@ pub struct HrExpenseClaimType {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "HR", description = "Entity HrExpenseClaim")]
 pub struct HrExpenseClaim {
     pub id: Uuid,
     pub employee_id: Uuid,
@@ -100,7 +106,8 @@ pub struct HrExpenseClaim {
 }
 
 // ---- PERFORMANCE APPRAISAL & KPI ----
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "HR", description = "Entity HrAppraisalTemplate")]
 pub struct HrAppraisalTemplate {
     pub id: Uuid,
     pub title: String,
@@ -114,7 +121,8 @@ pub struct HrAppraisalTemplate {
     pub department_name: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "HR", description = "Entity HrAppraisalTemplateItem")]
 pub struct HrAppraisalTemplateItem {
     pub id: Uuid,
     pub template_id: Uuid,
@@ -123,7 +131,8 @@ pub struct HrAppraisalTemplateItem {
     pub target_description: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "HR", description = "Entity HrEmployeeAppraisal")]
 pub struct HrEmployeeAppraisal {
     pub id: Uuid,
     pub employee_id: Uuid,

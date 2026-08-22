@@ -2,6 +2,7 @@
 //!
 //! Hierarchical categories for asset classification with custom attributes per category.
 
+use management_system_macros::DocType;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_json::Value as JsonValue;
@@ -9,7 +10,8 @@ use sqlx::FromRow;
 use uuid::Uuid;
 
 /// Asset Category - hierarchical structure
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "Assets", description = "Entity Category")]
 pub struct Category {
     pub id: Uuid,
     pub parent_id: Option<Uuid>,
@@ -88,7 +90,8 @@ impl Category {
 }
 
 /// Category tree node for hierarchical display
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, DocType)]
+#[doctype(module = "Assets", description = "Entity CategoryNode")]
 pub struct CategoryNode {
     #[serde(flatten)]
     pub category: Category,

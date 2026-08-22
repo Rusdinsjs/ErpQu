@@ -130,6 +130,7 @@ pub async fn default_deny_middleware(request: Request, next: Next) -> Result<Res
     if matched_path == "/api/me"
         || matched_path == "/api/me/password"
         || matched_path == "/api/me/avatar"
+        || matched_path.starts_with("/api/setup-wizard")
         || matched_path.starts_with("/api/uploads")
         || matched_path.starts_with("/api/upload")
         || matched_path == "/api/loans/my"

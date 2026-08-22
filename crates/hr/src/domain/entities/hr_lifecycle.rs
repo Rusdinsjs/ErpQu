@@ -1,10 +1,12 @@
+use management_system_macros::DocType;
 use chrono::{DateTime, NaiveDate, Utc};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
 
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "HR", description = "Entity HrDesignation")]
 pub struct HrDesignation {
     pub id: Uuid,
     pub name: String,
@@ -20,7 +22,8 @@ pub struct HrDesignation {
     pub department_name: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "HR", description = "Entity HrEmploymentType")]
 pub struct HrEmploymentType {
     pub id: Uuid,
     pub name: String,
@@ -35,7 +38,8 @@ pub struct HrEmploymentType {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "HR", description = "Entity HrEmployeeLifecycle")]
 pub struct HrEmployeeLifecycle {
     pub id: Uuid,
     pub employee_id: Uuid,
@@ -77,7 +81,8 @@ pub struct HrEmployeeLifecycle {
     pub performed_by_name: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "HR", description = "Entity HrEmployeeDocument")]
 pub struct HrEmployeeDocument {
     pub id: Uuid,
     pub employee_id: Uuid,
@@ -95,7 +100,8 @@ pub struct HrEmployeeDocument {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "HR", description = "Entity HrEmployeeEducation")]
 pub struct HrEmployeeEducation {
     pub id: Uuid,
     pub employee_id: Uuid,
@@ -109,7 +115,8 @@ pub struct HrEmployeeEducation {
     pub created_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "HR", description = "Entity WorkExperience")]
 pub struct WorkExperience {
     pub id: Uuid,
     pub employee_id: Uuid,

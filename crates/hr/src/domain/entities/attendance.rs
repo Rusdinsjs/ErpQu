@@ -3,6 +3,7 @@
 //! Attendance record for employee check-in/check-out tracking.
 //!
 
+use management_system_macros::DocType;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
@@ -47,7 +48,8 @@ impl AttendanceStatus {
 }
 
 /// Attendance record entity
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "HR", description = "Entity AttendanceRecord")]
 pub struct AttendanceRecord {
     pub id: Uuid,
     pub employee_id: Uuid,
@@ -87,7 +89,8 @@ pub struct AttendanceRecord {
 }
 
 /// Request for check-in
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, DocType)]
+#[doctype(module = "HR", description = "Entity CheckInRequest")]
 pub struct CheckInRequest {
     pub latitude: f64,
     pub longitude: f64,
@@ -96,7 +99,8 @@ pub struct CheckInRequest {
 }
 
 /// Request for check-out
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, DocType)]
+#[doctype(module = "HR", description = "Entity CheckOutRequest")]
 pub struct CheckOutRequest {
     pub latitude: f64,
     pub longitude: f64,
@@ -106,7 +110,8 @@ pub struct CheckOutRequest {
 }
 
 /// Today's attendance status response
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, DocType)]
+#[doctype(module = "HR", description = "Entity TodayAttendanceStatus")]
 pub struct TodayAttendanceStatus {
     pub has_checked_in: bool,
     pub has_checked_out: bool,

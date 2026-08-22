@@ -37,7 +37,7 @@ export type MenuId =
     | 'employees' | 'departments' | 'hr-workspace' | 'attendance' | 'leaves' | 'designations' | 'employee-lifecycle' | 'employee-360' | 'shifts' | 'attendance-logs' | 'overtime' | 'attendance-requests' | 'salary-slips' | 'payroll-processing' | 'salary-assignments' | 'salary-structures' | 'employee-loans' | 'expense-claims' | 'appraisal' | 'recruitment' | 'training-certifications' | 'disciplinary-actions' | 'driver-assignments' | 'p2h-inspections' | 'driver-safety-incidents'
     | 'approvals'
     | 'company' | 'branch' | 'email-account'
-    | 'users' | 'roles' | 'approval-workflow-settings' | 'audit' | 'webhooks' | 'outbox-management' | 'period-closing' | 'exchange-rates' | 'settings' | 'profile';
+    | 'users' | 'roles' | 'approval-workflow-settings' | 'audit' | 'webhooks' | 'outbox-management' | 'period-closing' | 'exchange-rates' | 'settings' | 'system-reset' | 'profile';
 
 // ─── Launchpad Module Config Shape ───────────────────────────────────────────
 export interface LaunchpadModuleConfig {
@@ -732,7 +732,7 @@ export const DEFAULT_LAUNCHPAD_CONFIG: LaunchpadConfig = {
             defaultRoute: '/approvals',
             minLevel: 2,
             features: ['Approval Center & Workflows', 'Audit Logs', 'System Settings'],
-            menuIds: ['approvals', 'audit', 'settings'],
+            menuIds: ['approvals', 'audit', 'settings', 'system-reset'],
             order: 12,
             enabled: true,
         },

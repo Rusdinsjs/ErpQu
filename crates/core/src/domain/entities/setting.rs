@@ -1,10 +1,12 @@
+use management_system_macros::DocType;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema, DocType)]
+#[doctype(module = "Core", description = "Entity Setting")]
 pub struct Setting {
     #[schema(example = "app_name")]
     pub key: String,
@@ -17,7 +19,8 @@ pub struct Setting {
     pub updated_by: Option<Uuid>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema, DocType)]
+#[doctype(module = "Core", description = "Entity UpdateSettingRequest")]
 pub struct UpdateSettingRequest {
     pub value: serde_json::Value,
     pub description: Option<String>,

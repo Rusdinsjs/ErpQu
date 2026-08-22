@@ -1,10 +1,12 @@
+use management_system_macros::DocType;
 use chrono::{DateTime, NaiveDate, Utc};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
 
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "HR", description = "Entity HrSalaryComponent")]
 pub struct HrSalaryComponent {
     pub id: Uuid,
     pub name: String,
@@ -18,7 +20,8 @@ pub struct HrSalaryComponent {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "HR", description = "Entity HrSalaryStructure")]
 pub struct HrSalaryStructure {
     pub id: Uuid,
     pub name: String,
@@ -31,7 +34,8 @@ pub struct HrSalaryStructure {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "HR", description = "Entity HrSalaryAssignment")]
 pub struct HrSalaryAssignment {
     pub id: Uuid,
     pub employee_id: Uuid,
@@ -62,7 +66,8 @@ pub struct HrSalaryAssignment {
     pub salary_structure_name: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "HR", description = "Entity HrPayrollEntry")]
 pub struct HrPayrollEntry {
     pub id: Uuid,
     pub posting_date: NaiveDate,
@@ -82,7 +87,8 @@ pub struct HrPayrollEntry {
     pub department_name: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "HR", description = "Entity HrSalarySlip")]
 pub struct HrSalarySlip {
     pub id: Uuid,
     pub payroll_entry_id: Option<Uuid>,

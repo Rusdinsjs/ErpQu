@@ -1,3 +1,4 @@
+use management_system_macros::DocType;
 use chrono::{DateTime, NaiveDate, NaiveTime, Utc};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
@@ -5,7 +6,8 @@ use sqlx::FromRow;
 use uuid::Uuid;
 
 /// Master Shift Kerja
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "HR", description = "Entity HrShiftType")]
 pub struct HrShiftType {
     pub id: Uuid,
     pub name: String,
@@ -25,7 +27,8 @@ pub struct HrShiftType {
 }
 
 /// Penugasan Shift Karyawan / Roster
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "HR", description = "Entity HrShiftAssignment")]
 pub struct HrShiftAssignment {
     pub id: Uuid,
     pub employee_id: Uuid,
@@ -54,7 +57,8 @@ pub struct HrShiftAssignment {
 }
 
 /// Permohonan Koreksi Absensi / Dinas Luar / WFH
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "HR", description = "Entity HrAttendanceRequest")]
 pub struct HrAttendanceRequest {
     pub id: Uuid,
     pub employee_id: Uuid,
@@ -82,7 +86,8 @@ pub struct HrAttendanceRequest {
 }
 
 /// Surat Perintah Kerja Lembur (SPKL)
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "HR", description = "Entity HrOvertimeRequest")]
 pub struct HrOvertimeRequest {
     pub id: Uuid,
     pub employee_id: Uuid,
@@ -115,7 +120,8 @@ pub struct HrOvertimeRequest {
 }
 
 /// Live Feed Kehadiran Lengkap
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "HR", description = "Entity HrAttendanceDetail")]
 pub struct HrAttendanceDetail {
     pub id: Uuid,
     pub employee_id: Uuid,

@@ -2,6 +2,7 @@
 //!
 //! Contract management for rental agreements with lifecycle tracking
 
+use management_system_macros::DocType;
 use chrono::{DateTime, NaiveDate, Utc};
 
 use serde::{Deserialize, Serialize};
@@ -36,7 +37,8 @@ impl ContractStatus {
 }
 
 /// Rental Contract Entity
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "Rentals", description = "Entity RentalContract")]
 pub struct RentalContract {
     pub id: Uuid,
     pub contract_number: String,

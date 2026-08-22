@@ -1,12 +1,14 @@
 //! Department Entity
 
+use management_system_macros::DocType;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
 
 /// Department entity
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "Core", description = "Entity Department")]
 pub struct Department {
     pub id: Uuid,
     pub code: String,

@@ -186,16 +186,26 @@ pub async fn upload_file(
 
             // Point B.12: Check Tenant Storage Quota (Fail-Closed)
             if let Some(company_id) = tenant_ctx.company_id {
+                let mut quota_tx = state.pool.begin().await.map_err(|e| {
+                    AppError::Internal(format!("Failed to start transaction: {}", e))
+                })?;
+                
+                tenant_ctx.apply_to_transaction(&mut *quota_tx).await.map_err(|e| {
+                    AppError::Internal(format!("Failed to apply RLS context: {}", e))
+                })?;
+
                 let current_usage: i64 = sqlx::query_scalar::<_, Option<i64>>(
                     "SELECT COALESCE(SUM(file_size), 0) FROM public.uploads WHERE company_id = $1",
                 )
                 .bind(company_id)
-                .fetch_one(&state.pool)
+                .fetch_one(&mut *quota_tx)
                 .await
                 .map_err(|e| {
                     AppError::Internal(format!("Failed to query tenant storage quota: {}", e))
                 })?
                 .unwrap_or(0);
+                
+                let _ = quota_tx.rollback().await;
 
                 if current_usage + (data.len() as i64) > DEFAULT_TENANT_STORAGE_QUOTA {
                     return Err(AppError::BadRequest(format!(
@@ -299,6 +309,15 @@ pub async fn upload_file(
             let _ = fs::remove_file(&quarantine_path).await;
 
             // Point B.9 & B.10: Record upload metadata in database for IDOR & authorization enforcement (Fail-Closed)
+            let mut tx = state.pool.begin().await.map_err(|e| {
+                AppError::Internal(format!("Failed to start transaction: {}", e))
+            })?;
+            
+            if let Err(e) = tenant_ctx.apply_to_transaction(&mut *tx).await {
+                let _ = fs::remove_file(&file_path).await;
+                return Err(AppError::Internal(format!("Failed to apply RLS context: {}", e)));
+            }
+
             let insert_res = sqlx::query(
                 r#"
                 INSERT INTO public.uploads (id, file_path, original_name, content_type, file_size, uploaded_by, company_id, role_level_required)
@@ -313,22 +332,30 @@ pub async fn upload_file(
             .bind(claims.user_id())
             .bind(tenant_ctx.company_id)
             .bind(claims.role_level)
-            .execute(&state.pool)
+            .execute(&mut *tx)
             .await;
 
-            if let Err(e) = insert_res {
-                // If metadata insert fails, delete written file to remain fail-closed (Point B.10)
-                if let Err(del_err) = fs::remove_file(&file_path).await {
-                    tracing::error!(
-                        "Point B.11: Orphan file deletion failed for {}: {}",
-                        file_path,
-                        del_err
-                    );
+            match insert_res {
+                Ok(_) => {
+                    if let Err(e) = tx.commit().await {
+                        let _ = fs::remove_file(&file_path).await;
+                        return Err(AppError::Internal(format!("Failed to commit transaction: {}", e)));
+                    }
                 }
-                return Err(AppError::Internal(format!(
-                    "Failed to register upload metadata in database: {}",
-                    e
-                )));
+                Err(e) => {
+                    // If metadata insert fails, delete written file to remain fail-closed (Point B.10)
+                    if let Err(del_err) = fs::remove_file(&file_path).await {
+                        tracing::error!(
+                            "Point B.11: Orphan file deletion failed for {}: {}",
+                            file_path,
+                            del_err
+                        );
+                    }
+                    return Err(AppError::Internal(format!(
+                        "Failed to register upload metadata in database: {}",
+                        e
+                    )));
+                }
             }
 
             // Point B.6: Generate signed download URL with 15-minute TTL

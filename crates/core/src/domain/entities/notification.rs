@@ -1,10 +1,12 @@
+use management_system_macros::DocType;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
 
 /// Notification Template entity
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "Core", description = "Entity NotificationTemplate")]
 pub struct NotificationTemplate {
     pub id: Uuid,
     pub code: String,
@@ -19,7 +21,8 @@ pub struct NotificationTemplate {
 }
 
 /// Notification entity
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "Core", description = "Entity Notification")]
 pub struct Notification {
     pub id: Uuid,
     pub user_id: Uuid,
@@ -38,7 +41,8 @@ pub struct Notification {
 }
 
 /// User notification preference
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "Core", description = "Entity NotificationPreference")]
 pub struct NotificationPreference {
     pub id: Uuid,
     pub user_id: Uuid,

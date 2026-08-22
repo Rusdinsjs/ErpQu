@@ -1,3 +1,4 @@
+use management_system_macros::DocType;
 use chrono::{DateTime, NaiveDate, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
@@ -40,7 +41,8 @@ impl LeaveStatus {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "HR", description = "Entity LeaveRequest")]
 pub struct LeaveRequest {
     pub id: Uuid,
     pub employee_id: Uuid,

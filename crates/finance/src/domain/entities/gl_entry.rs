@@ -1,10 +1,12 @@
+use management_system_macros::DocType;
 use chrono::{DateTime, NaiveDate, Utc};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 /// Immutable General Ledger Entry Entity (QACC-003)
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, DocType)]
+#[doctype(module = "Finance", description = "Entity GLEntry")]
 pub struct GLEntry {
     pub id: Uuid,
     pub company_id: Uuid,
@@ -61,7 +63,8 @@ impl GLEntry {
 }
 
 /// A line item inside a posting instruction sent to AccountingPostingEngine (QACC-004)
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, DocType)]
+#[doctype(module = "Finance", description = "Entity PostingLineItem")]
 pub struct PostingLineItem {
     pub account_id: Uuid,
     pub debit: Decimal,
@@ -75,7 +78,8 @@ pub struct PostingLineItem {
 }
 
 /// Structured posting instruction passed to AccountingPostingEngine (QACC-004)
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, DocType)]
+#[doctype(module = "Finance", description = "Entity PostingInstruction")]
 pub struct PostingInstruction {
     pub company_id: Uuid,
     pub posting_date: NaiveDate,

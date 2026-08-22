@@ -1,10 +1,12 @@
+use management_system_macros::DocType;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_json::Value as JsonValue;
 use sqlx::FromRow;
 use uuid::Uuid;
 
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "Assets", description = "Entity CategoryAttributeTemplate")]
 pub struct CategoryAttributeTemplate {
     pub id: Uuid,
     pub category_id: Uuid,
@@ -14,7 +16,8 @@ pub struct CategoryAttributeTemplate {
 }
 
 /// Response struct with category name included for frontend display
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "Assets", description = "Entity CategoryTemplateWithName")]
 pub struct CategoryTemplateWithName {
     pub id: Uuid,
     pub category_id: Uuid,
@@ -24,13 +27,15 @@ pub struct CategoryTemplateWithName {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, DocType)]
+#[doctype(module = "Assets", description = "Entity CreateCategoryAttributeTemplateRequest")]
 pub struct CreateCategoryAttributeTemplateRequest {
     pub category_id: Uuid,
     pub attributes: Vec<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, DocType)]
+#[doctype(module = "Assets", description = "Entity UpdateCategoryAttributeTemplateRequest")]
 pub struct UpdateCategoryAttributeTemplateRequest {
     pub attributes: Vec<String>,
 }

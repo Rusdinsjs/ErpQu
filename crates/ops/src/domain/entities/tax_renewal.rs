@@ -1,10 +1,12 @@
+use management_system_macros::DocType;
 use chrono::{DateTime, NaiveDate, Utc};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
 
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow, utoipa::ToSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, utoipa::ToSchema, DocType)]
+#[doctype(module = "Maintenance", description = "Entity TaxRenewal")]
 pub struct TaxRenewal {
     pub id: Uuid,
     pub asset_id: Uuid,
@@ -23,14 +25,16 @@ pub struct TaxRenewal {
     pub asset_name: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, utoipa::ToSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, utoipa::ToSchema, DocType)]
+#[doctype(module = "Maintenance", description = "Entity CreateTaxRenewalRequest")]
 pub struct CreateTaxRenewalRequest {
     pub asset_id: Uuid,
     pub document_type: String,
     pub current_expiry: NaiveDate,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, utoipa::ToSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, utoipa::ToSchema, DocType)]
+#[doctype(module = "Maintenance", description = "Entity UpdateTaxRenewalCostRequest")]
 pub struct UpdateTaxRenewalCostRequest {
     pub renewal_cost: Decimal,
     pub notes: Option<String>,
@@ -38,7 +42,8 @@ pub struct UpdateTaxRenewalCostRequest {
     pub invoice_attachment: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, utoipa::ToSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, utoipa::ToSchema, DocType)]
+#[doctype(module = "Maintenance", description = "Entity ApproveTaxRenewalRequest")]
 pub struct ApproveTaxRenewalRequest {
     pub notes: Option<String>,
 }

@@ -127,6 +127,32 @@ async fn main() {
 
     tracing::info!("Database connected successfully");
 
+    // Synchronize registered DocTypes to the database
+    tracing::info!("Synchronizing DocTypes from registry...");
+    for doctype in inventory::iter::<management_system_core::shared::doctype_registry::DocTypeRegistration> {
+        let result = sqlx::query(
+            r#"
+            INSERT INTO doctypes (name, module, description, is_submittable) 
+            VALUES ($1, $2, $3, $4) 
+            ON CONFLICT (name) DO UPDATE SET 
+                module = EXCLUDED.module, 
+                description = EXCLUDED.description, 
+                is_submittable = EXCLUDED.is_submittable
+            "#
+        )
+        .bind(doctype.name)
+        .bind(doctype.module)
+        .bind(doctype.description)
+        .bind(doctype.is_submittable)
+        .execute(&pool)
+        .await;
+
+        match result {
+            Ok(_) => tracing::debug!("Synced DocType: {}", doctype.name),
+            Err(e) => tracing::error!("Failed to sync DocType {}: {}", doctype.name, e),
+        }
+    }
+
     // JWT configuration
     let jwt_config = JwtConfig::new(config.jwt_secret.clone(), config.jwt_expiry_hours);
 

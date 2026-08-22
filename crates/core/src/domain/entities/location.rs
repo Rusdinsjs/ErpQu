@@ -3,6 +3,7 @@
 //! Multi-level location hierarchy: Country → City → Building → Floor → Room → Rack
 //!
 
+use management_system_macros::DocType;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
@@ -62,7 +63,8 @@ impl LocationType {
 }
 
 /// Location entity - hierarchical
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "Core", description = "Entity Location")]
 pub struct Location {
     pub id: Uuid,
     pub parent_id: Option<Uuid>,
@@ -138,7 +140,8 @@ impl Location {
 }
 
 /// Location with full hierarchy path
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, DocType)]
+#[doctype(module = "Core", description = "Entity LocationWithPath")]
 pub struct LocationWithPath {
     #[serde(flatten)]
     pub location: Location,

@@ -4,11 +4,13 @@
 //! apply based on usage ranges (e.g., normal rate for first 8 hours,
 //! overtime rate for hours 8-10, double time for 10+)
 
+use management_system_macros::DocType;
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 
 /// Configuration for tiered pricing
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, DocType)]
+#[doctype(module = "Rentals", description = "Entity TierConfig")]
 pub struct TierConfig {
     /// Type of tier: "hourly", "daily", "monthly"
     #[serde(rename = "type")]
@@ -19,7 +21,8 @@ pub struct TierConfig {
 }
 
 /// Individual pricing tier
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, DocType)]
+#[doctype(module = "Rentals", description = "Entity Tier")]
 pub struct Tier {
     /// Starting value for this tier (inclusive)
     pub from: Decimal,
@@ -99,7 +102,8 @@ impl TierConfig {
 }
 
 /// Breakdown of a single tier calculation for display
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, DocType)]
+#[doctype(module = "Rentals", description = "Entity TierBreakdown")]
 pub struct TierBreakdown {
     pub units: Decimal,
     pub multiplier: Decimal,

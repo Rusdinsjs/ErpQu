@@ -93,6 +93,7 @@ const MaintenanceSchedulesView = lazy(() => import('../../pages/Maintenance/Main
 const MaintenanceTeamsView = lazy(() => import('../../pages/Maintenance/MaintenanceTeams'));
 const WorkflowBuilderView = lazy(() => import('../../pages/Settings/WorkflowBuilder').then(m => ({ default: m.WorkflowBuilder })));
 const SettingsView = lazy(() => import('../../pages/Settings'));
+const SystemResetView = lazy(() => import('../../pages/SystemReset'));
 const InventoryItemsView = lazy(() => import('../../pages/Inventory/InventoryItems'));
 const InventoryDetailView = lazy(() => import('../../pages/Inventory/InventoryDetail'));
 const InventoryCategoriesView = lazy(() => import('../../pages/Inventory/InventoryCategories'));
@@ -526,13 +527,22 @@ export function AdminContentRouter({
         'metadata-editor': () => <MetadataEditorView />,
         'tax-renewals': () => <TaxRenewalsView />,
         'settings': () => <SettingsView />,
+        'system-reset': () => <SystemResetView />,
         'webhooks': () => <WebhooksManagementView />,
         'profile': () => <ProfileView />,
     };
 
+    const GenericDocTypePlaceholder = ({ doctype }: { doctype: string }) => (
+        <div className="p-8 text-center text-gray-500 dark:text-gray-400 mt-20">
+            <h2 className="text-2xl mb-4 font-bold capitalize text-gray-800 dark:text-gray-200">{doctype.replace(/-/g, ' ')}</h2>
+            <p>This is a dynamically registered DocType.</p>
+            <p className="text-sm mt-2">A generic list and form view needs to be mapped in AdminContentRouter for full functionality.</p>
+        </div>
+    );
+
     const renderActiveView = () => {
         const renderFn = VIEW_MAP[activeTab];
-        return renderFn ? renderFn() : <DashboardView />;
+        return renderFn ? renderFn() : <GenericDocTypePlaceholder doctype={activeTab} />;
     };
 
     return (

@@ -1,10 +1,12 @@
+use management_system_macros::DocType;
 use chrono::{DateTime, NaiveDate, Utc};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 /// Warehouse Entity (QSTK-002)
-#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow, DocType)]
+#[doctype(module = "Inventory", description = "Entity Warehouse")]
 pub struct Warehouse {
     pub id: Uuid,
     pub company_id: Uuid,
@@ -18,7 +20,8 @@ pub struct Warehouse {
 }
 
 /// Bin Projection Entity (QSTK-003)
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, DocType)]
+#[doctype(module = "Inventory", description = "Entity Bin")]
 pub struct Bin {
     pub id: Uuid,
     pub company_id: Uuid,
@@ -32,7 +35,8 @@ pub struct Bin {
 }
 
 /// Immutable Stock Ledger Entry Entity (QSTK-004)
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, DocType)]
+#[doctype(module = "Inventory", description = "Entity StockLedgerEntry")]
 pub struct StockLedgerEntry {
     pub id: Uuid,
     pub company_id: Uuid,
@@ -58,7 +62,8 @@ pub struct StockLedgerEntry {
 }
 
 /// A line item inside a stock posting instruction passed to StockPostingEngine (QSTK-005)
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, DocType)]
+#[doctype(module = "Inventory", description = "Entity StockPostingLineItem")]
 pub struct StockPostingLineItem {
     pub warehouse_id: Uuid,
     pub item_id: Uuid,
@@ -72,7 +77,8 @@ pub struct StockPostingLineItem {
 }
 
 /// Structured stock posting instruction passed to StockPostingEngine (QSTK-005)
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, DocType)]
+#[doctype(module = "Inventory", description = "Entity StockPostingInstruction")]
 pub struct StockPostingInstruction {
     pub company_id: Uuid,
     pub posting_date: NaiveDate,
@@ -84,7 +90,8 @@ pub struct StockPostingInstruction {
 }
 
 /// Stock Entry document representing manual stock movements (QSTK-018)
-#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow, DocType)]
+#[doctype(module = "Inventory", description = "Entity StockEntry")]
 pub struct StockEntry {
     pub id: Uuid,
     pub company_id: Uuid,
@@ -104,7 +111,8 @@ pub struct StockEntry {
 }
 
 /// A line item inside a Stock Entry document (QSTK-018)
-#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow, DocType)]
+#[doctype(module = "Inventory", description = "Entity StockEntryItem")]
 pub struct StockEntryItem {
     pub id: Uuid,
     pub stock_entry_id: Uuid,
@@ -122,7 +130,8 @@ pub struct StockEntryItem {
 }
 
 /// Material Request document for internal requisitions (QSTK-019)
-#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow, DocType)]
+#[doctype(module = "Inventory", description = "Entity MaterialRequest")]
 pub struct MaterialRequest {
     pub id: Uuid,
     pub company_id: Uuid,
@@ -139,7 +148,8 @@ pub struct MaterialRequest {
 }
 
 /// A line item inside a Material Request document (QSTK-019)
-#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow, DocType)]
+#[doctype(module = "Inventory", description = "Entity MaterialRequestItem")]
 pub struct MaterialRequestItem {
     pub id: Uuid,
     pub material_request_id: Uuid,
@@ -152,7 +162,8 @@ pub struct MaterialRequestItem {
 }
 
 /// Warehouse Bin Entity for location tracking (e.g. rack/shelf/bin)
-#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow, DocType)]
+#[doctype(module = "Inventory", description = "Entity WarehouseBin")]
 pub struct WarehouseBin {
     pub id: Uuid,
     pub warehouse_id: Uuid,
@@ -162,7 +173,8 @@ pub struct WarehouseBin {
 }
 
 /// Item Bin Balance Entity
-#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow, DocType)]
+#[doctype(module = "Inventory", description = "Entity ItemBinBalance")]
 pub struct ItemBinBalance {
     pub id: Uuid,
     pub company_id: Uuid,

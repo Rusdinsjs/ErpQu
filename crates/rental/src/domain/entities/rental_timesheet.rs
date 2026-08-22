@@ -2,6 +2,7 @@
 //!
 //! Daily operation logs for rental assets.
 
+use management_system_macros::DocType;
 use chrono::{DateTime, NaiveDate, NaiveTime, Utc};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
@@ -88,7 +89,8 @@ impl std::str::FromStr for TimesheetStatus {
 }
 
 /// Daily timesheet entry
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "Rentals", description = "Entity RentalTimesheet")]
 pub struct RentalTimesheet {
     pub id: Uuid,
     pub rental_id: Uuid,
@@ -228,7 +230,8 @@ impl RentalTimesheet {
 }
 
 /// Client contact (PIC)
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "Rentals", description = "Entity ClientContact")]
 pub struct ClientContact {
     pub id: Uuid,
     pub client_id: Uuid,

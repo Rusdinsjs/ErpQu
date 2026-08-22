@@ -2,6 +2,7 @@
 //!
 //! Owned strictly by `crates/finance`. Contains NO sqlx persistence attributes.
 
+use management_system_macros::DocType;
 use super::journal::JournalStatus;
 use chrono::{DateTime, NaiveDate, Utc};
 use rust_decimal::Decimal;
@@ -25,7 +26,8 @@ pub enum NormalBalance {
     Credit,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, DocType)]
+#[doctype(module = "Finance", description = "Entity ChartOfAccount")]
 pub struct ChartOfAccount {
     pub id: Uuid,
     pub code: String,
@@ -42,7 +44,8 @@ pub struct ChartOfAccount {
 
 pub type Account = ChartOfAccount;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, DocType)]
+#[doctype(module = "Finance", description = "Entity CreateAccountRequest")]
 pub struct CreateAccountRequest {
     pub code: String,
     pub name: String,
@@ -53,7 +56,8 @@ pub struct CreateAccountRequest {
     pub currency: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, DocType)]
+#[doctype(module = "Finance", description = "Entity UpdateAccountRequest")]
 pub struct UpdateAccountRequest {
     pub name: Option<String>,
     pub parent_id: Option<Uuid>,
@@ -61,7 +65,8 @@ pub struct UpdateAccountRequest {
     pub description: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, DocType)]
+#[doctype(module = "Finance", description = "Entity AccountTreeNode")]
 pub struct AccountTreeNode {
     pub id: Uuid,
     pub code: String,
@@ -74,7 +79,8 @@ pub struct AccountTreeNode {
     pub children: Vec<AccountTreeNode>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, DocType)]
+#[doctype(module = "Finance", description = "Entity GeneralLedgerEntry")]
 pub struct GeneralLedgerEntry {
     pub date: NaiveDate,
     pub transaction_number: String,
@@ -88,7 +94,8 @@ pub struct GeneralLedgerEntry {
     pub balance: Decimal,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, DocType)]
+#[doctype(module = "Finance", description = "Entity TrialBalanceEntry")]
 pub struct TrialBalanceEntry {
     pub account_id: Uuid,
     pub account_code: String,
@@ -100,7 +107,8 @@ pub struct TrialBalanceEntry {
     pub credit: Decimal,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, DocType)]
+#[doctype(module = "Finance", description = "Entity FinancialReportEntry")]
 pub struct FinancialReportEntry {
     pub account_code: String,
     pub account_name: String,
@@ -108,7 +116,8 @@ pub struct FinancialReportEntry {
     pub balance: Decimal,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, DocType)]
+#[doctype(module = "Finance", description = "Entity ExpenseAnalysis")]
 pub struct ExpenseAnalysis {
     pub month: NaiveDate,
     pub expense_type: String,
@@ -118,7 +127,8 @@ pub struct ExpenseAnalysis {
 
 // --- Operational Finance Entities ---
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, DocType)]
+#[doctype(module = "Finance", description = "Entity SalesInvoice")]
 pub struct SalesInvoice {
     pub id: Uuid,
     pub invoice_number: String,
@@ -141,7 +151,8 @@ pub struct SalesInvoice {
     pub attachment_url: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, DocType)]
+#[doctype(module = "Finance", description = "Entity SalesInvoiceItem")]
 pub struct SalesInvoiceItem {
     pub id: Uuid,
     pub invoice_id: Uuid,
@@ -155,7 +166,8 @@ pub struct SalesInvoiceItem {
     pub account_id: Option<Uuid>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, DocType)]
+#[doctype(module = "Finance", description = "Entity CreateInvoiceItemRequest")]
 pub struct CreateInvoiceItemRequest {
     pub description: String,
     #[serde(with = "rust_decimal::serde::str")]
@@ -165,7 +177,8 @@ pub struct CreateInvoiceItemRequest {
     pub account_id: Option<Uuid>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, DocType)]
+#[doctype(module = "Finance", description = "Entity CreateSalesInvoiceRequest")]
 pub struct CreateSalesInvoiceRequest {
     pub invoice_number: String,
     pub client_id: Uuid,
@@ -176,14 +189,16 @@ pub struct CreateSalesInvoiceRequest {
     pub attachment_url: Option<String>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, DocType)]
+#[doctype(module = "Finance", description = "Entity SalesInvoiceDetailResponse")]
 pub struct SalesInvoiceDetailResponse {
     #[serde(flatten)]
     pub invoice: SalesInvoice,
     pub items: Vec<SalesInvoiceItem>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, DocType)]
+#[doctype(module = "Finance", description = "Entity PurchaseBill")]
 pub struct PurchaseBill {
     pub id: Uuid,
     pub bill_number: String,
@@ -201,7 +216,8 @@ pub struct PurchaseBill {
     pub attachment_url: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, DocType)]
+#[doctype(module = "Finance", description = "Entity CreatePurchaseBillRequest")]
 pub struct CreatePurchaseBillRequest {
     pub bill_number: String,
     pub vendor_id: Uuid,
@@ -213,14 +229,16 @@ pub struct CreatePurchaseBillRequest {
     pub attachment_url: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, DocType)]
+#[doctype(module = "Finance", description = "Entity CreateBillItemRequest")]
 pub struct CreateBillItemRequest {
     pub description: String,
     pub amount: Decimal,
     pub account_id: Option<Uuid>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, DocType)]
+#[doctype(module = "Finance", description = "Entity Expense")]
 pub struct Expense {
     pub id: Uuid,
     pub expense_number: String,
@@ -236,7 +254,8 @@ pub struct Expense {
     pub attachment_url: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, DocType)]
+#[doctype(module = "Finance", description = "Entity CreateExpenseRequest")]
 pub struct CreateExpenseRequest {
     pub expense_number: Option<String>,
     pub date: NaiveDate,
@@ -247,7 +266,8 @@ pub struct CreateExpenseRequest {
     pub attachment_url: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, DocType)]
+#[doctype(module = "Finance", description = "Entity CashBankTransaction")]
 pub struct CashBankTransaction {
     pub id: Uuid,
     pub transaction_number: String,
@@ -264,7 +284,8 @@ pub struct CashBankTransaction {
     pub created_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, DocType)]
+#[doctype(module = "Finance", description = "Entity CreateCashBankTransactionRequest")]
 pub struct CreateCashBankTransactionRequest {
     pub transaction_number: Option<String>,
     pub transaction_type: String,
@@ -280,7 +301,8 @@ pub struct CreateCashBankTransactionRequest {
 
 // --- Sales Quotes, Orders & Shipments ---
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, DocType)]
+#[doctype(module = "Finance", description = "Entity SalesQuote")]
 pub struct SalesQuote {
     pub id: Uuid,
     pub quote_number: String,
@@ -295,7 +317,8 @@ pub struct SalesQuote {
     pub created_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, DocType)]
+#[doctype(module = "Finance", description = "Entity CreateSalesQuoteRequest")]
 pub struct CreateSalesQuoteRequest {
     pub quote_number: String,
     pub client_id: Uuid,
@@ -305,7 +328,8 @@ pub struct CreateSalesQuoteRequest {
     pub items: Vec<CreateInvoiceItemRequest>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, DocType)]
+#[doctype(module = "Finance", description = "Entity SalesOrder")]
 pub struct SalesOrder {
     pub id: Uuid,
     pub order_number: String,
@@ -321,7 +345,8 @@ pub struct SalesOrder {
     pub created_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, DocType)]
+#[doctype(module = "Finance", description = "Entity CreateSalesOrderRequest")]
 pub struct CreateSalesOrderRequest {
     pub order_number: String,
     pub quote_id: Option<Uuid>,
@@ -332,7 +357,8 @@ pub struct CreateSalesOrderRequest {
     pub items: Vec<CreateInvoiceItemRequest>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, DocType)]
+#[doctype(module = "Finance", description = "Entity SalesShipment")]
 pub struct SalesShipment {
     pub id: Uuid,
     pub shipment_number: String,
@@ -346,7 +372,8 @@ pub struct SalesShipment {
     pub created_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, DocType)]
+#[doctype(module = "Finance", description = "Entity SalesShipmentItem")]
 pub struct SalesShipmentItem {
     pub id: Uuid,
     pub shipment_id: Uuid,
@@ -356,7 +383,8 @@ pub struct SalesShipmentItem {
     pub item_id: Option<Uuid>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, DocType)]
+#[doctype(module = "Finance", description = "Entity CreateSalesShipmentItemRequest")]
 pub struct CreateSalesShipmentItemRequest {
     pub order_item_id: Option<Uuid>,
     pub description: String,
@@ -364,7 +392,8 @@ pub struct CreateSalesShipmentItemRequest {
     pub item_id: Option<Uuid>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, DocType)]
+#[doctype(module = "Finance", description = "Entity CreateSalesShipmentRequest")]
 pub struct CreateSalesShipmentRequest {
     pub shipment_number: String,
     pub sales_order_id: Uuid,
@@ -377,7 +406,8 @@ pub struct CreateSalesShipmentRequest {
 
 // --- Purchase Quotes, Orders & Shipments ---
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, DocType)]
+#[doctype(module = "Finance", description = "Entity PurchaseQuote")]
 pub struct PurchaseQuote {
     pub id: Uuid,
     pub quote_number: String,
@@ -392,7 +422,8 @@ pub struct PurchaseQuote {
     pub created_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, DocType)]
+#[doctype(module = "Finance", description = "Entity CreatePurchaseQuoteRequest")]
 pub struct CreatePurchaseQuoteRequest {
     pub quote_number: String,
     pub vendor_id: Uuid,
@@ -402,7 +433,8 @@ pub struct CreatePurchaseQuoteRequest {
     pub items: Vec<CreateBillItemRequest>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, DocType)]
+#[doctype(module = "Finance", description = "Entity PurchaseOrder")]
 pub struct PurchaseOrder {
     pub id: Uuid,
     pub order_number: String,
@@ -419,7 +451,8 @@ pub struct PurchaseOrder {
     pub created_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, DocType)]
+#[doctype(module = "Finance", description = "Entity CreatePurchaseOrderRequest")]
 pub struct CreatePurchaseOrderRequest {
     pub order_number: String,
     pub purchase_quote_id: Option<Uuid>,
@@ -431,7 +464,8 @@ pub struct CreatePurchaseOrderRequest {
     pub items: Vec<CreateBillItemRequest>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, DocType)]
+#[doctype(module = "Finance", description = "Entity PurchaseShipment")]
 pub struct PurchaseShipment {
     pub id: Uuid,
     pub shipment_number: String,
@@ -444,7 +478,8 @@ pub struct PurchaseShipment {
     pub created_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, DocType)]
+#[doctype(module = "Finance", description = "Entity CreatePurchaseShipmentRequest")]
 pub struct CreatePurchaseShipmentRequest {
     pub shipment_number: String,
     pub purchase_order_id: Uuid,

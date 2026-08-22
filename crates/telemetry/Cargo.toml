@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+management-system-macros = { workspace = true }
 management-system-core = { workspace = true }
 management-system-assets = { workspace = true }
 sqlx = { workspace = true }

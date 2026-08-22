@@ -672,14 +672,10 @@ pub async fn list_accessible_companies(
     axum::Extension(claims): axum::Extension<management_system_core::domain::entities::UserClaims>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, String)> {
     let pool = &state.pool;
-    let is_admin = claims.role == "super_admin"
-        || claims.role_level <= 1
-        || claims
-            .permissions
-            .iter()
-            .any(|p| p == "*" || p == "company.*" || p == "company.admin");
+    // Only super_admin sees all companies. Regular admin must have explicit membership.
+    let is_super = claims.role == "super_admin";
 
-    let rows = if is_admin {
+    let rows = if is_super {
         sqlx::query_as::<_, CompanyRow>(
             r#"
             SELECT 
@@ -738,5 +734,141 @@ pub async fn list_accessible_companies(
     Ok(Json(serde_json::json!({
         "success": true,
         "data": companies
+    })))
+}
+
+/// POST /api/setup-wizard/company - Setup Wizard: Create first Company & auto-assign user membership
+/// Similar to ERPNext/Frappe Setup Wizard first-run flow.
+pub async fn setup_wizard_create_company(
+    State(state): State<AppState>,
+    axum::Extension(claims): axum::Extension<management_system_core::domain::entities::UserClaims>,
+    Json(payload): Json<CreateCompanyPayload>,
+) -> Result<Json<serde_json::Value>, (StatusCode, String)> {
+    let pool = &state.pool;
+    let user_id = claims.user_id();
+    let tenant_id = Uuid::parse_str("00000000-0000-0000-0000-000000000001").unwrap_or_default();
+
+    let new_id = Uuid::new_v4();
+    let base_currency = payload.base_currency.unwrap_or_else(|| "IDR".to_string());
+    let country = payload.country.unwrap_or_else(|| "Indonesia".to_string());
+    let is_group = payload.is_group.unwrap_or(false);
+    let status = payload.status.unwrap_or_else(|| "ACTIVE".to_string());
+    let fiscal_start = payload.fiscal_year_start_month.unwrap_or(1);
+    let domain_slug = payload.code.trim().to_lowercase().replace(' ', "-");
+
+    // 1. Create the company
+    sqlx::query(
+        r#"
+        INSERT INTO public.companies (
+            id, tenant_id, code, name, legal_name, tax_id, base_currency, country,
+            address, phone, email, logo_url, domain, website, parent_company_id,
+            incorporation_date, registration_no,
+            establishment_deed_no, establishment_deed_date, establishment_notary_name, establishment_approval_no,
+            default_bank_account_id, default_cash_account_id, default_income_account_id,
+            default_expense_account_id, default_receivable_account_id, default_payable_account_id,
+            fiscal_year_start_month, is_group, status, domain_slug
+        ) VALUES (
+            $1, $2, $3, $4, $5, $6, $7, $8,
+            $9, $10, $11, $12, $13, $14, $15,
+            $16, $17,
+            $18, $19, $20, $21,
+            $22, $23, $24, $25, $26, $27,
+            $28, $29, $30, $31
+        )
+        "#,
+    )
+    .bind(new_id)
+    .bind(tenant_id)
+    .bind(&payload.code)
+    .bind(&payload.name)
+    .bind(&payload.legal_name)
+    .bind(&payload.tax_id)
+    .bind(&base_currency)
+    .bind(&country)
+    .bind(&payload.address)
+    .bind(&payload.phone)
+    .bind(&payload.email)
+    .bind(&payload.logo_url)
+    .bind(&payload.domain)
+    .bind(&payload.website)
+    .bind(payload.parent_company_id)
+    .bind(payload.incorporation_date)
+    .bind(&payload.registration_no)
+    .bind(&payload.establishment_deed_no)
+    .bind(payload.establishment_deed_date)
+    .bind(&payload.establishment_notary_name)
+    .bind(&payload.establishment_approval_no)
+    .bind(payload.default_bank_account_id)
+    .bind(payload.default_cash_account_id)
+    .bind(payload.default_income_account_id)
+    .bind(payload.default_expense_account_id)
+    .bind(payload.default_receivable_account_id)
+    .bind(payload.default_payable_account_id)
+    .bind(fiscal_start)
+    .bind(is_group)
+    .bind(&status)
+    .bind(&domain_slug)
+    .execute(pool)
+    .await
+    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("Failed to create company: {}", e)))?;
+
+    // 2. Insert amendment deeds if provided
+    if let Some(deeds) = payload.amendment_deeds {
+        for deed in deeds {
+            sqlx::query(
+                r#"
+                INSERT INTO public.company_amendment_deeds (
+                    id, company_id, deed_no, deed_date, notary_name, approval_no, description
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+                "#,
+            )
+            .bind(Uuid::new_v4())
+            .bind(new_id)
+            .bind(&deed.deed_no)
+            .bind(deed.deed_date)
+            .bind(&deed.notary_name)
+            .bind(&deed.approval_no)
+            .bind(&deed.description)
+            .execute(pool)
+            .await
+            .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("Failed to save amendment deed: {}", e)))?;
+        }
+    }
+
+    // 3. Auto-assign user membership to the new company via user_permissions (ERPNext UserPermission pattern)
+    sqlx::query(
+        r#"
+        INSERT INTO public.user_permissions (id, user_id, allow_doctype, for_value, is_default)
+        VALUES ($1, $2, 'Company', $3, TRUE)
+        ON CONFLICT DO NOTHING
+        "#,
+    )
+    .bind(Uuid::new_v4())
+    .bind(user_id)
+    .bind(new_id.to_string())
+    .execute(pool)
+    .await
+    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("Failed to assign company membership: {}", e)))?;
+
+    // 4. Update employee record if exists
+    let _ = sqlx::query(
+        "UPDATE hr.employees SET company_id = $1 WHERE user_id = $2 AND company_id IS NULL",
+    )
+    .bind(new_id)
+    .bind(user_id)
+    .execute(pool)
+    .await;
+
+    tracing::info!(
+        "SETUP WIZARD: User {} created company {} ({}) and was auto-assigned membership",
+        claims.email, payload.name, new_id
+    );
+
+    Ok(Json(serde_json::json!({
+        "success": true,
+        "message": "Company created successfully via Setup Wizard",
+        "company_id": new_id,
+        "company_name": payload.name,
+        "company_code": payload.code
     })))
 }

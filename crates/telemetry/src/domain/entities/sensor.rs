@@ -2,6 +2,7 @@
 //!
 //! IoT sensor data for asset telemetry monitoring.
 
+use management_system_macros::DocType;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
@@ -45,7 +46,8 @@ pub enum SensorStatus {
 }
 
 /// Sensor reading (timeseries data)
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "Telemetry", description = "Entity SensorReading")]
 pub struct SensorReading {
     pub time: DateTime<Utc>,
     pub asset_id: Uuid,
@@ -89,7 +91,8 @@ impl SensorReading {
 }
 
 /// Sensor threshold for alerts
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow, utoipa::ToSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, utoipa::ToSchema, DocType)]
+#[doctype(module = "Telemetry", description = "Entity SensorThreshold")]
 pub struct SensorThreshold {
     pub id: Uuid,
     pub asset_id: Uuid,
@@ -123,7 +126,8 @@ impl SensorThreshold {
 }
 
 /// Sensor alert model
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow, utoipa::ToSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, utoipa::ToSchema, DocType)]
+#[doctype(module = "Telemetry", description = "Entity SensorAlert")]
 pub struct SensorAlert {
     pub id: Uuid,
     pub asset_id: Uuid,
@@ -143,7 +147,8 @@ pub struct SensorAlert {
 }
 
 /// Aggregated sensor data for dashboard
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, DocType)]
+#[doctype(module = "Telemetry", description = "Entity SensorSummary")]
 pub struct SensorSummary {
     pub asset_id: Uuid,
     pub sensor_id: String,

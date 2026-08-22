@@ -2,6 +2,7 @@
 //!
 //! Maintenance work orders with checklists and technician assignment.
 
+use management_system_macros::DocType;
 use chrono::{DateTime, NaiveDate, Utc};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
@@ -72,7 +73,8 @@ impl WorkOrderStatus {
 }
 
 /// Maintenance Work Order
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "Maintenance", description = "Entity WorkOrder")]
 pub struct WorkOrder {
     pub id: Uuid,
     pub wo_number: String,
@@ -215,7 +217,8 @@ impl WorkOrder {
 }
 
 /// Checklist item for work order
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "Maintenance", description = "Entity ChecklistItem")]
 pub struct ChecklistItem {
     pub id: Uuid,
     pub work_order_id: Uuid,
@@ -263,7 +266,8 @@ impl ChecklistItem {
 }
 
 /// Spare part used in work order
-#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow, DocType)]
+#[doctype(module = "Maintenance", description = "Entity WorkOrderPart")]
 pub struct WorkOrderPart {
     pub id: Uuid,
     pub work_order_id: Uuid,

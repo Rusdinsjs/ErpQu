@@ -259,6 +259,7 @@ export const ALL_NAV_ITEMS: Record<string, NavItem> = {
     'branch': { id: 'branch', icon: Building2, label: 'Branch Management', minLevel: 2 },
     'email-account': { id: 'email-account', icon: Mail, label: 'Email Accounts', minLevel: 2 },
     'settings': { id: 'settings', icon: Settings, label: 'App Settings', minLevel: 2 },
+    'system-reset': { id: 'system-reset', icon: ShieldAlert, label: 'System Danger Zone', path: '/admin/system-reset', minLevel: 1, adminOnly: true },
     'metadata-editor': { id: 'metadata-editor', icon: Database, label: 'Metadata & Schema', minLevel: 1, adminOnly: true },
     'profile': { id: 'profile', icon: UserCircle, label: 'My Profile', minLevel: 5 },
 };

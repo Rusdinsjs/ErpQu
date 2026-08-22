@@ -13,6 +13,7 @@ members = [
     "crates/commercial",
     "crates/procurement",
     "crates/telemetry",
+    "crates/macros",
 ]
 
 [workspace.dependencies]
@@ -51,6 +52,9 @@ argon2 = "0.5"
 
 # Environment
 dotenvy = "0.15"
+
+# Registry
+inventory = "0.3"
 
 # Async traits
 async-trait = "0.1"
@@ -97,6 +101,7 @@ management-system-inventory = { path = "crates/inventory" }
 management-system-commercial = { path = "crates/commercial" }
 management-system-procurement = { path = "crates/procurement" }
 management-system-telemetry = { path = "crates/telemetry" }
+management-system-macros = { path = "crates/macros" }
 
 [profile.dev.package.argon2]
 opt-level = 3

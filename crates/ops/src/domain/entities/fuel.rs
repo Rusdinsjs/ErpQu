@@ -3,6 +3,7 @@
 //! Tracks fuel requests, approvals (coupons), and realizations.
 //!
 
+use management_system_macros::DocType;
 use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
@@ -80,7 +81,8 @@ impl FuelStatus {
 }
 
 /// Fuel Log Entry
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "Maintenance", description = "Entity FuelLog")]
 pub struct FuelLog {
     pub id: Uuid,
     pub tracking_number: String,

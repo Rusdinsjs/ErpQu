@@ -1,9 +1,11 @@
+use management_system_macros::DocType;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
 
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "Core", description = "Entity ApprovalWorkflow")]
 pub struct ApprovalWorkflow {
     pub id: Uuid,
     pub workflow_name: String,

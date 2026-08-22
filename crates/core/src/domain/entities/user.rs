@@ -2,6 +2,7 @@
 //!
 //! User management with role-based access control.
 
+use management_system_macros::DocType;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
@@ -81,7 +82,8 @@ impl std::str::FromStr for UserRole {
 
 /// User entity
 /// User entity
-#[derive(Clone, Serialize, Deserialize, FromRow, ToSchema)]
+#[derive(Clone, Serialize, Deserialize, FromRow, ToSchema, DocType)]
+#[doctype(module = "Core", description = "Entity User")]
 pub struct User {
     #[schema(example = "550e8400-e29b-41d4-a716-446655440000")]
     pub id: Uuid,
@@ -207,7 +209,8 @@ impl User {
 }
 
 /// User summary for list views (without sensitive data)
-#[derive(Debug, Clone, Serialize, FromRow)]
+#[derive(Debug, Clone, Serialize, FromRow, DocType)]
+#[doctype(module = "Core", description = "Entity UserSummary")]
 pub struct UserSummary {
     pub id: Uuid,
     pub email: String,
@@ -231,7 +234,8 @@ pub struct UserSummary {
 }
 
 /// JWT Claims for authentication
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, DocType)]
+#[doctype(module = "Core", description = "Entity UserClaims")]
 pub struct UserClaims {
     pub sub: String, // User ID
     pub email: String,

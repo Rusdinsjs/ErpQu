@@ -7,10 +7,12 @@ import { WebSocketProvider } from './contexts/WebSocketContext';
 import { PageLoading } from './components/ui';
 
 import { ThemeProvider } from './contexts/ThemeContext';
+import { CompanyContextGuard } from './components/Auth/CompanyContextGuard';
 
 const LoginPage = lazy(() => import('./pages/LoginPage'));
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
 const Launchpad = lazy(() => import('./pages/Launchpad'));
+const SetupWizard = lazy(() => import('./pages/SetupWizard'));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -23,7 +25,7 @@ const queryClient = new QueryClient({
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useAuthStore((state) => !!state.token);
-  return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />;
+  return isAuthenticated ? <CompanyContextGuard>{children}</CompanyContextGuard> : <Navigate to="/login" replace />;
 }
 
 // Redirect everyone to the Launchpad Portal first
@@ -40,6 +42,16 @@ function App() {
             <Suspense fallback={<PageLoading />}>
               <Routes>
                 <Route path="/login" element={<LoginPage />} />
+
+                {/* Setup Wizard for new users without companies */}
+                <Route
+                  path="/setup-wizard"
+                  element={
+                    <PrivateRoute>
+                      <SetupWizard />
+                    </PrivateRoute>
+                  }
+                />
 
                 {/* Launchpad - Full screen menu for non-super-admin users */}
                 <Route
@@ -80,4 +92,3 @@ function App() {
 }
 
 export default App;
-

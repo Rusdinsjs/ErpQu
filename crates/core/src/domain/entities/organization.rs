@@ -2,6 +2,7 @@
 //!
 //! Multi-tenant organization support with hierarchical structure.
 
+use management_system_macros::DocType;
 use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
@@ -31,7 +32,8 @@ impl OrganizationType {
 }
 
 /// Organization entity
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "Core", description = "Entity Organization")]
 pub struct Organization {
     pub id: Uuid,
     pub code: String,

@@ -1,10 +1,12 @@
+use management_system_macros::DocType;
 use chrono::{DateTime, NaiveDate, Utc};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
 
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "HR", description = "Entity HrLeaveType")]
 pub struct HrLeaveType {
     pub id: Uuid,
     pub name: String,
@@ -24,7 +26,8 @@ pub struct HrLeaveType {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "HR", description = "Entity HrLeaveAllocation")]
 pub struct HrLeaveAllocation {
     pub id: Uuid,
     pub employee_id: Uuid,
@@ -48,7 +51,8 @@ pub struct HrLeaveAllocation {
     pub leave_type_code: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "HR", description = "Entity HrLeaveApplication")]
 pub struct HrLeaveApplication {
     pub id: Uuid,
     pub employee_id: Uuid,
@@ -79,7 +83,8 @@ pub struct HrLeaveApplication {
     pub approver_name: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "HR", description = "Entity HrHolidayList")]
 pub struct HrHolidayList {
     pub id: Uuid,
     pub name: String,
@@ -93,7 +98,8 @@ pub struct HrHolidayList {
     pub total_holidays: Option<i64>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "HR", description = "Entity HrHoliday")]
 pub struct HrHoliday {
     pub id: Uuid,
     pub holiday_list_id: Uuid,
@@ -103,7 +109,8 @@ pub struct HrHoliday {
     pub created_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "HR", description = "Entity HrLeaveBlockList")]
 pub struct HrLeaveBlockList {
     pub id: Uuid,
     pub name: String,
@@ -114,7 +121,8 @@ pub struct HrLeaveBlockList {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "HR", description = "Entity HrLeaveBlockDate")]
 pub struct HrLeaveBlockDate {
     pub id: Uuid,
     pub block_list_id: Uuid,
@@ -123,7 +131,8 @@ pub struct HrLeaveBlockDate {
     pub created_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "HR", description = "Entity HrLeaveEncashment")]
 pub struct HrLeaveEncashment {
     pub id: Uuid,
     pub employee_id: Uuid,
@@ -143,7 +152,8 @@ pub struct HrLeaveEncashment {
     pub leave_type_name: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, DocType)]
+#[doctype(module = "HR", description = "Entity LeaveBalanceSummary")]
 pub struct LeaveBalanceSummary {
     pub leave_type_id: Uuid,
     pub leave_type_name: String,

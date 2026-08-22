@@ -3,6 +3,7 @@
 //! Asset loan management with complete workflow support.
 //!
 
+use management_system_macros::DocType;
 use chrono::{DateTime, NaiveDate, Utc};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
@@ -66,7 +67,8 @@ impl LoanStatus {
 }
 
 /// Asset Loan
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "Maintenance", description = "Entity Loan")]
 pub struct Loan {
     pub id: Uuid,
     pub loan_number: String,
@@ -196,7 +198,8 @@ impl Loan {
 }
 
 /// Loan summary for list views
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, DocType)]
+#[doctype(module = "Maintenance", description = "Entity LoanSummary")]
 pub struct LoanSummary {
     pub id: Uuid,
     pub loan_number: String,
@@ -213,7 +216,8 @@ pub struct LoanSummary {
 }
 
 /// Loan request for creating new loans
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, DocType)]
+#[doctype(module = "Maintenance", description = "Entity LoanRequest")]
 pub struct LoanRequest {
     pub asset_id: Uuid,
     pub borrower_id: Option<Uuid>,

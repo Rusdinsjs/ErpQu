@@ -2,6 +2,7 @@
 //!
 //! Defines the possible states of an asset and valid transitions between states.
 
+use management_system_macros::DocType;
 use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::str::FromStr;
@@ -302,7 +303,8 @@ impl fmt::Display for AssetState {
 }
 
 /// State transition event for audit logging
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, DocType)]
+#[doctype(module = "Assets", description = "Entity StateTransition")]
 pub struct StateTransition {
     pub from_state: AssetState,
     pub to_state: AssetState,
@@ -329,7 +331,8 @@ impl StateTransition {
 }
 
 /// Lifecycle history record (database entity)
-#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow, DocType)]
+#[doctype(module = "Assets", description = "Entity LifecycleHistory")]
 pub struct LifecycleHistory {
     pub id: uuid::Uuid,
     pub asset_id: uuid::Uuid,
@@ -452,7 +455,8 @@ impl FromStr for ConversionStatus {
 }
 
 /// Asset conversion request (database entity)
-#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow, DocType)]
+#[doctype(module = "Assets", description = "Entity AssetConversion")]
 pub struct AssetConversion {
     pub id: uuid::Uuid,
     pub asset_id: uuid::Uuid,

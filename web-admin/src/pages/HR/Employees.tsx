@@ -369,7 +369,7 @@ export default function Employees() {
     );
 
     const deptOptions = (Array.isArray(departments) ? departments : []).map(d => ({ value: d.id, label: d.name }));
-    const companyOptions = [{ value: '', label: 'Pilih Perusahaan...' }, ...(Array.isArray(companies) ? companies : []).map(c => ({ value: c.id, label: `${c.name} (${c.code})` }))];
+    const companyOptions = (Array.isArray(companies) ? companies : []).map(c => ({ value: c.id, label: `${c.name} (${c.code})` }));
     const statusOptions = [
         { value: 'pkwt', label: 'PKWT' },
         { value: 'pkwtt', label: 'PKWTT' },
@@ -425,7 +425,6 @@ export default function Employees() {
             </Card>
 
             <Card padding="lg">
-
                 <div className="relative">
                     <LoadingOverlay visible={loading} />
                     <Table>
@@ -662,7 +661,7 @@ export default function Employees() {
                             <div className="grid grid-cols-2 gap-4">
                                 <Select
                                     label="Perusahaan (Company) *"
-                                    value={formData.company_id}
+                                    value={formData.company_id || ''}
                                     onChange={(val) => setFormData({ ...formData, company_id: val || undefined })}
                                     options={companyOptions}
                                     placeholder="Pilih Perusahaan..."
@@ -670,7 +669,7 @@ export default function Employees() {
                                 />
                                 <Select
                                     label="Departemen"
-                                    value={formData.department_id}
+                                    value={formData.department_id || ''}
                                     onChange={(val) => setFormData({ ...formData, department_id: val || undefined })}
                                     options={deptOptions}
                                     placeholder="Pilih Departemen..."

@@ -2,6 +2,7 @@
 //!
 //! Entities for specific asset details (Vehicle, Insurance, Documents)
 
+use management_system_macros::DocType;
 use chrono::{DateTime, NaiveDate, Utc};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
@@ -17,7 +18,8 @@ fn default_datetime() -> DateTime<Utc> {
 }
 
 /// Vehicle Details (1:1 with Asset)
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "Assets", description = "Entity VehicleDetails")]
 pub struct VehicleDetails {
     #[serde(default = "default_uuid")]
     pub asset_id: Uuid,
@@ -44,7 +46,8 @@ pub struct VehicleDetails {
 }
 
 /// Insurance Details (1:N with Asset)
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "Assets", description = "Entity Insurance")]
 pub struct Insurance {
     pub id: Uuid,
     pub asset_id: Uuid,
@@ -62,7 +65,8 @@ pub struct Insurance {
 }
 
 /// Asset Document (1:N with Asset)
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "Assets", description = "Entity AssetDocument")]
 pub struct AssetDocument {
     pub id: Uuid,
     pub asset_id: Uuid,
@@ -80,7 +84,8 @@ pub struct AssetDocument {
 }
 
 /// Land Details (1:1 with Asset)
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "Assets", description = "Entity LandDetails")]
 pub struct LandDetails {
     #[serde(default = "default_uuid")]
     pub asset_id: Uuid,
@@ -101,7 +106,8 @@ pub struct LandDetails {
 }
 
 /// Building Details (1:1 with Asset)
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "Assets", description = "Entity BuildingDetails")]
 pub struct BuildingDetails {
     #[serde(default = "default_uuid")]
     pub asset_id: Uuid,
@@ -123,7 +129,8 @@ pub struct BuildingDetails {
 }
 
 /// Heavy Equipment Details (1:1 with Asset)
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "Assets", description = "Entity HeavyEquipmentDetails")]
 pub struct HeavyEquipmentDetails {
     #[serde(default = "default_uuid")]
     pub asset_id: Uuid,
@@ -141,7 +148,8 @@ pub struct HeavyEquipmentDetails {
 }
 
 /// Machine Details (1:1 with Asset)
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "Assets", description = "Entity MachineDetails")]
 pub struct MachineDetails {
     #[serde(default = "default_uuid")]
     pub asset_id: Uuid,
@@ -157,7 +165,8 @@ pub struct MachineDetails {
 }
 
 /// Inventory Details (1:1 with Asset)
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "Assets", description = "Entity InventoryDetails")]
 pub struct InventoryDetails {
     #[serde(default = "default_uuid")]
     pub asset_id: Uuid,
@@ -172,7 +181,8 @@ pub struct InventoryDetails {
 }
 
 /// Furniture Details (1:1 with Asset)
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "Assets", description = "Entity FurnitureDetails")]
 pub struct FurnitureDetails {
     #[serde(default = "default_uuid")]
     pub asset_id: Uuid,

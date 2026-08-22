@@ -1,10 +1,12 @@
+use management_system_macros::DocType;
 use chrono::{DateTime, NaiveDate, Utc};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
 
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "HR", description = "Entity HrDriverAssignment")]
 pub struct HrDriverAssignment {
     pub id: Uuid,
     pub employee_id: Uuid,
@@ -28,7 +30,8 @@ pub struct HrDriverAssignment {
     pub asset_code: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "HR", description = "Entity HrP2hInspection")]
 pub struct HrP2hInspection {
     pub id: Uuid,
     pub assignment_id: Option<Uuid>,
@@ -57,7 +60,8 @@ pub struct HrP2hInspection {
     pub asset_code: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "HR", description = "Entity HrDriverSafetyIncident")]
 pub struct HrDriverSafetyIncident {
     pub id: Uuid,
     pub employee_id: Uuid,
@@ -81,7 +85,8 @@ pub struct HrDriverSafetyIncident {
     pub asset_name: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "HR", description = "Entity HrVehicleHandover")]
 pub struct HrVehicleHandover {
     pub id: Uuid,
     pub asset_id: Uuid,

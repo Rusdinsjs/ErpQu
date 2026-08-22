@@ -41,6 +41,7 @@ tokio-cron-scheduler = "0.10.0"
 async-trait = { workspace = true }
 genpdf = { workspace = true }
 csv = { workspace = true }
+inventory = { workspace = true }
 
 [profile.dev]
 debug = 0

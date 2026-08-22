@@ -1,9 +1,11 @@
+use management_system_macros::DocType;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
 
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "Core", description = "Entity AuditSession")]
 pub struct AuditSession {
     pub id: Uuid,
     pub user_id: Uuid,
@@ -13,7 +15,8 @@ pub struct AuditSession {
     pub closed_at: Option<DateTime<Utc>>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "Core", description = "Entity AuditRecord")]
 pub struct AuditRecord {
     pub id: Uuid,
     pub session_id: Uuid,

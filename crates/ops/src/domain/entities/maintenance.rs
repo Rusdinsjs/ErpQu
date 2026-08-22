@@ -1,10 +1,12 @@
+use management_system_macros::DocType;
 use chrono::{DateTime, Utc};
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
 
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "Maintenance", description = "Entity MaintenanceType")]
 pub struct MaintenanceType {
     pub id: i32,
     pub code: String,
@@ -12,7 +14,8 @@ pub struct MaintenanceType {
     pub is_preventive: bool,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "Maintenance", description = "Entity MaintenanceRecord")]
 pub struct MaintenanceRecord {
     pub id: Uuid,
     pub asset_id: Uuid,
@@ -74,7 +77,8 @@ impl MaintenanceRecord {
 }
 
 // Summary struct for lists
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "Maintenance", description = "Entity MaintenanceSummary")]
 pub struct MaintenanceSummary {
     pub id: Uuid,
     pub asset_id: Uuid,
@@ -90,7 +94,8 @@ pub struct MaintenanceSummary {
     pub type_name: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "Maintenance", description = "Entity MaintenanceSchedule")]
 pub struct MaintenanceSchedule {
     pub id: Uuid,
     pub asset_id: Uuid,
@@ -112,7 +117,8 @@ pub struct MaintenanceSchedule {
     pub asset_name: Option<String>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, DocType)]
+#[doctype(module = "Maintenance", description = "Entity CreateMaintenanceScheduleRequest")]
 pub struct CreateMaintenanceScheduleRequest {
     pub asset_id: Uuid,
     pub title: String,
@@ -146,7 +152,8 @@ impl MaintenanceSchedule {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "Maintenance", description = "Entity MonthlyCost")]
 pub struct MonthlyCost {
     pub month: String,
     pub total_cost: Decimal,

@@ -2,13 +2,15 @@
 //!
 //! External customer/company for asset rental operations.
 
+use management_system_macros::DocType;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
 
 /// External client for rentals
-#[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
+#[doctype(module = "CRM", description = "Entity Client")]
 pub struct Client {
     pub id: Uuid,
     pub client_code: String,
@@ -57,7 +59,8 @@ impl Client {
 }
 
 /// Client summary for list views
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, DocType)]
+#[doctype(module = "CRM", description = "Entity ClientSummary")]
 pub struct ClientSummary {
     pub id: Uuid,
     pub client_code: String,

@@ -2,7 +2,7 @@
 
 use crate::api::handlers::company_handler;
 use crate::api::server::AppState;
-use axum::{routing::get, Router};
+use axum::{routing::{get, post, put, delete}, Router};
 
 pub fn company_routes() -> Router<AppState> {
     Router::new()
@@ -23,5 +23,10 @@ pub fn company_routes() -> Router<AppState> {
             get(company_handler::get_company)
                 .put(company_handler::update_company)
                 .delete(company_handler::delete_company),
+        )
+        // Setup Wizard: First-run company creation (ERPNext-style)
+        .route(
+            "/api/setup-wizard/company",
+            post(company_handler::setup_wizard_create_company),
         )
 }

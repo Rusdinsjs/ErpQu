@@ -1,9 +1,11 @@
+use management_system_macros::DocType;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use uuid::Uuid;
 
-#[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
+#[derive(Debug, Serialize, Deserialize, sqlx::FromRow, DocType)]
+#[doctype(module = "Core", description = "Entity AuditLog")]
 pub struct AuditLog {
     pub id: Uuid,
     pub table_name: String,
@@ -17,7 +19,8 @@ pub struct AuditLog {
     pub created_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
+#[derive(Debug, Serialize, Deserialize, sqlx::FromRow, DocType)]
+#[doctype(module = "Core", description = "Entity AuditLogEntry")]
 pub struct AuditLogEntry {
     pub id: Uuid,
     pub entity_type: String, // mapped from table_name
