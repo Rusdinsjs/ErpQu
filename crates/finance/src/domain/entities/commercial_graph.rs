@@ -1,5 +1,5 @@
-use management_system_macros::DocType;
 use chrono::{DateTime, NaiveDate, Utc};
+use management_system_macros::DocType;
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -75,7 +75,10 @@ pub struct AllocatePaymentRequest {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, DocType)]
-#[doctype(module = "Finance", description = "Entity CreatePurchaseReceiptItemRequest")]
+#[doctype(
+    module = "Finance",
+    description = "Entity CreatePurchaseReceiptItemRequest"
+)]
 pub struct CreatePurchaseReceiptItemRequest {
     pub item_id: Uuid,
     pub qty_received: Decimal,
@@ -86,7 +89,10 @@ pub struct CreatePurchaseReceiptItemRequest {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, DocType)]
-#[doctype(module = "Finance", description = "Entity CreatePurchaseReceiptRequest")]
+#[doctype(
+    module = "Finance",
+    description = "Entity CreatePurchaseReceiptRequest"
+)]
 pub struct CreatePurchaseReceiptRequest {
     pub company_id: Uuid,
     pub receipt_number: String,

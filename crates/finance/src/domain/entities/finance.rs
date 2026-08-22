@@ -2,9 +2,9 @@
 //!
 //! Owned strictly by `crates/finance`. Contains NO sqlx persistence attributes.
 
-use management_system_macros::DocType;
 use super::journal::JournalStatus;
 use chrono::{DateTime, NaiveDate, Utc};
+use management_system_macros::DocType;
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -285,7 +285,10 @@ pub struct CashBankTransaction {
 }
 
 #[derive(Debug, Deserialize, DocType)]
-#[doctype(module = "Finance", description = "Entity CreateCashBankTransactionRequest")]
+#[doctype(
+    module = "Finance",
+    description = "Entity CreateCashBankTransactionRequest"
+)]
 pub struct CreateCashBankTransactionRequest {
     pub transaction_number: Option<String>,
     pub transaction_type: String,
@@ -384,7 +387,10 @@ pub struct SalesShipmentItem {
 }
 
 #[derive(Debug, Deserialize, DocType)]
-#[doctype(module = "Finance", description = "Entity CreateSalesShipmentItemRequest")]
+#[doctype(
+    module = "Finance",
+    description = "Entity CreateSalesShipmentItemRequest"
+)]
 pub struct CreateSalesShipmentItemRequest {
     pub order_item_id: Option<Uuid>,
     pub description: String,
@@ -479,7 +485,10 @@ pub struct PurchaseShipment {
 }
 
 #[derive(Debug, Deserialize, DocType)]
-#[doctype(module = "Finance", description = "Entity CreatePurchaseShipmentRequest")]
+#[doctype(
+    module = "Finance",
+    description = "Entity CreatePurchaseShipmentRequest"
+)]
 pub struct CreatePurchaseShipmentRequest {
     pub shipment_number: String,
     pub purchase_order_id: Uuid,

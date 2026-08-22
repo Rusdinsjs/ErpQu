@@ -2,8 +2,8 @@
 //!
 //! User management with role-based access control.
 
-use management_system_macros::DocType;
 use chrono::{DateTime, Utc};
+use management_system_macros::DocType;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;

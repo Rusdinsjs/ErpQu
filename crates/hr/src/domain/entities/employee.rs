@@ -1,9 +1,9 @@
 use chrono::{DateTime, Utc};
+use management_system_macros::DocType;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use std::str::FromStr;
 use uuid::Uuid;
-use management_system_macros::DocType;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -45,7 +45,11 @@ impl EmploymentStatus {
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, FromRow, DocType)]
-#[doctype(module = "HR", description = "Data Karyawan & Kepegawaian", is_submittable = false)]
+#[doctype(
+    module = "HR",
+    description = "Data Karyawan & Kepegawaian",
+    is_submittable = false
+)]
 pub struct Employee {
     pub id: Uuid,
     pub nik: String,

@@ -17,7 +17,11 @@ use super::AssetState;
 use management_system_macros::DocType;
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema, DocType)]
-#[doctype(module = "Assets", description = "Manajemen Aset Perusahaan", is_submittable = false)]
+#[doctype(
+    module = "Assets",
+    description = "Manajemen Aset Perusahaan",
+    is_submittable = false
+)]
 pub struct Asset {
     #[schema(example = "550e8400-e29b-41d4-a716-446655440000")]
     pub id: Uuid,

@@ -189,10 +189,13 @@ pub async fn upload_file(
                 let mut quota_tx = state.pool.begin().await.map_err(|e| {
                     AppError::Internal(format!("Failed to start transaction: {}", e))
                 })?;
-                
-                tenant_ctx.apply_to_transaction(&mut *quota_tx).await.map_err(|e| {
-                    AppError::Internal(format!("Failed to apply RLS context: {}", e))
-                })?;
+
+                tenant_ctx
+                    .apply_to_transaction(&mut *quota_tx)
+                    .await
+                    .map_err(|e| {
+                        AppError::Internal(format!("Failed to apply RLS context: {}", e))
+                    })?;
 
                 let current_usage: i64 = sqlx::query_scalar::<_, Option<i64>>(
                     "SELECT COALESCE(SUM(file_size), 0) FROM public.uploads WHERE company_id = $1",
@@ -204,7 +207,7 @@ pub async fn upload_file(
                     AppError::Internal(format!("Failed to query tenant storage quota: {}", e))
                 })?
                 .unwrap_or(0);
-                
+
                 let _ = quota_tx.rollback().await;
 
                 if current_usage + (data.len() as i64) > DEFAULT_TENANT_STORAGE_QUOTA {
@@ -309,13 +312,17 @@ pub async fn upload_file(
             let _ = fs::remove_file(&quarantine_path).await;
 
             // Point B.9 & B.10: Record upload metadata in database for IDOR & authorization enforcement (Fail-Closed)
-            let mut tx = state.pool.begin().await.map_err(|e| {
-                AppError::Internal(format!("Failed to start transaction: {}", e))
-            })?;
-            
+            let mut tx =
+                state.pool.begin().await.map_err(|e| {
+                    AppError::Internal(format!("Failed to start transaction: {}", e))
+                })?;
+
             if let Err(e) = tenant_ctx.apply_to_transaction(&mut *tx).await {
                 let _ = fs::remove_file(&file_path).await;
-                return Err(AppError::Internal(format!("Failed to apply RLS context: {}", e)));
+                return Err(AppError::Internal(format!(
+                    "Failed to apply RLS context: {}",
+                    e
+                )));
             }
 
             let insert_res = sqlx::query(
@@ -339,7 +346,10 @@ pub async fn upload_file(
                 Ok(_) => {
                     if let Err(e) = tx.commit().await {
                         let _ = fs::remove_file(&file_path).await;
-                        return Err(AppError::Internal(format!("Failed to commit transaction: {}", e)));
+                        return Err(AppError::Internal(format!(
+                            "Failed to commit transaction: {}",
+                            e
+                        )));
                     }
                 }
                 Err(e) => {

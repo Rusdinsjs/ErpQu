@@ -2,13 +2,13 @@ extern crate proc_macro;
 
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{parse_macro_input, DeriveInput, Meta, LitStr, LitBool};
+use syn::{parse_macro_input, DeriveInput, LitBool, LitStr, Meta};
 
 #[proc_macro_derive(DocType, attributes(doctype))]
 pub fn doctype_derive(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
     let struct_name = &input.ident;
-    
+
     let mut module = String::new();
     let mut description = String::new();
     let mut is_submittable = false;

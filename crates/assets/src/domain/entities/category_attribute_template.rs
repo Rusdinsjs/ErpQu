@@ -1,5 +1,5 @@
-use management_system_macros::DocType;
 use chrono::{DateTime, Utc};
+use management_system_macros::DocType;
 use serde::{Deserialize, Serialize};
 use serde_json::Value as JsonValue;
 use sqlx::FromRow;
@@ -28,14 +28,20 @@ pub struct CategoryTemplateWithName {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, DocType)]
-#[doctype(module = "Assets", description = "Entity CreateCategoryAttributeTemplateRequest")]
+#[doctype(
+    module = "Assets",
+    description = "Entity CreateCategoryAttributeTemplateRequest"
+)]
 pub struct CreateCategoryAttributeTemplateRequest {
     pub category_id: Uuid,
     pub attributes: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, DocType)]
-#[doctype(module = "Assets", description = "Entity UpdateCategoryAttributeTemplateRequest")]
+#[doctype(
+    module = "Assets",
+    description = "Entity UpdateCategoryAttributeTemplateRequest"
+)]
 pub struct UpdateCategoryAttributeTemplateRequest {
     pub attributes: Vec<String>,
 }

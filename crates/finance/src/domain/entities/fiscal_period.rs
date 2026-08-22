@@ -1,5 +1,5 @@
-use management_system_macros::DocType;
 use chrono::{DateTime, NaiveDate, Utc};
+use management_system_macros::DocType;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -48,7 +48,10 @@ pub struct CreateFiscalYearRequest {
 
 /// Request to create an Accounting Period
 #[derive(Debug, Clone, Serialize, Deserialize, DocType)]
-#[doctype(module = "Finance", description = "Entity CreateAccountingPeriodRequest")]
+#[doctype(
+    module = "Finance",
+    description = "Entity CreateAccountingPeriodRequest"
+)]
 pub struct CreateAccountingPeriodRequest {
     pub fiscal_year_id: Uuid,
     pub period_name: String,

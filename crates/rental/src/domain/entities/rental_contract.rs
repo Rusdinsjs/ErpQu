@@ -2,8 +2,8 @@
 //!
 //! Contract management for rental agreements with lifecycle tracking
 
-use management_system_macros::DocType;
 use chrono::{DateTime, NaiveDate, Utc};
+use management_system_macros::DocType;
 
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;

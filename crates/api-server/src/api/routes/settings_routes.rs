@@ -4,7 +4,7 @@ use crate::api::middleware::rbac::admin_only_middleware;
 use crate::api::server::AppState;
 use axum::middleware as axum_middleware;
 use axum::{
-    routing::{get, put, post},
+    routing::{get, post, put},
     Router,
 };
 

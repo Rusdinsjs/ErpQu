@@ -1,5 +1,5 @@
-use management_system_macros::DocType;
 use chrono::{DateTime, Utc};
+use management_system_macros::DocType;
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
@@ -118,7 +118,10 @@ pub struct MaintenanceSchedule {
 }
 
 #[derive(Debug, Deserialize, DocType)]
-#[doctype(module = "Maintenance", description = "Entity CreateMaintenanceScheduleRequest")]
+#[doctype(
+    module = "Maintenance",
+    description = "Entity CreateMaintenanceScheduleRequest"
+)]
 pub struct CreateMaintenanceScheduleRequest {
     pub asset_id: Uuid,
     pub title: String,

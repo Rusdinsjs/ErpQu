@@ -3,8 +3,8 @@
 //! Asset loan management with complete workflow support.
 //!
 
-use management_system_macros::DocType;
 use chrono::{DateTime, NaiveDate, Utc};
+use management_system_macros::DocType;
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;

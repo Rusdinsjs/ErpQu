@@ -3,8 +3,8 @@
 //! Manages contract-related documents with versioning support
 //!
 
-use management_system_macros::DocType;
 use chrono::{DateTime, Utc};
+use management_system_macros::DocType;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
@@ -28,7 +28,10 @@ pub struct ContractDocument {
 }
 
 #[derive(Debug, Clone, Deserialize, DocType)]
-#[doctype(module = "Rentals", description = "Entity CreateContractDocumentRequest")]
+#[doctype(
+    module = "Rentals",
+    description = "Entity CreateContractDocumentRequest"
+)]
 pub struct CreateContractDocumentRequest {
     pub contract_id: Uuid,
     pub document_type: String,

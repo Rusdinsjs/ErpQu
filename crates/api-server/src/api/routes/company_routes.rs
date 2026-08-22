@@ -2,7 +2,10 @@
 
 use crate::api::handlers::company_handler;
 use crate::api::server::AppState;
-use axum::{routing::{get, post, put, delete}, Router};
+use axum::{
+    routing::{delete, get, post, put},
+    Router,
+};
 
 pub fn company_routes() -> Router<AppState> {
     Router::new()

@@ -62,7 +62,9 @@ fn is_company_exempt(path: &str) -> bool {
     if path == "/api/companies" {
         return true;
     }
-    COMPANY_EXEMPT_PREFIXES.iter().any(|prefix| path.starts_with(prefix))
+    COMPANY_EXEMPT_PREFIXES
+        .iter()
+        .any(|prefix| path.starts_with(prefix))
 }
 
 pub async fn tenant_middleware(
@@ -184,4 +186,3 @@ pub async fn tenant_middleware(
 
     Ok(next.run(request).await)
 }
-

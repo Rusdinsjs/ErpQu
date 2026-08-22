@@ -129,7 +129,9 @@ async fn main() {
 
     // Synchronize registered DocTypes to the database
     tracing::info!("Synchronizing DocTypes from registry...");
-    for doctype in inventory::iter::<management_system_core::shared::doctype_registry::DocTypeRegistration> {
+    for doctype in
+        inventory::iter::<management_system_core::shared::doctype_registry::DocTypeRegistration>
+    {
         let result = sqlx::query(
             r#"
             INSERT INTO doctypes (name, module, description, is_submittable) 
@@ -138,7 +140,7 @@ async fn main() {
                 module = EXCLUDED.module, 
                 description = EXCLUDED.description, 
                 is_submittable = EXCLUDED.is_submittable
-            "#
+            "#,
         )
         .bind(doctype.name)
         .bind(doctype.module)

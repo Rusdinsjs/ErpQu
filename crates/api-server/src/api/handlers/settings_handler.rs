@@ -90,7 +90,6 @@ pub async fn get_public_settings(
     }))
 }
 
-
 /// Reset Database (Super Admin Only)
 #[utoipa::path(
     post,
@@ -108,7 +107,9 @@ pub async fn reset_database(
     Extension(claims): Extension<UserClaims>,
 ) -> Result<Json<ApiResponse<serde_json::Value>>, AppError> {
     if claims.role != "super_admin" {
-        return Err(AppError::Forbidden("Only super_admin can reset the database".to_string()));
+        return Err(AppError::Forbidden(
+            "Only super_admin can reset the database".to_string(),
+        ));
     }
 
     let sql = r#"

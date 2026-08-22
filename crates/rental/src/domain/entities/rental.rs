@@ -4,8 +4,8 @@
 //! Supports Multi-Asset Rentals (1 Rental Agreement -> Many Rental Items).
 //!
 
-use management_system_macros::DocType;
 use chrono::{DateTime, NaiveDate, Utc};
+use management_system_macros::DocType;
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;

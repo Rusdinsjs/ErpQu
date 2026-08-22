@@ -1,7 +1,7 @@
 //! Company Entity Master (QTEN-004)
 
-use management_system_macros::DocType;
 use chrono::{DateTime, Utc};
+use management_system_macros::DocType;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 

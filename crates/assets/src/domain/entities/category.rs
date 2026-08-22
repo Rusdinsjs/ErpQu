@@ -2,8 +2,8 @@
 //!
 //! Hierarchical categories for asset classification with custom attributes per category.
 
-use management_system_macros::DocType;
 use chrono::{DateTime, Utc};
+use management_system_macros::DocType;
 use serde::{Deserialize, Serialize};
 use serde_json::Value as JsonValue;
 use sqlx::FromRow;

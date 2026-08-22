@@ -3,8 +3,8 @@
 //! Multi-level location hierarchy: Country → City → Building → Floor → Room → Rack
 //!
 
-use management_system_macros::DocType;
 use chrono::{DateTime, Utc};
+use management_system_macros::DocType;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use std::str::FromStr;

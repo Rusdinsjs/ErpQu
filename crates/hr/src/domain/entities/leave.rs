@@ -1,5 +1,5 @@
-use management_system_macros::DocType;
 use chrono::{DateTime, NaiveDate, Utc};
+use management_system_macros::DocType;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use std::str::FromStr;

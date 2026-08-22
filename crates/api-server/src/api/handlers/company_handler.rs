@@ -831,7 +831,12 @@ pub async fn setup_wizard_create_company(
             .bind(&deed.description)
             .execute(pool)
             .await
-            .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("Failed to save amendment deed: {}", e)))?;
+            .map_err(|e| {
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    format!("Failed to save amendment deed: {}", e),
+                )
+            })?;
         }
     }
 
@@ -848,7 +853,12 @@ pub async fn setup_wizard_create_company(
     .bind(new_id.to_string())
     .execute(pool)
     .await
-    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, format!("Failed to assign company membership: {}", e)))?;
+    .map_err(|e| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("Failed to assign company membership: {}", e),
+        )
+    })?;
 
     // 4. Update employee record if exists
     let _ = sqlx::query(
@@ -861,7 +871,9 @@ pub async fn setup_wizard_create_company(
 
     tracing::info!(
         "SETUP WIZARD: User {} created company {} ({}) and was auto-assigned membership",
-        claims.email, payload.name, new_id
+        claims.email,
+        payload.name,
+        new_id
     );
 
     Ok(Json(serde_json::json!({

@@ -2,8 +2,8 @@
 //!
 //! Daily operation logs for rental assets.
 
-use management_system_macros::DocType;
 use chrono::{DateTime, NaiveDate, NaiveTime, Utc};
+use management_system_macros::DocType;
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;

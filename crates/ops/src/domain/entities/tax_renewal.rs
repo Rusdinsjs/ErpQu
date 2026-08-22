@@ -1,5 +1,5 @@
-use management_system_macros::DocType;
 use chrono::{DateTime, NaiveDate, Utc};
+use management_system_macros::DocType;
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
@@ -34,7 +34,10 @@ pub struct CreateTaxRenewalRequest {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, utoipa::ToSchema, DocType)]
-#[doctype(module = "Maintenance", description = "Entity UpdateTaxRenewalCostRequest")]
+#[doctype(
+    module = "Maintenance",
+    description = "Entity UpdateTaxRenewalCostRequest"
+)]
 pub struct UpdateTaxRenewalCostRequest {
     pub renewal_cost: Decimal,
     pub notes: Option<String>,
@@ -43,7 +46,10 @@ pub struct UpdateTaxRenewalCostRequest {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, utoipa::ToSchema, DocType)]
-#[doctype(module = "Maintenance", description = "Entity ApproveTaxRenewalRequest")]
+#[doctype(
+    module = "Maintenance",
+    description = "Entity ApproveTaxRenewalRequest"
+)]
 pub struct ApproveTaxRenewalRequest {
     pub notes: Option<String>,
 }

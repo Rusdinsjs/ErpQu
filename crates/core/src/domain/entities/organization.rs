@@ -2,8 +2,8 @@
 //!
 //! Multi-tenant organization support with hierarchical structure.
 
-use management_system_macros::DocType;
 use chrono::{DateTime, Utc};
+use management_system_macros::DocType;
 use rust_decimal::Decimal;
 use serde::{Deserialize, Serialize};
 use serde_json::Value as JsonValue;
