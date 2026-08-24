@@ -4,7 +4,6 @@ import { Save, Globe, Palette, Bot, Play, Sparkles, Eye, EyeOff, CheckCircle2, L
 import { useTheme } from '../contexts/ThemeContext';
 import { settingsApi } from '../api/settings';
 import { aiApi } from '../api/ai';
-import { WorkflowBuilder } from './Settings/WorkflowBuilder';
 
 import {
     Button,
@@ -160,13 +159,6 @@ export default function Settings() {
                                 className="w-full justify-start px-4 py-3 data-[state=active]:bg-orange-600/10 data-[state=active]:text-orange-400"
                             >
                                 Launchpad
-                            </TabsTrigger>
-                            <TabsTrigger
-                                value="workflow" 
-                                icon={<GitMerge size={16} />}
-                                className="w-full justify-start px-4 py-3 data-[state=active]:bg-cyan-600/10 data-[state=active]:text-cyan-400"
-                            >
-                                Workflow Builder
                             </TabsTrigger>
                         </TabsList>
                     </div>
@@ -649,9 +641,6 @@ export default function Settings() {
                                 onSave={handleSave}
                                 isSaving={updateMutation.isPending}
                             />
-                        </TabsContent>
-                        <TabsContent value="workflow" className="mt-0 space-y-6">
-                            <WorkflowBuilder />
                         </TabsContent>
                     </div>
                 </Tabs>

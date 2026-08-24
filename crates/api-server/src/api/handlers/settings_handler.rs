@@ -112,24 +112,76 @@ pub async fn reset_database(
         ));
     }
 
+    // Tables to preserve during factory reset
+    // users, roles, user_roles: user accounts & RBAC
+    // settings: system configuration
+    // _sqlx_migrations: migration tracking
+    // refresh_tokens, user_sessions: active auth sessions (so current user stays logged in)
+    // uploads: uploaded file metadata
     let sql = r#"
 DO $$
 DECLARE
     row RECORD;
+    fk RECORD;
     truncate_stmt TEXT := '';
+    preserved_tables TEXT[] := ARRAY[
+        'users', 'roles', 'user_roles', '_sqlx_migrations',
+        'settings', 'refresh_tokens', 'user_sessions',
+        'tenant_storage_quotas', 'uploads'
+    ];
+    dropped_fks TEXT[][] := ARRAY[]::TEXT[][];
 BEGIN
-    ALTER TABLE public.users DROP CONSTRAINT IF EXISTS users_department_id_fkey;
-    ALTER TABLE public.users DROP CONSTRAINT IF EXISTS users_organization_id_fkey;
-    ALTER TABLE public.user_roles DROP CONSTRAINT IF EXISTS user_roles_organization_id_fkey;
-    
-    UPDATE public.users SET department_id = NULL, organization_id = NULL;
-    UPDATE public.user_roles SET organization_id = NULL;
+    -- Phase 1: Discover and drop all FK constraints from preserved tables
+    -- that reference tables which WILL be truncated
+    FOR fk IN
+        SELECT
+            tc.table_schema AS src_schema,
+            tc.table_name AS src_table,
+            tc.constraint_name,
+            kcu.column_name,
+            ccu.table_schema AS ref_schema,
+            ccu.table_name AS ref_table,
+            ccu.column_name AS ref_column,
+            rc.delete_rule
+        FROM information_schema.table_constraints tc
+        JOIN information_schema.key_column_usage kcu
+            ON tc.constraint_name = kcu.constraint_name
+            AND tc.table_schema = kcu.table_schema
+        JOIN information_schema.constraint_column_usage ccu
+            ON tc.constraint_name = ccu.constraint_name
+            AND tc.table_schema = ccu.table_schema
+        JOIN information_schema.referential_constraints rc
+            ON tc.constraint_name = rc.constraint_name
+            AND tc.table_schema = rc.constraint_schema
+        WHERE tc.constraint_type = 'FOREIGN KEY'
+          AND tc.table_name = ANY(preserved_tables)
+          AND NOT (ccu.table_name = ANY(preserved_tables))
+          AND tc.table_schema IN ('public', 'hr', 'crm', 'rental', 'inventory', 'commercial')
+    LOOP
+        -- Null out the FK column in the preserved table
+        EXECUTE format(
+            'UPDATE %I.%I SET %I = NULL WHERE %I IS NOT NULL',
+            fk.src_schema, fk.src_table, fk.column_name, fk.column_name
+        );
+        -- Drop the FK constraint
+        EXECUTE format(
+            'ALTER TABLE %I.%I DROP CONSTRAINT IF EXISTS %I',
+            fk.src_schema, fk.src_table, fk.constraint_name
+        );
+        -- Remember for re-creation
+        dropped_fks := dropped_fks || ARRAY[[
+            fk.src_schema, fk.src_table, fk.constraint_name,
+            fk.column_name, fk.ref_schema, fk.ref_table, fk.ref_column,
+            fk.delete_rule
+        ]];
+    END LOOP;
 
+    -- Phase 2: Build TRUNCATE statement for all non-preserved tables
     FOR row IN
-        SELECT schemaname, tablename 
-        FROM pg_tables 
+        SELECT schemaname, tablename
+        FROM pg_tables
         WHERE schemaname IN ('public', 'hr', 'crm', 'rental', 'inventory', 'commercial')
-          AND tablename NOT IN ('users', 'roles', 'user_roles', '_sqlx_migrations')
+          AND NOT (tablename = ANY(preserved_tables))
     LOOP
         truncate_stmt := truncate_stmt || quote_ident(row.schemaname) || '.' || quote_ident(row.tablename) || ', ';
     END LOOP;
@@ -139,9 +191,26 @@ BEGIN
         EXECUTE truncate_stmt;
     END IF;
 
-    ALTER TABLE public.users ADD CONSTRAINT users_department_id_fkey FOREIGN KEY (department_id) REFERENCES public.departments(id) ON DELETE RESTRICT;
-    ALTER TABLE public.users ADD CONSTRAINT users_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES public.organizations(id) ON DELETE RESTRICT;
-    ALTER TABLE public.user_roles ADD CONSTRAINT user_roles_organization_id_fkey FOREIGN KEY (organization_id) REFERENCES public.organizations(id) ON DELETE CASCADE;
+    -- Phase 3: Re-create dropped FK constraints
+    FOR i IN 1..coalesce(array_length(dropped_fks, 1), 0) LOOP
+        BEGIN
+            EXECUTE format(
+                'ALTER TABLE %I.%I ADD CONSTRAINT %I FOREIGN KEY (%I) REFERENCES %I.%I(%I) ON DELETE %s',
+                dropped_fks[i][1], dropped_fks[i][2], dropped_fks[i][3],
+                dropped_fks[i][4],
+                dropped_fks[i][5], dropped_fks[i][6], dropped_fks[i][7],
+                CASE dropped_fks[i][8]
+                    WHEN 'CASCADE' THEN 'CASCADE'
+                    WHEN 'SET NULL' THEN 'SET NULL'
+                    WHEN 'SET DEFAULT' THEN 'SET DEFAULT'
+                    WHEN 'NO ACTION' THEN 'NO ACTION'
+                    ELSE 'RESTRICT'
+                END
+            );
+        EXCEPTION WHEN OTHERS THEN
+            RAISE NOTICE 'Could not re-create FK constraint %: %', dropped_fks[i][3], SQLERRM;
+        END;
+    END LOOP;
 END $$;
 "#;
 

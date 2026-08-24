@@ -26,7 +26,7 @@ export default function SystemReset() {
             window.location.href = '/setup-wizard';
         },
         onError: (err: any) => {
-            toast.error(err.response?.data?.message || 'Failed to reset database');
+            toast.error(err.response?.data?.error || err.response?.data?.message || 'Failed to reset database');
         },
     });
 
