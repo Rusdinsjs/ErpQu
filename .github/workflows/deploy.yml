@@ -146,7 +146,7 @@ jobs:
 
             # Run migrations (fail-closed)
             echo ">> Running database migrations..."
-            docker compose -f docker-compose.prod.yml run --rm migrate || {
+            docker compose -f docker-compose.prod.yml run --rm --build migrate || {
                 echo "═══════════════════════════════════════"
                 echo "CRITICAL: Migration FAILED!"
                 echo "Production database is UNCHANGED."

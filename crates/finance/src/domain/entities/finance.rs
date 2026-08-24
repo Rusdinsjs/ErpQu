@@ -149,6 +149,7 @@ pub struct SalesInvoice {
     pub journal_status: Option<JournalStatus>,
     pub created_at: DateTime<Utc>,
     pub attachment_url: Option<String>,
+    pub company_id: Option<Uuid>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, DocType)]
@@ -214,6 +215,7 @@ pub struct PurchaseBill {
     pub journal_entry_id: Option<Uuid>,
     pub created_at: DateTime<Utc>,
     pub attachment_url: Option<String>,
+    pub company_id: Option<Uuid>,
 }
 
 #[derive(Debug, Deserialize, DocType)]
@@ -252,6 +254,7 @@ pub struct Expense {
     pub journal_entry_id: Option<Uuid>,
     pub created_at: DateTime<Utc>,
     pub attachment_url: Option<String>,
+    pub company_id: Option<Uuid>,
 }
 
 #[derive(Debug, Deserialize, DocType)]
@@ -282,6 +285,7 @@ pub struct CashBankTransaction {
     pub description: Option<String>,
     pub journal_entry_id: Option<Uuid>,
     pub created_at: DateTime<Utc>,
+    pub company_id: Option<Uuid>,
 }
 
 #[derive(Debug, Deserialize, DocType)]
@@ -318,6 +322,7 @@ pub struct SalesQuote {
     pub total_amount: Decimal,
     pub status: String,
     pub created_at: DateTime<Utc>,
+    pub company_id: Option<Uuid>,
 }
 
 #[derive(Debug, Deserialize, DocType)]
@@ -346,6 +351,7 @@ pub struct SalesOrder {
     pub total_amount: Decimal,
     pub status: String,
     pub created_at: DateTime<Utc>,
+    pub company_id: Option<Uuid>,
 }
 
 #[derive(Debug, Deserialize, DocType)]
@@ -373,6 +379,7 @@ pub struct SalesShipment {
     pub tracking_number: Option<String>,
     pub status: String,
     pub created_at: DateTime<Utc>,
+    pub company_id: Option<Uuid>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, DocType)]
@@ -426,6 +433,7 @@ pub struct PurchaseQuote {
     pub total_amount: Decimal,
     pub status: String,
     pub created_at: DateTime<Utc>,
+    pub company_id: Option<Uuid>,
 }
 
 #[derive(Debug, Deserialize, DocType)]
@@ -455,6 +463,7 @@ pub struct PurchaseOrder {
     pub status: String,
     pub budget_type: String,
     pub created_at: DateTime<Utc>,
+    pub company_id: Option<Uuid>,
 }
 
 #[derive(Debug, Deserialize, DocType)]
@@ -482,6 +491,7 @@ pub struct PurchaseShipment {
     pub tracking_number: Option<String>,
     pub status: String,
     pub created_at: DateTime<Utc>,
+    pub company_id: Option<Uuid>,
 }
 
 #[derive(Debug, Deserialize, DocType)]

@@ -86,6 +86,7 @@ struct SalesInvoiceRow {
     journal_entry_id: Option<Uuid>,
     created_at: chrono::DateTime<chrono::Utc>,
     attachment_url: Option<String>,
+    company_id: Option<Uuid>,
 }
 
 impl From<SalesInvoiceRow> for SalesInvoice {
@@ -106,6 +107,7 @@ impl From<SalesInvoiceRow> for SalesInvoice {
             journal_status: None,
             created_at: r.created_at,
             attachment_url: r.attachment_url,
+            company_id: r.company_id,
         }
     }
 }
@@ -149,6 +151,7 @@ struct PurchaseBillRow {
     journal_entry_id: Option<Uuid>,
     created_at: chrono::DateTime<chrono::Utc>,
     attachment_url: Option<String>,
+    company_id: Option<Uuid>,
 }
 
 impl From<PurchaseBillRow> for PurchaseBill {
@@ -166,6 +169,7 @@ impl From<PurchaseBillRow> for PurchaseBill {
             journal_entry_id: r.journal_entry_id,
             created_at: r.created_at,
             attachment_url: r.attachment_url,
+            company_id: r.company_id,
         }
     }
 }
@@ -183,6 +187,7 @@ struct ExpenseRow {
     journal_entry_id: Option<Uuid>,
     created_at: chrono::DateTime<chrono::Utc>,
     attachment_url: Option<String>,
+    company_id: Option<Uuid>,
 }
 
 impl From<ExpenseRow> for Expense {
@@ -199,6 +204,7 @@ impl From<ExpenseRow> for Expense {
             journal_entry_id: r.journal_entry_id,
             created_at: r.created_at,
             attachment_url: r.attachment_url,
+            company_id: r.company_id,
         }
     }
 }
@@ -217,6 +223,7 @@ struct CashBankTransactionRow {
     description: Option<String>,
     journal_entry_id: Option<Uuid>,
     created_at: chrono::DateTime<chrono::Utc>,
+    company_id: Option<Uuid>,
 }
 
 impl From<CashBankTransactionRow> for CashBankTransaction {
@@ -234,6 +241,7 @@ impl From<CashBankTransactionRow> for CashBankTransaction {
             description: r.description,
             journal_entry_id: r.journal_entry_id,
             created_at: r.created_at,
+            company_id: r.company_id,
         }
     }
 }
@@ -251,6 +259,7 @@ struct SalesQuoteRow {
     total_amount: Decimal,
     status: String,
     created_at: chrono::DateTime<chrono::Utc>,
+    company_id: Option<Uuid>,
 }
 
 impl From<SalesQuoteRow> for SalesQuote {
@@ -267,6 +276,7 @@ impl From<SalesQuoteRow> for SalesQuote {
             total_amount: r.total_amount,
             status: r.status,
             created_at: r.created_at,
+            company_id: r.company_id,
         }
     }
 }
@@ -285,6 +295,7 @@ struct SalesOrderRow {
     total_amount: Decimal,
     status: String,
     created_at: chrono::DateTime<chrono::Utc>,
+    company_id: Option<Uuid>,
 }
 
 impl From<SalesOrderRow> for SalesOrder {
@@ -302,6 +313,7 @@ impl From<SalesOrderRow> for SalesOrder {
             total_amount: r.total_amount,
             status: r.status,
             created_at: r.created_at,
+            company_id: r.company_id,
         }
     }
 }
@@ -318,6 +330,7 @@ struct SalesShipmentRow {
     tracking_number: Option<String>,
     status: String,
     created_at: chrono::DateTime<chrono::Utc>,
+    company_id: Option<Uuid>,
 }
 
 impl From<SalesShipmentRow> for SalesShipment {
@@ -333,6 +346,7 @@ impl From<SalesShipmentRow> for SalesShipment {
             tracking_number: r.tracking_number,
             status: r.status,
             created_at: r.created_at,
+            company_id: r.company_id,
         }
     }
 }
@@ -437,6 +451,7 @@ struct PurchaseQuoteRow {
     total_amount: Decimal,
     status: String,
     created_at: chrono::DateTime<chrono::Utc>,
+    company_id: Option<Uuid>,
 }
 
 impl From<PurchaseQuoteRow> for PurchaseQuote {
@@ -453,6 +468,7 @@ impl From<PurchaseQuoteRow> for PurchaseQuote {
             total_amount: r.total_amount,
             status: r.status,
             created_at: r.created_at,
+            company_id: r.company_id,
         }
     }
 }
@@ -472,6 +488,7 @@ struct PurchaseOrderRow {
     status: String,
     budget_type: String,
     created_at: chrono::DateTime<chrono::Utc>,
+    company_id: Option<Uuid>,
 }
 
 impl From<PurchaseOrderRow> for PurchaseOrder {
@@ -490,6 +507,7 @@ impl From<PurchaseOrderRow> for PurchaseOrder {
             status: r.status,
             budget_type: r.budget_type,
             created_at: r.created_at,
+            company_id: r.company_id,
         }
     }
 }
@@ -505,6 +523,7 @@ struct PurchaseShipmentRow {
     tracking_number: Option<String>,
     status: String,
     created_at: chrono::DateTime<chrono::Utc>,
+    company_id: Option<Uuid>,
 }
 
 impl From<PurchaseShipmentRow> for PurchaseShipment {
@@ -519,6 +538,7 @@ impl From<PurchaseShipmentRow> for PurchaseShipment {
             tracking_number: r.tracking_number,
             status: r.status,
             created_at: r.created_at,
+            company_id: r.company_id,
         }
     }
 }
@@ -595,12 +615,13 @@ impl FinanceRepository {
             r#"
             INSERT INTO sales_invoices (
                 id, invoice_number, client_id, date, due_date, subject, 
-                subtotal, tax, total_amount, amount_paid, status, journal_entry_id, attachment_url
+                subtotal, tax, total_amount, amount_paid, status, journal_entry_id, attachment_url,
+                company_id
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
             RETURNING id, invoice_number, client_id, date, due_date, subject, 
                       subtotal, tax, total_amount, amount_paid, 
-                      status, journal_entry_id, created_at, attachment_url
+                      status, journal_entry_id, created_at, attachment_url, company_id
             "#,
         )
         .bind(invoice.id)
@@ -616,6 +637,7 @@ impl FinanceRepository {
         .bind(&invoice.status)
         .bind(invoice.journal_entry_id)
         .bind(&invoice.attachment_url)
+        .bind(invoice.company_id)
         .fetch_one(uow.conn())
         .await
         .map_err(|e| DomainError::Database(e.to_string()))?;
@@ -663,11 +685,11 @@ impl FinanceRepository {
             UPDATE sales_invoices
             SET invoice_number = $1, client_id = $2, date = $3, due_date = $4, subject = $5,
                 subtotal = $6, tax = $7, total_amount = $8, amount_paid = $9, status = $10,
-                attachment_url = $11
-            WHERE id = $12
+                attachment_url = $11, company_id = COALESCE($12, company_id)
+            WHERE id = $13
             RETURNING id, invoice_number, client_id, date, due_date, subject, 
                       subtotal, tax, total_amount, amount_paid, 
-                      status, journal_entry_id, created_at, attachment_url
+                      status, journal_entry_id, created_at, attachment_url, company_id
             "#,
         )
         .bind(&invoice.invoice_number)
@@ -681,6 +703,7 @@ impl FinanceRepository {
         .bind(invoice.amount_paid)
         .bind(&invoice.status)
         .bind(&invoice.attachment_url)
+        .bind(invoice.company_id)
         .bind(invoice.id)
         .fetch_one(uow.conn())
         .await
@@ -729,7 +752,7 @@ impl FinanceRepository {
             r#"
             SELECT id, invoice_number, client_id, date, due_date, subject, 
                    subtotal, tax, total_amount, amount_paid, 
-                   status, journal_entry_id, created_at, attachment_url
+                   status, journal_entry_id, created_at, attachment_url, company_id
             FROM sales_invoices
             WHERE id = $1
             "#,
@@ -766,7 +789,7 @@ impl FinanceRepository {
             r#"
             SELECT id, invoice_number, client_id, date, due_date, subject, 
                    subtotal, tax, total_amount, amount_paid, 
-                   status, journal_entry_id, created_at, attachment_url
+                   status, journal_entry_id, created_at, attachment_url, company_id
             FROM sales_invoices
             ORDER BY created_at DESC
             "#,
@@ -1014,9 +1037,9 @@ impl FinanceRepository {
     pub async fn create_purchase_bill(&self, bill: &PurchaseBill) -> DomainResult<PurchaseBill> {
         let row = sqlx::query_as::<_, PurchaseBillRow>(
             r#"
-            INSERT INTO purchase_bills (id, bill_number, vendor_id, date, due_date, total_amount, amount_paid, status, budget_type, journal_entry_id, created_at, attachment_url)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-            RETURNING id, bill_number, vendor_id, date, due_date, total_amount, amount_paid, status, budget_type, journal_entry_id, created_at, attachment_url
+            INSERT INTO purchase_bills (id, bill_number, vendor_id, date, due_date, total_amount, amount_paid, status, budget_type, journal_entry_id, created_at, attachment_url, company_id)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+            RETURNING id, bill_number, vendor_id, date, due_date, total_amount, amount_paid, status, budget_type, journal_entry_id, created_at, attachment_url, company_id
             "#,
         )
         .bind(bill.id)
@@ -1031,6 +1054,7 @@ impl FinanceRepository {
         .bind(bill.journal_entry_id)
         .bind(bill.created_at)
         .bind(&bill.attachment_url)
+        .bind(bill.company_id)
         .fetch_one(&self.pool)
         .await
         .map_err(|e| DomainError::Database(e.to_string()))?;
@@ -1045,9 +1069,9 @@ impl FinanceRepository {
     ) -> DomainResult<PurchaseBill> {
         let row = sqlx::query_as::<_, PurchaseBillRow>(
             r#"
-            INSERT INTO purchase_bills (id, bill_number, vendor_id, date, due_date, total_amount, amount_paid, status, budget_type, journal_entry_id, created_at, attachment_url)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-            RETURNING id, bill_number, vendor_id, date, due_date, total_amount, amount_paid, status, budget_type, journal_entry_id, created_at, attachment_url
+            INSERT INTO purchase_bills (id, bill_number, vendor_id, date, due_date, total_amount, amount_paid, status, budget_type, journal_entry_id, created_at, attachment_url, company_id)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+            RETURNING id, bill_number, vendor_id, date, due_date, total_amount, amount_paid, status, budget_type, journal_entry_id, created_at, attachment_url, company_id
             "#,
         )
         .bind(bill.id)
@@ -1062,6 +1086,7 @@ impl FinanceRepository {
         .bind(bill.journal_entry_id)
         .bind(bill.created_at)
         .bind(&bill.attachment_url)
+        .bind(bill.company_id)
         .fetch_one(uow.conn())
         .await
         .map_err(|e| DomainError::Database(e.to_string()))?;
@@ -1076,9 +1101,9 @@ impl FinanceRepository {
     ) -> DomainResult<Expense> {
         let row = sqlx::query_as::<_, ExpenseRow>(
             r#"
-            INSERT INTO expenses (id, expense_number, date, pay_from_account_id, recipient, total_amount, status, expense_type, journal_entry_id, created_at, attachment_url)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-            RETURNING id, expense_number, date, pay_from_account_id, recipient, total_amount, status, expense_type, journal_entry_id, created_at, attachment_url
+            INSERT INTO expenses (id, expense_number, date, pay_from_account_id, recipient, total_amount, status, expense_type, journal_entry_id, created_at, attachment_url, company_id)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+            RETURNING id, expense_number, date, pay_from_account_id, recipient, total_amount, status, expense_type, journal_entry_id, created_at, attachment_url, company_id
             "#,
         )
         .bind(expense.id)
@@ -1092,6 +1117,7 @@ impl FinanceRepository {
         .bind(expense.journal_entry_id)
         .bind(expense.created_at)
         .bind(&expense.attachment_url)
+        .bind(expense.company_id)
         .fetch_one(uow.conn())
         .await
         .map_err(|e| DomainError::Database(e.to_string()))?;
@@ -1102,7 +1128,7 @@ impl FinanceRepository {
     pub async fn list_purchase_bills(&self) -> DomainResult<Vec<PurchaseBill>> {
         let rows = sqlx::query_as::<_, PurchaseBillRow>(
             r#"
-            SELECT id, bill_number, vendor_id, date, due_date, total_amount, amount_paid, status, budget_type, journal_entry_id, created_at, attachment_url
+            SELECT id, bill_number, vendor_id, date, due_date, total_amount, amount_paid, status, budget_type, journal_entry_id, created_at, attachment_url, company_id
             FROM purchase_bills
             ORDER BY created_at DESC
             "#,
@@ -1117,9 +1143,9 @@ impl FinanceRepository {
     pub async fn create_expense(&self, expense: &Expense) -> DomainResult<Expense> {
         let row = sqlx::query_as::<_, ExpenseRow>(
             r#"
-            INSERT INTO expenses (id, expense_number, date, pay_from_account_id, recipient, total_amount, status, expense_type, journal_entry_id, created_at, attachment_url)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-            RETURNING id, expense_number, date, pay_from_account_id, recipient, total_amount, status, expense_type, journal_entry_id, created_at, attachment_url
+            INSERT INTO expenses (id, expense_number, date, pay_from_account_id, recipient, total_amount, status, expense_type, journal_entry_id, created_at, attachment_url, company_id)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+            RETURNING id, expense_number, date, pay_from_account_id, recipient, total_amount, status, expense_type, journal_entry_id, created_at, attachment_url, company_id
             "#,
         )
         .bind(expense.id)
@@ -1133,6 +1159,7 @@ impl FinanceRepository {
         .bind(expense.journal_entry_id)
         .bind(expense.created_at)
         .bind(&expense.attachment_url)
+        .bind(expense.company_id)
         .fetch_one(&self.pool)
         .await
         .map_err(|e| DomainError::Database(e.to_string()))?;
@@ -1143,7 +1170,7 @@ impl FinanceRepository {
     pub async fn list_expenses(&self) -> DomainResult<Vec<Expense>> {
         let rows = sqlx::query_as::<_, ExpenseRow>(
             r#"
-            SELECT id, expense_number, date, pay_from_account_id, recipient, total_amount, status, expense_type, journal_entry_id, created_at, attachment_url
+            SELECT id, expense_number, date, pay_from_account_id, recipient, total_amount, status, expense_type, journal_entry_id, created_at, attachment_url, company_id
             FROM expenses
             ORDER BY created_at DESC
             "#,

@@ -357,6 +357,7 @@ impl FinanceService {
             journal_status: None,
             created_at: Utc::now(),
             attachment_url: req.attachment_url,
+            company_id: Some(company_id),
         };
 
         // 1. Find Accounts (Piutang & Penjualan)
@@ -404,7 +405,7 @@ impl FinanceService {
 
         // 5. Create Draft Journal Entry in the SAME UnitOfWork
         let journal_req = CreateJournalEntryRequest {
-            company_id: None,
+            company_id: Some(company_id),
             date: created_invoice.date,
             description: format!(
                 "Penjualan: {} - {}",
@@ -725,6 +726,7 @@ impl FinanceService {
             journal_entry_id: None,
             created_at: Utc::now(),
             attachment_url: req.attachment_url,
+            company_id: None,
         };
 
         let mut uow = UnitOfWork::begin(self.repo.pool()).await?;
@@ -811,6 +813,7 @@ impl FinanceService {
             journal_entry_id: None,
             created_at: Utc::now(),
             attachment_url: req.attachment_url,
+            company_id: None,
         };
 
         let mut uow = UnitOfWork::begin(self.repo.pool()).await?;
@@ -898,6 +901,7 @@ impl FinanceService {
             description: req.description,
             journal_entry_id: None,
             created_at: Utc::now(),
+            company_id: None,
         };
 
         let mut uow = UnitOfWork::begin(self.repo.pool()).await?;
@@ -974,6 +978,7 @@ impl FinanceService {
             total_amount: total,
             status: "draft".to_string(),
             created_at: Utc::now(),
+            company_id: None,
         };
         self.repo.create_sales_quote(&quote).await
     }
@@ -1001,6 +1006,7 @@ impl FinanceService {
             total_amount: total,
             status: "draft".to_string(),
             created_at: Utc::now(),
+            company_id: None,
         };
         self.repo.create_sales_order(&order).await
     }
@@ -1025,6 +1031,7 @@ impl FinanceService {
             tracking_number: req.tracking_number,
             status: "pending".to_string(),
             created_at: Utc::now(),
+            company_id: None,
         };
 
         let items: Vec<SalesShipmentItem> = req
@@ -1064,6 +1071,7 @@ impl FinanceService {
             total_amount: total,
             status: "draft".to_string(),
             created_at: Utc::now(),
+            company_id: None,
         };
         self.repo.create_purchase_quote(&quote).await
     }
@@ -1091,6 +1099,7 @@ impl FinanceService {
             status: "draft".to_string(),
             budget_type: req.budget_type.unwrap_or_else(|| "OPEX".to_string()),
             created_at: Utc::now(),
+            company_id: None,
         };
         let po = self.repo.create_purchase_order(&order).await?;
         Ok(po)
@@ -1114,6 +1123,7 @@ impl FinanceService {
             tracking_number: req.tracking_number,
             status: "received".to_string(),
             created_at: Utc::now(),
+            company_id: None,
         };
         self.repo.create_purchase_shipment(&shipment).await
     }
