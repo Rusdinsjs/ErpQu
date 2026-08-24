@@ -37,15 +37,26 @@ fn service(pool: &PgPool) -> FinanceService {
     )
 }
 
+/// Return a company_id that satisfies the FK on sales_invoices / journal_entries.
+/// The migration 20260808200000 seeds this well-known company.
+const SEEDED_COMPANY_ID: &str = "c0000000-0000-0000-0000-000000000001";
+
+fn company_id() -> Uuid {
+    SEEDED_COMPANY_ID.parse().unwrap()
+}
+
 async fn seed_client(pool: &PgPool) -> Uuid {
     let id = Uuid::new_v4();
-    sqlx::query("INSERT INTO crm.clients (id, client_code, name) VALUES ($1, $2, $3)")
-        .bind(id)
-        .bind(format!("TEST-{}", &id.to_string()[..8]))
-        .bind("3R.1.1 Test Client")
-        .execute(pool)
-        .await
-        .expect("seed client");
+    sqlx::query(
+        "INSERT INTO crm.clients (id, client_code, name, company_id) VALUES ($1, $2, $3, $4)",
+    )
+    .bind(id)
+    .bind(format!("TEST-{}", &id.to_string()[..8]))
+    .bind("3R.1.1 Test Client")
+    .bind(company_id())
+    .execute(pool)
+    .await
+    .expect("seed client");
     id
 }
 
@@ -101,7 +112,7 @@ async fn create_persists_header_lines_journal_audit_outbox_and_idempotency(pool:
     let created = service(&pool)
         .create_sales_invoice(
             Uuid::new_v4(),
-            Uuid::new_v4(),
+            company_id(),
             number("IDEM"),
             CreateSalesInvoiceRequest {
                 items: vec![
@@ -171,7 +182,7 @@ async fn update_add_remove_lines_and_rebuild_draft_effect_atomically(pool: PgPoo
     let created = svc
         .create_sales_invoice(
             Uuid::new_v4(),
-            Uuid::new_v4(),
+            company_id(),
             number("IDEM"),
             request(client, number("INV/UPDATE"), dec!(1000.0000)),
         )
@@ -204,7 +215,7 @@ async fn update_add_remove_lines_and_rebuild_draft_effect_atomically(pool: PgPoo
     let updated = svc
         .update_sales_invoice(
             Uuid::new_v4(),
-            Uuid::new_v4(),
+            company_id(),
             number("IDEM"),
             created.id,
             update,
@@ -242,7 +253,7 @@ async fn empty_lines_are_rejected_without_db_effects(pool: PgPool) {
     let mut req = request(client, invoice_number.clone(), dec!(1));
     req.items.clear();
     let result = service(&pool)
-        .create_sales_invoice(Uuid::new_v4(), Uuid::new_v4(), number("IDEM"), req)
+        .create_sales_invoice(Uuid::new_v4(), company_id(), number("IDEM"), req)
         .await;
     assert!(result.is_err());
     let count: i64 =
@@ -262,7 +273,7 @@ async fn line_failure_rolls_back_header_and_lines(pool: PgPool) {
     let result = service(&pool)
         .create_sales_invoice(
             Uuid::new_v4(),
-            Uuid::new_v4(),
+            company_id(),
             number("IDEM"),
             request(client, invoice_number.clone(), dec!(10)),
         )
@@ -286,7 +297,7 @@ async fn journal_failure_rolls_back_invoice_lines_audit_outbox_and_idempotency(p
     let result = service(&pool)
         .create_sales_invoice(
             Uuid::new_v4(),
-            Uuid::new_v4(),
+            company_id(),
             key.clone(),
             request(client, invoice_number.clone(), dec!(10)),
         )
@@ -316,7 +327,7 @@ async fn audit_failure_rolls_back_source_effect_outbox_and_idempotency(pool: PgP
     let result = service(&pool)
         .create_sales_invoice(
             Uuid::new_v4(),
-            Uuid::new_v4(),
+            company_id(),
             key.clone(),
             request(client, invoice_number.clone(), dec!(10)),
         )
@@ -346,7 +357,7 @@ async fn outbox_failure_rolls_back_source_effect_audit_and_idempotency(pool: PgP
     let result = service(&pool)
         .create_sales_invoice(
             Uuid::new_v4(),
-            Uuid::new_v4(),
+            company_id(),
             key.clone(),
             request(client, invoice_number.clone(), dec!(10)),
         )
@@ -381,7 +392,7 @@ async fn idempotency_failure_happens_before_any_source_effect(pool: PgPool) {
     let result = service(&pool)
         .create_sales_invoice(
             Uuid::new_v4(),
-            Uuid::new_v4(),
+            company_id(),
             number("IDEM/FAIL"),
             request(client, invoice_number.clone(), dec!(10)),
         )
@@ -403,7 +414,7 @@ async fn identical_idempotent_replay_returns_cached_result_without_duplicate_sem
     let client = seed_client(&pool).await;
     let svc = service(&pool);
     let actor = Uuid::new_v4();
-    let company = Uuid::new_v4();
+    let company = company_id();
     let key = number("IDEM/REPLAY");
     let req = request(client, number("INV/REPLAY"), dec!(1234.5678));
     let first = svc
@@ -451,7 +462,7 @@ async fn same_idempotency_key_with_different_payload_is_conflict(pool: PgPool) {
     let client = seed_client(&pool).await;
     let svc = service(&pool);
     let actor = Uuid::new_v4();
-    let company = Uuid::new_v4();
+    let company = company_id();
     let key = number("IDEM/CONFLICT");
     let invoice_number = number("INV/CONFLICT");
     let first_req = request(client, invoice_number.clone(), dec!(10));
@@ -479,7 +490,7 @@ async fn posted_journal_blocks_invoice_edit_and_preserves_source(pool: PgPool) {
     let created = svc
         .create_sales_invoice(
             Uuid::new_v4(),
-            Uuid::new_v4(),
+            company_id(),
             number("IDEM"),
             request(client, number("INV/POSTED"), dec!(100)),
         )
@@ -496,7 +507,7 @@ async fn posted_journal_blocks_invoice_edit_and_preserves_source(pool: PgPool) {
     let result = svc
         .update_sales_invoice(
             Uuid::new_v4(),
-            Uuid::new_v4(),
+            company_id(),
             number("IDEM"),
             created.id,
             update,
@@ -519,7 +530,7 @@ async fn decimal_db_roundtrip_preserves_value_beyond_js_safe_integer(pool: PgPoo
     let created = service(&pool)
         .create_sales_invoice(
             Uuid::new_v4(),
-            Uuid::new_v4(),
+            company_id(),
             number("IDEM"),
             request(client, number("INV/DECIMAL"), expected),
         )
