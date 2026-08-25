@@ -215,6 +215,7 @@ export default function AdminDashboard() {
                         }
                         if (m.id === 'admin') {
                             const ids = m.menuIds || [];
+                            if (!ids.includes('system-reset')) ids.push('system-reset');
                             return {
                                 ...m, menuIds: ids.filter((id: string) =>
                                     id !== 'locations' &&
