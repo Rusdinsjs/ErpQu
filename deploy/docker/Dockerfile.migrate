@@ -17,4 +17,4 @@ RUN apk add --no-cache ca-certificates libgcc
 COPY --from=builder /usr/local/cargo/bin/sqlx /usr/local/bin/sqlx
 COPY database/migrations ./database/migrations
 
-CMD ["sqlx", "migrate", "run"]
+CMD ["sqlx", "migrate", "run", "--source", "database/migrations"]

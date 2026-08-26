@@ -127,7 +127,7 @@ fn test_s2p_sod_goods_receiver_cannot_pay_supplier() {
 }
 
 /// Test: GL double-entry posting debit == credit via AccountingPostingEngine
-#[sqlx::test(migrations = "../../migrations")]
+#[sqlx::test(migrations = "../../database/migrations")]
 async fn test_s2p_gl_posting_debit_equals_credit(pool: PgPool) {
     let env = setup_s2p_db_env(&pool).await;
     let po_total = dec!(500000.00);
@@ -186,7 +186,7 @@ async fn test_s2p_gl_posting_debit_equals_credit(pool: PgPool) {
 }
 
 /// Test: Storno reversal (reverse_voucher_in_uow) creates opposite entries without deleting originals
-#[sqlx::test(migrations = "../../migrations")]
+#[sqlx::test(migrations = "../../database/migrations")]
 async fn test_s2p_storno_reversal_immutable_originals(pool: PgPool) {
     let env = setup_s2p_db_env(&pool).await;
     let po_total = dec!(250000.00);
@@ -280,7 +280,7 @@ async fn test_s2p_storno_reversal_immutable_originals(pool: PgPool) {
 }
 
 /// Test: GL reconciliation delta must be zero after balanced postings
-#[sqlx::test(migrations = "../../migrations")]
+#[sqlx::test(migrations = "../../database/migrations")]
 async fn test_s2p_reconciliation_gl_delta_zero(pool: PgPool) {
     let env = setup_s2p_db_env(&pool).await;
     let amount = dec!(750000.00);

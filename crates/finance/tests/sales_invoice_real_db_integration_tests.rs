@@ -105,7 +105,7 @@ async fn install_fail_trigger(pool: &PgPool, table: &str, trigger: &str) {
         .expect("install failure trigger");
 }
 
-#[sqlx::test(migrations = "../../migrations")]
+#[sqlx::test(migrations = "../../database/migrations")]
 async fn create_persists_header_lines_journal_audit_outbox_and_idempotency(pool: PgPool) {
     let client = seed_client(&pool).await;
     let invoice_number = number("INV/CREATE");
@@ -175,7 +175,7 @@ async fn create_persists_header_lines_journal_audit_outbox_and_idempotency(pool:
     assert_eq!(credit, created.total_amount);
 }
 
-#[sqlx::test(migrations = "../../migrations")]
+#[sqlx::test(migrations = "../../database/migrations")]
 async fn update_add_remove_lines_and_rebuild_draft_effect_atomically(pool: PgPool) {
     let client = seed_client(&pool).await;
     let svc = service(&pool);
@@ -246,7 +246,7 @@ async fn update_add_remove_lines_and_rebuild_draft_effect_atomically(pool: PgPoo
     assert_eq!(credit, updated.total_amount);
 }
 
-#[sqlx::test(migrations = "../../migrations")]
+#[sqlx::test(migrations = "../../database/migrations")]
 async fn empty_lines_are_rejected_without_db_effects(pool: PgPool) {
     let client = seed_client(&pool).await;
     let invoice_number = number("INV/EMPTY");
@@ -265,7 +265,7 @@ async fn empty_lines_are_rejected_without_db_effects(pool: PgPool) {
     assert_eq!(count, 0);
 }
 
-#[sqlx::test(migrations = "../../migrations")]
+#[sqlx::test(migrations = "../../database/migrations")]
 async fn line_failure_rolls_back_header_and_lines(pool: PgPool) {
     let client = seed_client(&pool).await;
     install_fail_trigger(&pool, "sales_invoice_items", "fail_sales_invoice_item").await;
@@ -288,7 +288,7 @@ async fn line_failure_rolls_back_header_and_lines(pool: PgPool) {
     assert_eq!(count, 0);
 }
 
-#[sqlx::test(migrations = "../../migrations")]
+#[sqlx::test(migrations = "../../database/migrations")]
 async fn journal_failure_rolls_back_invoice_lines_audit_outbox_and_idempotency(pool: PgPool) {
     let client = seed_client(&pool).await;
     install_fail_trigger(&pool, "journal_entries", "fail_invoice_journal").await;
@@ -318,7 +318,7 @@ async fn journal_failure_rolls_back_invoice_lines_audit_outbox_and_idempotency(p
     assert_eq!((invoice_count, idem_count), (0, 0));
 }
 
-#[sqlx::test(migrations = "../../migrations")]
+#[sqlx::test(migrations = "../../database/migrations")]
 async fn audit_failure_rolls_back_source_effect_outbox_and_idempotency(pool: PgPool) {
     let client = seed_client(&pool).await;
     install_fail_trigger(&pool, "document_audit_trail", "fail_invoice_audit").await;
@@ -348,7 +348,7 @@ async fn audit_failure_rolls_back_source_effect_outbox_and_idempotency(pool: PgP
     assert_eq!((invoice_count, idem_count), (0, 0));
 }
 
-#[sqlx::test(migrations = "../../migrations")]
+#[sqlx::test(migrations = "../../database/migrations")]
 async fn outbox_failure_rolls_back_source_effect_audit_and_idempotency(pool: PgPool) {
     let client = seed_client(&pool).await;
     install_fail_trigger(&pool, "outbox", "fail_invoice_outbox").await;
@@ -384,7 +384,7 @@ async fn outbox_failure_rolls_back_source_effect_audit_and_idempotency(pool: PgP
     assert_eq!((invoice_count, audit_count, idem_count), (0, 0, 0));
 }
 
-#[sqlx::test(migrations = "../../migrations")]
+#[sqlx::test(migrations = "../../database/migrations")]
 async fn idempotency_failure_happens_before_any_source_effect(pool: PgPool) {
     let client = seed_client(&pool).await;
     install_fail_trigger(&pool, "idempotency_log", "fail_invoice_idempotency").await;
@@ -407,7 +407,7 @@ async fn idempotency_failure_happens_before_any_source_effect(pool: PgPool) {
     assert_eq!(count, 0);
 }
 
-#[sqlx::test(migrations = "../../migrations")]
+#[sqlx::test(migrations = "../../database/migrations")]
 async fn identical_idempotent_replay_returns_cached_result_without_duplicate_semantics(
     pool: PgPool,
 ) {
@@ -457,7 +457,7 @@ async fn identical_idempotent_replay_returns_cached_result_without_duplicate_sem
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
+#[sqlx::test(migrations = "../../database/migrations")]
 async fn same_idempotency_key_with_different_payload_is_conflict(pool: PgPool) {
     let client = seed_client(&pool).await;
     let svc = service(&pool);
@@ -483,7 +483,7 @@ async fn same_idempotency_key_with_different_payload_is_conflict(pool: PgPool) {
     ));
 }
 
-#[sqlx::test(migrations = "../../migrations")]
+#[sqlx::test(migrations = "../../database/migrations")]
 async fn posted_journal_blocks_invoice_edit_and_preserves_source(pool: PgPool) {
     let client = seed_client(&pool).await;
     let svc = service(&pool);
@@ -523,7 +523,7 @@ async fn posted_journal_blocks_invoice_edit_and_preserves_source(pool: PgPool) {
     assert_eq!(amount, dec!(100));
 }
 
-#[sqlx::test(migrations = "../../migrations")]
+#[sqlx::test(migrations = "../../database/migrations")]
 async fn decimal_db_roundtrip_preserves_value_beyond_js_safe_integer(pool: PgPool) {
     let client = seed_client(&pool).await;
     let expected = dec!(9007199254740993.0100);
@@ -573,7 +573,7 @@ async fn assert_audit_mutation_denied(pool: &PgPool, statement: &str) {
     let _ = result;
 }
 
-#[sqlx::test(migrations = "../../migrations")]
+#[sqlx::test(migrations = "../../database/migrations")]
 async fn runtime_role_cannot_update_audit(pool: PgPool) {
     assert_audit_mutation_denied(
         &pool,
@@ -582,7 +582,7 @@ async fn runtime_role_cannot_update_audit(pool: PgPool) {
     .await;
 }
 
-#[sqlx::test(migrations = "../../migrations")]
+#[sqlx::test(migrations = "../../database/migrations")]
 async fn runtime_role_cannot_delete_audit(pool: PgPool) {
     assert_audit_mutation_denied(&pool, "DELETE FROM document_audit_trail").await;
 }

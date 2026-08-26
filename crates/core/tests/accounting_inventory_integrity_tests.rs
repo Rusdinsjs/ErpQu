@@ -62,7 +62,7 @@ async fn setup_test_company_and_accounts(pool: &PgPool) -> (Uuid, Uuid, Uuid) {
     (company_id, acc_cash, acc_equity)
 }
 
-#[sqlx::test(migrations = "../../migrations")]
+#[sqlx::test(migrations = "../../database/migrations")]
 async fn test_gl_posting_debit_equals_credit_double_entry(pool: PgPool) {
     let (company_id, acc_cash, acc_equity) = setup_test_company_and_accounts(&pool).await;
     let engine = AccountingPostingEngine::new(pool.clone());
@@ -126,7 +126,7 @@ async fn test_gl_posting_debit_equals_credit_double_entry(pool: PgPool) {
     assert_eq!(report.status, "PASSED");
 }
 
-#[sqlx::test(migrations = "../../migrations")]
+#[sqlx::test(migrations = "../../database/migrations")]
 async fn test_unbalanced_gl_posting_rejected(pool: PgPool) {
     let (company_id, acc_cash, acc_equity) = setup_test_company_and_accounts(&pool).await;
     let engine = AccountingPostingEngine::new(pool.clone());
@@ -175,7 +175,7 @@ async fn test_unbalanced_gl_posting_rejected(pool: PgPool) {
     assert!(res.is_err(), "Unbalanced GL posting MUST be rejected");
 }
 
-#[sqlx::test(migrations = "../../migrations")]
+#[sqlx::test(migrations = "../../database/migrations")]
 async fn test_storno_reversal_creates_opposite_entry_immutable_original(pool: PgPool) {
     let (company_id, acc_cash, acc_equity) = setup_test_company_and_accounts(&pool).await;
     let engine = AccountingPostingEngine::new(pool.clone());
@@ -269,7 +269,7 @@ async fn test_storno_reversal_creates_opposite_entry_immutable_original(pool: Pg
     assert_eq!(full_report.overall_status, "CLEAN_AUDIT");
 }
 
-#[sqlx::test(migrations = "../../migrations")]
+#[sqlx::test(migrations = "../../database/migrations")]
 async fn test_exact_decimal_arithmetic_preserves_precision(_pool: PgPool) {
     let a = dec!(0.1000);
     let b = dec!(0.2000);

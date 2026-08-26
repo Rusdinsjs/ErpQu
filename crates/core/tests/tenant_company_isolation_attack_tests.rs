@@ -60,7 +60,7 @@ async fn setup_test_companies(pool: &PgPool) -> (Uuid, Uuid, Uuid) {
     (company_a, company_b, category_id)
 }
 
-#[sqlx::test(migrations = "../../migrations")]
+#[sqlx::test(migrations = "../../database/migrations")]
 async fn test_tenant_a_cannot_read_tenant_b_data(pool: PgPool) {
     let (comp_a, comp_b, cat_id) = setup_test_companies(&pool).await;
 
@@ -96,7 +96,7 @@ async fn test_tenant_a_cannot_read_tenant_b_data(pool: PgPool) {
     assert_eq!(rows, 0, "Tenant A MUST NOT be able to read Tenant B assets");
 }
 
-#[sqlx::test(migrations = "../../migrations")]
+#[sqlx::test(migrations = "../../database/migrations")]
 async fn test_tenant_a_cannot_update_tenant_b_data(pool: PgPool) {
     let (comp_a, comp_b, cat_id) = setup_test_companies(&pool).await;
 
@@ -136,7 +136,7 @@ async fn test_tenant_a_cannot_update_tenant_b_data(pool: PgPool) {
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
+#[sqlx::test(migrations = "../../database/migrations")]
 async fn test_tenant_a_cannot_delete_tenant_b_data(pool: PgPool) {
     let (comp_a, comp_b, cat_id) = setup_test_companies(&pool).await;
 
@@ -176,7 +176,7 @@ async fn test_tenant_a_cannot_delete_tenant_b_data(pool: PgPool) {
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
+#[sqlx::test(migrations = "../../database/migrations")]
 async fn test_tenant_a_cannot_access_tenant_b_by_guessed_uuid(pool: PgPool) {
     let (comp_a, comp_b, cat_id) = setup_test_companies(&pool).await;
 
@@ -214,7 +214,7 @@ async fn test_tenant_a_cannot_access_tenant_b_by_guessed_uuid(pool: PgPool) {
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
+#[sqlx::test(migrations = "../../database/migrations")]
 async fn test_background_job_without_context_fails_closed(pool: PgPool) {
     let (_comp_a, comp_b, cat_id) = setup_test_companies(&pool).await;
 
@@ -248,7 +248,7 @@ async fn test_background_job_without_context_fails_closed(pool: PgPool) {
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
+#[sqlx::test(migrations = "../../database/migrations")]
 async fn test_connection_pool_reuse_cleans_transaction_context(pool: PgPool) {
     let (comp_a, _comp_b, _cat_id) = setup_test_companies(&pool).await;
 
@@ -305,7 +305,7 @@ fn test_company_boundary_enforcement_unit() {
 }
 
 /// Skenario 8: Tenant A cannot INSERT data into Company B scope (RLS WITH CHECK).
-#[sqlx::test(migrations = "../../migrations")]
+#[sqlx::test(migrations = "../../database/migrations")]
 async fn test_tenant_a_cannot_insert_into_tenant_b_scope(pool: PgPool) {
     let (comp_a, comp_b, cat_id) = setup_test_companies(&pool).await;
 
@@ -333,7 +333,7 @@ async fn test_tenant_a_cannot_insert_into_tenant_b_scope(pool: PgPool) {
 }
 
 /// Skenario 9: Report/Export query under Company A context returns ONLY Company A data.
-#[sqlx::test(migrations = "../../migrations")]
+#[sqlx::test(migrations = "../../database/migrations")]
 async fn test_report_export_only_returns_own_company_data(pool: PgPool) {
     let (comp_a, comp_b, cat_id) = setup_test_companies(&pool).await;
 
@@ -383,7 +383,7 @@ async fn test_report_export_only_returns_own_company_data(pool: PgPool) {
 }
 
 /// Skenario 10: Transaction rollback leaves pool connection without residual SET LOCAL variables.
-#[sqlx::test(migrations = "../../migrations")]
+#[sqlx::test(migrations = "../../database/migrations")]
 async fn test_transaction_rollback_leaves_pool_clean(pool: PgPool) {
     let (comp_a, _comp_b, _cat_id) = setup_test_companies(&pool).await;
 

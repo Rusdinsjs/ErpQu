@@ -7,7 +7,7 @@
 
 use sqlx::PgPool;
 
-#[sqlx::test(migrations = "../../migrations")]
+#[sqlx::test(migrations = "../../database/migrations")]
 async fn test_fresh_database_install_migration(pool: PgPool) {
     // 1. Verify core tables exist after migration
     let table_count: i64 = sqlx::query_scalar(
@@ -47,7 +47,7 @@ async fn test_migration_run_twice_is_idempotent(pool: PgPool) {
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
+#[sqlx::test(migrations = "../../database/migrations")]
 async fn test_runtime_role_dml_allowed_ddl_denied(pool: PgPool) {
     let role = std::env::var("TEST_APP_DB_ROLE").unwrap_or_else(|_| "erpqu_app".to_string());
 

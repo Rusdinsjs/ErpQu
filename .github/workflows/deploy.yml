@@ -68,8 +68,8 @@ jobs:
       - name: Build and Push Frontend Image
         uses: docker/build-push-action@v5
         with:
-          context: ./web-admin
-          file: ./web-admin/Dockerfile
+          context: ./apps/web-admin
+          file: ./apps/web-admin/Dockerfile
           push: true
           tags: |
             ghcr.io/${{ steps.prep.outputs.owner }}/erp-frontend:${{ github.sha }}

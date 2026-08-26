@@ -93,7 +93,7 @@ jobs:
           DATABASE_URL: postgres://postgres:postgrespassword@localhost:5432/erp_system_test
           MIGRATION_DATABASE_URL: postgres://postgres:postgrespassword@localhost:5432/erp_system_test
         run: |
-          sqlx migrate run --source migrations/ 2>&1 | tail -20
+          sqlx migrate run --source database/migrations/ 2>&1 | tail -20
           echo "✅ All migrations applied successfully"
 
       - name: "1.6 ✅ Backend Integration Tests"
@@ -132,7 +132,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./web-admin
+        working-directory: ./apps/web-admin
 
     steps:
       - name: Checkout Code
@@ -143,7 +143,7 @@ jobs:
         with:
           node-version: 20
           cache: npm
-          cache-dependency-path: ./web-admin/package-lock.json
+          cache-dependency-path: ./apps/web-admin/package-lock.json
 
       - name: "2.1 ✅ Clean Dependency Installation"
         run: npm ci
@@ -175,7 +175,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./mobile
+        working-directory: ./apps/mobile
 
     steps:
       - name: Checkout Code
@@ -186,7 +186,7 @@ jobs:
         with:
           node-version: 20
           cache: npm
-          cache-dependency-path: ./mobile/package-lock.json
+          cache-dependency-path: ./apps/mobile/package-lock.json
 
       - name: "3.1 ✅ Clean Dependency Installation"
         run: npm ci

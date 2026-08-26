@@ -45,7 +45,8 @@ app.log
 *.sql.gz
 erpqu_backup*.sql
 /*.sql
-!migrations/*.sql
+!database/migrations/*.sql
+!database/seeds/*.sql
 
 # Auth, Token, & Request Debug Artifacts
 login_*.json
