@@ -36,10 +36,10 @@ async fn test_fresh_database_install_migration(pool: PgPool) {
     );
 }
 
-#[sqlx::test(migrations = "../../migrations")]
+#[sqlx::test(migrations = "../../database/migrations")]
 async fn test_migration_run_twice_is_idempotent(pool: PgPool) {
     // Re-running sqlx::migrate! on an already migrated database must succeed without errors (no-op)
-    let migration_res = sqlx::migrate!("../../migrations").run(&pool).await;
+    let migration_res = sqlx::migrate!("../../database/migrations").run(&pool).await;
     assert!(
         migration_res.is_ok(),
         "Running migrations twice on the same database must be idempotent: {:?}",

@@ -189,7 +189,7 @@ services:
   frontend:
     image: ghcr.io/rusdinsjs/erp-frontend:${IMAGE_TAG:-latest}
     build:
-      context: ./web-admin
+      context: ./apps/web-admin
       dockerfile: Dockerfile
     container_name: erpqu-frontend
     restart: unless-stopped

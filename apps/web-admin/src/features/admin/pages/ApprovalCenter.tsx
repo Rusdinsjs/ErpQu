@@ -1,0 +1,1024 @@
+// ApprovalCenter Page - Pure Tailwind
+import { useState, useMemo } from 'react';
+import {
+    Check, X, RefreshCw, Wrench, ClipboardList, ArrowRight,
+    Calendar, User, Clock, Truck, ClipboardCheck, Info, ArrowLeftRight, Plus
+} from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { approvalApi } from'../api/approval';
+import { approvalEntityTypesApi } from'../api/approvalEntityTypes';
+import { conversionApi } from'../../assets/api/conversion';
+import { fuelApi } from'../../fuel/api/fuel';
+import { taxRenewalApi } from'../../tax-renewals/api/tax-renewals';
+import type { ApprovalRequest } from'../api/approval';
+import {
+    Button,
+    Card,
+    Table, TableHead, TableBody, TableRow, TableTh, TableTd,
+    Badge,
+    Modal,
+    Select,
+    Textarea,
+    LoadingOverlay,
+    useToast,
+    PageHeader,
+} from'../../../components/ui';
+import { Fuel, FileText } from 'lucide-react';
+
+import { APPROVAL_ENTITY_TYPES } from'../config/approvalEntities';
+
+// Resource type config built dynamically from our single source of truth
+const resourceTypeConfig = APPROVAL_ENTITY_TYPES.reduce((acc, entity) => {
+    acc[entity.value] = { label: entity.label, iconColor: entity.color || 'text-muted-foreground' };
+    return acc;
+}, {} as Record<string, { label: string; iconColor: string }>);
+
+// State colors for lifecycle
+const stateBadgeVariant: Record<string, 'default' | 'info' | 'success' | 'warning' | 'danger'> = {
+    planning: 'default',
+    procurement: 'info',
+    in_inventory: 'success',
+    deployed: 'success',
+    under_maintenance: 'warning',
+    under_repair: 'warning',
+    retired: 'default',
+    disposed: 'danger',
+};
+
+const API_URL = import.meta.env.VITE_API_URL || '/api';
+
+function getFullImageUrl(path: string | undefined) {
+    if (!path) return '';
+    if (path.startsWith('http')) return path;
+    const baseUrl = API_URL.endsWith('/api') ? API_URL.slice(0, -4) : API_URL;
+    return `${baseUrl}${path}`;
+}
+
+function RequestDetails({ request, showDetails = false }: { request: ApprovalRequest; showDetails?: boolean }) {
+    const data = request.data_snapshot;
+
+    if (request.resource_type === 'fuel_request') {
+        return (
+            <div className="space-y-3">
+                <div className="space-y-1">
+                    <p className="text-sm font-medium text-white">{data?.asset_name || 'Unknown Asset'}</p>
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <Fuel size={12} />
+                        <span>{data?.request_type === 'amount' ? `IDR ${Number(data.requested_value).toLocaleString()}` : `${data.requested_value} Liters`}</span>
+                    </div>
+
+                    {/* Odometer Stats */}
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-2 mt-2 p-2 bg-slate-800/50 rounded-lg text-xs">
+                        <div>
+                            <p className="text-muted-foreground">Current Odo</p>
+                            <p className="text-white font-mono">{Number(data?.odometer_reading).toLocaleString()} km</p>
+                        </div>
+                        <div>
+                            <p className="text-muted-foreground">Prev. Odo</p>
+                            <p className="text-white font-mono">
+                                {data?.previous_odometer ? `${Number(data.previous_odometer).toLocaleString()} km` : '-'}
+                            </p>
+                        </div>
+                        <div>
+                            <p className="text-muted-foreground">Diff</p>
+                            <p className="text-emerald-400 font-mono">
+                                {data?.previous_odometer
+                                    ? `+${(Number(data.odometer_reading) - Number(data.previous_odometer)).toLocaleString()} km`
+                                    : '-'}
+                            </p>
+                        </div>
+                        <div>
+                            <p className="text-muted-foreground">Prev. Usage</p>
+                            <p className="text-white font-mono">
+                                {data?.previous_fuel_volume ? `${Number(data.previous_fuel_volume).toLocaleString()} L` : '-'}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                {showDetails && data?.odometer_image_url && (
+                    <div className="mt-2">
+                        <p className="text-xs text-muted-foreground mb-1">Odometer Photo:</p>
+                        <div className="relative rounded-lg overflow-hidden border border-slate-700 bg-slate-900 w-full max-w-sm">
+                            <img
+                                src={getFullImageUrl(data.odometer_image_url)}
+                                alt="Odometer"
+                                className="w-full h-auto object-cover max-h-[300px]"
+                                onError={(e) => {
+                                    (e.target as HTMLImageElement).style.display = 'none';
+                                }}
+                            />
+                        </div>
+                    </div>
+                )}
+            </div>
+        );
+    }
+
+    if (request.resource_type === 'conversion_request') {
+        return (
+            <div className="space-y-1">
+                <p className="text-sm font-medium text-white">{data?.title || 'Conversion Request'}</p>
+                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <ArrowLeftRight size={12} />
+                    <span>Cost: Rp {Number(data?.conversion_cost || 0).toLocaleString()}</span>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                    {data?.reason ? `Reason: ${data.reason}` : 'No reason provided'}
+                </p>
+            </div>
+        );
+    }
+
+    if (request.resource_type === 'lifecycle_transition') {
+        return (
+            <div className="space-y-1">
+                <p className="text-sm font-medium text-white">{data?.asset_name || 'Unknown Asset'}</p>
+                <div className="flex items-center gap-2">
+                    <Badge variant={stateBadgeVariant[data?.from_state] || 'default'}>
+                        {data?.from_state?.replace(/_/g, ' ') || 'Unknown'}
+                    </Badge>
+                    <ArrowRight size={14} className="text-muted-foreground" />
+                    <Badge variant={stateBadgeVariant[data?.to_state] || 'default'}>
+                        {data?.to_state?.replace(/_/g, ' ') || 'Unknown'}
+                    </Badge>
+                </div>
+                {data?.reason && (
+                    <p className="text-xs text-muted-foreground">Reason: {data.reason}</p>
+                )}
+            </div>
+        );
+    }
+
+    if (request.resource_type === 'work_order') {
+        return (
+            <div className="space-y-1">
+                <p className="text-sm font-medium text-white">{data?.title || 'Work Order'}</p>
+                {data?.priority && (
+                    <Badge variant={data.priority === 'high' ? 'danger' : data.priority === 'medium' ? 'warning' : 'success'}>
+                        {data.priority}
+                    </Badge>
+                )}
+                {data?.estimated_cost && (
+                    <p className="text-xs text-muted-foreground">Est: Rp {Number(data.estimated_cost).toLocaleString()}</p>
+                )}
+            </div>
+        );
+    }
+
+    if (request.resource_type === 'loan' || request.resource_type === 'loan_request') {
+        const assetName = data?.asset_name || 'Unknown Asset';
+        const loanDate = data?.loan_date ? new Date(data.loan_date).toLocaleDateString() : 'N/A';
+        const returnDate = data?.return_date || data?.expected_return_date ? new Date(data.return_date || data.expected_return_date).toLocaleDateString() : 'N/A';
+        const purpose = data?.purpose || data?.needs || '';
+
+        return (
+            <div className="space-y-1">
+                <p className="text-sm font-medium text-white">{assetName}</p>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Calendar size={12} />
+                    <span>{loanDate} - {returnDate}</span>
+                </div>
+                {purpose && (
+                    <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <Info size={12} />
+                        <span className="truncate max-w-[250px]">{purpose}</span>
+                    </div>
+                )}
+            </div>
+        );
+    }
+
+    if (request.resource_type === 'rental_request') {
+        return (
+            <div className="space-y-1">
+                <p className="text-sm font-medium text-white">{data?.client_name || 'Unknown Client'}</p>
+                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <Truck size={12} />
+                    <span>{data?.asset_name || 'Unknown Asset'}</span>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                    {data?.start_date} - {data?.expected_end_date || 'N/A'}
+                </p>
+            </div>
+        );
+    }
+
+    if (request.resource_type === 'timesheet_verification') {
+        return (
+            <div className="space-y-1">
+                <p className="text-sm font-medium text-white">{data?.rental_number || 'Unknown Rental'}</p>
+                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <Calendar size={12} />
+                    <span>Date: {data?.work_date}</span>
+                </div>
+                <p className="text-xs text-muted-foreground">Hours: {data?.operating_hours} hrs</p>
+            </div>
+        );
+    }
+
+    if (request.resource_type === 'Asset' || request.resource_type === 'asset') {
+        const assetObj = data?.asset || data;
+        const policyObj = data?.policy;
+        return (
+            <div className="space-y-1">
+                <p className="text-sm font-medium text-white">{assetObj?.name || assetObj?.asset_name || 'Asset Request'}</p>
+                <div className="flex items-center gap-2 text-xs">
+                    <Badge variant="info">{request.action_type || 'APPROVAL'}</Badge>
+                    {assetObj?.asset_code && (
+                        <span className="text-muted-foreground font-mono">({assetObj.asset_code})</span>
+                    )}
+                </div>
+                {policyObj?.label && (
+                    <p className="text-xs text-purple-400">Kebijakan: {policyObj.label}</p>
+                )}
+            </div>
+        );
+    }
+
+    if (request.resource_type === 'tax_renewal') {
+        return (
+            <div className="space-y-1">
+                <p className="text-sm font-medium text-white">{data?.asset_name || data?.asset_id || 'Unknown Asset'}</p>
+                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <FileText size={12} />
+                    <span>{data?.document_type}</span>
+                </div>
+                {data?.renewal_cost && (
+                    <p className="text-xs text-emerald-400">
+                        Cost: Rp {Number(data.renewal_cost).toLocaleString()}
+                    </p>
+                )}
+                {showDetails && data?.invoice_attachment && (
+                    <div className="mt-3">
+                        <p className="text-xs text-muted-foreground mb-1">Invoice / Receipt:</p>
+                        <div className="relative rounded-lg overflow-hidden border border-slate-700 bg-slate-900 w-full max-w-sm">
+                            {data.invoice_attachment.toLowerCase().endsWith('.pdf') ? (
+                                <a
+                                    href={getFullImageUrl(data.invoice_attachment)}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center justify-center p-4 text-cyan-400 hover:bg-slate-800 transition-colors"
+                                >
+                                    <FileText size={24} className="mr-2" />
+                                    <span className="text-sm font-medium">View PDF Invoice</span>
+                                </a>
+                            ) : (
+                                <img
+                                    src={getFullImageUrl(data.invoice_attachment)}
+                                    alt="Invoice Attachment"
+                                    className="w-full h-auto object-cover max-h-[400px]"
+                                    onError={(e) => {
+                                        (e.target as HTMLImageElement).style.display = 'none';
+                                    }}
+                                />
+                            )}
+                        </div>
+                    </div>
+                )}
+            </div>
+        );
+    }
+
+    // Generic / Custom Entity Request Fallback View
+    return (
+        <div className="space-y-1.5">
+            <p className="text-sm font-semibold text-foreground">
+                {data?.title || data?.subject || data?.name || 'Approval Request'}
+            </p>
+            {data?.amount !== undefined && data?.amount !== null && (
+                <p className="text-xs font-semibold text-emerald-500">
+                    Amount: IDR {Number(data.amount).toLocaleString()}
+                </p>
+            )}
+            {(data?.description || data?.notes || data?.reason) && (
+                <p className="text-xs text-muted-foreground line-clamp-3 leading-relaxed">
+                    {data.description || data.notes || data.reason}
+                </p>
+            )}
+            {data?.reference_no && (
+                <p className="text-[11px] text-muted-foreground font-mono">
+                    Ref No: {data.reference_no}
+                </p>
+            )}
+        </div>
+    );
+}
+
+function StatCard({ title, value, icon: Icon, iconColor }: { title: string; value: number; icon: any; iconColor: string }) {
+    const glowColorMap: Record<string, string> = {
+        'text-violet-400': 'bg-violet-500/10 shadow-violet-500/20',
+        'text-blue-400': 'bg-blue-500/10 shadow-blue-500/20',
+        'text-orange-400': 'bg-orange-500/10 shadow-orange-500/20',
+        'text-purple-400': 'bg-purple-500/100/10 shadow-purple-500/20',
+        'text-teal-400': 'bg-teal-500/10 shadow-teal-500/20',
+        'text-green-400': 'bg-green-500/10 shadow-green-500/20',
+        'text-pink-400': 'bg-pink-500/10 shadow-pink-500/20',
+        'text-yellow-400': 'bg-yellow-500/10 shadow-yellow-500/20',
+        'text-rose-400': 'bg-rose-500/10 shadow-rose-500/20',
+    };
+
+    const bgGlow = glowColorMap[iconColor] || 'bg-muted/300/10 shadow-slate-500/20';
+
+    return (
+        <div className="bg-card/40 backdrop-blur-xl border border-border p-6 rounded-3xl relative overflow-hidden group hover:border-primary/50 transition-all shadow-xl">
+            <div className={`absolute top-0 right-0 w-24 h-24 ${bgGlow.split(' ')[0]} rounded-full blur-[40px] pointer-events-none group-hover:scale-150 transition-transform`} />
+            <div className="flex items-start justify-between relative z-10">
+                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center bg-card/80 border border-border ${iconColor} shadow-lg group-hover:scale-110 transition-transform`}>
+                    <Icon size={24} />
+                </div>
+            </div>
+            <div className="relative z-10 mt-4">
+                <p className="text-3xl font-black text-foreground font-mono tracking-tight">{value}</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mt-1 truncate">{title}</p>
+            </div>
+        </div>
+    );
+}
+
+export default function ApprovalCenter() {
+    const queryClient = useQueryClient();
+    const { success, error: showError } = useToast();
+    const [activeTab, setActiveTab] = useState('pending');
+    const [filterType, setFilterType] = useState('all');
+
+    const [modalOpen, setModalOpen] = useState(false);
+    const [selectedRequest, setSelectedRequest] = useState<ApprovalRequest | null>(null);
+    const [actionNotes, setActionNotes] = useState('');
+
+    // Dynamic Entity Types for Submit Modal & Filtering
+    const { data: entityTypes = [] } = useQuery({
+        queryKey: ['approval-entity-types'],
+        queryFn: () => approvalEntityTypesApi.list().catch(() => []),
+    });
+
+    // Create New Request Modal State
+    const [showCreateModal, setShowCreateModal] = useState(false);
+    const [createFormData, setCreateFormData] = useState({
+        resource_type: '',
+        title: '',
+        amount: '',
+        description: '',
+        reference_no: '',
+    });
+
+    // Standard Approvals
+    const { data: standardRequests = [], isLoading: loadingStandard } = useQuery({
+        queryKey: ['approvals', 'pending'],
+        queryFn: approvalApi.listPending,
+        enabled: activeTab === 'pending',
+    });
+
+    // Conversion Requests
+    const { data: conversionRequests = [], isLoading: loadingConversions } = useQuery({
+        queryKey: ['conversions', 'pending'],
+        queryFn: conversionApi.getPendingRequests,
+        enabled: activeTab === 'pending',
+    });
+
+    // Fuel Requests
+    const { data: fuelRequests = [], isLoading: loadingFuel } = useQuery({
+        queryKey: ['fuel', 'pending'],
+        queryFn: fuelApi.listPending,
+        enabled: activeTab === 'pending',
+    });
+
+    // Tax Renewals
+    const { data: taxRenewals = [], isLoading: loadingTax } = useQuery({
+        queryKey: ['tax-renewals', 'pending'],
+        queryFn: () => taxRenewalApi.list('PENDING_APPROVAL'),
+        enabled: activeTab === 'pending',
+    });
+
+    const { data: myRequests = [], isLoading: loadingMy } = useQuery({
+        queryKey: ['approvals', 'my-requests'],
+        queryFn: approvalApi.listMyRequests,
+        enabled: activeTab === 'my_requests',
+    });
+
+    const { data: myFuelRequests = [], isLoading: loadingMyFuel } = useQuery({
+        queryKey: ['fuel', 'my-requests'],
+        queryFn: fuelApi.listMyRequests,
+        enabled: activeTab === 'my_requests',
+    });
+
+    // Merge Requests for 'pending' view
+    const pendingRequests = useMemo(() => {
+        const mappedConversions: ApprovalRequest[] = conversionRequests.map((c: any) => ({
+            id: c.id,
+            resource_type: 'conversion_request',
+            resource_id: c.asset_id,
+            action_type: 'conversion',
+            status: c.status.toUpperCase(),
+            current_approval_level: 1,
+            requested_by: c.requested_by || 'Unknown',
+            requester_name: c.requested_by,
+            created_at: c.created_at,
+            updated_at: c.created_at,
+            data_snapshot: c,
+        }));
+
+        const mappedFuel: ApprovalRequest[] = fuelRequests.map((f: any) => ({
+            id: f.id,
+            resource_type: 'fuel_request',
+            resource_id: f.asset_id,
+            action_type: 'fuel_request',
+            status: f.status.toUpperCase(),
+            current_approval_level: 1,
+            requested_by: f.requested_by,
+            requester_name: f.requester_name,
+            created_at: f.created_at,
+            updated_at: f.updated_at,
+            data_snapshot: f,
+        }));
+
+        const mappedTax: ApprovalRequest[] = taxRenewals.map((t: any) => ({
+            id: t.id,
+            resource_type: 'tax_renewal',
+            resource_id: t.asset_id,
+            action_type: 'tax_renewal',
+            status: t.status.toUpperCase(),
+            current_approval_level: 1,
+            requested_by: 'System',
+            requester_name: 'Admin / Operator',
+            created_at: t.created_at,
+            updated_at: t.updated_at,
+            data_snapshot: t,
+        }));
+
+        return [...standardRequests, ...mappedConversions, ...mappedFuel, ...mappedTax].sort((a, b) =>
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+    }, [standardRequests, conversionRequests, fuelRequests, taxRenewals]);
+
+    // Merge Requests for 'my_requests' view
+    const myMergedRequests = useMemo(() => {
+        const mappedFuel: ApprovalRequest[] = myFuelRequests.map((f: any) => ({
+            id: f.id,
+            resource_type: 'fuel_request',
+            resource_id: f.asset_id,
+            action_type: 'fuel_request',
+            status: f.status.toUpperCase(),
+            current_approval_level: 1,
+            requested_by: f.requested_by,
+            requester_name: f.requester_name,
+            created_at: f.created_at,
+            updated_at: f.updated_at,
+            data_snapshot: f,
+        }));
+
+        return [...myRequests, ...mappedFuel].sort((a, b) =>
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+    }, [myRequests, myFuelRequests]);
+
+    const createRequestMutation = useMutation({
+        mutationFn: async () => {
+            const resource_id = window.crypto?.randomUUID ? window.crypto.randomUUID() : '00000000-0000-0000-0000-000000000000';
+            return approvalApi.create({
+                resource_type: createFormData.resource_type,
+                resource_id,
+                action_type: 'create',
+                data_snapshot: {
+                    title: createFormData.title,
+                    amount: createFormData.amount ? Number(createFormData.amount) : undefined,
+                    description: createFormData.description,
+                    reference_no: createFormData.reference_no || undefined,
+                },
+            });
+        },
+        onSuccess: () => {
+            success('Approval request submitted successfully', 'Success');
+            queryClient.invalidateQueries({ queryKey: ['approvals'] });
+            setShowCreateModal(false);
+            setCreateFormData({
+                resource_type: '',
+                title: '',
+                amount: '',
+                description: '',
+                reference_no: '',
+            });
+        },
+        onError: (err: any) => {
+            const msg = err?.response?.data?.error || err?.message || 'Failed to submit approval request';
+            showError(msg, 'Error');
+        },
+    });
+
+    const approveMutation = useMutation({
+        mutationFn: async ({ id, notes }: { id: string; notes?: string }) => {
+            if (selectedRequest?.resource_type === 'conversion_request') {
+                return conversionApi.approveRequest(id);
+            }
+            if (selectedRequest?.resource_type === 'fuel_request') {
+                return fuelApi.approve(id);
+            }
+            if (selectedRequest?.resource_type === 'tax_renewal') {
+                return taxRenewalApi.approve(id, notes);
+            }
+            return approvalApi.approve(id, notes);
+        },
+        onSuccess: () => {
+            success('Request approved', 'Success');
+            queryClient.invalidateQueries({ queryKey: ['approvals'] });
+            queryClient.invalidateQueries({ queryKey: ['conversions'] });
+            queryClient.invalidateQueries({ queryKey: ['fuel'] });
+            queryClient.invalidateQueries({ queryKey: ['tax-renewals'] });
+            setModalOpen(false);
+            setSelectedRequest(null);
+            setActionNotes('');
+        },
+        onError: (err: any) => {
+            showError(err.message || 'Failed to approve request', 'Error');
+        },
+    });
+
+    const rejectMutation = useMutation({
+        mutationFn: async ({ id, notes }: { id: string; notes: string }) => {
+            if (selectedRequest?.resource_type === 'conversion_request') {
+                return conversionApi.rejectRequest(id);
+            }
+            if (selectedRequest?.resource_type === 'fuel_request') {
+                return fuelApi.reject(id, notes);
+            }
+            if (selectedRequest?.resource_type === 'tax_renewal') {
+                return taxRenewalApi.reject(id, notes);
+            }
+            return approvalApi.reject(id, notes);
+        },
+        onSuccess: () => {
+            success('Request rejected', 'Success');
+            queryClient.invalidateQueries({ queryKey: ['approvals'] });
+            queryClient.invalidateQueries({ queryKey: ['conversions'] });
+            queryClient.invalidateQueries({ queryKey: ['fuel'] });
+            queryClient.invalidateQueries({ queryKey: ['tax-renewals'] });
+            setModalOpen(false);
+            setSelectedRequest(null);
+            setActionNotes('');
+        },
+        onError: (err: any) => {
+            showError(err.message || 'Failed to reject request', 'Error');
+        },
+    });
+
+    const openRequest = (request: ApprovalRequest) => {
+        setSelectedRequest(request);
+        setActionNotes('');
+        setModalOpen(true);
+    };
+
+    const handleApprove = () => {
+        if (!selectedRequest) return;
+        if (window.confirm('Are you sure you want to approve this request?')) {
+            approveMutation.mutate({ id: selectedRequest.id, notes: actionNotes });
+        }
+    };
+
+    const handleReject = () => {
+        if (!selectedRequest) return;
+        if (window.confirm('Are you sure you want to reject this request?')) {
+            rejectMutation.mutate({ id: selectedRequest.id, notes: actionNotes || 'Rejected' });
+        }
+    };
+
+    const getStatusBadge = (status: string): 'info' | 'success' | 'warning' | 'danger' | 'default' => {
+        switch (status) {
+            case 'APPROVED_L1': return 'info';
+            case 'APPROVED_L2': return 'success';
+            case 'REJECTED':
+            case 'rejected': return 'danger';
+            case 'PENDING':
+            case 'pending': return 'warning';
+            default: return 'default';
+        }
+    };
+
+    const currentData = activeTab === 'pending' ? pendingRequests : myMergedRequests;
+    const isLoading = activeTab === 'pending' ? (loadingStandard || loadingConversions || loadingFuel || loadingTax) : (loadingMy || loadingMyFuel);
+    const filteredData = filterType === 'all' ? currentData : currentData.filter(r => r.resource_type === filterType);
+
+    // Stats
+    const lifecycleCount = pendingRequests.filter(r => r.resource_type === 'lifecycle_transition').length;
+    const workOrderCount = pendingRequests.filter(r => r.resource_type === 'work_order').length;
+    const rentalCount = pendingRequests.filter(r => r.resource_type === 'rental_request').length;
+    const timesheetCount = pendingRequests.filter(r => r.resource_type === 'timesheet_verification').length;
+    const conversionCount = pendingRequests.filter(r => r.resource_type === 'conversion_request').length;
+    const assetCount = pendingRequests.filter(r => r.resource_type === 'asset').length;
+    const loanCount = pendingRequests.filter(r => r.resource_type === 'loan').length;
+    const fuelCount = pendingRequests.filter(r => r.resource_type === 'fuel_request').length;
+    const taxCount = pendingRequests.filter(r => r.resource_type === 'tax_renewal').length;
+
+    const TabButton = ({ value, children, icon: Icon }: { value: string; children: React.ReactNode; icon: any }) => (
+        <button
+            onClick={() => setActiveTab(value)}
+            className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all ${activeTab === value
+                ? 'bg-cyan-500/20 text-cyan-400'
+                : 'text-muted-foreground hover:text-white hover:bg-slate-800'
+                }`}
+        >
+            <Icon size={16} />
+            {children}
+        </button>
+    );
+
+    const handleCloseModal = () => {
+        if (actionNotes.trim()) {
+            if (window.confirm('Discard changes? You have entered notes.')) {
+                setModalOpen(false);
+                setActionNotes('');
+            }
+        } else {
+            setModalOpen(false);
+        }
+    };
+
+    const filterOptions = useMemo(() => {
+        const options = [{ value: 'all', label: 'All Types' }];
+        if (entityTypes.length > 0) {
+            entityTypes.forEach(ent => {
+                options.push({ value: ent.value, label: ent.label });
+            });
+        } else {
+            APPROVAL_ENTITY_TYPES.forEach(ent => {
+                options.push({ value: ent.value, label: ent.label });
+            });
+        }
+        return options;
+    }, [entityTypes]);
+
+    return (
+        <div className="space-y-8 p-8 relative">
+            <div className="absolute top-0 left-1/4 w-96 h-96 bg-indigo-500/100/10 rounded-full blur-[120px] pointer-events-none" />
+
+            <PageHeader
+                title="Approval Center"
+                description="Review and manage pending requests across all modules"
+                badge={`${pendingRequests.length} Pending`}
+                actions={
+                    <Button
+                        onClick={() => {
+                            queryClient.invalidateQueries({ queryKey: ['approvals'] });
+                            queryClient.invalidateQueries({ queryKey: ['conversions'] });
+                            queryClient.invalidateQueries({ queryKey: ['fuel'] });
+                            queryClient.invalidateQueries({ queryKey: ['tax-renewals'] });
+                        }}
+                        variant="secondary"
+                        leftIcon={<RefreshCw size={16} />}
+                    >
+                        Refresh Data
+                    </Button>
+                }
+                action={
+                    <Button
+                        onClick={() => {
+                            setCreateFormData({
+                                resource_type: entityTypes[0]?.value || 'sponsorship_request',
+                                title: '',
+                                amount: '',
+                                description: '',
+                                reference_no: '',
+                            });
+                            setShowCreateModal(true);
+                        }}
+                        leftIcon={<Plus size={18} />}
+                    >
+                        New Request
+                    </Button>
+                }
+            />
+
+            {/* Stats */}
+            {activeTab === 'pending' && (
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-6 relative z-10">
+                    <StatCard title="Lifecycle" value={lifecycleCount} icon={RefreshCw} iconColor="text-violet-400" />
+                    <StatCard title="Work Orders" value={workOrderCount} icon={Wrench} iconColor="text-blue-400" />
+                    <StatCard title="Rentals" value={rentalCount} icon={Truck} iconColor="text-orange-400" />
+                    <StatCard title="Conversions" value={conversionCount} icon={ArrowLeftRight} iconColor="text-purple-400" />
+                    <StatCard title="Timesheets" value={timesheetCount} icon={ClipboardCheck} iconColor="text-teal-400" />
+                    <StatCard title="Assets" value={assetCount} icon={ClipboardList} iconColor="text-green-400" />
+                    <StatCard title="Loans" value={loanCount} icon={ClipboardList} iconColor="text-pink-400" />
+                    <StatCard title="Fuel" value={fuelCount} icon={Fuel} iconColor="text-yellow-400" />
+                    <StatCard title="Tax" value={taxCount} icon={FileText} iconColor="text-rose-400" />
+                </div>
+            )}
+
+            {/* Tabs & Filter */}
+            <div className="flex flex-wrap items-center justify-between gap-4">
+                <div className="flex gap-1 p-1 bg-slate-900/50 border border-slate-800 rounded-xl">
+                    <TabButton value="pending" icon={Clock}>Pending Approvals</TabButton>
+                    <TabButton value="my_requests" icon={User}>My Requests</TabButton>
+                </div>
+                <Select
+                    placeholder="Filter by type"
+                    value={filterType}
+                    onChange={setFilterType}
+                    options={filterOptions}
+                />
+            </div>
+
+            {/* Table */}
+            <div className="bg-card/40 backdrop-blur-xl border border-border rounded-3xl overflow-hidden shadow-2xl relative z-10">
+                <div className="absolute bottom-0 right-0 w-64 h-64 bg-cyan-500/5 rounded-full blur-[80px] pointer-events-none" />
+                <div className="relative z-10">
+                    <LoadingOverlay visible={isLoading} />
+
+                    {filteredData.length === 0 && !isLoading ? (
+                        <div className="flex flex-col items-center justify-center py-24 text-muted-foreground text-center">
+                            <div className="w-24 h-24 bg-muted/50 rounded-full flex items-center justify-center mb-6 border-2 border-dashed border-border">
+                                <Info size={40} className="opacity-50" />
+                            </div>
+                            <h3 className="text-xl font-bold text-foreground uppercase tracking-widest">Inbox Zero</h3>
+                            <p className="mt-2 text-sm text-muted-foreground">No {activeTab === 'pending' ? 'pending approvals' : 'requests'} found.</p>
+                        </div>
+                    ) : (
+                        <div className="overflow-x-auto">
+                            <Table className="border-none rounded-none shadow-none">
+                                <TableHead>
+                                    <TableRow className="bg-card/90 backdrop-blur-md border-b border-border">
+                                        <TableTh>Date</TableTh>
+                                        <TableTh>Type</TableTh>
+                                        <TableTh>Action</TableTh>
+                                        <TableTh>Details</TableTh>
+                                        <TableTh>Level</TableTh>
+                                        <TableTh>Status</TableTh>
+                                        <TableTh>Requester</TableTh>
+                                        <TableTh align="center">Actions</TableTh>
+                                    </TableRow>
+                                </TableHead>
+                                <TableBody>
+                                    {filteredData.map((req) => {
+                                        const config = resourceTypeConfig[req.resource_type] || { label: req.resource_type, iconColor: 'text-muted-foreground' };
+                                        return (
+                                            <TableRow key={req.id} onClick={() => openRequest(req)} className="cursor-pointer hover:bg-muted/40 transition-colors group">
+                                                <TableTd>
+                                                    <div className="flex items-center gap-2 text-sm font-medium">
+                                                        <Calendar size={14} className="text-muted-foreground" />
+                                                        {new Date(req.created_at).toLocaleDateString()}
+                                                    </div>
+                                                </TableTd>
+                                                <TableTd>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className={`font-semibold text-xs uppercase tracking-wider ${config.iconColor}`}>
+                                                            {config.label}
+                                                        </span>
+                                                    </div>
+                                                </TableTd>
+                                                <TableTd>
+                                                    <Badge variant="default">{req.action_type}</Badge>
+                                                </TableTd>
+                                                <TableTd>
+                                                    <RequestDetails request={req} />
+                                                </TableTd>
+                                                <TableTd>
+                                                    <Badge variant={req.current_approval_level === 1 ? 'info' : 'success'}>
+                                                        L{req.current_approval_level}
+                                                    </Badge>
+                                                </TableTd>
+                                                <TableTd>
+                                                    <Badge variant={getStatusBadge(req.status)}>{req.status}</Badge>
+                                                </TableTd>
+                                                <TableTd>
+                                                    <span className="text-sm font-medium text-foreground">
+                                                        {req.requester_name || req.requested_by}
+                                                    </span>
+                                                </TableTd>
+                                                <TableTd align="center">
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            openRequest(req);
+                                                        }}
+                                                    >
+                                                        Review
+                                                    </Button>
+                                                </TableTd>
+                                            </TableRow>
+                                        );
+                                    })}
+                                </TableBody>
+                            </Table>
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* Modal Create New Request */}
+            <Modal
+                isOpen={showCreateModal}
+                onClose={() => setShowCreateModal(false)}
+                title="Submit New Approval Request"
+                size="lg"
+            >
+                <form
+                    onSubmit={(e) => {
+                        e.preventDefault();
+                        createRequestMutation.mutate();
+                    }}
+                    className="space-y-4"
+                >
+                    <div>
+                        <label className="block text-xs font-bold uppercase text-muted-foreground mb-1">
+                            Request Category / Entity Type *
+                        </label>
+                        <select
+                            required
+                            value={createFormData.resource_type}
+                            onChange={(e) => setCreateFormData({ ...createFormData, resource_type: e.target.value })}
+                            className="w-full bg-background border border-border rounded-lg px-3.5 py-2 text-foreground focus:ring-2 focus:ring-primary outline-none text-sm font-medium"
+                        >
+                            {entityTypes.map(ent => (
+                                <option key={ent.value} value={ent.value}>
+                                    {ent.label} ({ent.value})
+                                </option>
+                            ))}
+                        </select>
+                        <p className="text-[11px] text-muted-foreground mt-1">
+                            {entityTypes.find(e => e.value === createFormData.resource_type)?.description || 'Select approval category'}
+                        </p>
+                    </div>
+
+                    <div>
+                        <label className="block text-xs font-bold uppercase text-muted-foreground mb-1">
+                            Request Subject / Title *
+                        </label>
+                        <input
+                            type="text"
+                            required
+                            value={createFormData.title}
+                            onChange={(e) => setCreateFormData({ ...createFormData, title: e.target.value })}
+                            className="w-full bg-background border border-border rounded-lg px-3.5 py-2 text-foreground focus:ring-2 focus:ring-primary outline-none text-sm"
+                            placeholder="e.g. Sponsorship Event MLBB 2026"
+                        />
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-xs font-bold uppercase text-muted-foreground mb-1">
+                                Amount / Budget (IDR) (Optional)
+                            </label>
+                            <input
+                                type="number"
+                                min="0"
+                                value={createFormData.amount}
+                                onChange={(e) => setCreateFormData({ ...createFormData, amount: e.target.value })}
+                                className="w-full bg-background border border-border rounded-lg px-3.5 py-2 text-foreground focus:ring-2 focus:ring-primary outline-none text-sm font-mono"
+                                placeholder="e.g. 15000000"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-bold uppercase text-muted-foreground mb-1">
+                                Reference No / Doc No (Optional)
+                            </label>
+                            <input
+                                type="text"
+                                value={createFormData.reference_no}
+                                onChange={(e) => setCreateFormData({ ...createFormData, reference_no: e.target.value })}
+                                className="w-full bg-background border border-border rounded-lg px-3.5 py-2 text-foreground focus:ring-2 focus:ring-primary outline-none text-sm"
+                                placeholder="e.g. SPON/2026/07/001"
+                            />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="block text-xs font-bold uppercase text-muted-foreground mb-1">
+                            Description / Details *
+                        </label>
+                        <Textarea
+                            required
+                            rows={4}
+                            value={createFormData.description}
+                            onChange={(e) => setCreateFormData({ ...createFormData, description: e.target.value })}
+                            placeholder="Explain the purpose, budget breakdown, or background details..."
+                            className="w-full bg-background border border-border text-sm"
+                        />
+                    </div>
+
+                    <div className="flex justify-end gap-3 pt-4 border-t border-border">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setShowCreateModal(false)}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            type="submit"
+                            variant="primary"
+                            loading={createRequestMutation.isPending}
+                        >
+                            Submit Request
+                        </Button>
+                    </div>
+                </form>
+            </Modal>
+
+            {/* Unified Detail & Action Modal */}
+            <Modal
+                isOpen={modalOpen}
+                onClose={handleCloseModal}
+                title="Review Request"
+                size="lg"
+            >
+                {selectedRequest && (
+                    <div className="space-y-6">
+                        {/* Header Info */}
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <p className="text-xs text-muted-foreground">Request ID</p>
+                                <p className="text-sm font-mono text-white">{selectedRequest.id}</p>
+                            </div>
+                            <div>
+                                <p className="text-xs text-muted-foreground">Created At</p>
+                                <p className="text-sm text-white">{new Date(selectedRequest.created_at).toLocaleString()}</p>
+                            </div>
+                            <div>
+                                <p className="text-xs text-muted-foreground">Resource Type</p>
+                                <Badge>{resourceTypeConfig[selectedRequest.resource_type]?.label || selectedRequest.resource_type}</Badge>
+                            </div>
+                            <div>
+                                <p className="text-xs text-muted-foreground">Status</p>
+                                <Badge variant={getStatusBadge(selectedRequest.status)}>{selectedRequest.status}</Badge>
+                            </div>
+                            <div>
+                                <p className="text-xs text-muted-foreground">Approval Level</p>
+                                <Badge variant={selectedRequest.current_approval_level === 1 ? 'info' : 'success'}>
+                                    Level {selectedRequest.current_approval_level}
+                                </Badge>
+                            </div>
+                            <div>
+                                <p className="text-xs text-muted-foreground">Requester</p>
+                                <p className="text-sm text-white">{selectedRequest.requester_name || selectedRequest.requested_by}</p>
+                            </div>
+                        </div>
+
+                        {/* Request Content */}
+                        <div className="border-t border-slate-800 pt-4">
+                            <p className="text-xs text-muted-foreground mb-2">Request Content</p>
+                            <Card padding="sm" className="bg-slate-900/50 border-slate-800">
+                                <RequestDetails request={selectedRequest} showDetails={true} />
+                            </Card>
+                        </div>
+
+                        {/* Approval History / Notes */}
+                        {(selectedRequest.notes_l1 || selectedRequest.notes_l2) && (
+                            <div className="border-t border-slate-800 pt-4 space-y-2">
+                                <p className="text-xs text-muted-foreground">Previous Notes</p>
+                                {selectedRequest.notes_l1 && (
+                                    <div className="p-3 bg-slate-900/50 rounded-lg border border-slate-800">
+                                        <p className="text-xs text-muted-foreground">L1 Approver:</p>
+                                        <p className="text-sm text-white">{selectedRequest.notes_l1}</p>
+                                    </div>
+                                )}
+                                {selectedRequest.notes_l2 && (
+                                    <div className="p-3 bg-slate-900/50 rounded-lg border border-slate-800">
+                                        <p className="text-xs text-muted-foreground">L2 Approver:</p>
+                                        <p className="text-sm text-white">{selectedRequest.notes_l2}</p>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Action Area (Only if Pending) */}
+                        {activeTab === 'pending' && (
+                            <div className="border-t border-slate-800 pt-4 space-y-4">
+                                <Textarea
+                                    label="Approval / Rejection Notes"
+                                    placeholder="Add notes (optional for approval, required for rejection)..."
+                                    value={actionNotes}
+                                    onChange={(e) => setActionNotes(e.target.value)}
+                                />
+
+                                <div className="flex justify-end gap-2">
+                                    <Button type="button" variant="outline" onClick={handleCloseModal}>
+                                        Cancel
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        variant="danger"
+                                        onClick={handleReject}
+                                        loading={rejectMutation.isPending}
+                                        disabled={!actionNotes}
+                                        leftIcon={<X size={16} />}
+                                    >
+                                        Reject
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        variant="primary"
+                                        onClick={handleApprove}
+                                        loading={approveMutation.isPending}
+                                        leftIcon={<Check size={16} />}
+                                    >
+                                        Approve
+                                    </Button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
+            </Modal>
+        </div>
+    );
+}

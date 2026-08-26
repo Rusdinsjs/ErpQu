@@ -84,14 +84,14 @@ docker exec -e PGPASSWORD=${POSTGRES_PASSWORD:-postgres} mgmt-db psql -U ${POSTG
 
 # 4. Setup & Jalankan Frontend (Bun / Vite) di background
 echo -e "${GREEN}4. Menyiapkan Frontend Web Admin...${NC}"
-cd web-admin
+cd apps/web-admin
 if [ ! -d "node_modules" ]; then
     echo "Installing frontend dependencies..."
     bun install
 fi
 bun dev > frontend.log 2>&1 &
 FRONTEND_PID=$!
-cd ..
+cd ../..
 
 # 5. Jalankan Backend (Rust) di background
 echo -e "${GREEN}5. Menjalankan Backend (Rust)...${NC}"

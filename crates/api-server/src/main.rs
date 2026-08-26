@@ -88,7 +88,7 @@ async fn main() {
             }
         };
 
-        if let Err(e) = sqlx::migrate!("../../migrations")
+        if let Err(e) = sqlx::migrate!("../../database/migrations")
             .run(&migration_pool)
             .await
         {

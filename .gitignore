@@ -18,12 +18,12 @@ dist/
 !.env.production.example
 *.env
 !*.env.example
-web-admin/.env
-web-admin/.env.*
-!web-admin/.env.example
-mobile/.env
-mobile/.env.*
-!mobile/.env.example
+apps/web-admin/.env
+apps/web-admin/.env.*
+!apps/web-admin/.env.example
+apps/mobile/.env
+apps/mobile/.env.*
+!apps/mobile/.env.example
 
 # Logs & Debug outputs
 *.log

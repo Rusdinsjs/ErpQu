@@ -1,0 +1,132 @@
+name: management-system
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:17-alpine
+    container_name: mgmt-db
+    restart: unless-stopped
+    mem_limit: 512m
+    environment:
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_DB: ${DB_NAME:-management_system}
+      DB_APP_USER: ${DB_APP_USER:-erpqu_app}
+      DB_APP_PASSWORD: ${DB_APP_PASSWORD:-erpqu_app_dev_only}
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256 --auth-local=scram-sha-256"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      # Mount custom pg_hba.conf — trust auth untuk semua koneksi Docker internal
+      - ./postgres/pg_hba.conf:/etc/postgresql/pg_hba.conf:ro
+      - ./postgres/init_app_user.sh:/docker-entrypoint-initdb.d/010-init-app-user.sh:ro
+    # Override pg_hba.conf location sehingga trust auth aktif
+    command: postgres -c hba_file=/etc/postgresql/pg_hba.conf -c password_encryption=scram-sha-256
+    ports:
+      - "${DB_PORT:-5436}:5432"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-management_system}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  # Redis Cache (QSEC-REDIS)
+  redis:
+    image: redis:7-alpine
+    container_name: mgmt-redis
+    restart: unless-stopped
+    mem_limit: 256m
+    command: redis-server --requirepass ${REDIS_PASSWORD:-change_this_redis_password} --appendonly yes
+    volumes:
+      - redis_data:/data
+    ports:
+      - "${REDIS_PORT:-6382}:6379"
+    healthcheck:
+      test: [ "CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-change_this_redis_password}", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend API
+  backend:
+    image: ghcr.io/rusdinsjs/erp-backend:${IMAGE_TAG:-latest}
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: mgmt-backend
+    restart: unless-stopped
+    mem_limit: 1024m
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      MIGRATION_DATABASE_URL: postgres://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@postgres:5432/${DB_NAME:-management_system}
+      DATABASE_URL: postgres://${DB_APP_USER:-erpqu_app}:${DB_APP_PASSWORD:-erpqu_app_dev_only}@postgres:5432/${DB_NAME:-management_system}
+      REDIS_URL: redis://:${REDIS_PASSWORD:-change_this_redis_password}@redis:6379
+      JWT_SECRET: ${JWT_SECRET:-management-system-secret-key-change-in-production}
+      JWT_EXPIRATION_HOURS: ${JWT_EXPIRATION_HOURS:-24}
+      SERVER_HOST: 0.0.0.0
+      SERVER_PORT: 8181
+      ENVIRONMENT: production
+      RUST_LOG: info
+    expose:
+      - "8181"
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8181/health" ]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  # Frontend Web Admin
+  frontend:
+    image: ghcr.io/rusdinsjs/erp-frontend:${IMAGE_TAG:-latest}
+    build:
+      context: ./apps/web-admin
+      dockerfile: Dockerfile
+    container_name: mgmt-frontend
+    restart: unless-stopped
+    mem_limit: 256m
+    depends_on:
+      - backend
+    ports:
+      - "8888:80" # Map host 8888 to container 80 (Nginx)
+
+  # Database migrations (run once)
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile.migrate
+    container_name: mgmt-migrate
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@postgres:5432/${DB_NAME:-management_system}
+    profiles:
+      - migrate
+
+  # AI Service (Ollama)
+  ms-ai-ollama:
+    image: ollama/ollama:latest
+    container_name: ms-ai-ollama
+    restart: unless-stopped
+    mem_limit: 4096m
+    volumes:
+      - ollama_data:/root/.ollama
+    expose:
+      - "11434"
+    networks:
+      - default
+    profiles:
+      - ai
+
+volumes:
+  postgres_data:
+  redis_data:
+  ollama_data:
+
+networks:
+  default:
+    name: mgmt-network

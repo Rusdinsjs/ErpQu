@@ -32,7 +32,7 @@ WORKDIR /app
 
 # Copy the binary and migrations
 COPY --from=builder /app/target/release/management-system /app/management-system
-COPY --from=builder /app/migrations /app/migrations
+COPY --from=builder /app/database/migrations /app/database/migrations
 
 EXPOSE 8080
 CMD ["./management-system"]
