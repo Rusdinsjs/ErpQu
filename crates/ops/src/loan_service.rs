@@ -46,11 +46,19 @@ impl LoanService {
             })?
             .ok_or_else(|| DomainError::not_found("Asset", request.asset_id))?;
 
-        if !asset.is_available() {
+        if !asset.is_loan {
             return Err(DomainError::business_rule(
-                "asset_availability",
-                "Asset is not available for loan",
+                "asset_loanable",
+                "Asset is not configured as a loanable asset (is_loan is false)",
             ));
+        }
+
+        if !asset.is_available() {
+            let msg = format!(
+                "Asset is not available for loan in its current status ('{}'). Asset must be in 'in_inventory' or 'available' status.",
+                asset.status
+            );
+            return Err(DomainError::business_rule("asset_availability", &msg));
         }
 
         let mut loan = Loan::new(
@@ -262,7 +270,7 @@ impl LoanService {
             })?;
 
         // Update asset status
-        let _ = self.asset_repo.update_status(loan.asset_id, "in_use").await;
+        let _ = self.asset_repo.update_status(loan.asset_id, "on_loan").await;
 
         let updated_loan = self.get_by_id(id).await?;
 

@@ -298,6 +298,8 @@ impl AssetRepository {
         department: Option<&str>,
         status: Option<&str>,
         is_fuel: Option<bool>,
+        is_loan: Option<bool>,
+        is_rental: Option<bool>,
         limit: i64,
         offset: i64,
         exact_match: bool,
@@ -358,6 +360,8 @@ impl AssetRepository {
                 )
                 AND ($8::boolean IS NULL OR a.is_fuel = $8)
                 AND ($10::text IS NULL OR c.asset_group = $10)
+                AND ($11::boolean IS NULL OR a.is_loan = $11)
+                AND ($12::boolean IS NULL OR a.is_rental = $12)
             ORDER BY {} {}
             LIMIT $6 OFFSET $7
             "#,
@@ -375,6 +379,8 @@ impl AssetRepository {
             .bind(is_fuel)
             .bind(exact_match)
             .bind(asset_group)
+            .bind(is_loan)
+            .bind(is_rental)
             .fetch_all(&self.pool)
             .await
     }

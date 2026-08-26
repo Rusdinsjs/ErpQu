@@ -88,11 +88,12 @@ export default function Loans() {
         try {
             const [loansRes, assetsRes, employeesRes] = await Promise.all([
                 activeTab === 'overdue' ? loanApi.listOverdue() : loanApi.list(),
-                assetApi.list({ page: 1, per_page: 200, is_loan: true }),
+                assetApi.list({ page: 1, per_page: 500, is_loan: true }),
                 employeeApi.list(),
             ]);
             setLoans(Array.isArray(loansRes) ? loansRes : []);
-            setAssets(Array.isArray(assetsRes) ? assetsRes : (assetsRes as any).data?.data || (assetsRes as any).data || []);
+            const list = Array.isArray(assetsRes) ? assetsRes : (assetsRes as any).data || (assetsRes as any).data?.data || [];
+            setAssets(Array.isArray(list) ? list : []);
             setEmployees(employeesRes);
         } catch (error) {
             console.error(error);
@@ -244,7 +245,8 @@ export default function Loans() {
         return asset ? `${asset.asset_code} - ${asset.name}` : assetId;
     }
 
-    const availableAssets = assets.filter((a) => ['in_inventory', 'available'].includes(a.status) && a.is_loan === true);
+    const loanableStatuses = ['in_inventory', 'available'];
+    const availableAssets = assets.filter((a) => (a.is_loan === true || (a as any).is_loan === 1 || (a as any).is_loan === 'true') && loanableStatuses.includes(a.status?.toLowerCase()));
 
     const TabButton = ({ value, children, count, danger }: { value: string; children: React.ReactNode; count?: number; danger?: boolean }) => (
         <button
@@ -450,12 +452,23 @@ export default function Loans() {
                 <div className="space-y-4">
                     <Select
                         label="Pilih Aset"
-                        placeholder="Cari aset..."
+                        placeholder={availableAssets.length > 0 ? "Cari aset..." : "Tidak ada aset berstatus Siap Gunakan (In Inventory)"}
                         value={newLoan.asset_id}
                         onChange={(val) => setNewLoan({ ...newLoan, asset_id: val })}
-                        options={availableAssets.map((a) => ({ value: a.id, label: `${a.asset_code} - ${a.name}` }))}
+                        options={availableAssets.map((a) => ({ value: a.id, label: `${a.name} (${a.asset_code})` }))}
                         required
+                        disabled={availableAssets.length === 0}
                     />
+                    {availableAssets.length === 0 && (
+                        <div className="text-xs text-amber-300 bg-amber-500/10 border border-amber-500/20 rounded-lg p-3 space-y-1">
+                            <p className="font-semibold">⚠️ Tidak ada aset yang siap dipinjamkan.</p>
+                            <p className="text-muted-foreground">Peminjaman hanya berlaku untuk aset yang:</p>
+                            <ul className="list-disc list-inside text-muted-foreground space-y-0.5">
+                                <li>Memiliki status lifecycle <span className="text-emerald-400 font-medium">"Siap Gunakan (In Inventory)"</span> / <span className="text-emerald-400 font-medium">"Available"</span></li>
+                                <li>Opsi <span className="text-purple-400 font-medium">"Loanable Asset"</span> diaktifkan pada data aset</li>
+                            </ul>
+                        </div>
+                    )}
                     <Select
                         label="Siapa yang meminjam?"
                         value={borrowerType}

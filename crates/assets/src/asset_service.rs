@@ -329,6 +329,8 @@ impl AssetService {
                 department_clean.as_deref(),
                 status_clean.as_deref(),
                 params.is_fuel,
+                params.is_loan,
+                params.is_rental,
                 per_page,
                 offset,
                 params.exact_match.unwrap_or(false),

@@ -56,6 +56,8 @@ impl DepreciationService {
                     None,                    // dept
                     Some("in_use,deployed"), // status
                     None,                    // is_fuel
+                    None,                    // is_loan
+                    None,                    // is_rental
                     batch_size,              // limit
                     offset,                  // offset
                     false,                   // exact_match
