@@ -270,7 +270,10 @@ impl LoanService {
             })?;
 
         // Update asset status
-        let _ = self.asset_repo.update_status(loan.asset_id, "on_loan").await;
+        let _ = self
+            .asset_repo
+            .update_status(loan.asset_id, "on_loan")
+            .await;
 
         let updated_loan = self.get_by_id(id).await?;
 
