@@ -142,7 +142,7 @@ jobs:
 
             # Pull new images
             echo ">> Pulling production images [${IMAGE_SHA:0:8}]..."
-            docker compose -f docker-compose.prod.yml pull backend frontend nginx
+            docker compose -f docker-compose.prod.yml pull backend frontend
 
             # Run migrations (fail-closed)
             echo ">> Running database migrations..."
@@ -157,7 +157,7 @@ jobs:
 
             # Rolling deployment
             echo ">> Starting production services..."
-            docker compose -f docker-compose.prod.yml up -d --remove-orphans
+            docker compose -f docker-compose.prod.yml up -d --build --remove-orphans
 
             # Strict readiness gate
             echo ">> Production readiness gate..."
