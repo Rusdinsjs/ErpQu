@@ -97,6 +97,27 @@ async fn main() {
         }
 
         tracing::info!("Database migrations applied successfully.");
+
+        // Automatically grant all permissions to application user (erpqu_app)
+        let grant_query = r#"
+        DO $$
+        DECLARE s text;
+        BEGIN
+          FOR s IN SELECT schema_name FROM information_schema.schemata WHERE schema_name NOT LIKE 'pg_%' AND schema_name != 'information_schema'
+          LOOP
+            EXECUTE format('GRANT ALL ON ALL TABLES IN SCHEMA %I TO erpqu_app;', s);
+            EXECUTE format('GRANT ALL ON ALL SEQUENCES IN SCHEMA %I TO erpqu_app;', s);
+            EXECUTE format('ALTER DEFAULT PRIVILEGES IN SCHEMA %I GRANT ALL ON TABLES TO erpqu_app;', s);
+            EXECUTE format('ALTER DEFAULT PRIVILEGES IN SCHEMA %I GRANT ALL ON SEQUENCES TO erpqu_app;', s);
+          END LOOP;
+        END $$;
+        "#;
+        if let Err(e) = sqlx::query(grant_query).execute(&migration_pool).await {
+            tracing::warn!("Warning: Failed to execute automatic schema permissions grant: {}", e);
+        } else {
+            tracing::info!("Schema permissions for erpqu_app granted successfully.");
+        }
+
         migration_pool.close().await;
 
         if is_migration_only {

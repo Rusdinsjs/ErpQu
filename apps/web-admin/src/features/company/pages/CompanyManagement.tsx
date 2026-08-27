@@ -211,7 +211,7 @@ export const CompanyManagement: React.FC = () => {
                     key, 
                     value === '' ? undefined : value
                 ])
-            );
+            ) as unknown as CompanyPayload;
 
             if (editingCompany) {
                 await updateCompany(editingCompany.id, sanitizedData);
@@ -242,6 +242,29 @@ export const CompanyManagement: React.FC = () => {
     const totalCompanies = companies.length;
     const groupCompanies = companies.filter(c => c.is_group).length;
     const operatingCompanies = totalCompanies - groupCompanies;
+
+    const filteredCompanies = companies.filter((c) => {
+        const matchesSearch =
+            !search ||
+            c.name.toLowerCase().includes(search.toLowerCase()) ||
+            c.code.toLowerCase().includes(search.toLowerCase()) ||
+            (c.legal_name && c.legal_name.toLowerCase().includes(search.toLowerCase())) ||
+            (c.tax_id && c.tax_id.toLowerCase().includes(search.toLowerCase()));
+        const matchesStatus = statusFilter === 'ALL' || c.status === statusFilter;
+        return matchesSearch && matchesStatus;
+    });
+
+    const getCompanyCardColSpan = (index: number, total: number): string => {
+        const fullRowLimit = Math.floor(total / 4) * 4;
+        if (index < fullRowLimit) {
+            return 'col-span-12 sm:col-span-6 lg:col-span-3';
+        }
+        const remainder = total % 4;
+        if (remainder === 1) return 'col-span-12';
+        if (remainder === 2) return 'col-span-12 sm:col-span-6';
+        if (remainder === 3) return 'col-span-12 sm:col-span-6 lg:col-span-4';
+        return 'col-span-12 sm:col-span-6 lg:col-span-3';
+    };
 
     return (
         <div className="p-6 max-w-7xl mx-auto space-y-6">
@@ -376,138 +399,146 @@ export const CompanyManagement: React.FC = () => {
                     <p className="text-sm font-medium text-muted-foreground">Memuat data perusahaan & akta legalitas...</p>
                 </div>
             ) : viewMode === 'grid' ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                    {companies.map((comp) => (
-                        <div
-                            key={comp.id}
-                            className="bg-card rounded-2xl border border-border shadow-sm hover:shadow-md transition-all p-5 flex flex-col justify-between relative overflow-hidden group"
-                        >
-                            {/* Decorative Accent Header Bar */}
-                            <div className={`absolute top-0 left-0 right-0 h-1.5 ${comp.is_group ? 'bg-gradient-to-r from-purple-500 to-indigo-600' : 'bg-gradient-to-r from-indigo-500 to-cyan-500'}`} />
+                <div className="grid grid-cols-12 gap-5">
+                    {filteredCompanies.length === 0 ? (
+                        <div className="col-span-12 bg-card p-12 rounded-2xl border border-border text-center">
+                            <Building2 className="w-10 h-10 mx-auto text-muted-foreground mb-3 opacity-40" />
+                            <p className="text-sm font-semibold text-foreground">Tidak ada data perusahaan yang sesuai</p>
+                            <p className="text-xs text-muted-foreground mt-1">Coba sesuaikan kata kunci pencarian atau status filter Anda.</p>
+                        </div>
+                    ) : (
+                        filteredCompanies.map((comp, index) => (
+                            <div
+                                key={comp.id}
+                                className={`${getCompanyCardColSpan(index, filteredCompanies.length)} bg-card rounded-2xl border border-border shadow-sm hover:shadow-md transition-all p-5 flex flex-col justify-between relative overflow-hidden group`}
+                            >
+                                {/* Decorative Accent Header Bar */}
+                                <div className={`absolute top-0 left-0 right-0 h-1.5 ${comp.is_group ? 'bg-gradient-to-r from-purple-500 to-indigo-600' : 'bg-gradient-to-r from-indigo-500 to-cyan-500'}`} />
 
-                            <div>
-                                <div className="flex items-start justify-between gap-3 mb-3">
-                                    <div className="flex items-center gap-3">
-                                        {comp.logo_url ? (
-                                            <img
-                                                src={getImageUrl(comp.logo_url)}
-                                                alt={comp.name}
-                                                className="w-11 h-11 rounded-xl object-contain bg-muted/30 border border-border p-1 shrink-0"
-                                            />
-                                        ) : (
-                                            <div className={`w-11 h-11 rounded-xl flex items-center justify-center font-bold text-sm tracking-wider shrink-0 ${comp.is_group
-                                                ? 'bg-purple-500/15 text-purple-400 border border-purple-500/20'
-                                                : 'bg-indigo-500/15 text-indigo-400 border border-indigo-500/20'
-                                                }`}>
-                                                {comp.code}
+                                <div>
+                                    <div className="flex items-start justify-between gap-3 mb-3">
+                                        <div className="flex items-center gap-3">
+                                            {comp.logo_url ? (
+                                                <img
+                                                    src={getImageUrl(comp.logo_url)}
+                                                    alt={comp.name}
+                                                    className="w-11 h-11 rounded-xl object-contain bg-muted/30 border border-border p-1 shrink-0"
+                                                />
+                                            ) : (
+                                                <div className={`w-11 h-11 rounded-xl flex items-center justify-center font-bold text-sm tracking-wider shrink-0 ${comp.is_group
+                                                    ? 'bg-purple-500/15 text-purple-400 border border-purple-500/20'
+                                                    : 'bg-indigo-500/15 text-indigo-400 border border-indigo-500/20'
+                                                    }`}>
+                                                    {comp.code}
+                                                </div>
+                                            )}
+                                            <div>
+                                                <h4 className="font-bold text-foreground line-clamp-1">{comp.name}</h4>
+                                                <p className="text-xs text-muted-foreground">{comp.legal_name || comp.code}</p>
+                                            </div>
+                                        </div>
+
+                                        <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ${comp.status === 'ACTIVE'
+                                            ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
+                                            : 'bg-muted text-muted-foreground border border-border'
+                                            }`}>
+                                            <span className={`w-1.5 h-1.5 rounded-full ${comp.status === 'ACTIVE' ? 'bg-emerald-500' : 'bg-slate-400'}`} />
+                                            {comp.status}
+                                        </span>
+                                    </div>
+
+                                    {comp.is_group && (
+                                        <div className="mb-3 inline-flex items-center gap-1.5 px-2.5 py-1 bg-purple-500/10 text-purple-400 rounded-lg text-xs font-semibold border border-purple-500/20">
+                                            <GitFork className="w-3.5 h-3.5" />
+                                            Grup Induk (Holding)
+                                        </div>
+                                    )}
+
+                                    {!comp.is_group && comp.parent_company_name && (
+                                        <div className="mb-3 text-xs text-muted-foreground">
+                                            <span className="font-semibold text-foreground">Induk: </span>
+                                            {comp.parent_company_name}
+                                        </div>
+                                    )}
+
+                                    <div className="space-y-2 text-xs text-muted-foreground my-3 pt-2 border-t border-border/60">
+                                        {comp.establishment_deed_no && (
+                                            <div className="p-2.5 bg-amber-500/10 border border-amber-500/20 rounded-xl space-y-1">
+                                                <div className="flex items-center gap-1.5 font-bold text-amber-400">
+                                                    <ScrollText className="w-3.5 h-3.5 text-amber-400" />
+                                                    <span>Akta Pendirian: No. {comp.establishment_deed_no}</span>
+                                                </div>
+                                                {comp.establishment_notary_name && (
+                                                    <p className="text-[11px] text-amber-300">
+                                                        Notaris: {comp.establishment_notary_name}
+                                                    </p>
+                                                )}
+                                                {comp.establishment_approval_no && (
+                                                    <p className="text-[10px] text-amber-500 truncate">
+                                                        SK Kemenkumham: {comp.establishment_approval_no}
+                                                    </p>
+                                                )}
                                             </div>
                                         )}
-                                        <div>
-                                            <h4 className="font-bold text-foreground line-clamp-1">{comp.name}</h4>
-                                            <p className="text-xs text-muted-foreground">{comp.legal_name || comp.code}</p>
-                                        </div>
-                                    </div>
 
-                                    <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold ${comp.status === 'ACTIVE'
-                                        ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                                        : 'bg-muted text-muted-foreground border border-border'
-                                        }`}>
-                                        <span className={`w-1.5 h-1.5 rounded-full ${comp.status === 'ACTIVE' ? 'bg-emerald-500' : 'bg-slate-400'}`} />
-                                        {comp.status}
-                                    </span>
-                                </div>
-
-                                {comp.is_group && (
-                                    <div className="mb-3 inline-flex items-center gap-1.5 px-2.5 py-1 bg-purple-500/10 text-purple-400 rounded-lg text-xs font-semibold border border-purple-500/20">
-                                        <GitFork className="w-3.5 h-3.5" />
-                                        Grup Induk (Holding)
-                                    </div>
-                                )}
-
-                                {!comp.is_group && comp.parent_company_name && (
-                                    <div className="mb-3 text-xs text-muted-foreground">
-                                        <span className="font-semibold text-foreground">Induk: </span>
-                                        {comp.parent_company_name}
-                                    </div>
-                                )}
-
-                                <div className="space-y-2 text-xs text-muted-foreground my-3 pt-2 border-t border-border/60">
-                                    {comp.establishment_deed_no && (
-                                        <div className="p-2.5 bg-amber-500/10 border border-amber-500/20 rounded-xl space-y-1">
-                                            <div className="flex items-center gap-1.5 font-bold text-amber-400">
-                                                <ScrollText className="w-3.5 h-3.5 text-amber-400" />
-                                                <span>Akta Pendirian: No. {comp.establishment_deed_no}</span>
+                                        {comp.tax_id && (
+                                            <div className="flex items-center justify-between pt-1">
+                                                <span className="text-muted-foreground">NPWP / Tax ID:</span>
+                                                <span className="font-medium text-foreground">{comp.tax_id}</span>
                                             </div>
-                                            {comp.establishment_notary_name && (
-                                                <p className="text-[11px] text-amber-300">
-                                                    Notaris: {comp.establishment_notary_name}
-                                                </p>
-                                            )}
-                                            {comp.establishment_approval_no && (
-                                                <p className="text-[10px] text-amber-500 truncate">
-                                                    SK Kemenkumham: {comp.establishment_approval_no}
-                                                </p>
-                                            )}
-                                        </div>
-                                    )}
-
-                                    {comp.tax_id && (
-                                        <div className="flex items-center justify-between pt-1">
-                                            <span className="text-muted-foreground">NPWP / Tax ID:</span>
-                                            <span className="font-medium text-foreground">{comp.tax_id}</span>
-                                        </div>
-                                    )}
-                                    {comp.domain && (
+                                        )}
+                                        {comp.domain && (
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-muted-foreground">Sektor / Industri:</span>
+                                                <span className="font-medium text-foreground">{comp.domain}</span>
+                                            </div>
+                                        )}
                                         <div className="flex items-center justify-between">
-                                            <span className="text-muted-foreground">Sektor / Industri:</span>
-                                            <span className="font-medium text-foreground">{comp.domain}</span>
+                                            <span className="text-muted-foreground">Mata Uang:</span>
+                                            <span className="font-semibold text-indigo-400">{comp.base_currency}</span>
                                         </div>
-                                    )}
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-muted-foreground">Mata Uang:</span>
-                                        <span className="font-semibold text-indigo-400">{comp.base_currency}</span>
+                                        {comp.email && (
+                                            <div className="flex items-center gap-2 text-muted-foreground pt-1">
+                                                <Mail className="w-3.5 h-3.5 text-muted-foreground" />
+                                                <span className="truncate">{comp.email}</span>
+                                            </div>
+                                        )}
+                                        {comp.phone && (
+                                            <div className="flex items-center gap-2 text-muted-foreground">
+                                                <Phone className="w-3.5 h-3.5 text-muted-foreground" />
+                                                <span>{comp.phone}</span>
+                                            </div>
+                                        )}
                                     </div>
-                                    {comp.email && (
-                                        <div className="flex items-center gap-2 text-muted-foreground pt-1">
-                                            <Mail className="w-3.5 h-3.5 text-muted-foreground" />
-                                            <span className="truncate">{comp.email}</span>
-                                        </div>
-                                    )}
-                                    {comp.phone && (
-                                        <div className="flex items-center gap-2 text-muted-foreground">
-                                            <Phone className="w-3.5 h-3.5 text-muted-foreground" />
-                                            <span>{comp.phone}</span>
-                                        </div>
-                                    )}
+                                </div>
+
+                                {/* Actions with View (Detail), Edit, Delete */}
+                                <div className="flex items-center justify-end gap-1.5 pt-3 border-t border-border/60">
+                                    <button
+                                        onClick={() => handleOpenViewModal(comp)}
+                                        className="p-2 text-muted-foreground hover:text-cyan-500 hover:bg-cyan-500/10 rounded-lg transition-colors"
+                                        title="Lihat Detail Data Perusahaan"
+                                    >
+                                        <Eye className="w-4 h-4" />
+                                    </button>
+                                    <button
+                                        onClick={() => handleOpenEditModal(comp)}
+                                        className="p-2 text-muted-foreground hover:text-indigo-400 hover:bg-indigo-500/10 rounded-lg transition-colors"
+                                        title="Edit Perusahaan & Akta"
+                                    >
+                                        <Edit className="w-4 h-4" />
+                                    </button>
+                                    <button
+                                        onClick={() => handleDelete(comp.id, comp.name)}
+                                        className="p-2 text-muted-foreground hover:text-rose-600 hover:bg-rose-500/10 rounded-lg transition-colors"
+                                        title="Hapus Perusahaan"
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                    </button>
                                 </div>
                             </div>
-
-                            {/* Actions with View (Detail), Edit, Delete */}
-                            <div className="flex items-center justify-end gap-1.5 pt-3 border-t border-border/60">
-                                <button
-                                    onClick={() => handleOpenViewModal(comp)}
-                                    className="p-2 text-muted-foreground hover:text-cyan-500 hover:bg-cyan-500/10 rounded-lg transition-colors"
-                                    title="Lihat Detail Data Perusahaan"
-                                >
-                                    <Eye className="w-4 h-4" />
-                                </button>
-                                <button
-                                    onClick={() => handleOpenEditModal(comp)}
-                                    className="p-2 text-muted-foreground hover:text-indigo-400 hover:bg-indigo-500/10 rounded-lg transition-colors"
-                                    title="Edit Perusahaan & Akta"
-                                >
-                                    <Edit className="w-4 h-4" />
-                                </button>
-                                <button
-                                    onClick={() => handleDelete(comp.id, comp.name)}
-                                    className="p-2 text-muted-foreground hover:text-rose-600 hover:bg-rose-500/10 rounded-lg transition-colors"
-                                    title="Hapus Perusahaan"
-                                >
-                                    <Trash2 className="w-4 h-4" />
-                                </button>
-                            </div>
-                        </div>
-                    ))}
+                        ))
+                    )}
                 </div>
             ) : (
                 /* Frappe Hierarchy Tree View */
