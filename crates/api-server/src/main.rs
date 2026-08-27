@@ -113,7 +113,10 @@ async fn main() {
         END $$;
         "#;
         if let Err(e) = sqlx::query(grant_query).execute(&migration_pool).await {
-            tracing::warn!("Warning: Failed to execute automatic schema permissions grant: {}", e);
+            tracing::warn!(
+                "Warning: Failed to execute automatic schema permissions grant: {}",
+                e
+            );
         } else {
             tracing::info!("Schema permissions for erpqu_app granted successfully.");
         }
