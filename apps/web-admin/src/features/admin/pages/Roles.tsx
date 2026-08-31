@@ -1,30 +1,36 @@
-
-import { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Shield, Settings, Plus, Edit, Trash2, Save, Eye, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
-import { Card, Modal, Input, Button, useToast, Skeleton, Table, TableHead, TableBody, TableRow, TableTh, TableTd, TableEmpty, SearchInput, Badge, ActionIcon, PageHeader } from'../../../components/ui';
-import { rbacApi } from'../api/rbac';
+import { Shield, Settings, Plus, Users, Layers, Grid, FileCheck } from 'lucide-react';
+import { Modal, Input, Button, useToast, PageHeader } from '../../../components/ui';
+import { rbacApi } from '../api/rbac';
+import type { Role } from '../../../types';
 
-import type { Role } from'../../../types';
+import { RoleHierarchyCards } from '../components/RoleHierarchyCards';
+import { FrappeRolePermissionManager } from '../components/FrappeRolePermissionManager';
+import { UserPermissionsTab } from '../components/UserPermissionsTab';
+import { GlobalMatrixAuditView } from '../components/GlobalMatrixAuditView';
 
-import { FrappeRolePermissionManager } from'../components/FrappeRolePermissionManager';
+type TabType = 'overview' | 'frappe_matrix' | 'user_perms' | 'global_audit';
 
-type TabType = 'overview' | 'frappe_matrix';
-
-
-function RolesList() {
+export default function Roles() {
     const queryClient = useQueryClient();
     const { success, error: showError } = useToast();
+    const [activeTab, setActiveTab] = useState<TabType>('overview');
+
+    // Create & Edit Role Modal
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [viewModalOpen, setViewModalOpen] = useState(false);
-    const [viewingRole, setViewingRole] = useState<Role | null>(null);
     const [editingRole, setEditingRole] = useState<Role | null>(null);
-
-    const [search, setSearch] = useState('');
-    const [sortField, setSortField] = useState<'name' | 'code' | 'role_level'>('role_level');
-    const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
-
     const [formData, setFormData] = useState({
+        code: '',
+        name: '',
+        description: '',
+        role_level: 5
+    });
+
+    // Clone Role Modal
+    const [isCloneModalOpen, setIsCloneModalOpen] = useState(false);
+    const [cloningSourceRole, setCloningSourceRole] = useState<Role | null>(null);
+    const [cloneData, setCloneData] = useState({
         code: '',
         name: '',
         description: '',
@@ -41,10 +47,10 @@ function RolesList() {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['roles'] });
             setIsModalOpen(false);
-            success('Role created successfully');
+            success('Role baru berhasil dibuat');
             resetForm();
         },
-        onError: (err: any) => showError(err.message || 'Failed to create role')
+        onError: (err: any) => showError(err.message || 'Gagal membuat role')
     });
 
     const updateMutation = useMutation({
@@ -52,33 +58,38 @@ function RolesList() {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['roles'] });
             setIsModalOpen(false);
-            success('Role updated successfully');
+            success('Role berhasil diperbarui');
             resetForm();
         },
-        onError: (err: any) => showError(err.message || 'Failed to update role')
+        onError: (err: any) => showError(err.message || 'Gagal memperbarui role')
     });
 
     const deleteMutation = useMutation({
         mutationFn: rbacApi.deleteRole,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['roles'] });
-            success('Role deleted successfully');
+            success('Role berhasil dihapus');
         },
-        onError: (err: any) => showError(err.message || 'Failed to delete role')
+        onError: (err: any) => showError(err.message || 'Gagal menghapus role')
+    });
+
+    const cloneMutation = useMutation({
+        mutationFn: async (data: typeof cloneData) => {
+            const newRole = await rbacApi.createRole(data);
+            return newRole;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['roles'] });
+            setIsCloneModalOpen(false);
+            success('Role berhasil diduplikasi');
+            setCloningSourceRole(null);
+        },
+        onError: (err: any) => showError(err.message || 'Gagal menduplikasi role')
     });
 
     const resetForm = () => {
         setEditingRole(null);
         setFormData({ code: '', name: '', description: '', role_level: 5 });
-    };
-
-    const handleSort = (field: 'name' | 'code' | 'role_level') => {
-        if (sortField === field) {
-            setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
-        } else {
-            setSortField(field);
-            setSortDirection('asc');
-        }
     };
 
     const handleEdit = (role: Role) => {
@@ -87,14 +98,20 @@ function RolesList() {
             code: role.code,
             name: role.name,
             description: role.description || '',
-            role_level: role.role_level
+            role_level: role.role_level || 5
         });
         setIsModalOpen(true);
     };
 
-    const handleView = (role: Role) => {
-        setViewingRole(role);
-        setViewModalOpen(true);
+    const handleClone = (role: Role) => {
+        setCloningSourceRole(role);
+        setCloneData({
+            code: `${role.code}_copy`,
+            name: `${role.name} (Copy)`,
+            description: role.description ? `Salinan dari ${role.name}: ${role.description}` : `Salinan dari ${role.name}`,
+            role_level: role.role_level || 5
+        });
+        setIsCloneModalOpen(true);
     };
 
     const handleSubmit = (e: React.FormEvent) => {
@@ -103,299 +120,262 @@ function RolesList() {
             updateMutation.mutate({
                 name: formData.name,
                 description: formData.description,
-                role_level: formData.role_level
+                role_level: Number(formData.role_level)
             });
         } else {
-            createMutation.mutate(formData);
+            createMutation.mutate({
+                code: formData.code.toLowerCase().replace(/\s+/g, '_'),
+                name: formData.name,
+                description: formData.description,
+                role_level: Number(formData.role_level)
+            });
         }
     };
 
-    const filteredRoles = useMemo(() => {
-        return (roles as Role[]).filter((r: Role) => {
-            if (!search.trim()) return true;
-            const query = search.toLowerCase().trim();
-            return (r.name || '').toLowerCase().includes(query) ||
-                (r.code || '').toLowerCase().includes(query) ||
-                (r.description || '').toLowerCase().includes(query);
-        }).sort((a: Role, b: Role) => {
-            let valA: any = a[sortField] ?? '';
-            let valB: any = b[sortField] ?? '';
-            if (typeof valA === 'string') valA = valA.toLowerCase();
-            if (typeof valB === 'string') valB = valB.toLowerCase();
-            if (valA < valB) return sortDirection === 'asc' ? -1 : 1;
-            if (valA > valB) return sortDirection === 'asc' ? 1 : -1;
-            return 0;
+    const handleCloneSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        cloneMutation.mutate({
+            code: cloneData.code.toLowerCase().replace(/\s+/g, '_'),
+            name: cloneData.name,
+            description: cloneData.description,
+            role_level: Number(cloneData.role_level)
         });
-    }, [roles, search, sortField, sortDirection]);
-
-    if (isLoading) return (
-        <Card padding="lg">
-            <div className="flex justify-between items-center mb-6">
-                <div>
-                    <Skeleton className="h-6 w-48 mb-2" />
-                    <Skeleton className="h-4 w-64" />
-                </div>
-                <Skeleton className="h-10 w-24" />
-            </div>
-            <div className="grid gap-4">
-                {[1, 2, 3].map(i => (
-                    <Skeleton key={i} className="h-24 w-full" />
-                ))}
-            </div>
-        </Card>
-    );
+    };
 
     return (
-        <Card padding="lg">
-            <div className="flex justify-between items-center mb-6">
+        <div className="space-y-6 max-w-[1600px] mx-auto p-4 sm:p-6 animate-in fade-in duration-300">
+            {/* Page Header */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h3 className="text-lg font-semibold text-white">Roles Overview</h3>
-                    <p className="text-sm text-muted-foreground">Manage system roles and access levels</p>
+                    <h1 className="text-2xl font-black tracking-tight text-foreground flex items-center gap-3">
+                        <Shield className="w-8 h-8 text-primary" />
+                        <span>Hak Akses & Manajemen Role (RBAC)</span>
+                    </h1>
+                    <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+                        Atur hierarki tingkatan wewenang pengguna, matriks izin dokumen per modul, dan pembatasan data baris (Row-Level Security).
+                    </p>
                 </div>
-                <Button
-                    leftIcon={<Plus size={18} />}
-                    onClick={() => { resetForm(); setIsModalOpen(true); }}
+            </div>
+
+            {/* Navigation Tabs */}
+            <div className="flex items-center gap-2 border-b border-border overflow-x-auto">
+                <button
+                    onClick={() => setActiveTab('overview')}
+                    className={`flex items-center gap-2 px-4 py-3 text-xs sm:text-sm font-bold border-b-2 transition-colors whitespace-nowrap ${activeTab === 'overview'
+                        ? 'border-primary text-primary'
+                        : 'border-transparent text-muted-foreground hover:text-foreground'
+                        }`}
                 >
-                    Add Role
-                </Button>
+                    <Shield size={16} />
+                    <span>1. Daftar & Hierarki Role ({roles.length})</span>
+                </button>
+
+                <button
+                    onClick={() => setActiveTab('frappe_matrix')}
+                    className={`flex items-center gap-2 px-4 py-3 text-xs sm:text-sm font-bold border-b-2 transition-colors whitespace-nowrap ${activeTab === 'frappe_matrix'
+                        ? 'border-primary text-primary'
+                        : 'border-transparent text-muted-foreground hover:text-foreground'
+                        }`}
+                >
+                    <Layers size={16} />
+                    <span>2. Matriks Izin Dokumen (DocPerm)</span>
+                </button>
+
+                <button
+                    onClick={() => setActiveTab('user_perms')}
+                    className={`flex items-center gap-2 px-4 py-3 text-xs sm:text-sm font-bold border-b-2 transition-colors whitespace-nowrap ${activeTab === 'user_perms'
+                        ? 'border-primary text-primary'
+                        : 'border-transparent text-muted-foreground hover:text-foreground'
+                        }`}
+                >
+                    <Users size={16} />
+                    <span>3. Pembatasan Data Staf (RLS)</span>
+                </button>
+
+                <button
+                    onClick={() => setActiveTab('global_audit')}
+                    className={`flex items-center gap-2 px-4 py-3 text-xs sm:text-sm font-bold border-b-2 transition-colors whitespace-nowrap ${activeTab === 'global_audit'
+                        ? 'border-primary text-primary'
+                        : 'border-transparent text-muted-foreground hover:text-foreground'
+                        }`}
+                >
+                    <Grid size={16} />
+                    <span>4. Audit Matriks Global</span>
+                </button>
             </div>
 
-            {/* Search */}
-            <div className="mb-4 max-w-md">
-                <SearchInput
-                    value={search}
-                    onChange={setSearch}
-                    placeholder="Search role by name, code or description..."
+            {/* Tab Contents */}
+            {activeTab === 'overview' && (
+                <RoleHierarchyCards
+                    roles={roles}
+                    isLoading={isLoading}
+                    onEdit={handleEdit}
+                    onDelete={(id) => deleteMutation.mutate(id)}
+                    onClone={handleClone}
+                    onSelectForPerms={() => setActiveTab('frappe_matrix')}
+                    onCreateNew={() => { resetForm(); setIsModalOpen(true); }}
                 />
-            </div>
+            )}
 
-            <Table>
-                <TableHead>
-                    <TableRow>
-                        <TableTh onClick={() => handleSort('name')} className="cursor-pointer hover:text-white transition-colors">
-                            <div className="flex items-center gap-1.5">
-                                <span>Role Name</span>
-                                {sortField === 'name' ? (
-                                    sortDirection === 'asc' ? <ArrowUp size={12} className="text-cyan-400" /> : <ArrowDown size={12} className="text-cyan-400" />
-                                ) : (
-                                    <ArrowUpDown size={12} className="opacity-40" />
-                                )}
-                            </div>
-                        </TableTh>
-                        <TableTh onClick={() => handleSort('code')} className="cursor-pointer hover:text-white transition-colors">
-                            <div className="flex items-center gap-1.5">
-                                <span>Code</span>
-                                {sortField === 'code' ? (
-                                    sortDirection === 'asc' ? <ArrowUp size={12} className="text-cyan-400" /> : <ArrowDown size={12} className="text-cyan-400" />
-                                ) : (
-                                    <ArrowUpDown size={12} className="opacity-40" />
-                                )}
-                            </div>
-                        </TableTh>
-                        <TableTh onClick={() => handleSort('role_level')} className="cursor-pointer hover:text-white transition-colors">
-                            <div className="flex items-center gap-1.5">
-                                <span>Role Level</span>
-                                {sortField === 'role_level' ? (
-                                    sortDirection === 'asc' ? <ArrowUp size={12} className="text-cyan-400" /> : <ArrowDown size={12} className="text-cyan-400" />
-                                ) : (
-                                    <ArrowUpDown size={12} className="opacity-40" />
-                                )}
-                            </div>
-                        </TableTh>
-                        <TableTh>Description</TableTh>
-                        <TableTh align="center">Actions</TableTh>
-                    </TableRow>
-                </TableHead>
-                <TableBody>
-                    {filteredRoles.length > 0 ? filteredRoles.map((role: Role) => (
-                        <TableRow key={role.id}>
-                            <TableTd>
-                                <span className="font-semibold text-white">{role.name}</span>
-                            </TableTd>
-                            <TableTd>
-                                <Badge variant="default" className="font-mono">{role.code}</Badge>
-                            </TableTd>
-                            <TableTd>
-                                <Badge variant={role.role_level === 1 ? 'danger' : role.role_level <= 3 ? 'warning' : 'info'}>
-                                    Level {role.role_level}
-                                </Badge>
-                            </TableTd>
-                            <TableTd>
-                                <span className="text-sm text-muted-foreground">{role.description || 'No description'}</span>
-                            </TableTd>
-                            <TableTd align="center">
-                                <div className="flex items-center justify-center gap-1.5">
-                                    <ActionIcon onClick={() => handleView(role)} title="View Details">
-                                        <Eye size={16} className="text-cyan-400" />
-                                    </ActionIcon>
-                                    <ActionIcon onClick={() => handleEdit(role)} title="Edit Role">
-                                        <Edit size={16} className="text-amber-400" />
-                                    </ActionIcon>
-                                    <ActionIcon
-                                        variant="danger"
-                                        title="Delete Role"
-                                        onClick={() => {
-                                            if (confirm(`Delete role ${role.name}? This cannot be undone.`)) {
-                                                deleteMutation.mutate(role.id);
-                                            }
-                                        }}
-                                    >
-                                        <Trash2 size={16} className="text-rose-400" />
-                                    </ActionIcon>
-                                </div>
-                            </TableTd>
-                        </TableRow>
-                    )) : (
-                        <TableEmpty colSpan={5} message="No roles found" />
-                    )}
-                </TableBody>
-            </Table>
+            {activeTab === 'frappe_matrix' && (
+                <FrappeRolePermissionManager />
+            )}
 
-            {/* View Modal */}
-            <Modal
-                isOpen={viewModalOpen}
-                onClose={() => setViewModalOpen(false)}
-                title="Role Details"
-            >
-                {viewingRole && (
-                    <div className="p-6 space-y-4 text-sm">
-                        <div>
-                            <p className="text-xs text-muted-foreground uppercase font-bold">Role Name</p>
-                            <p className="text-lg font-bold text-white mt-1">{viewingRole.name}</p>
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <p className="text-xs text-muted-foreground uppercase font-bold">Code</p>
-                                <Badge variant="default" className="font-mono mt-1">{viewingRole.code}</Badge>
-                            </div>
-                            <div>
-                                <p className="text-xs text-muted-foreground uppercase font-bold">Level</p>
-                                <Badge variant="info" className="mt-1">Level {viewingRole.role_level}</Badge>
-                            </div>
-                        </div>
-                        <div>
-                            <p className="text-xs text-muted-foreground uppercase font-bold">Description</p>
-                            <p className="text-slate-300 mt-1">{viewingRole.description || 'No description provided.'}</p>
-                        </div>
-                    </div>
-                )}
-            </Modal>
+            {activeTab === 'user_perms' && (
+                <UserPermissionsTab />
+            )}
 
+            {activeTab === 'global_audit' && (
+                <GlobalMatrixAuditView />
+            )}
+
+            {/* Modal Tambah / Edit Role */}
             <Modal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
-                title={editingRole ? 'Edit Role' : 'Create New Role'}
+                title={editingRole ? 'Edit Role Wewenang' : 'Tambah Role Baru'}
             >
-                <form onSubmit={handleSubmit} className="p-6 space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                        <Input
-                            label="Role Name"
-                            placeholder="e.g. Field Coordinator"
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    {!editingRole && (
+                        <div className="space-y-1">
+                            <label className="text-xs font-bold text-foreground uppercase tracking-wider">
+                                Kode Role (*Role Code*)
+                            </label>
+                            <input
+                                type="text"
+                                placeholder="Contoh: operations_manager, technician_field"
+                                value={formData.code}
+                                onChange={(e) => setFormData({ ...formData, code: e.target.value })}
+                                className="w-full px-3 py-2 bg-background border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 text-foreground"
+                                required
+                            />
+                        </div>
+                    )}
+
+                    <div className="space-y-1">
+                        <label className="text-xs font-bold text-foreground uppercase tracking-wider">
+                            Nama Tampilan (*Display Name*)
+                        </label>
+                        <input
+                            type="text"
+                            placeholder="Contoh: Manajer Operasional Lapangan"
                             value={formData.name}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, name: e.target.value })}
-                            required
-                        />
-                        <Input
-                            label="Role Code"
-                            placeholder="e.g. FIELD_COORD"
-                            value={formData.code}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, code: e.target.value.toUpperCase().replace(/\s+/g, '_') })}
-                            disabled={!!editingRole}
+                            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                            className="w-full px-3 py-2 bg-background border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 text-foreground"
                             required
                         />
                     </div>
 
-                    <div>
-                        <Input
-                            label="Role Level (1-5)"
-                            type="number"
-                            min={1}
-                            max={5}
+                    <div className="space-y-1">
+                        <label className="text-xs font-bold text-foreground uppercase tracking-wider">
+                            Tingkatan Hierarki (*Role Level*)
+                        </label>
+                        <select
                             value={formData.role_level}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, role_level: parseInt(e.target.value) })}
-                            required
-                        />
-                        <p className="text-xs text-muted-foreground mt-1">
-                            Level 1: Super Admin (Full Access) <br />
-                            Level 5: Basic User (Limited Access)
-                        </p>
+                            onChange={(e) => setFormData({ ...formData, role_level: Number(e.target.value) })}
+                            className="w-full px-3 py-2 bg-background border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 text-foreground font-semibold"
+                        >
+                            <option value={1}>Level 1 · Super Administrator (Akses Penuh)</option>
+                            <option value={2}>Level 2 · System Administrator (Admin Konfigurasi)</option>
+                            <option value={3}>Level 3 · Department / Operational Manager (Penyetuju Dokumen)</option>
+                            <option value={4}>Level 4 · Operational Staff & Technician (Eksekutor Harian)</option>
+                            <option value={5}>Level 5 · Viewer / Guest (Hanya Melihat / Read-Only)</option>
+                        </select>
                     </div>
 
-                    <Input
-                        label="Description"
-                        placeholder="Brief description of this role's responsibilities"
-                        value={formData.description}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, description: e.target.value })}
-                    />
+                    <div className="space-y-1">
+                        <label className="text-xs font-bold text-foreground uppercase tracking-wider">
+                            Deskripsi Wewenang
+                        </label>
+                        <textarea
+                            rows={3}
+                            placeholder="Tuliskan cakupan tugas dan tanggung jawab role ini..."
+                            value={formData.description}
+                            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                            className="w-full px-3 py-2 bg-background border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 text-foreground"
+                        />
+                    </div>
 
-                    <div className="flex justify-end gap-3 pt-4 border-t border-slate-700 mt-4">
-                        <Button variant="ghost" type="button" onClick={() => setIsModalOpen(false)}>
-                            Cancel
+                    <div className="pt-4 border-t border-border flex justify-end gap-2">
+                        <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>
+                            Batal
                         </Button>
-                        <Button
-                            type="submit"
-                            variant="primary"
-                            loading={createMutation.isPending || updateMutation.isPending}
-                        >
-                            <Save size={18} className="mr-2" />
-                            {editingRole ? 'Update Role' : 'Create Role'}
+                        <Button type="submit">
+                            {editingRole ? 'Simpan Perubahan' : 'Buat Role'}
                         </Button>
                     </div>
                 </form>
             </Modal>
-        </Card>
-    );
-}
 
+            {/* Modal Duplikasi / Clone Role */}
+            <Modal
+                isOpen={isCloneModalOpen}
+                onClose={() => setIsCloneModalOpen(false)}
+                title={`Duplikasi Role: ${cloningSourceRole?.name}`}
+            >
+                <form onSubmit={handleCloneSubmit} className="space-y-4">
+                    <div className="p-3 rounded-xl bg-blue-500/10 border border-blue-500/20 text-xs text-foreground space-y-1">
+                        <p className="font-semibold text-blue-600 dark:text-blue-400">
+                            Fitur Duplikasi Role (Clone)
+                        </p>
+                        <p className="text-muted-foreground">
+                            Role baru akan dibuat dengan mewarisi struktur level hierarki yang sama.
+                        </p>
+                    </div>
 
-export default function Roles() {
-    const [activeTab, setActiveTab] = useState<TabType>('frappe_matrix');
+                    <div className="space-y-1">
+                        <label className="text-xs font-bold text-foreground uppercase tracking-wider">
+                            Kode Role Baru
+                        </label>
+                        <input
+                            type="text"
+                            value={cloneData.code}
+                            onChange={(e) => setCloneData({ ...cloneData, code: e.target.value })}
+                            className="w-full px-3 py-2 bg-background border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 text-foreground"
+                            required
+                        />
+                    </div>
 
-    return (
-        <div className="space-y-4">
-            <PageHeader
-                title="Role Management"
-                description="Kelola Peran (Roles) & Matriks Hak Akses Dokumen ERPQu"
-            />
+                    <div className="space-y-1">
+                        <label className="text-xs font-bold text-foreground uppercase tracking-wider">
+                            Nama Tampilan Role Baru
+                        </label>
+                        <input
+                            type="text"
+                            value={cloneData.name}
+                            onChange={(e) => setCloneData({ ...cloneData, name: e.target.value })}
+                            className="w-full px-3 py-2 bg-background border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 text-foreground"
+                            required
+                        />
+                    </div>
 
-            {/* Tabs */}
-            <Card padding="none">
-                <div className="border-b border-slate-700">
-                    <nav className="flex gap-4 px-6">
-                        <button
-                            onClick={() => setActiveTab('frappe_matrix')}
-                            className={`py-4 px-2 border-b-2 font-medium text-sm transition-colors ${activeTab === 'frappe_matrix'
-                                ? 'border-cyan-500 text-cyan-400'
-                                : 'border-transparent text-muted-foreground hover:text-slate-300'
-                                }`}
+                    <div className="space-y-1">
+                        <label className="text-xs font-bold text-foreground uppercase tracking-wider">
+                            Tingkatan Hierarki
+                        </label>
+                        <select
+                            value={cloneData.role_level}
+                            onChange={(e) => setCloneData({ ...cloneData, role_level: Number(e.target.value) })}
+                            className="w-full px-3 py-2 bg-background border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 text-foreground"
                         >
-                            <div className="flex items-center gap-2">
-                                <Shield size={16} className="text-cyan-400" />
-                                <span>Role Permission Manager (DocPerm)</span>
-                            </div>
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('overview')}
-                            className={`py-4 px-2 border-b-2 font-medium text-sm transition-colors ${activeTab === 'overview'
-                                ? 'border-cyan-500 text-cyan-400'
-                                : 'border-transparent text-muted-foreground hover:text-slate-300'
-                                }`}
-                        >
-                            <div className="flex items-center gap-2">
-                                <Settings size={16} />
-                                <span>Daftar Role (Roles Overview)</span>
-                            </div>
-                        </button>
-                    </nav>
-                </div>
-            </Card>
+                            <option value={1}>Level 1 · Super Administrator</option>
+                            <option value={2}>Level 2 · System Administrator</option>
+                            <option value={3}>Level 3 · Manager</option>
+                            <option value={4}>Level 4 · Operational Staff</option>
+                            <option value={5}>Level 5 · Viewer</option>
+                        </select>
+                    </div>
 
-            {/* Tab Content */}
-            {activeTab === 'frappe_matrix' && <FrappeRolePermissionManager />}
-
-            {activeTab === 'overview' && <RolesList />}
+                    <div className="pt-4 border-t border-border flex justify-end gap-2">
+                        <Button type="button" variant="outline" onClick={() => setIsCloneModalOpen(false)}>
+                            Batal
+                        </Button>
+                        <Button type="submit">
+                            Duplikasi Sekarang
+                        </Button>
+                    </div>
+                </form>
+            </Modal>
         </div>
     );
 }
-
-

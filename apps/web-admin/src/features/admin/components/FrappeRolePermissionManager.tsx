@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
-import { Shield, Plus, Trash2, Save, FileText } from 'lucide-react';
-import { rbacApi } from'../api/rbac';
-import type { Role } from'../../../types';
-import { Button, Card, Select, Badge, useToast, LoadingOverlay } from'../../../components/ui';
+import React, { useState, useEffect } from 'react';
+import { Shield, Plus, Trash2, Save, FileText, CheckCircle2, HelpCircle, AlertCircle, Check, X } from 'lucide-react';
+import { rbacApi } from '../api/rbac';
+import type { Role } from '../../../types';
+import { Button, Card, Select, Badge, useToast, LoadingOverlay, Modal } from '../../../components/ui';
 
 interface DocType {
     id: string;
@@ -34,14 +34,32 @@ interface CustomDocPerm {
     if_owner: boolean;
 }
 
+const ACTION_DESCRIPTIONS: Record<string, { label: string; desc: string }> = {
+    read_perm: { label: 'Read (Melihat)', desc: 'Melihat dan membuka data dokumen' },
+    write_perm: { label: 'Write (Mengubah)', desc: 'Mengedit data dokumen yang berstatus Draft' },
+    create_perm: { label: 'Create (Membuat)', desc: 'Membuat dokumen baru di sistem' },
+    delete_perm: { label: 'Delete (Menghapus)', desc: 'Menghapus data dokumen dari sistem' },
+    submit_perm: { label: 'Submit (Finalisasi)', desc: 'Mengajukan dokumen menjadi resmi (Submitted)' },
+    cancel_perm: { label: 'Cancel (Batalkan)', desc: 'Membatalkan transaksi yang sudah di-Submit' },
+    amend_perm: { label: 'Amend (Revisi)', desc: 'Membuat dokumen revisi baru dari dokumen yang dibatalkan' },
+    print_perm: { label: 'Print (Cetak)', desc: 'Mencetak dokumen atau mengekspor ke format PDF' },
+    export_perm: { label: 'Export (Unduh)', desc: 'Mengekspor data ke format Excel / CSV' },
+    if_owner: { label: 'Only If Owner', desc: 'Hanya berlaku jika dokumen dibuat oleh pengguna tersebut' }
+};
+
 export function FrappeRolePermissionManager() {
     const [docTypes, setDocTypes] = useState<DocType[]>([]);
     const [roles, setRoles] = useState<Role[]>([]);
     const [selectedDocType, setSelectedDocType] = useState<string>('');
-    const [selectedRole, setSelectedRole] = useState<string>('');
     const [docPerms, setDocPerms] = useState<CustomDocPerm[]>([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
+    // Add Role Modal
+    const [isAddRoleModalOpen, setIsAddRoleModalOpen] = useState(false);
+    const [selectedNewRoleId, setSelectedNewRoleId] = useState<string>('');
+    const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
 
     const { success, error: showError } = useToast();
 
@@ -79,7 +97,8 @@ export function FrappeRolePermissionManager() {
         setLoading(true);
         try {
             const perms = await rbacApi.getDocPerms(dtId);
-            setDocPerms(perms);
+            setDocPerms(perms || []);
+            setHasUnsavedChanges(false);
         } catch (err: any) {
             showError('Gagal memuat matriks izin DocType', 'Error');
         } finally {
@@ -87,23 +106,52 @@ export function FrappeRolePermissionManager() {
         }
     };
 
-    const handleAddRule = () => {
-        if (!selectedDocType || !selectedRole) {
-            showError('Pilih DocType dan Role terlebih dahulu', 'Peringatan');
-            return;
-        }
+    const handleTogglePerm = (roleId: string, field: keyof CustomDocPerm) => {
+        setDocPerms(prev => prev.map(perm => {
+            if (perm.role_id === roleId) {
+                return { ...perm, [field]: !perm[field] };
+            }
+            return perm;
+        }));
+        setHasUnsavedChanges(true);
+    };
 
-        const roleObj = roles.find((r: Role) => r.id === selectedRole);
-        const existing = docPerms.find((p: CustomDocPerm) => p.role_id === selectedRole && p.permlevel === 0);
-        if (existing) {
-            showError(`Aturan untuk Role ${roleObj?.name || ''} sudah ada`, 'Perhatian');
+    const handleRowSelectAll = (roleId: string, enableAll: boolean) => {
+        setDocPerms(prev => prev.map(perm => {
+            if (perm.role_id === roleId) {
+                return {
+                    ...perm,
+                    read_perm: enableAll,
+                    write_perm: enableAll,
+                    create_perm: enableAll,
+                    delete_perm: enableAll,
+                    submit_perm: enableAll,
+                    cancel_perm: enableAll,
+                    amend_perm: enableAll,
+                    print_perm: enableAll,
+                    export_perm: enableAll,
+                };
+            }
+            return perm;
+        }));
+        setHasUnsavedChanges(true);
+    };
+
+    const handleAddRoleRule = () => {
+        if (!selectedNewRoleId) return;
+        const roleObj = roles.find(r => r.id === selectedNewRoleId);
+        if (!roleObj) return;
+
+        // Check if already in docPerms
+        if (docPerms.some(p => p.role_id === selectedNewRoleId)) {
+            showError('Role ini sudah memiliki aturan di DocType ini');
             return;
         }
 
         const newRule: CustomDocPerm = {
             doctype_id: selectedDocType,
-            role_id: selectedRole,
-            role_name: roleObj?.name,
+            role_id: selectedNewRoleId,
+            role_name: roleObj.name,
             permlevel: 0,
             read_perm: true,
             write_perm: false,
@@ -117,246 +165,268 @@ export function FrappeRolePermissionManager() {
             export_perm: false,
             import_perm: false,
             share_perm: false,
-            report_perm: true,
-            if_owner: false,
+            report_perm: false,
+            if_owner: false
         };
 
-        setDocPerms((prev: CustomDocPerm[]) => [...prev, newRule]);
+        setDocPerms(prev => [...prev, newRule]);
+        setHasUnsavedChanges(true);
+        setIsAddRoleModalOpen(false);
+        setSelectedNewRoleId('');
     };
 
-    const handleToggleCheck = (index: number, field: keyof CustomDocPerm) => {
-        setDocPerms((prev: CustomDocPerm[]) => {
-            const updated = [...prev];
-            const item = { ...updated[index] };
-            (item[field] as boolean) = !(item[field] as boolean);
-            updated[index] = item;
-            return updated;
-        });
+    const handleRemoveRoleRule = (roleId: string) => {
+        setDocPerms(prev => prev.filter(p => p.role_id !== roleId));
+        setHasUnsavedChanges(true);
     };
 
-    const handleSaveRule = async (rule: CustomDocPerm) => {
+    const handleSaveAll = async () => {
         setSaving(true);
         try {
-            await rbacApi.saveDocPerm(rule);
-            success('Aturan izin berhasil disimpan', 'Sukses');
-            loadDocPerms(selectedDocType);
+            for (const perm of docPerms) {
+                await rbacApi.saveDocPerm(perm);
+            }
+            success('Matriks izin berhasil disimpan');
+            setHasUnsavedChanges(false);
         } catch (err: any) {
-            showError(err.response?.data?.message || 'Gagal menyimpan aturan', 'Error');
+            showError('Gagal menyimpan matriks izin', 'Error');
         } finally {
             setSaving(false);
         }
     };
 
-    const handleDeleteRule = async (id?: string, index?: number) => {
-        if (id) {
-            setSaving(true);
-            try {
-                await rbacApi.deleteDocPerm(id);
-                success('Aturan izin berhasil dihapus', 'Sukses');
-                loadDocPerms(selectedDocType);
-            } catch (err: any) {
-                showError('Gagal menghapus aturan', 'Error');
-            } finally {
-                setSaving(false);
-            }
-        } else if (index !== undefined) {
-            setDocPerms((prev: CustomDocPerm[]) => prev.filter((_: any, i: number) => i !== index));
-        }
-    };
+    const activeDocType = docTypes.find(dt => dt.id === selectedDocType);
 
-    const activeDocType = docTypes.find((d: DocType) => d.id === selectedDocType);
+    // Available roles to add
+    const availableRolesToAdd = roles.filter(r => !docPerms.some(p => p.role_id === r.id));
 
     return (
-        <Card className="p-6 bg-card border-border shadow-xl space-y-6 relative overflow-hidden">
-            <LoadingOverlay visible={loading || saving} />
-
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border pb-4">
-                <div className="flex items-center gap-3">
-                    <div className="p-3 bg-cyan-500/10 text-cyan-400 rounded-2xl border border-cyan-500/20">
-                        <Shield size={24} />
+        <div className="space-y-6 relative">
+            {/* Top Selector Bar */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-card/60 p-4 rounded-2xl border border-border">
+                <div className="flex items-center gap-3 flex-1">
+                    <div className="space-y-1 w-full max-w-sm">
+                        <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                            Pilih Dokumen / Entitas (DocType)
+                        </label>
+                        <select
+                            value={selectedDocType}
+                            onChange={(e) => setSelectedDocType(e.target.value)}
+                            className="w-full px-3 py-2 bg-background border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 text-foreground font-semibold"
+                        >
+                            {docTypes.map(dt => (
+                                <option key={dt.id} value={dt.id}>
+                                    {dt.name} ({dt.module || 'General'})
+                                </option>
+                            ))}
+                        </select>
                     </div>
-                    <div>
-                        <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
-                            ERPQu Role Permission Manager
-                            <Badge variant="outline" className="text-xs bg-cyan-500/10 text-cyan-400 border-cyan-500/30">
-                                ERPQu Standard
-                            </Badge>
-                        </h2>
-                        <p className="text-sm text-muted-foreground">
-                            Kelola matriks izin Dokumen, PermLevel (Field-Level), dan Workflow Actions
-                        </p>
-                    </div>
-                </div>
-            </div>
 
-            {/* Filter Toolbar */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-muted/30 p-4 rounded-2xl border border-border">
-                <div>
-                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1 block">
-                        1. Pilih Document Type (DocType)
-                    </label>
-                    <Select
-                        value={selectedDocType}
-                        onChange={(val: string) => setSelectedDocType(val)}
-                        options={docTypes.map(dt => ({
-                            value: dt.id,
-                            label: `[${dt.module}] ${dt.name} ${dt.is_submittable ? '(Submittable)' : ''}`
-                        }))}
-                        className="w-full bg-background"
-                    />
+                    {activeDocType && (
+                        <div className="hidden md:flex items-center gap-2 mt-5">
+                            <span className="text-xs px-2.5 py-1 rounded-full bg-primary/10 text-primary border border-primary/20 font-semibold">
+                                Modul: {activeDocType.module || 'General'}
+                            </span>
+                            {activeDocType.is_submittable && (
+                                <span className="text-xs px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 font-semibold">
+                                    Submittable (Mendukung Approval)
+                                </span>
+                            )}
+                        </div>
+                    )}
                 </div>
 
-                <div>
-                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1 block">
-                        2. Pilih Role Tambahan
-                    </label>
-                    <Select
-                        value={selectedRole}
-                        onChange={(val: string) => setSelectedRole(val)}
-                        options={[
-                            { value: '', label: '-- Pilih Role --' },
-                            ...roles.map(r => ({
-                                value: r.id,
-                                label: `${r.name} (Level ${r.role_level ?? '-'})`
-                            }))
-                        ]}
-                        className="w-full bg-background"
-                    />
-                </div>
-
-                <div className="flex items-end">
+                <div className="flex items-center gap-2">
                     <Button
-                        variant="primary"
-                        className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white"
-                        leftIcon={<Plus size={16} />}
-                        onClick={handleAddRule}
-                        disabled={!selectedRole}
+                        variant="outline"
+                        onClick={() => setIsHelpModalOpen(true)}
+                        className="flex items-center gap-2 text-xs"
                     >
-                        Tambah Aturan Role
+                        <HelpCircle size={15} />
+                        <span>Panduan Izin</span>
+                    </Button>
+
+                    <Button
+                        onClick={() => setIsAddRoleModalOpen(true)}
+                        disabled={availableRolesToAdd.length === 0}
+                        className="flex items-center gap-2 text-xs"
+                    >
+                        <Plus size={15} />
+                        <span>Tambah Role ke Dokumen Ini</span>
                     </Button>
                 </div>
             </div>
 
             {/* Matrix Table */}
-            <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
-                        <FileText size={18} className="text-cyan-400" />
-                        Matriks Izin Matched: <span className="text-cyan-400 font-mono">{activeDocType?.name}</span>
-                    </h3>
-                </div>
-
-                <div className="overflow-x-auto border border-border rounded-2xl">
-                    <table className="w-full text-sm text-left">
-                        <thead className="bg-muted/50 text-muted-foreground uppercase text-[11px] font-bold tracking-wider border-b border-border">
-                            <tr>
-                                <th className="p-3">Role</th>
-                                <th className="p-3 text-center">PermLevel</th>
-                                <th className="p-3 text-center">Read</th>
-                                <th className="p-3 text-center">Write</th>
-                                <th className="p-3 text-center">Create</th>
-                                <th className="p-3 text-center">Delete</th>
-                                {activeDocType?.is_submittable && (
-                                    <>
-                                        <th className="p-3 text-center bg-blue-500/10 text-blue-400">Submit</th>
-                                        <th className="p-3 text-center bg-blue-500/10 text-blue-400">Cancel</th>
-                                        <th className="p-3 text-center bg-blue-500/10 text-blue-400">Amend</th>
-                                    </>
-                                )}
-                                <th className="p-3 text-center">Print</th>
-                                <th className="p-3 text-center">Export</th>
-                                <th className="p-3 text-center">Report</th>
-                                <th className="p-3 text-center">If Owner</th>
-                                <th className="p-3 text-center">Aksi</th>
+            <div className="bg-card border border-border rounded-2xl overflow-hidden shadow-sm">
+                <div className="overflow-x-auto">
+                    <table className="w-full text-xs text-left border-collapse">
+                        <thead>
+                            <tr className="bg-muted/60 border-b border-border">
+                                <th className="p-3.5 font-bold text-foreground min-w-[180px] sticky left-0 bg-muted z-20">
+                                    Role Wewenang
+                                </th>
+                                <th className="p-3 text-center font-bold text-foreground">Read</th>
+                                <th className="p-3 text-center font-bold text-foreground">Write</th>
+                                <th className="p-3 text-center font-bold text-foreground">Create</th>
+                                <th className="p-3 text-center font-bold text-foreground">Delete</th>
+                                <th className="p-3 text-center font-bold text-emerald-600 dark:text-emerald-400">Submit</th>
+                                <th className="p-3 text-center font-bold text-rose-600 dark:text-rose-400">Cancel</th>
+                                <th className="p-3 text-center font-bold text-amber-600 dark:text-amber-400">Amend</th>
+                                <th className="p-3 text-center font-bold text-foreground">Print</th>
+                                <th className="p-3 text-center font-bold text-foreground">Export</th>
+                                <th className="p-3 text-center font-bold text-foreground">If Owner</th>
+                                <th className="p-3 text-center font-bold text-foreground min-w-[100px]">Aksi Baris</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-border">
-                            {docPerms.length === 0 ? (
+                        <tbody className="divide-y divide-border/60">
+                            {loading ? (
                                 <tr>
-                                    <td colSpan={15} className="p-8 text-center text-muted-foreground">
-                                        Belum ada aturan izin kustom untuk DocType ini. Klik "Tambah Aturan Role" untuk menambahkan.
+                                    <td colSpan={12} className="text-center py-12 text-muted-foreground">
+                                        Memuat matriks izin...
+                                    </td>
+                                </tr>
+                            ) : docPerms.length === 0 ? (
+                                <tr>
+                                    <td colSpan={12} className="text-center py-12 text-muted-foreground">
+                                        Belum ada aturan role untuk dokumen ini. Klik tombol "+ Tambah Role ke Dokumen Ini".
                                     </td>
                                 </tr>
                             ) : (
-                                docPerms.map((perm: CustomDocPerm, idx: number) => (
-                                    <tr key={perm.id || idx} className="hover:bg-muted/20 transition-colors">
-                                        <td className="p-3 font-semibold text-foreground">
-                                            {perm.role_name || roles.find((r: Role) => r.id === perm.role_id)?.name || 'Role'}
-                                        </td>
-                                        <td className="p-3 text-center">
-                                            <Badge variant="outline" className="font-mono text-xs">
-                                                Lvl {perm.permlevel}
-                                            </Badge>
-                                        </td>
-                                        
-                                        {/* Standard Checkboxes */}
-                                        {(['read_perm', 'write_perm', 'create_perm', 'delete_perm'] as (keyof CustomDocPerm)[]).map(field => (
-                                            <td key={field} className="p-3 text-center">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={Boolean(perm[field])}
-                                                    onChange={() => handleToggleCheck(idx, field)}
-                                                    className="w-4 h-4 rounded border-slate-700 text-cyan-500 focus:ring-cyan-400 focus:ring-offset-slate-900 cursor-pointer"
-                                                />
-                                            </td>
-                                        ))}
+                                docPerms.map((perm) => {
+                                    const roleObj = roles.find(r => r.id === perm.role_id);
+                                    const roleName = perm.role_name || roleObj?.name || 'Unknown Role';
+                                    const roleLevel = roleObj?.role_level || 5;
 
-                                        {/* Submittable Workflow Checkboxes */}
-                                        {activeDocType?.is_submittable && (
-                                            (['submit_perm', 'cancel_perm', 'amend_perm'] as (keyof CustomDocPerm)[]).map(field => (
-                                                <td key={field} className="p-3 text-center bg-blue-500/5">
+                                    return (
+                                        <tr key={perm.role_id} className="hover:bg-muted/30 transition-colors">
+                                            <td className="p-3.5 sticky left-0 bg-card z-10 border-r border-border/40">
+                                                <div className="space-y-0.5">
+                                                    <span className="font-bold text-foreground text-sm block">
+                                                        {roleName}
+                                                    </span>
+                                                    <span className="text-[10px] px-1.5 py-0.2 rounded bg-muted text-muted-foreground font-semibold">
+                                                        Level {roleLevel}
+                                                    </span>
+                                                </div>
+                                            </td>
+
+                                            {/* Perm Toggles */}
+                                            {(['read_perm', 'write_perm', 'create_perm', 'delete_perm', 'submit_perm', 'cancel_perm', 'amend_perm', 'print_perm', 'export_perm', 'if_owner'] as (keyof CustomDocPerm)[]).map((field) => (
+                                                <td key={field} className="p-3 text-center">
                                                     <input
                                                         type="checkbox"
-                                                        checked={Boolean(perm[field])}
-                                                        onChange={() => handleToggleCheck(idx, field)}
-                                                        className="w-4 h-4 rounded border-blue-700 text-blue-500 focus:ring-blue-400 focus:ring-offset-slate-900 cursor-pointer"
+                                                        checked={!!perm[field]}
+                                                        onChange={() => handleTogglePerm(perm.role_id, field)}
+                                                        className="w-4 h-4 rounded border-border text-primary focus:ring-primary cursor-pointer"
                                                     />
                                                 </td>
-                                            ))
-                                        )}
+                                            ))}
 
-                                        {/* Additional Checkboxes */}
-                                        {(['print_perm', 'export_perm', 'report_perm', 'if_owner'] as (keyof CustomDocPerm)[]).map(field => (
-                                            <td key={field} className="p-3 text-center">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={Boolean(perm[field])}
-                                                    onChange={() => handleToggleCheck(idx, field)}
-                                                    className="w-4 h-4 rounded border-slate-700 text-cyan-500 focus:ring-cyan-400 focus:ring-offset-slate-900 cursor-pointer"
-                                                />
+                                            {/* Row Actions */}
+                                            <td className="p-3 text-center border-l border-border/40">
+                                                <div className="flex items-center justify-center gap-1.5">
+                                                    <button
+                                                        onClick={() => handleRowSelectAll(perm.role_id, true)}
+                                                        title="Beri Semua Izin"
+                                                        className="p-1 rounded text-emerald-600 hover:bg-emerald-500/10 text-[11px] font-bold"
+                                                    >
+                                                        Semua
+                                                    </button>
+                                                    <span className="text-border">|</span>
+                                                    <button
+                                                        onClick={() => handleRowSelectAll(perm.role_id, false)}
+                                                        title="Kosongkan Izin"
+                                                        className="p-1 rounded text-muted-foreground hover:bg-muted text-[11px] font-medium"
+                                                    >
+                                                        Reset
+                                                    </button>
+                                                    <span className="text-border">|</span>
+                                                    <button
+                                                        onClick={() => handleRemoveRoleRule(perm.role_id)}
+                                                        title="Hapus Role dari Dokumen Ini"
+                                                        className="p-1 text-muted-foreground hover:text-rose-500 hover:bg-rose-500/10 rounded"
+                                                    >
+                                                        <Trash2 size={14} />
+                                                    </button>
+                                                </div>
                                             </td>
-                                        ))}
-
-                                        {/* Actions */}
-                                        <td className="p-3 text-center">
-                                            <div className="flex items-center justify-center gap-2">
-                                                <Button
-                                                    size="sm"
-                                                    variant="outline"
-                                                    className="p-1.5 h-8 text-cyan-400 hover:text-cyan-300 hover:bg-cyan-500/10 border-cyan-500/30"
-                                                    onClick={() => handleSaveRule(perm)}
-                                                    title="Simpan Aturan Ini"
-                                                >
-                                                    <Save size={14} />
-                                                </Button>
-                                                <Button
-                                                    size="sm"
-                                                    variant="outline"
-                                                    className="p-1.5 h-8 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 border-rose-500/30"
-                                                    onClick={() => handleDeleteRule(perm.id, idx)}
-                                                    title="Hapus Aturan"
-                                                >
-                                                    <Trash2 size={14} />
-                                                </Button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))
+                                        </tr>
+                                    );
+                                })
                             )}
                         </tbody>
                     </table>
                 </div>
             </div>
-        </Card>
+
+            {/* Floating Unsaved Changes Bar */}
+            {hasUnsavedChanges && (
+                <div className="fixed bottom-6 right-6 z-50 bg-card border border-primary/40 shadow-2xl rounded-2xl p-4 flex items-center gap-4 animate-in slide-in-from-bottom-4">
+                    <div className="flex items-center gap-2">
+                        <AlertCircle className="w-5 h-5 text-amber-500" />
+                        <span className="text-xs font-semibold text-foreground">
+                            Ada perubahan izin yang belum disimpan
+                        </span>
+                    </div>
+                    <Button onClick={handleSaveAll} disabled={saving} className="flex items-center gap-2 text-xs">
+                        <Save size={15} />
+                        <span>{saving ? 'Menyimpan...' : 'Simpan Perubahan'}</span>
+                    </Button>
+                </div>
+            )}
+
+            {/* Modal Tambah Role ke DocType */}
+            <Modal
+                isOpen={isAddRoleModalOpen}
+                onClose={() => setIsAddRoleModalOpen(false)}
+                title={`Tambah Role ke ${activeDocType?.name || 'Dokumen'}`}
+            >
+                <div className="space-y-4">
+                    <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-foreground uppercase tracking-wider">
+                            Pilih Role
+                        </label>
+                        <select
+                            value={selectedNewRoleId}
+                            onChange={(e) => setSelectedNewRoleId(e.target.value)}
+                            className="w-full px-3 py-2 bg-background border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 text-foreground"
+                        >
+                            <option value="">-- Pilih Role yang Ingin Diberikan Akses --</option>
+                            {availableRolesToAdd.map(r => (
+                                <option key={r.id} value={r.id}>
+                                    {r.name} (Level {r.role_level || 5})
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="pt-4 border-t border-border flex justify-end gap-2">
+                        <Button variant="outline" onClick={() => setIsAddRoleModalOpen(false)}>
+                            Batal
+                        </Button>
+                        <Button onClick={handleAddRoleRule} disabled={!selectedNewRoleId}>
+                            Tambahkan Role
+                        </Button>
+                    </div>
+                </div>
+            </Modal>
+
+            {/* Modal Panduan Istilah Izin */}
+            <Modal
+                isOpen={isHelpModalOpen}
+                onClose={() => setIsHelpModalOpen(false)}
+                title="Panduan Istilah Hak Akses Dokumen (DocPerm)"
+            >
+                <div className="space-y-3 max-h-[450px] overflow-y-auto pr-1 text-xs">
+                    {Object.entries(ACTION_DESCRIPTIONS).map(([key, info]) => (
+                        <div key={key} className="p-3 rounded-xl bg-background/60 border border-border space-y-1">
+                            <h4 className="font-bold text-primary">{info.label}</h4>
+                            <p className="text-muted-foreground">{info.desc}</p>
+                        </div>
+                    ))}
+                </div>
+            </Modal>
+        </div>
     );
 }
