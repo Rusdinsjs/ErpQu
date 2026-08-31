@@ -1154,14 +1154,14 @@ export default function AdminDashboard() {
             {/* Mobile Backdrop */}
             {sidebarOpen && (
                 <div
-                    className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40 lg:hidden"
+                    className="fixed inset-0 bg-black/20 z-40 lg:hidden"
                     onClick={() => setSidebarOpen(false)}
                 />
             )}
 
             {/* Sidebar */}
             <aside
-                className={`flex-none bg-card backdrop-blur-xl border-r border-border transition-all duration-300 ease-in-out flex flex-col fixed lg:relative inset-y-0 left-0 z-50 lg:z-20 h-full shadow-2xl lg:shadow-[4px_0_24px_-12px_rgba(0,0,0,0.1)]
+                className={`flex-none bg-card border-r border-border transition-all duration-300 ease-in-out flex flex-col fixed lg:relative inset-y-0 left-0 z-50 lg:z-20 h-full shadow-2xl lg:shadow-[4px_0_24px_-12px_rgba(0,0,0,0.1)]
                 ${sidebarOpen ? 'w-64 translate-x-0' : 'w-64 lg:w-20 -translate-x-full lg:translate-x-0'}`}
             >
                 {/* Brand / Logo & Toggle */}
