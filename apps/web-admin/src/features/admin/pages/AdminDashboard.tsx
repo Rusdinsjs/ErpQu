@@ -44,7 +44,16 @@ export default function AdminDashboard() {
     const toggleTheme = () => {
         setTheme(theme === 'light' ? 'dark' : 'light');
     };
-    const [sidebarOpen, setSidebarOpen] = useState(true);
+    const [sidebarOpen, setSidebarOpen] = useState(() => (typeof window !== 'undefined' ? window.innerWidth >= 1024 : true));
+
+    useEffect(() => {
+        const handleResize = () => {
+            if (window.innerWidth < 1024) setSidebarOpen(false);
+            else setSidebarOpen(true);
+        };
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
     const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({
         asset_operations: true,
         maintenance_group: false,
@@ -69,6 +78,10 @@ export default function AdminDashboard() {
     const { user, logout, hasPermission } = useAuthStore();
     const navigate = useNavigate();
     const location = useLocation();
+
+    useEffect(() => {
+        if (window.innerWidth < 1024) setSidebarOpen(false);
+    }, [location.pathname]);
 
     // Fetch public settings for dynamic branding
     const { data: publicSettings } = useQuery({
