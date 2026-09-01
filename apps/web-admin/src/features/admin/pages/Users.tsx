@@ -1,9 +1,9 @@
 // Users Page - Pure Tailwind
 import { useEffect, useState } from 'react';
 import { Edit, Trash2, Link, UserCheck, Eye, ArrowUpDown, ArrowUp, ArrowDown, RefreshCw } from 'lucide-react';
-import { usersApi, type UserSummary, type UpdateUserRequest } from'../api/users';
-import { departmentApi, type Department } from'../../company/api/departments';
-import { getImageUrl } from'../../../utils/image';
+import { usersApi, type UserSummary, type UpdateUserRequest } from '../api/users';
+import { departmentApi, type Department } from '../../company/api/departments';
+import { getImageUrl } from '../../../utils/image';
 import {
     Button,
     Card,
@@ -17,7 +17,7 @@ import {
     useToast,
     SearchInput,
     PageHeader,
-} from'../../../components/ui';
+} from '../../../components/ui';
 
 interface Role {
     id: string;
@@ -26,6 +26,7 @@ interface Role {
     role_level: number;
 }
 
+type SortField = 'name' | 'email' | 'role' | 'company' | 'department' | 'access_scope' | 'employee';
 
 export default function Users() {
     const [users, setUsers] = useState<UserSummary[]>([]);
@@ -48,7 +49,7 @@ export default function Users() {
     const [filterDepartment, setFilterDepartment] = useState<string>('all');
     const [filterStatus, setFilterStatus] = useState<string>('all');
     const [filterLinked, setFilterLinked] = useState<string>('all');
-    const [sortField, setSortField] = useState<'name' | 'email' | 'role_code' | 'department' | 'is_active'>('name');
+    const [sortField, setSortField] = useState<SortField>('name');
     const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
     const { success, error: showError } = useToast();
@@ -89,12 +90,42 @@ export default function Users() {
         }
     };
 
-    const handleSort = (field: 'name' | 'email' | 'role_code' | 'department' | 'is_active') => {
+    const handleSort = (field: SortField) => {
         if (sortField === field) {
             setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
         } else {
             setSortField(field);
             setSortDirection('asc');
+        }
+    };
+
+    const getUserRolesArray = (user: UserSummary): Array<{ id?: string; code: string; name: string; role_level: number }> => {
+        if (!user.roles) return [];
+        if (Array.isArray(user.roles)) return user.roles;
+        if (typeof user.roles === 'string') {
+            try {
+                const parsed = JSON.parse(user.roles);
+                if (Array.isArray(parsed)) return parsed;
+            } catch (e) {
+                console.error('Failed to parse user.roles:', e);
+            }
+        }
+        return [];
+    };
+
+    const getAccessScope = (roleCode: string) => {
+        switch (roleCode) {
+            case 'super_admin': return 'Full System Access';
+            case 'admin': return 'Organization Management';
+            case 'manager': return 'Approval L2, Asset Management';
+            case 'supervisor': return 'Approval L1, Operational View';
+            case 'admin_alat_berat': return 'Spesialis Alat Berat';
+            case 'admin_kendaraan': return 'Spesialis Kendaraan';
+            case 'admin_infrastruktur': return 'Spesialis Infrastruktur';
+            case 'technician': return 'Maintenance Execution';
+            case 'staff': return 'General Staff View';
+            case 'user': return 'Basic View Access';
+            default: return 'Limited Access';
         }
     };
 
@@ -107,6 +138,8 @@ export default function Users() {
             filtered = filtered.filter(u =>
                 (u.name || '').toLowerCase().includes(query) ||
                 (u.email || '').toLowerCase().includes(query) ||
+                (u.department || '').toLowerCase().includes(query) ||
+                (u.company_name || '').toLowerCase().includes(query) ||
                 (u.employee_name || '').toLowerCase().includes(query) ||
                 (u.employee_nik || '').toLowerCase().includes(query)
             );
@@ -136,26 +169,53 @@ export default function Users() {
             filtered = filtered.filter(u => !u.employee_name && !u.employee_id);
         }
 
-        filtered.sort((a: any, b: any) => {
-            let valA = a[sortField] ?? '';
-            let valB = b[sortField] ?? '';
-            if (typeof valA === 'string') valA = valA.toLowerCase();
-            if (typeof valB === 'string') valB = valB.toLowerCase();
-            if (valA < valB) return sortDirection === 'asc' ? -1 : 1;
-            if (valA > valB) return sortDirection === 'asc' ? 1 : -1;
-            return 0;
+        filtered.sort((a: UserSummary, b: UserSummary) => {
+            let comp = 0;
+            switch (sortField) {
+                case 'name':
+                    comp = (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' });
+                    break;
+                case 'email':
+                    comp = (a.email || '').localeCompare(b.email || '', undefined, { sensitivity: 'base' });
+                    break;
+                case 'role': {
+                    const levelA = a.role_level ?? 99;
+                    const levelB = b.role_level ?? 99;
+                    if (levelA !== levelB) {
+                        comp = levelA - levelB;
+                    } else {
+                        comp = (a.role_code || '').localeCompare(b.role_code || '');
+                    }
+                    break;
+                }
+                case 'company':
+                    comp = (a.company_name || '').localeCompare(b.company_name || '', undefined, { sensitivity: 'base' });
+                    break;
+                case 'department':
+                    comp = (a.department || '').localeCompare(b.department || '', undefined, { sensitivity: 'base' });
+                    break;
+                case 'access_scope': {
+                    const scopeA = getAccessScope(a.role_code);
+                    const scopeB = getAccessScope(b.role_code);
+                    comp = scopeA.localeCompare(scopeB, undefined, { sensitivity: 'base' });
+                    break;
+                }
+                case 'employee':
+                    comp = (a.employee_name || '').localeCompare(b.employee_name || '', undefined, { sensitivity: 'base' });
+                    break;
+                default:
+                    comp = 0;
+            }
+            return sortDirection === 'asc' ? comp : -comp;
         });
 
         setFilteredUsers(filtered);
     }, [users, search, filterRole, filterDepartment, filterStatus, filterLinked, sortField, sortDirection]);
 
-
     const handleUpdate = async () => {
         if (!editingUser) return;
         setSubmitting(true);
         try {
-            // Build payload – only include fields that have actual values
-            // Empty strings are sent as null/undefined so backend COALESCE keeps existing value
             const rawPayload: Record<string, any> = {
                 name: editFormData.name || undefined,
                 role_code: selectedRoleCodes[0] || editFormData.role_code || undefined,
@@ -172,9 +232,7 @@ export default function Users() {
                 Object.entries(rawPayload).filter(([_, v]) => v !== undefined && v !== '')
             ) as UpdateUserRequest;
 
-            console.log('[handleUpdate] payload:', payload);
-            const res = await usersApi.update(editingUser.id, payload);
-            console.log('[handleUpdate] response:', res);
+            await usersApi.update(editingUser.id, payload);
             success('User updated successfully', 'Success');
             setEditOpened(false);
             loadData();
@@ -185,7 +243,6 @@ export default function Users() {
             setSubmitting(false);
         }
     };
-
 
     const handleDelete = async (user: UserSummary) => {
         if (!window.confirm(`Are you sure you want to delete ${user.name}?`)) return;
@@ -201,20 +258,6 @@ export default function Users() {
     const openViewModal = (user: UserSummary) => {
         setSelectedUser(user);
         setViewOpened(true);
-    };
-
-    const getUserRolesArray = (user: UserSummary): Array<{ id?: string; code: string; name: string; role_level: number }> => {
-        if (!user.roles) return [];
-        if (Array.isArray(user.roles)) return user.roles;
-        if (typeof user.roles === 'string') {
-            try {
-                const parsed = JSON.parse(user.roles);
-                if (Array.isArray(parsed)) return parsed;
-            } catch (e) {
-                console.error('Failed to parse user.roles:', e);
-            }
-        }
-        return [];
     };
 
     const [selectedRoleCodes, setSelectedRoleCodes] = useState<string[]>([]);
@@ -245,22 +288,6 @@ export default function Users() {
         if (level === 3) return 'warning';
         if (level === 4) return 'info';
         return 'default';
-    };
-
-    const getAccessScope = (roleCode: string) => {
-        switch (roleCode) {
-            case 'super_admin': return 'Full System Access';
-            case 'admin': return 'Organization Management';
-            case 'manager': return 'Approval L2, Asset Management';
-            case 'supervisor': return 'Approval L1, Operational View';
-            case 'admin_alat_berat': return 'Spesialis Alat Berat';
-            case 'admin_kendaraan': return 'Spesialis Kendaraan';
-            case 'admin_infrastruktur': return 'Spesialis Infrastruktur';
-            case 'technician': return 'Maintenance Execution';
-            case 'staff': return 'General Staff View';
-            case 'user': return 'Basic View Access';
-            default: return 'Limited Access';
-        }
     };
 
     const getRoleLabel = (user?: UserSummary | null) => {
@@ -314,7 +341,12 @@ export default function Users() {
         { value: 'INFRASTRUKTUR', label: 'Infrastruktur' },
     ];
 
-
+    const renderSortIndicator = (field: SortField) => {
+        if (sortField === field) {
+            return sortDirection === 'asc' ? <ArrowUp size={12} className="text-cyan-400" /> : <ArrowDown size={12} className="text-cyan-400" />;
+        }
+        return <ArrowUpDown size={12} className="opacity-40" />;
+    };
 
     return (
         <div className="space-y-4">
@@ -326,7 +358,7 @@ export default function Users() {
                     <Button
                         variant="outline"
                         size="md"
-                        onClick={() => fetchUsers()}
+                        onClick={() => loadData()}
                         loading={loading}
                         leftIcon={<RefreshCw className={`w-4 h-4 text-indigo-500 ${loading ? 'animate-spin' : ''}`} />}
                         className="bg-card text-foreground hover:bg-muted border border-border shadow-sm font-medium"
@@ -396,59 +428,47 @@ export default function Users() {
                             <TableRow>
                                 <TableTh onClick={() => handleSort('name')} className="cursor-pointer hover:text-white transition-colors">
                                     <div className="flex items-center gap-1.5">
-                                        <span>Name</span>
-                                        {sortField === 'name' ? (
-                                            sortDirection === 'asc' ? <ArrowUp size={12} className="text-cyan-400" /> : <ArrowDown size={12} className="text-cyan-400" />
-                                        ) : (
-                                            <ArrowUpDown size={12} className="opacity-40" />
-                                        )}
+                                        <span>NAME</span>
+                                        {renderSortIndicator('name')}
                                     </div>
                                 </TableTh>
                                 <TableTh onClick={() => handleSort('email')} className="cursor-pointer hover:text-white transition-colors">
                                     <div className="flex items-center gap-1.5">
-                                        <span>Email</span>
-                                        {sortField === 'email' ? (
-                                            sortDirection === 'asc' ? <ArrowUp size={12} className="text-cyan-400" /> : <ArrowDown size={12} className="text-cyan-400" />
-                                        ) : (
-                                            <ArrowUpDown size={12} className="opacity-40" />
-                                        )}
+                                        <span>EMAIL</span>
+                                        {renderSortIndicator('email')}
                                     </div>
                                 </TableTh>
-                                <TableTh onClick={() => handleSort('role_code')} className="cursor-pointer hover:text-white transition-colors">
+                                <TableTh onClick={() => handleSort('role')} className="cursor-pointer hover:text-white transition-colors">
                                     <div className="flex items-center gap-1.5">
-                                        <span>Role</span>
-                                        {sortField === 'role_code' ? (
-                                            sortDirection === 'asc' ? <ArrowUp size={12} className="text-cyan-400" /> : <ArrowDown size={12} className="text-cyan-400" />
-                                        ) : (
-                                            <ArrowUpDown size={12} className="opacity-40" />
-                                        )}
+                                        <span>ROLE</span>
+                                        {renderSortIndicator('role')}
                                     </div>
                                 </TableTh>
-                                <TableTh>
-                                    <span>Company</span>
+                                <TableTh onClick={() => handleSort('company')} className="cursor-pointer hover:text-white transition-colors">
+                                    <div className="flex items-center gap-1.5">
+                                        <span>COMPANY</span>
+                                        {renderSortIndicator('company')}
+                                    </div>
                                 </TableTh>
                                 <TableTh onClick={() => handleSort('department')} className="cursor-pointer hover:text-white transition-colors">
                                     <div className="flex items-center gap-1.5">
-                                        <span>Access Scope</span>
-                                        {sortField === 'department' ? (
-                                            sortDirection === 'asc' ? <ArrowUp size={12} className="text-cyan-400" /> : <ArrowDown size={12} className="text-cyan-400" />
-                                        ) : (
-                                            <ArrowUpDown size={12} className="opacity-40" />
-                                        )}
+                                        <span>DEPARTMENT</span>
+                                        {renderSortIndicator('department')}
                                     </div>
                                 </TableTh>
-                                <TableTh onClick={() => handleSort('is_active')} className="cursor-pointer hover:text-white transition-colors">
+                                <TableTh onClick={() => handleSort('access_scope')} className="cursor-pointer hover:text-white transition-colors">
                                     <div className="flex items-center gap-1.5">
-                                        <span>Login Status</span>
-                                        {sortField === 'is_active' ? (
-                                            sortDirection === 'asc' ? <ArrowUp size={12} className="text-cyan-400" /> : <ArrowDown size={12} className="text-cyan-400" />
-                                        ) : (
-                                            <ArrowUpDown size={12} className="opacity-40" />
-                                        )}
+                                        <span>ACCESS SCOPE</span>
+                                        {renderSortIndicator('access_scope')}
                                     </div>
                                 </TableTh>
-                                <TableTh>Linked Employee</TableTh>
-                                <TableTh align="center">Action</TableTh>
+                                <TableTh onClick={() => handleSort('employee')} className="cursor-pointer hover:text-white transition-colors">
+                                    <div className="flex items-center gap-1.5">
+                                        <span>LINKED EMPLOYEE</span>
+                                        {renderSortIndicator('employee')}
+                                    </div>
+                                </TableTh>
+                                <TableTh align="center">ACTION</TableTh>
                             </TableRow>
                         </TableHead>
                         <TableBody>
@@ -459,22 +479,22 @@ export default function Users() {
                                     </TableTd>
                                     <TableTd>{user.email}</TableTd>
                                     <TableTd>
-                                         {(() => {
-                                             const rolesArr = getUserRolesArray(user);
-                                             return rolesArr.length > 0 ? (
-                                                 <div className="flex flex-wrap gap-1 max-w-[220px]">
-                                                     {rolesArr.map((r, idx) => (
-                                                         <Badge key={r.code || idx} variant={getRoleBadge(r.role_level)}>
-                                                             {r.name} (L{r.role_level})
-                                                         </Badge>
-                                                     ))}
-                                                 </div>
-                                             ) : (
-                                                 <Badge variant={getRoleBadge(user.role_level)}>
-                                                     {getRoleLabel(user)}
-                                                 </Badge>
-                                             );
-                                         })()}
+                                        {(() => {
+                                            const rolesArr = getUserRolesArray(user);
+                                            return rolesArr.length > 0 ? (
+                                                <div className="flex flex-wrap gap-1 max-w-[220px]">
+                                                    {rolesArr.map((r, idx) => (
+                                                        <Badge key={r.code || idx} variant={getRoleBadge(r.role_level)}>
+                                                            {r.name} (L{r.role_level})
+                                                        </Badge>
+                                                    ))}
+                                                </div>
+                                            ) : (
+                                                <Badge variant={getRoleBadge(user.role_level)}>
+                                                    {getRoleLabel(user)}
+                                                </Badge>
+                                            );
+                                        })()}
                                     </TableTd>
                                     <TableTd>
                                         {user.company_name ? (
@@ -484,30 +504,26 @@ export default function Users() {
                                         )}
                                     </TableTd>
                                     <TableTd>
+                                        {user.department ? (
+                                            <Badge variant="info">{user.department}</Badge>
+                                        ) : (
+                                            <span className="text-xs text-muted-foreground italic">—</span>
+                                        )}
+                                    </TableTd>
+                                    <TableTd>
                                         <span className="text-sm text-muted-foreground">
                                             {getAccessScope(user.role_code)}
                                         </span>
-                                        <div className="mt-1 flex flex-wrap gap-1">
-                                            {user.department && (
-                                                <Badge variant="info">Dept: {user.department}</Badge>
-                                            )}
-                                            {user.allowed_asset_group && (
+                                        {user.allowed_asset_group && (
+                                            <div className="mt-1 flex flex-wrap gap-1">
                                                 <Badge variant="warning">Asset: {user.allowed_asset_group}</Badge>
-                                            )}
-                                        </div>
+                                            </div>
+                                        )}
                                     </TableTd>
-                                     <TableTd>
-                                         <Badge variant={user.is_active ? 'success' : 'danger'}>
-                                             {user.is_active ? 'Allowed' : 'Denied'}
-                                         </Badge>
-                                         <p className="text-xs text-muted-foreground mt-1">
-                                             {user.last_login_at ? new Date(user.last_login_at).toLocaleString('id-ID') : 'Belum pernah login'}
-                                         </p>
-                                     </TableTd>
                                     <TableTd>
                                         {user.employee_name ? (
                                             <div className="flex items-center gap-2">
-                                                <div className="p-1.5 rounded-lg bg-emerald-500/100/10 text-emerald-400 shrink-0">
+                                                <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 shrink-0">
                                                     <UserCheck size={16} />
                                                 </div>
                                                 <div>
