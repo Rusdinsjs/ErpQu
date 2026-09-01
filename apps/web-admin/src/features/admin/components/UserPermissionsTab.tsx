@@ -1,7 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { UserCheck, Plus, Trash2, Shield, Search, Info, Building2, MapPin, Layers, FolderTree } from 'lucide-react';
 import { rbacApi } from '../api/rbac';
 import { usersApi, type UserSummary } from '../api/users';
+import { fetchCompanies, type Company } from '../../company/api/companyApi';
+import { departmentApi, type Department } from '../../company/api/departments';
+import { inventoryApi } from '../../inventory/api/inventory';
+import { categoryApi, type Category } from '../../assets/api/category';
 import { Button, Card, Select, Badge, useToast, Modal, LoadingOverlay } from '../../../components/ui';
 
 interface UserPermRule {
@@ -14,10 +18,10 @@ interface UserPermRule {
 }
 
 const DOCTYPE_PRESETS = [
-    { value: 'Company', label: 'Perusahaan (Company)', icon: Building2 },
+    { value: 'Department', label: 'Departemen (Department)', icon: FolderTree },
     { value: 'Branch', label: 'Cabang (Branch)', icon: MapPin },
     { value: 'Warehouse', label: 'Gudang (Warehouse)', icon: Layers },
-    { value: 'Department', label: 'Departemen (Department)', icon: FolderTree },
+    { value: 'Company', label: 'Perusahaan (Company)', icon: Building2 },
     { value: 'Category', label: 'Kategori Aset (Category)', icon: Shield },
 ];
 
@@ -29,17 +33,25 @@ export function UserPermissionsTab() {
     const [permsLoading, setPermsLoading] = useState(false);
     const [searchUser, setSearchUser] = useState('');
 
+    // Master Data for Select Options
+    const [companies, setCompanies] = useState<Company[]>([]);
+    const [departments, setDepartments] = useState<Department[]>([]);
+    const [warehouses, setWarehouses] = useState<any[]>([]);
+    const [categories, setCategories] = useState<Category[]>([]);
+
     // Create Rule Modal
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-    const [newDocType, setNewDocType] = useState('Branch');
+    const [newDocType, setNewDocType] = useState('Department');
     const [newValue, setNewValue] = useState('');
     const [newIsDefault, setNewIsDefault] = useState(false);
+    const [isManualInput, setIsManualInput] = useState(false);
     const [saving, setSaving] = useState(false);
 
     const { success, error: showError } = useToast();
 
     useEffect(() => {
         loadUsers();
+        loadMasterData();
     }, []);
 
     useEffect(() => {
@@ -66,6 +78,43 @@ export function UserPermissionsTab() {
         }
     };
 
+    const loadMasterData = async () => {
+        try {
+            const [compRes, deptRes, whRes, catRes] = await Promise.allSettled([
+                fetchCompanies({ status: 'ACTIVE' }),
+                departmentApi.list(),
+                inventoryApi.listWarehouses(),
+                categoryApi.list(),
+            ]);
+
+            if (compRes.status === 'fulfilled') {
+                const raw = compRes.value;
+                const list = Array.isArray(raw) ? raw : (raw?.data || []);
+                setCompanies(list);
+            }
+
+            if (deptRes.status === 'fulfilled') {
+                const raw = deptRes.value;
+                const list = Array.isArray(raw) ? raw : ((raw as any)?.data || []);
+                setDepartments(list);
+            }
+
+            if (whRes.status === 'fulfilled') {
+                const raw = whRes.value;
+                const list = Array.isArray(raw) ? raw : ((raw as any)?.data || []);
+                setWarehouses(list);
+            }
+
+            if (catRes.status === 'fulfilled') {
+                const raw = catRes.value;
+                const list = Array.isArray(raw) ? raw : ((raw as any)?.data || []);
+                setCategories(list);
+            }
+        } catch (e) {
+            console.error('Failed to load master data for RLS', e);
+        }
+    };
+
     const loadUserPerms = async (userId: string) => {
         setPermsLoading(true);
         try {
@@ -76,6 +125,75 @@ export function UserPermissionsTab() {
         } finally {
             setPermsLoading(false);
         }
+    };
+
+    // Master Data options based on selected DocType
+    const forValueOptions = useMemo(() => {
+        switch (newDocType) {
+            case 'Department':
+                return departments.map(d => ({
+                    value: d.name,
+                    label: d.name
+                }));
+            case 'Branch':
+                return companies
+                    .filter(c => !c.is_group)
+                    .map(c => ({
+                        value: c.name,
+                        label: `${c.name} (${c.code})`
+                    }));
+            case 'Warehouse':
+                return warehouses.map(w => ({
+                    value: w.name,
+                    label: `${w.name} (${w.code})`
+                }));
+            case 'Company':
+                return companies.map(c => ({
+                    value: c.id,
+                    label: `${c.name} (${c.code})`
+                }));
+            case 'Category':
+                return categories.map(cat => ({
+                    value: cat.name,
+                    label: `${cat.name} (${cat.code})`
+                }));
+            default:
+                return [];
+        }
+    }, [newDocType, companies, warehouses, departments, categories]);
+
+    const handleDocTypeChange = (doctype: string) => {
+        setNewDocType(doctype);
+        setIsManualInput(false);
+        switch (doctype) {
+            case 'Department':
+                setNewValue(departments[0]?.name || '');
+                break;
+            case 'Branch': {
+                const branches = companies.filter(c => !c.is_group);
+                setNewValue(branches[0]?.name || '');
+                break;
+            }
+            case 'Warehouse':
+                setNewValue(warehouses[0]?.name || '');
+                break;
+            case 'Company':
+                setNewValue(companies[0]?.id || companies[0]?.name || '');
+                break;
+            case 'Category':
+                setNewValue(categories[0]?.name || '');
+                break;
+            default:
+                setNewValue('');
+        }
+    };
+
+    const openAddModal = () => {
+        setIsAddModalOpen(true);
+        setNewDocType('Department');
+        setIsManualInput(false);
+        setNewValue(departments[0]?.name || '');
+        setNewIsDefault(false);
     };
 
     const handleCreateRule = async (e: React.FormEvent) => {
@@ -110,6 +228,30 @@ export function UserPermissionsTab() {
         } catch (err: any) {
             showError(err?.response?.data?.message || err?.message || 'Gagal menghapus aturan');
         }
+    };
+
+    const getDisplayValue = (doctype: string, val: string) => {
+        if (doctype === 'Company') {
+            const found = companies.find(c => c.id === val || c.name === val);
+            return found ? `${found.name} (${found.code})` : val;
+        }
+        if (doctype === 'Branch') {
+            const found = companies.find(c => !c.is_group && (c.id === val || c.name === val));
+            return found ? `${found.name} (${found.code})` : val;
+        }
+        if (doctype === 'Warehouse') {
+            const found = warehouses.find(w => w.id === val || w.name === val);
+            return found ? `${found.name} (${found.code})` : val;
+        }
+        if (doctype === 'Department') {
+            const found = departments.find(d => d.id === val || d.name === val);
+            return found ? found.name : val;
+        }
+        if (doctype === 'Category') {
+            const found = categories.find(cat => cat.id === val || cat.name === val || cat.code === val);
+            return found ? `${found.name} (${found.code})` : val;
+        }
+        return val;
     };
 
     const filteredUsers = users.filter(u =>
@@ -208,7 +350,7 @@ export function UserPermissionsTab() {
                         </div>
 
                         <Button
-                            onClick={() => setIsAddModalOpen(true)}
+                            onClick={openAddModal}
                             disabled={!selectedUserId}
                             className="flex items-center gap-2"
                         >
@@ -233,6 +375,7 @@ export function UserPermissionsTab() {
                             {userPerms.map((rule) => {
                                 const preset = DOCTYPE_PRESETS.find(p => p.value === rule.allow_doctype);
                                 const Icon = preset?.icon || Shield;
+                                const displayValue = getDisplayValue(rule.allow_doctype, rule.for_value);
 
                                 return (
                                     <div
@@ -255,10 +398,10 @@ export function UserPermissionsTab() {
                                                     )}
                                                 </div>
                                                 <p className="text-sm font-semibold text-primary">
-                                                    "{rule.for_value}"
+                                                    "{displayValue}"
                                                 </p>
                                                 <p className="text-[11px] text-muted-foreground">
-                                                    Hanya boleh mengakses data dengan {rule.allow_doctype} = {rule.for_value}
+                                                    Hanya boleh mengakses data dengan {rule.allow_doctype} = {displayValue}
                                                 </p>
                                             </div>
                                         </div>
@@ -291,7 +434,7 @@ export function UserPermissionsTab() {
                         </label>
                         <select
                             value={newDocType}
-                            onChange={(e) => setNewDocType(e.target.value)}
+                            onChange={(e) => handleDocTypeChange(e.target.value)}
                             className="w-full px-3 py-2 bg-background border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 text-foreground"
                         >
                             {DOCTYPE_PRESETS.map(p => (
@@ -301,19 +444,56 @@ export function UserPermissionsTab() {
                     </div>
 
                     <div className="space-y-1.5">
-                        <label className="text-xs font-bold text-foreground uppercase tracking-wider">
-                            Nilai yang Diizinkan (*For Value*)
-                        </label>
-                        <input
-                            type="text"
-                            placeholder="Contoh: Gudang Utama, Balikpapan, Operasional..."
-                            value={newValue}
-                            onChange={(e) => setNewValue(e.target.value)}
-                            className="w-full px-3 py-2 bg-background border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 text-foreground"
-                            required
-                        />
+                        <div className="flex items-center justify-between">
+                            <label className="text-xs font-bold text-foreground uppercase tracking-wider">
+                                Nilai yang Diizinkan (*For Value*)
+                            </label>
+                            {forValueOptions.length > 0 && (
+                                <button
+                                    type="button"
+                                    onClick={() => setIsManualInput(!isManualInput)}
+                                    className="text-[11px] text-primary hover:underline font-normal"
+                                >
+                                    {isManualInput ? '← Pilih dari Daftar Master Data' : 'Ketik Manual...'}
+                                </button>
+                            )}
+                        </div>
+
+                        {!isManualInput && forValueOptions.length > 0 ? (
+                            <select
+                                value={newValue}
+                                onChange={(e) => setNewValue(e.target.value)}
+                                className="w-full px-3 py-2 bg-background border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 text-foreground"
+                                required
+                            >
+                                <option value="">— Pilih {DOCTYPE_PRESETS.find(p => p.value === newDocType)?.label.split(' ')[0]} —</option>
+                                {forValueOptions.map(opt => (
+                                    <option key={opt.value} value={opt.value}>
+                                        {opt.label}
+                                    </option>
+                                ))}
+                            </select>
+                        ) : (
+                            <input
+                                type="text"
+                                placeholder={
+                                    newDocType === 'Company' ? 'Contoh: PT Sanjaya Solusindo Group...' :
+                                    newDocType === 'Branch' ? 'Contoh: Cabang Surabaya, Balikpapan...' :
+                                    newDocType === 'Warehouse' ? 'Contoh: Gudang Utama, Transit...' :
+                                    newDocType === 'Department' ? 'Contoh: Operasional, IT, HR...' :
+                                    'Ketik nilai yang diizinkan...'
+                                }
+                                value={newValue}
+                                onChange={(e) => setNewValue(e.target.value)}
+                                className="w-full px-3 py-2 bg-background border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 text-foreground"
+                                required
+                            />
+                        )}
+
                         <p className="text-[11px] text-muted-foreground">
-                            Ketik nama cabang, gudang, atau divisi yang secara spesifik boleh diakses oleh staf ini.
+                            {!isManualInput && forValueOptions.length > 0
+                                ? `Pilih ${newDocType} dari master data sistem yang secara spesifik boleh diakses oleh staf ini.`
+                                : `Ketik nama ${newDocType.toLowerCase()} yang secara spesifik boleh diakses oleh staf ini.`}
                         </p>
                     </div>
 
