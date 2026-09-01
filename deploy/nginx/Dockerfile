@@ -5,6 +5,8 @@ RUN apk add --no-cache certbot certbot-nginx bash curl openssl
 
 # Copy Nginx configuration
 COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY hermes.conf /etc/nginx/conf.d/hermes.conf
+COPY llm.conf /etc/nginx/conf.d/llm.conf
 
 # Create directories for certbot
 RUN mkdir -p /var/www/certbot /etc/letsencrypt
