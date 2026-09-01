@@ -489,7 +489,7 @@ export function AssetForm({ initialValues, categories, locations, onSubmit, onCa
     }, [departmentData]);
 
     const companyOptions = useMemo(() => {
-        const list = Array.isArray(companiesData) ? companiesData : [];
+        const list = Array.isArray(companiesData) ? companiesData : ((companiesData as any)?.data || []);
         return list.map((c: any) => ({ value: c.id, label: `${c.code} — ${c.name}` }));
     }, [companiesData]);
 

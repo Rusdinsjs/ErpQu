@@ -1,5 +1,5 @@
 // Branch Management — mirrors Company structure with entity_type = 'BRANCH'
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Edit, Trash2, RefreshCw, Building2, MapPin, Phone, Mail, FileText } from 'lucide-react';
 import { api } from'../../../api/http';
@@ -66,7 +66,8 @@ const branchApi = {
     list: async (params?: { search?: string; status?: string }) => {
         // If backend exposes /branches, swap the URL here.
         const res = await api.get('/companies', { params: { ...params, is_group: false } });
-        return (res.data as Company[]).filter((c: any) => c.entity_type === 'BRANCH' || !c.is_group);
+        const list = Array.isArray(res.data) ? res.data : (res.data?.data || []);
+        return (list as Company[]).filter((c: any) => c.entity_type === 'BRANCH' || !c.is_group);
     },
     create: async (payload: BranchPayload) => {
         const res = await api.post('/companies', { ...payload, is_group: false, entity_type: 'BRANCH' });
@@ -101,11 +102,15 @@ export default function Branch() {
         staleTime: 30_000,
     });
 
-    const { data: companies = [] } = useQuery({
+    const { data: companiesRes } = useQuery({
         queryKey: ['companies-list'],
         queryFn: () => fetchCompanies({ status: 'ACTIVE' }),
         staleTime: 60_000,
     });
+
+    const companies: Company[] = useMemo(() => {
+        return Array.isArray(companiesRes) ? companiesRes : (companiesRes?.data || []);
+    }, [companiesRes]);
 
     // Mutations
     const saveMutation = useMutation({
@@ -156,12 +161,23 @@ export default function Branch() {
         setDrawerOpen(true);
     };
     const closeDrawer = () => { setDrawerOpen(false); setEditing(null); };
-    const handleSubmit = (e: React.FormEvent) => { e.preventDefault(); saveMutation.mutate(form); };
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        const sanitizedData = Object.fromEntries(
+            Object.entries(form).map(([key, value]) => [
+                key,
+                value === '' ? undefined : value
+            ])
+        ) as unknown as BranchPayload;
+        saveMutation.mutate(sanitizedData);
+    };
     const f = (key: keyof BranchPayload, val: any) => setForm(p => ({ ...p, [key]: val }));
 
-    const companyOptions = Array.isArray(companies)
-        ? companies.map((c: Company) => ({ value: c.id, label: `${c.code} — ${c.name}` }))
-        : [];
+    const companyOptions = useMemo(() => {
+        return companies
+            .filter((c: Company) => !editing || c.id !== editing.id)
+            .map((c: Company) => ({ value: c.id, label: `${c.name} (${c.code})` }));
+    }, [companies, editing]);
 
     return (
         <div className="space-y-6 p-6">
