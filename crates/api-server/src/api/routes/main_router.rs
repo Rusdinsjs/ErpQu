@@ -358,6 +358,14 @@ pub fn create_router(state: AppState) -> Router {
                 .delete(crate::api::handlers::workflow_handler::delete_workflow),
         )
         .route(
+            "/api/workflows/doctype/:doctype_name",
+            get(crate::api::handlers::workflow_handler::get_workflow_by_doctype),
+        )
+        .route(
+            "/api/workflows/logs/:document_id",
+            get(crate::api::handlers::workflow_handler::get_workflow_logs),
+        )
+        .route(
             "/api/workflows/:id/states",
             post(crate::api::handlers::workflow_handler::save_workflow_state),
         )

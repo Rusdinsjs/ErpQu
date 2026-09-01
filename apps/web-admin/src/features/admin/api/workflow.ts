@@ -1,4 +1,4 @@
-import { api } from'../../../api/http';
+import { api } from '../../../api/http';
 
 export interface WorkflowWithDocType {
     id: string;
@@ -34,6 +34,20 @@ export interface WorkflowTransitionDetail {
     allowed_role_code: string;
 }
 
+export interface WorkflowActionLog {
+    id: string;
+    workflow_id: string;
+    document_id: string;
+    action_by_user_id: string;
+    action_by_user_name: string;
+    action_by_user_email: string;
+    from_state: string;
+    action_name: string;
+    to_state: string;
+    comments?: string;
+    created_at: string;
+}
+
 export interface WorkflowDetailResponse {
     workflow: WorkflowWithDocType;
     states: WorkflowState[];
@@ -48,6 +62,16 @@ export const workflowApi = {
 
     getWorkflowDetail: async (id: string) => {
         const response = await api.get<WorkflowDetailResponse>(`/workflows/${id}`);
+        return response.data;
+    },
+
+    getWorkflowByDocType: async (doctypeName: string) => {
+        const response = await api.get<WorkflowDetailResponse>(`/workflows/doctype/${doctypeName}`);
+        return response.data;
+    },
+
+    getDocumentLogs: async (documentId: string) => {
+        const response = await api.get<WorkflowActionLog[]>(`/workflows/logs/${documentId}`);
         return response.data;
     },
 

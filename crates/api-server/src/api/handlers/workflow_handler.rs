@@ -45,6 +45,21 @@ pub struct WorkflowTransitionDetail {
     pub allowed_role_code: String,
 }
 
+#[derive(Debug, Serialize, sqlx::FromRow)]
+pub struct WorkflowActionLogWithUser {
+    pub id: Uuid,
+    pub workflow_id: Uuid,
+    pub document_id: Uuid,
+    pub action_by_user_id: Uuid,
+    pub action_by_user_name: String,
+    pub action_by_user_email: String,
+    pub from_state: String,
+    pub action_name: String,
+    pub to_state: String,
+    pub comments: Option<String>,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+}
+
 #[derive(Debug, Deserialize)]
 pub struct CreateWorkflowRequest {
     pub workflow_name: String,
@@ -149,6 +164,92 @@ pub async fn get_workflow_detail(
         states,
         transitions,
     }))
+}
+
+/// GET /api/workflows/doctype/:doctype_name - Get Active Workflow Detail by DocType
+pub async fn get_workflow_by_doctype(
+    State(state): State<AppState>,
+    Path(doctype_name): Path<String>,
+) -> AppResult<impl IntoResponse> {
+    let workflow = sqlx::query_as::<_, WorkflowWithDocType>(
+        r#"
+        SELECT 
+            w.id, w.workflow_name, w.doctype_id, dt.name as doctype_name,
+            w.is_active, w.document_status_field, w.created_at, w.updated_at
+        FROM workflows w
+        JOIN doctypes dt ON dt.id = w.doctype_id
+        WHERE dt.name ILIKE $1 AND w.is_active = TRUE
+        ORDER BY w.updated_at DESC
+        LIMIT 1
+        "#,
+    )
+    .bind(&doctype_name)
+    .fetch_optional(&state.pool)
+    .await
+    .map_err(|e: sqlx::Error| AppError::Database(e.to_string()))?
+    .ok_or(AppError::NotFound(format!(
+        "Tidak ditemukan alur kerja aktif untuk DocType '{}'",
+        doctype_name
+    )))?;
+
+    let states = sqlx::query_as::<_, WorkflowState>(
+        "SELECT id, workflow_id, state_name, doc_status, allow_edit_role_id, style_variant, created_at FROM workflow_states WHERE workflow_id = $1 ORDER BY doc_status, state_name"
+    )
+    .bind(workflow.id)
+    .fetch_all(&state.pool)
+    .await
+    .map_err(|e: sqlx::Error| AppError::Database(e.to_string()))?;
+
+    let transitions = sqlx::query_as::<_, WorkflowTransitionDetail>(
+        r#"
+        SELECT 
+            t.id, t.workflow_id, t.state_id, s1.state_name as state_name,
+            t.action_name, t.next_state_id, s2.state_name as next_state_name,
+            t.allowed_role_id, r.name as allowed_role_name, r.code as allowed_role_code
+        FROM workflow_transitions t
+        JOIN workflow_states s1 ON s1.id = t.state_id
+        JOIN workflow_states s2 ON s2.id = t.next_state_id
+        JOIN roles r ON r.id = t.allowed_role_id
+        WHERE t.workflow_id = $1
+        ORDER BY s1.state_name
+        "#,
+    )
+    .bind(workflow.id)
+    .fetch_all(&state.pool)
+    .await
+    .map_err(|e: sqlx::Error| AppError::Database(e.to_string()))?;
+
+    Ok(Json(WorkflowDetailResponse {
+        workflow,
+        states,
+        transitions,
+    }))
+}
+
+/// GET /api/workflows/logs/:document_id - Get Workflow Audit Trail Logs
+pub async fn get_workflow_logs(
+    State(state): State<AppState>,
+    Path(document_id): Path<Uuid>,
+) -> AppResult<impl IntoResponse> {
+    let logs = sqlx::query_as::<_, WorkflowActionLogWithUser>(
+        r#"
+        SELECT 
+            l.id, l.workflow_id, l.document_id, l.action_by_user_id,
+            COALESCE(u.name, 'System') as action_by_user_name,
+            COALESCE(u.email, '-') as action_by_user_email,
+            l.from_state, l.action_name, l.to_state, l.comments, l.created_at
+        FROM workflow_action_logs l
+        LEFT JOIN users u ON u.id = l.action_by_user_id
+        WHERE l.document_id = $1
+        ORDER BY l.created_at DESC
+        "#,
+    )
+    .bind(document_id)
+    .fetch_all(&state.pool)
+    .await
+    .map_err(|e: sqlx::Error| AppError::Database(e.to_string()))?;
+
+    Ok(Json(logs))
 }
 
 /// POST /api/workflows - Create Workflow
@@ -317,6 +418,64 @@ pub async fn apply_workflow_action(
     .fetch_one(&state.pool)
     .await
     .map_err(|e: sqlx::Error| AppError::Database(e.to_string()))?;
+
+    // 4. Automatically sync status on the target document table if known
+    let wf_info = sqlx::query_as::<_, WorkflowWithDocType>(
+        r#"
+        SELECT 
+            w.id, w.workflow_name, w.doctype_id, dt.name as doctype_name,
+            w.is_active, w.document_status_field, w.created_at, w.updated_at
+        FROM workflows w
+        JOIN doctypes dt ON dt.id = w.doctype_id
+        WHERE w.id = $1
+        "#,
+    )
+    .bind(payload.workflow_id)
+    .fetch_optional(&state.pool)
+    .await
+    .map_err(|e| AppError::Database(e.to_string()))?;
+
+    if let Some(wf) = wf_info {
+        let status_val = &transition.next_state_name;
+        match wf.doctype_name.to_lowercase().as_str() {
+            "workorder" => {
+                let _ = sqlx::query("UPDATE maintenance_work_orders SET status = $1, updated_at = NOW() WHERE id = $2")
+                    .bind(status_val)
+                    .bind(payload.document_id)
+                    .execute(&state.pool)
+                    .await;
+            }
+            "purchaseorder" => {
+                let _ = sqlx::query("UPDATE purchase_orders SET status = $1, updated_at = NOW() WHERE id = $2")
+                    .bind(status_val)
+                    .bind(payload.document_id)
+                    .execute(&state.pool)
+                    .await;
+            }
+            "leaveapplication" => {
+                let _ = sqlx::query("UPDATE hr_leave_applications SET status = $1, updated_at = NOW() WHERE id = $2")
+                    .bind(status_val)
+                    .bind(payload.document_id)
+                    .execute(&state.pool)
+                    .await;
+            }
+            "expenseclaim" => {
+                let _ = sqlx::query("UPDATE hr_expense_claims SET status = $1, updated_at = NOW() WHERE id = $2")
+                    .bind(status_val)
+                    .bind(payload.document_id)
+                    .execute(&state.pool)
+                    .await;
+            }
+            "rentalcontract" => {
+                let _ = sqlx::query("UPDATE contracts SET status = $1, updated_at = NOW() WHERE id = $2")
+                    .bind(status_val)
+                    .bind(payload.document_id)
+                    .execute(&state.pool)
+                    .await;
+            }
+            _ => {}
+        }
+    }
 
     Ok(Json(serde_json::json!({
         "success": true,

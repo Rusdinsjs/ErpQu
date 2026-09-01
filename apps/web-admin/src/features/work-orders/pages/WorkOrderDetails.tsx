@@ -6,6 +6,7 @@ import { ArrowLeft, Info, CheckSquare, Wrench, Plus, Trash2, DollarSign, Play, C
 import { workOrderApi } from'../api/work-order';
 import { uploadApi } from'../../../api/upload';
 import { useAuthStore } from'../../../store/useAuthStore';
+import { WorkflowActionBar } from '../../../components/Workflow/WorkflowActionBar';
 import { TechnicianSelectModal } from'../components/TechnicianSelectModal';
 import { InventoryItemSelector } from'../../inventory/components/InventoryItemSelector';
 import { useWebSocket } from'../../../contexts/WebSocketContext';
@@ -358,6 +359,19 @@ export default function WorkOrderDetails({ workOrderId: propId }: WorkOrderDetai
                     Back to Work Orders
                 </Button>
             </div>
+
+            {wo && id && (
+                <div className="mb-6">
+                    <WorkflowActionBar
+                        doctypeName="WorkOrder"
+                        documentId={id}
+                        currentState={wo.status || 'Draft'}
+                        onStateChanged={() => {
+                            queryClient.invalidateQueries({ queryKey: ['work-order', id] });
+                        }}
+                    />
+                </div>
+            )}
 
             {/* Header Section */}
             <div className="flex justify-between items-start mb-8">

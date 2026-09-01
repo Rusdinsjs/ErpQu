@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { contractApi } from'../api/contract';
 import type { ContractDetail, ContractDocument, ContractApproval } from'../types/contract';
+import { WorkflowActionBar } from '../../../components/Workflow/WorkflowActionBar';
 import DocumentUploadModal from'../components/DocumentUploadModal';
 import ApprovalModal from'../components/ApprovalModal';
 import ApprovalHistory from'../components/ApprovalHistory';
@@ -146,6 +147,16 @@ export default function ContractDetailPage() {
 
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+            {/* Workflow Action Bar */}
+            <WorkflowActionBar
+                doctypeName="RentalContract"
+                documentId={id!}
+                currentState={contract.status || 'Draft'}
+                onStateChanged={() => {
+                    queryClient.invalidateQueries({ queryKey: ['contract-detail', id] });
+                }}
+            />
+
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
