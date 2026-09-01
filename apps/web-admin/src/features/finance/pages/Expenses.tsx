@@ -162,7 +162,7 @@ export default function Expenses() {
                                     className={clsx(
                                         "flex-1 py-1.5 text-sm font-medium rounded-md transition-all flex items-center justify-center gap-2",
                                         newExpenseStatus === 'unpaid'
-                                            ? "bg-amber-500/100/10 text-amber-500 shadow-sm ring-1 ring-amber-500/20"
+                                            ? "bg-amber-500/10 text-amber-500 shadow-sm ring-1 ring-amber-500/20"
                                             : "text-muted-foreground hover:text-foreground"
                                     )}
                                 >
@@ -329,7 +329,7 @@ export default function Expenses() {
                                 <span className="text-sm font-normal text-muted-foreground">Tagihan</span>
                             </h3>
                         </div>
-                        <div className="p-3 rounded-xl bg-amber-500/100/10 ring-1 ring-amber-500/20">
+                        <div className="p-3 rounded-xl bg-amber-500/10 ring-1 ring-amber-500/20">
                             <Clock className="text-amber-500" size={24} />
                         </div>
                     </div>
@@ -340,7 +340,7 @@ export default function Expenses() {
                             <p className="text-sm text-muted-foreground mb-1 font-medium">Efisiensi Bulan Ini</p>
                             <h3 className="text-3xl font-bold text-foreground tracking-tight text-emerald-500">Good</h3>
                         </div>
-                        <div className="p-3 rounded-xl bg-emerald-500/100/10 ring-1 ring-emerald-500/20">
+                        <div className="p-3 rounded-xl bg-emerald-500/10 ring-1 ring-emerald-500/20">
                             <TrendingDown className="text-emerald-500" size={24} />
                         </div>
                     </div>
@@ -377,7 +377,7 @@ export default function Expenses() {
                                 <div className={clsx(
                                     "w-5 h-5 rounded border flex items-center justify-center transition-colors",
                                     filterStatus.includes('unpaid')
-                                        ? "bg-amber-500/100 border-amber-500 text-white"
+                                        ? "bg-amber-500 border-amber-500 text-white"
                                         : "border-muted-foreground/30 bg-background group-hover:border-amber-500"
                                 )}>
                                     {filterStatus.includes('unpaid') && <Check size={12} strokeWidth={3} />}
@@ -457,7 +457,7 @@ export default function Expenses() {
                                         <div className="flex items-center gap-4 w-full sm:w-auto">
                                             <div className={clsx(
                                                 "p-3 rounded-lg transition-colors shrink-0",
-                                                expense.status === 'paid' ? "bg-primary/10 text-primary" : "bg-amber-500/100/10 text-amber-500"
+                                                expense.status === 'paid' ? "bg-primary/10 text-primary" : "bg-amber-500/10 text-amber-500"
                                             )}>
                                                 {expense.status === 'paid' ? <Receipt size={24} /> : <Clock size={24} />}
                                             </div>

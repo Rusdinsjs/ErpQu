@@ -183,7 +183,7 @@ export default function Settings() {
                                         leftIcon={isTestingAI ? <Loader2 size={14} className="animate-spin" /> : <Play size={14} />}
                                         onClick={handleTestAI}
                                         disabled={isTestingAI}
-                                        className="border-indigo-500/30 text-indigo-400 hover:bg-indigo-500/100/100/10"
+                                        className="border-indigo-500/30 text-indigo-400 hover:bg-indigo-500/10"
                                     >
                                         {isTestingAI ? 'Testing Connection...' : 'Test AI Connection'}
                                     </Button>
@@ -226,7 +226,7 @@ export default function Settings() {
                                                         }}
                                                         className={`p-4 rounded-xl border text-left transition-all relative overflow-hidden ${
                                                             isSelected
-                                                                ? 'border-indigo-500 bg-indigo-500/100/10 ring-1 ring-indigo-500'
+                                                                ? 'border-indigo-500 bg-indigo-500/10 ring-1 ring-indigo-500'
                                                                 : 'border-border bg-card/50 hover:bg-muted/50'
                                                         }`}
                                                     >
@@ -318,7 +318,7 @@ export default function Settings() {
                                                     onClick={() => handleChange('ai_model', m)}
                                                     className={`px-2.5 py-1 text-xs rounded-lg border transition-colors ${
                                                         formData['ai_model'] === m
-                                                            ? 'bg-indigo-500/100/20 text-indigo-300 border-indigo-500/40 font-medium'
+                                                            ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40 font-medium'
                                                             : 'bg-muted/50 text-muted-foreground border-border hover:bg-muted'
                                                     }`}
                                                 >
@@ -859,7 +859,7 @@ function LaunchpadConfigEditor({ formData, handleChange }: LaunchpadConfigEditor
                                             }}
                                             className={`px-2 py-1 text-xs rounded-md border transition-colors ${
                                                 mod.enabled
-                                                    ? 'bg-emerald-500/100/10 text-emerald-400 border-emerald-500/20'
+                                                    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
                                                     : 'bg-muted text-muted-foreground border-border'
                                             }`}
                                         >
@@ -950,13 +950,13 @@ function LaunchpadConfigEditor({ formData, handleChange }: LaunchpadConfigEditor
 
             {/* Unassigned Warning */}
             {unassignedMenus.length > 0 && (
-                <div className="mt-4 p-3 bg-amber-500/100/10 border border-amber-500/20 rounded-xl">
+                <div className="mt-4 p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl">
                     <p className="text-xs font-medium text-amber-400 mb-2">
                         ⚠ {unassignedMenus.length} menu belum di-assign ke modul apapun:
                     </p>
                     <div className="flex flex-wrap gap-1.5">
                         {unassignedMenus.map(id => (
-                            <span key={id} className="px-2 py-1 bg-amber-500/100/10 text-amber-400 rounded text-xs">
+                            <span key={id} className="px-2 py-1 bg-amber-500/10 text-amber-400 rounded text-xs">
                                 {MENU_LABELS[id]}
                             </span>
                         ))}

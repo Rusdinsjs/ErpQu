@@ -329,7 +329,7 @@ export default function Clients() {
                                             title="Klik untuk mengubah status Active / Inactive"
                                             className="cursor-pointer transition-transform hover:scale-105"
                                         >
-                                            <Badge variant={client.is_active ? 'success' : 'default'} className={client.is_active ? 'bg-emerald-500/100/10 text-emerald-400 border-emerald-500/20' : 'bg-slate-800 text-muted-foreground border-slate-700'}>
+                                            <Badge variant={client.is_active ? 'success' : 'default'} className={client.is_active ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-slate-800 text-muted-foreground border-slate-700'}>
                                                 {client.is_active ? 'Active' : 'Inactive'}
                                             </Badge>
                                         </button>

@@ -265,7 +265,7 @@ export default function ContractDetailPage() {
                                     Rp {performance.total_revenue.toLocaleString()}
                                 </p>
                             </div>
-                            <div className="p-3 bg-purple-500/100/10 rounded-xl">
+                            <div className="p-3 bg-purple-500/10 rounded-xl">
                                 <DollarSign size={24} className="text-purple-500" />
                             </div>
                         </div>

@@ -71,7 +71,7 @@ export default function PurchaseShipments() {
                     </Button>
                     <Button
                         onClick={() => setIsModalOpen(true)}
-                        className="gap-2 bg-emerald-600 hover:bg-emerald-500/100"
+                        className="gap-2 bg-emerald-600 hover:bg-emerald-500"
                     >
                         <Plus size={18} />
                         Catat Penerimaan
@@ -130,7 +130,7 @@ export default function PurchaseShipments() {
                                         <td className="px-6 py-4 text-white">{shipment.courier_name || '-'}</td>
                                         <td className="px-6 py-4 font-mono text-xs">{shipment.tracking_number || '-'}</td>
                                         <td className="px-6 py-4 text-center">
-                                            <Badge variant="success" className="bg-emerald-500/100/10 text-emerald-400 border-emerald-500/20 capitalize">
+                                            <Badge variant="success" className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 capitalize">
                                                 {shipment.status}
                                             </Badge>
                                         </td>
@@ -230,7 +230,7 @@ export default function PurchaseShipments() {
                                 <Button
                                     type="submit"
                                     disabled={createMutation.isPending}
-                                    className="flex-1 bg-emerald-600 hover:bg-emerald-500/100"
+                                    className="flex-1 bg-emerald-600 hover:bg-emerald-500"
                                 >
                                     {createMutation.isPending ? 'Menyimpan...' : 'Simpan'}
                                 </Button>

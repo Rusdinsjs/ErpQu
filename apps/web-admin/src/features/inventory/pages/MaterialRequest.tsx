@@ -127,11 +127,11 @@ const MaterialRequestPage: React.FC = () => {
     const getStatusBadge = (status: string) => {
         switch (status) {
             case 'APPROVED':
-                return <span className="px-2.5 py-1 text-xs font-bold bg-emerald-500/100/10 text-emerald-400 border border-emerald-500/20 rounded-full">APPROVED</span>;
+                return <span className="px-2.5 py-1 text-xs font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-full">APPROVED</span>;
             case 'REJECTED':
                 return <span className="px-2.5 py-1 text-xs font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20 rounded-full">REJECTED</span>;
             case 'PENDING_APPROVAL':
-                return <span className="px-2.5 py-1 text-xs font-bold bg-amber-500/100/10 text-amber-400 border border-amber-500/20 rounded-full">PENDING APPROVAL</span>;
+                return <span className="px-2.5 py-1 text-xs font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-full">PENDING APPROVAL</span>;
             case 'CANCELLED':
                 return <span className="px-2.5 py-1 text-xs font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20 rounded-full">CANCELLED</span>;
             default:
@@ -346,7 +346,7 @@ const MaterialRequestPage: React.FC = () => {
                                                 <button
                                                     type="button"
                                                     onClick={() => handleRemoveItemRow(idx)}
-                                                    className="p-2 hover:bg-rose-500/100/10 text-rose-500 rounded-lg hover:border-rose-500/20 border border-transparent"
+                                                    className="p-2 hover:bg-rose-500/10 text-rose-500 rounded-lg hover:border-rose-500/20 border border-transparent"
                                                     disabled={itemsList.length === 1}
                                                 >
                                                     <Trash2 size={18} />

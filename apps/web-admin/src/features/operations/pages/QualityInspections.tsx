@@ -89,11 +89,11 @@ const QualityInspectionsPage: React.FC = () => {
     const getStatusBadgeClass = (status: string) => {
         switch (status) {
             case 'PASSED':
-                return 'bg-emerald-500/100/10 text-emerald-400 border border-emerald-500/20';
+                return 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
             case 'REJECTED':
                 return 'bg-rose-500/10 text-rose-400 border border-rose-500/20';
             case 'QUALITY_HOLD':
-                return 'bg-amber-500/100/10 text-amber-400 border border-amber-500/20';
+                return 'bg-amber-500/10 text-amber-400 border border-amber-500/20';
             default:
                 return 'bg-blue-500/10 text-blue-400 border border-blue-500/20';
         }
@@ -181,7 +181,7 @@ const QualityInspectionsPage: React.FC = () => {
                                                         size="sm"
                                                         variant="ghost"
                                                         onClick={() => updateStatusMut.mutate({ id: ins.id, status: 'PASSED' })}
-                                                        className="text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/100/10"
+                                                        className="text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10"
                                                     >
                                                         Pass
                                                     </Button>
@@ -189,7 +189,7 @@ const QualityInspectionsPage: React.FC = () => {
                                                         size="sm"
                                                         variant="ghost"
                                                         onClick={() => updateStatusMut.mutate({ id: ins.id, status: 'QUALITY_HOLD' })}
-                                                        className="text-amber-400 hover:text-amber-300 hover:bg-amber-500/100/10"
+                                                        className="text-amber-400 hover:text-amber-300 hover:bg-amber-500/10"
                                                     >
                                                         Hold
                                                     </Button>
@@ -197,7 +197,7 @@ const QualityInspectionsPage: React.FC = () => {
                                                         size="sm"
                                                         variant="ghost"
                                                         onClick={() => updateStatusMut.mutate({ id: ins.id, status: 'REJECTED' })}
-                                                        className="text-rose-400 hover:text-rose-300 hover:bg-rose-500/100/10"
+                                                        className="text-rose-400 hover:text-rose-300 hover:bg-rose-500/10"
                                                     >
                                                         Reject
                                                     </Button>

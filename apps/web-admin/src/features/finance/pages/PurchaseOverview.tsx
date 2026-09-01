@@ -34,8 +34,8 @@ export default function PurchaseOverview() {
 
     const stats = [
         { label: 'Total Pesanan', value: totalOrders.toString(), icon: ShoppingBag, color: 'text-blue-400', bg: 'bg-blue-500/10' },
-        { label: 'Pesanan Pending', value: pendingOrders.toString(), icon: Clock, color: 'text-amber-400', bg: 'bg-amber-500/100/10' },
-        { label: 'Pengiriman Aktif', value: activeShipments.toString(), icon: Truck, color: 'text-emerald-400', bg: 'bg-emerald-500/100/10' },
+        { label: 'Pesanan Pending', value: pendingOrders.toString(), icon: Clock, color: 'text-amber-400', bg: 'bg-amber-500/10' },
+        { label: 'Pengiriman Aktif', value: activeShipments.toString(), icon: Truck, color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
     ];
 
     return (

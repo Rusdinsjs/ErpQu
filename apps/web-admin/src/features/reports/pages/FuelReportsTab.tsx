@@ -139,7 +139,7 @@ const FuelReportsTab: React.FC = () => {
                     <div className="absolute right-0 top-0 p-4 opacity-10"><Droplets size={80} /></div>
                     <p className="text-indigo-200/80 font-medium text-sm uppercase tracking-wide">Total Consumption</p>
                     <h3 className="text-3xl font-bold text-white mt-1">{formatVolume(totalConsumption)} <span className="text-lg text-muted-foreground font-normal">Liters</span></h3>
-                    <div className="flex items-center gap-1 mt-2 text-xs text-emerald-400 font-medium bg-emerald-500/100/10 w-fit px-2 py-1 rounded-full"><TrendingUp size={12} /> Last 6 Months</div>
+                    <div className="flex items-center gap-1 mt-2 text-xs text-emerald-400 font-medium bg-emerald-500/10 w-fit px-2 py-1 rounded-full"><TrendingUp size={12} /> Last 6 Months</div>
                 </div>
 
                 <div className="relative overflow-hidden rounded-2xl p-6 bg-gradient-to-br from-emerald-900/50 to-slate-900 border border-emerald-500/20 shadow-lg">

@@ -168,7 +168,7 @@ const Contracts: React.FC = () => {
                 <div className="flex gap-3">
                     <button
                         onClick={() => navigate('/contract-analytics')}
-                        className="w-full md:w-auto bg-purple-600 hover:bg-purple-500/100 text-white px-6 py-3 rounded-2xl shadow-lg 
+                        className="w-full md:w-auto bg-purple-600 hover:bg-purple-500 text-white px-6 py-3 rounded-2xl shadow-lg 
                                  shadow-purple-500/20 flex items-center justify-center gap-2 transition-all duration-200 font-semibold"
                     >
                         <BarChart2 size={20} />

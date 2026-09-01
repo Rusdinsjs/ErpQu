@@ -163,7 +163,7 @@ const ContractAnalytics: React.FC = () => {
                 <div className="bg-gray-800/40 border border-white/5 rounded-2xl p-6 backdrop-blur-sm">
                     <div className="flex items-center justify-between mb-4">
                         <span className="text-sm font-medium text-muted-foreground">Avg Revenue/Contract</span>
-                        <div className="p-2 bg-purple-500/100/10 rounded-xl">
+                        <div className="p-2 bg-purple-500/10 rounded-xl">
                             <TrendingUp size={20} className="text-purple-400" />
                         </div>
                     </div>

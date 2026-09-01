@@ -34,7 +34,7 @@ export default function Purchases() {
     const stats = [
         { label: 'Total Utang', value: formatCurrency(totalPayable), icon: ShoppingBag, color: 'text-rose-400', bg: 'bg-rose-500/10' },
         { label: 'Jatuh Tempo', value: formatCurrency(bills?.filter((b: any) => b.status === 'overdue').reduce((a: any, b: any) => a + b.total_amount, 0) || 0), icon: AlertCircle, color: 'text-red-400', bg: 'bg-red-500/10' },
-        { label: 'Lunas (Total)', value: formatCurrency(bills?.filter((b: any) => b.status === 'paid').reduce((a: any, b: any) => a + b.total_amount, 0) || 0), icon: CheckSquare, color: 'text-emerald-400', bg: 'bg-emerald-500/100/10' },
+        { label: 'Lunas (Total)', value: formatCurrency(bills?.filter((b: any) => b.status === 'paid').reduce((a: any, b: any) => a + b.total_amount, 0) || 0), icon: CheckSquare, color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
     ];
 
     return (
@@ -121,7 +121,7 @@ export default function Purchases() {
                                             {formatCurrency(b.total_amount)}
                                         </td>
                                         <td className="px-6 py-4 text-center">
-                                            <Badge variant={b.status === 'paid' ? 'success' : 'danger'} className={`${b.status === 'paid' ? 'bg-emerald-500/100/10 text-emerald-400 border-emerald-500/20' :
+                                            <Badge variant={b.status === 'paid' ? 'success' : 'danger'} className={`${b.status === 'paid' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
                                                 'bg-red-500/10 text-red-400 border-red-500/20'
                                                 }`}>
                                                 {b.status === 'paid' ? 'Lunas' : b.status === 'draft' ? 'Draft' : 'Belum Lunas'}

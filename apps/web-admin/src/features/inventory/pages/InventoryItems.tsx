@@ -256,9 +256,9 @@ export default function InventoryItems() {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6 relative z-10">
                 {[
                     { label: 'Total Item', value: stats.total.toLocaleString(), icon: Box, color: 'text-blue-400', bg: 'bg-blue-500/10 border-blue-500/20' },
-                    { label: 'Low Stock', value: stats.low.toString(), icon: AlertTriangle, color: 'text-amber-400', bg: 'bg-amber-500/100/10 border-amber-500/20' },
+                    { label: 'Low Stock', value: stats.low.toString(), icon: AlertTriangle, color: 'text-amber-400', bg: 'bg-amber-500/10 border-amber-500/20' },
                     { label: 'Out of Stock', value: stats.out.toString(), icon: Package, color: 'text-red-400', bg: 'bg-red-500/10 border-red-500/20' },
-                    { label: 'Nilai Inventory', value: `Rp ${stats.value.toLocaleString()}`, icon: BarChart2, color: 'text-emerald-400', bg: 'bg-emerald-500/100/10 border-emerald-500/20' },
+                    { label: 'Nilai Inventory', value: `Rp ${stats.value.toLocaleString()}`, icon: BarChart2, color: 'text-emerald-400', bg: 'bg-emerald-500/10 border-emerald-500/20' },
                 ].map((stat, i) => (
                     <div key={i} className="bg-card/60 backdrop-blur-xl border border-border p-5 rounded-3xl hover:-translate-y-1 hover:shadow-xl transition-all duration-300 group overflow-hidden relative flex flex-col justify-between min-h-[120px]">
                         <div className={`absolute -top-4 -right-4 w-24 h-24 ${stat.bg.split(' ')[0]} rounded-full blur-[30px] group-hover:scale-150 transition-transform pointer-events-none`} />
@@ -391,14 +391,14 @@ export default function InventoryItems() {
                                             <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                                 <button
                                                     onClick={() => handleOpenHistory(item)}
-                                                    className="w-8 h-8 flex items-center justify-center hover:bg-indigo-500/100/100/20 rounded-xl text-indigo-400 transition-colors shadow-sm"
+                                                    className="w-8 h-8 flex items-center justify-center hover:bg-indigo-500/20 rounded-xl text-indigo-400 transition-colors shadow-sm"
                                                     title="History"
                                                 >
                                                     <History size={16} />
                                                 </button>
                                                 <button
                                                     onClick={() => handleOpenEdit(item)}
-                                                    className="w-8 h-8 flex items-center justify-center hover:bg-amber-500/100/20 rounded-xl text-amber-400 transition-colors shadow-sm"
+                                                    className="w-8 h-8 flex items-center justify-center hover:bg-amber-500/20 rounded-xl text-amber-400 transition-colors shadow-sm"
                                                     title="Edit"
                                                 >
                                                     <Edit2 size={16} />

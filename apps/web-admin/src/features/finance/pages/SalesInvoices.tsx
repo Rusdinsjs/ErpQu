@@ -211,8 +211,8 @@ export default function SalesInvoices() {
 
     const stats = [
         { label: 'Total Piutang', value: formatCurrencyIDR(totalReceivable), icon: TrendingUp, color: 'text-cyan-400', bg: 'bg-cyan-500/10' },
-        { label: 'Belum Dibayar', value: unpaidCount.toString() + ' Invoice', icon: Clock, color: 'text-amber-400', bg: 'bg-amber-500/100/10' },
-        { label: 'Lunas (Total)', value: formatCurrencyIDR(paidTotalAmount), icon: CheckCircle2, color: 'text-emerald-400', bg: 'bg-emerald-500/100/10' },
+        { label: 'Belum Dibayar', value: unpaidCount.toString() + ' Invoice', icon: Clock, color: 'text-amber-400', bg: 'bg-amber-500/10' },
+        { label: 'Lunas (Total)', value: formatCurrencyIDR(paidTotalAmount), icon: CheckCircle2, color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
     ];
 
     return (
@@ -311,10 +311,10 @@ export default function SalesInvoices() {
                                                     variant={states.payment === 'paid' ? 'success' : states.payment === 'partially_paid' ? 'info' : 'warning'}
                                                     className={
                                                         states.payment === 'paid'
-                                                            ? 'bg-emerald-500/100/10 text-emerald-400 border-emerald-500/20'
+                                                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
                                                             : states.payment === 'partially_paid'
                                                                 ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20'
-                                                                : 'bg-amber-500/100/10 text-amber-400 border-amber-500/20'
+                                                                : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
                                                     }
                                                 >
                                                     {states.payment === 'paid' ? 'Lunas' : states.payment === 'partially_paid' ? 'Sebagian' : 'Belum Dibayar'}
@@ -323,7 +323,7 @@ export default function SalesInvoices() {
                                             <td className="px-6 py-4 text-center">
                                                 <Badge
                                                     variant={states.journal === 'posted' ? 'success' : 'outline'}
-                                                    className={states.journal === 'posted' ? 'bg-indigo-500/100/10 text-indigo-400 border-indigo-500/20' : 'bg-slate-800 text-muted-foreground'}
+                                                    className={states.journal === 'posted' ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20' : 'bg-slate-800 text-muted-foreground'}
                                                 >
                                                     {states.journal === 'posted' ? 'Terposting' : states.journal === 'draft' ? 'Draf' : 'Belum Ada'}
                                                 </Badge>
@@ -376,7 +376,7 @@ export default function SalesInvoices() {
                                                                     handleDelete(inv);
                                                                     setActiveMenuId(null);
                                                                 }}
-                                                                className="w-full px-4 py-2.5 text-xs text-rose-400 hover:bg-rose-500/100/10 flex items-center gap-2.5 transition-colors cursor-pointer"
+                                                                className="w-full px-4 py-2.5 text-xs text-rose-400 hover:bg-rose-500/10 flex items-center gap-2.5 transition-colors cursor-pointer"
                                                             >
                                                                 <Trash2 size={14} className="text-rose-400" />
                                                                 Hapus Invoice

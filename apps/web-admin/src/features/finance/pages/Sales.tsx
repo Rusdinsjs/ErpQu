@@ -88,8 +88,8 @@ export default function Sales() {
 
     const stats = [
         { label: 'Total Piutang', value: formatCurrencyIDR(totalReceivable), icon: TrendingUp, color: 'text-cyan-400', bg: 'bg-cyan-500/10' },
-        { label: 'Belum Dibayar', value: unpaidCount.toString() + ' Invoice', icon: Clock, color: 'text-amber-400', bg: 'bg-amber-500/100/10' },
-        { label: 'Lunas (Total)', value: formatCurrencyIDR(paidTotal), icon: CheckCircle2, color: 'text-emerald-400', bg: 'bg-emerald-500/100/10' },
+        { label: 'Belum Dibayar', value: unpaidCount.toString() + ' Invoice', icon: Clock, color: 'text-amber-400', bg: 'bg-amber-500/10' },
+        { label: 'Lunas (Total)', value: formatCurrencyIDR(paidTotal), icon: CheckCircle2, color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
     ];
 
     return (
@@ -181,8 +181,8 @@ export default function Sales() {
                                             {formatCurrencyIDR(inv.total_amount)}
                                         </td>
                                         <td className="px-6 py-4 text-center">
-                                            <Badge variant={deriveInvoiceStates(inv).payment === 'paid' ? 'success' : 'warning'} className={`${deriveInvoiceStates(inv).payment === 'paid' ? 'bg-emerald-500/100/10 text-emerald-400 border-emerald-500/20' :
-                                                'bg-amber-500/100/10 text-amber-400 border-amber-500/20'
+                                            <Badge variant={deriveInvoiceStates(inv).payment === 'paid' ? 'success' : 'warning'} className={`${deriveInvoiceStates(inv).payment === 'paid' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' :
+                                                'bg-amber-500/10 text-amber-400 border-amber-500/20'
                                                 }`}>
                                                 {deriveInvoiceStates(inv).payment === 'paid' ? 'Lunas' : deriveInvoiceStates(inv).payment === 'partially_paid' ? 'Sebagian' : 'Belum Dibayar'}
                                             </Badge>

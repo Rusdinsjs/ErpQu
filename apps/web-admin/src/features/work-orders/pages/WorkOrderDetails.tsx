@@ -391,7 +391,7 @@ export default function WorkOrderDetails({ workOrderId: propId }: WorkOrderDetai
                     <div className="flex items-center gap-2">
                         <p className="text-muted-foreground">{wo.wo_type}</p>
                         {wo.maintenance_team_name && (
-                            <Badge variant="outline" className="border-amber-500/30 text-amber-400 bg-amber-500/100/10">
+                            <Badge variant="outline" className="border-amber-500/30 text-amber-400 bg-amber-500/10">
                                 👥 Tim: {wo.maintenance_team_name}
                             </Badge>
                         )}
@@ -421,7 +421,7 @@ export default function WorkOrderDetails({ workOrderId: propId }: WorkOrderDetai
                             leftIcon={<Check size={18} />}
                             onClick={() => approveMutation.mutate()}
                             loading={approveMutation.isPending}
-                            className="rounded-xl shadow-lg shadow-emerald-500/20 bg-emerald-600 hover:bg-emerald-500/100"
+                            className="rounded-xl shadow-lg shadow-emerald-500/20 bg-emerald-600 hover:bg-emerald-500"
                         >
                             Approve
                         </Button>
@@ -451,7 +451,7 @@ export default function WorkOrderDetails({ workOrderId: propId }: WorkOrderDetai
                             variant="primary"
                             leftIcon={<Check size={18} />}
                             onClick={() => setCompleteModalOpen(true)}
-                            className="rounded-xl shadow-lg shadow-emerald-500/20 bg-emerald-600 hover:bg-emerald-500/100"
+                            className="rounded-xl shadow-lg shadow-emerald-500/20 bg-emerald-600 hover:bg-emerald-500"
                         >
                             Finish Work
                         </Button>
@@ -464,7 +464,7 @@ export default function WorkOrderDetails({ workOrderId: propId }: WorkOrderDetai
                                 setVerifyData({ labor_cost: 0 });
                                 setVerifyModalOpen(true);
                             }}
-                            className="rounded-xl shadow-lg shadow-amber-500/20 bg-amber-600 hover:bg-amber-500/100"
+                            className="rounded-xl shadow-lg shadow-amber-500/20 bg-amber-600 hover:bg-amber-500"
                         >
                             Verify & Input Cost
                         </Button>
@@ -474,7 +474,7 @@ export default function WorkOrderDetails({ workOrderId: propId }: WorkOrderDetai
                             variant="primary"
                             leftIcon={<CheckSquare size={18} />}
                             onClick={() => setFinalizeModalOpen(true)}
-                            className="rounded-xl shadow-lg shadow-purple-500/20 bg-purple-600 hover:bg-purple-500/100"
+                            className="rounded-xl shadow-lg shadow-purple-500/20 bg-purple-600 hover:bg-purple-500"
                         >
                             Sign Off / Finalize
                         </Button>
@@ -509,7 +509,7 @@ export default function WorkOrderDetails({ workOrderId: propId }: WorkOrderDetai
                         return (
                             <div key={step.status} className="flex flex-col items-center gap-4 relative z-10 flex-1 group cursor-default">
                                 <div className={`w-12 h-12 rounded-2xl flex items-center justify-center border-2 transition-all duration-500 shadow-xl ${
-                                    isCompleted ? 'bg-emerald-500/100 border-emerald-500 text-white shadow-emerald-500/30 group-hover:scale-110' :
+                                    isCompleted ? 'bg-emerald-500 border-emerald-500 text-white shadow-emerald-500/30 group-hover:scale-110' :
                                     isCurrent ? 'bg-blue-600 border-blue-400 text-white animate-pulse shadow-blue-500/40 ring-4 ring-blue-500/20' :
                                     'bg-card border-border text-muted-foreground group-hover:border-muted-foreground/30'
                                 }`}>
@@ -544,9 +544,9 @@ export default function WorkOrderDetails({ workOrderId: propId }: WorkOrderDetai
                 </Card>
 
                 <Card className="relative overflow-hidden group p-6">
-                    <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/100/10 rounded-full -mr-4 -mt-4 transition-transform group-hover:scale-110" />
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/10 rounded-full -mr-4 -mt-4 transition-transform group-hover:scale-110" />
                     <div className="flex items-center gap-4 relative z-10">
-                        <div className="p-3 bg-amber-500/100/20 rounded-xl">
+                        <div className="p-3 bg-amber-500/20 rounded-xl">
                             <DollarSign className="text-amber-400" size={24} />
                         </div>
                         <div>
@@ -571,10 +571,10 @@ export default function WorkOrderDetails({ workOrderId: propId }: WorkOrderDetai
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                <Card className="relative overflow-hidden group p-6 bg-purple-500/100/5 border-purple-500/20">
-                    <div className="absolute top-0 right-0 w-24 h-24 bg-purple-500/100/10 rounded-full -mr-4 -mt-4 transition-transform group-hover:scale-110" />
+                <Card className="relative overflow-hidden group p-6 bg-purple-500/5 border-purple-500/20">
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-purple-500/10 rounded-full -mr-4 -mt-4 transition-transform group-hover:scale-110" />
                     <div className="flex items-center gap-4 relative z-10">
-                        <div className="p-3 bg-purple-500/100/20 rounded-xl">
+                        <div className="p-3 bg-purple-500/20 rounded-xl">
                             <div className="w-6 h-6 flex items-center justify-center font-black text-purple-400">O</div>
                         </div>
                         <div>
@@ -644,7 +644,7 @@ export default function WorkOrderDetails({ workOrderId: propId }: WorkOrderDetai
                                         </div>
                                         <div className="flex justify-between items-center group">
                                             <span className="text-muted-foreground text-xs uppercase font-bold tracking-widest group-hover:text-foreground transition-colors">Completed At</span>
-                                            <span className="text-foreground font-bold bg-emerald-500/100/10 text-emerald-500 px-3 py-1 rounded-lg">
+                                            <span className="text-foreground font-bold bg-emerald-500/10 text-emerald-500 px-3 py-1 rounded-lg">
                                                 {wo.actual_end_date ? new Date(wo.actual_end_date).toLocaleString() : '-'}
                                             </span>
                                         </div>
@@ -652,8 +652,8 @@ export default function WorkOrderDetails({ workOrderId: propId }: WorkOrderDetai
                                 </div>
                             </div>
                             <div className="space-y-8">
-                                <div className="p-6 bg-emerald-500/100/5 rounded-3xl border border-emerald-500/10 relative overflow-hidden group hover:border-emerald-500/30 transition-colors backdrop-blur-md">
-                                    <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/100/10 rounded-full blur-[30px] -mr-8 -mt-8 transition-transform group-hover:scale-125" />
+                                <div className="p-6 bg-emerald-500/5 rounded-3xl border border-emerald-500/10 relative overflow-hidden group hover:border-emerald-500/30 transition-colors backdrop-blur-md">
+                                    <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-[30px] -mr-8 -mt-8 transition-transform group-hover:scale-125" />
                                     <div className="relative z-10">
                                         <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-3 flex items-center gap-2">
                                             <CheckSquare size={14} /> Work Performed
@@ -814,7 +814,7 @@ export default function WorkOrderDetails({ workOrderId: propId }: WorkOrderDetai
                                                             setSelectedTaskPhotos({ id: task.id, photos: task.photos || [] });
                                                             setPhotoModalOpen(true);
                                                         }}
-                                                        className="opacity-0 group-hover:opacity-100 transition-opacity hover:bg-purple-500/100/20 text-purple-400"
+                                                        className="opacity-0 group-hover:opacity-100 transition-opacity hover:bg-purple-500/20 text-purple-400"
                                                     >
                                                         <Camera size={16} />
                                                     </ActionIcon>
@@ -877,7 +877,7 @@ export default function WorkOrderDetails({ workOrderId: propId }: WorkOrderDetai
                                             <TableTd align="center">
                                                 <Badge
                                                     variant={part.expense_type === 'CAPEX' ? 'info' : 'default'}
-                                                    className={`px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider ${part.expense_type === 'CAPEX' ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' : 'bg-purple-500/100/10 text-purple-400 border-purple-500/20'}`}
+                                                    className={`px-2 py-0.5 rounded text-[10px] uppercase font-bold tracking-wider ${part.expense_type === 'CAPEX' ? 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20' : 'bg-purple-500/10 text-purple-400 border-purple-500/20'}`}
                                                 >
                                                     {part.expense_type || 'OPEX'}
                                                 </Badge>
@@ -1029,7 +1029,7 @@ export default function WorkOrderDetails({ workOrderId: propId }: WorkOrderDetai
                             variant="primary"
                             onClick={() => addTaskMutation.mutate(newTask)}
                             loading={addTaskMutation.isPending}
-                            className="bg-indigo-600 hover:bg-indigo-500/100/100 rounded-xl px-8 shadow-lg shadow-indigo-500/20 font-bold"
+                            className="bg-indigo-600 hover:bg-indigo-500 rounded-xl px-8 shadow-lg shadow-indigo-500/20 font-bold"
                         >
                             {editTaskId ? "Save Changes" : "Add Task"}
                         </Button>
@@ -1048,7 +1048,7 @@ export default function WorkOrderDetails({ workOrderId: propId }: WorkOrderDetai
                         </button>
                         <button
                             onClick={() => setNewPart({ ...newPart, inventory_item_id: 'temp', part_name: '', unit_cost: 0 })} // Set temp ID to switch mode, will be replaced by actual ID
-                            className={`flex-1 py-2 px-4 rounded-lg text-sm font-bold border transition-colors ${newPart.inventory_item_id ? 'bg-emerald-500/100/20 border-emerald-500 text-emerald-400' : 'bg-background border-border text-muted-foreground'}`}
+                            className={`flex-1 py-2 px-4 rounded-lg text-sm font-bold border transition-colors ${newPart.inventory_item_id ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400' : 'bg-background border-border text-muted-foreground'}`}
                         >
                             From Inventory
                         </button>
@@ -1083,7 +1083,7 @@ export default function WorkOrderDetails({ workOrderId: propId }: WorkOrderDetai
                                 className="bg-background border-border rounded-xl"
                             />
                         )}
-                        <div className="absolute -top-10 -right-10 w-32 h-32 bg-amber-500/100/10 rounded-full blur-[50px] pointer-events-none" />
+                        <div className="absolute -top-10 -right-10 w-32 h-32 bg-amber-500/10 rounded-full blur-[50px] pointer-events-none" />
                     </div>
 
                     <div className="grid grid-cols-2 gap-6">
@@ -1108,7 +1108,7 @@ export default function WorkOrderDetails({ workOrderId: propId }: WorkOrderDetai
                         <div className="grid grid-cols-2 gap-3">
                             <button
                                 onClick={() => setNewPart({ ...newPart, expense_type: 'OPEX' })}
-                                className={`p-3 rounded-xl border text-sm font-bold transition-all ${newPart.expense_type === 'OPEX' ? 'bg-purple-500/100/20 border-purple-500 text-purple-400' : 'bg-background border-border text-muted-foreground hover:bg-secondary'}`}
+                                className={`p-3 rounded-xl border text-sm font-bold transition-all ${newPart.expense_type === 'OPEX' ? 'bg-purple-500/20 border-purple-500 text-purple-400' : 'bg-background border-border text-muted-foreground hover:bg-secondary'}`}
                             >
                                 OPEX
                             </button>
@@ -1132,7 +1132,7 @@ export default function WorkOrderDetails({ workOrderId: propId }: WorkOrderDetai
                                 addPartMutation.mutate(payload);
                             }}
                             loading={addPartMutation.isPending}
-                            className="bg-amber-600 hover:bg-amber-500/100 rounded-xl px-8 shadow-lg shadow-amber-500/20"
+                            className="bg-amber-600 hover:bg-amber-500 rounded-xl px-8 shadow-lg shadow-amber-500/20"
                         >
                             Add Part
                         </Button>
@@ -1150,10 +1150,10 @@ export default function WorkOrderDetails({ workOrderId: propId }: WorkOrderDetai
                             onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCompleteData({ ...completeData, work_performed: e.target.value })}
                             className="bg-background border-border rounded-xl"
                         />
-                        <div className="absolute -top-10 -right-10 w-32 h-32 bg-emerald-500/100/10 rounded-full blur-[50px] pointer-events-none" />
+                        <div className="absolute -top-10 -right-10 w-32 h-32 bg-emerald-500/10 rounded-full blur-[50px] pointer-events-none" />
                     </div>
-                    <div className="flex items-start gap-4 p-5 bg-emerald-500/100/5 border border-emerald-500/20 rounded-2xl">
-                        <div className="p-2 bg-emerald-500/100/10 rounded-lg">
+                    <div className="flex items-start gap-4 p-5 bg-emerald-500/5 border border-emerald-500/20 rounded-2xl">
+                        <div className="p-2 bg-emerald-500/10 rounded-lg">
                             <Info size={20} className="text-emerald-400" />
                         </div>
                         <p className="text-sm text-muted-foreground leading-relaxed">
@@ -1192,7 +1192,7 @@ export default function WorkOrderDetails({ workOrderId: propId }: WorkOrderDetai
                             variant="primary"
                             onClick={() => completeMutation.mutate(completeData)}
                             loading={completeMutation.isPending}
-                            className="bg-emerald-600 hover:bg-emerald-500/100 rounded-xl px-10 h-12 shadow-lg shadow-emerald-500/20 font-bold"
+                            className="bg-emerald-600 hover:bg-emerald-500 rounded-xl px-10 h-12 shadow-lg shadow-emerald-500/20 font-bold"
                         >
                             Finish Work
                         </Button>
@@ -1234,7 +1234,7 @@ export default function WorkOrderDetails({ workOrderId: propId }: WorkOrderDetai
                             variant="primary"
                             onClick={() => verifyMutation.mutate(verifyData)}
                             loading={verifyMutation.isPending}
-                            className="bg-amber-600 hover:bg-amber-500/100 rounded-xl px-10 h-12 shadow-lg shadow-amber-500/20 font-bold"
+                            className="bg-amber-600 hover:bg-amber-500 rounded-xl px-10 h-12 shadow-lg shadow-amber-500/20 font-bold"
                         >
                             Verify & Submit
                         </Button>
@@ -1251,7 +1251,7 @@ export default function WorkOrderDetails({ workOrderId: propId }: WorkOrderDetai
             />
             <Modal isOpen={finalizeModalOpen} onClose={() => setFinalizeModalOpen(false)} title="Finalize Work Order" size="xl">
                 <div className="space-y-6 p-6">
-                    <div className="p-4 bg-purple-500/100/10 border border-purple-500/20 rounded-xl">
+                    <div className="p-4 bg-purple-500/10 border border-purple-500/20 rounded-xl">
                         <div className="flex items-center gap-3 mb-2">
                             <Info size={20} className="text-purple-400" />
                             <h3 className="text-lg font-bold text-white">Expense Classification</h3>
@@ -1293,7 +1293,7 @@ export default function WorkOrderDetails({ workOrderId: propId }: WorkOrderDetai
                         {parts?.map(part => (
                             <div key={part.id} className="flex items-center justify-between p-4 bg-background border border-border rounded-xl hover:bg-secondary/50 transition-colors">
                                 <div className="flex items-center gap-4">
-                                    <div className="p-3 bg-amber-500/100/20 rounded-xl">
+                                    <div className="p-3 bg-amber-500/20 rounded-xl">
                                         <Wrench size={20} className="text-amber-400" />
                                     </div>
                                     <div>
@@ -1322,7 +1322,7 @@ export default function WorkOrderDetails({ workOrderId: propId }: WorkOrderDetai
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
-                        <div className="p-4 bg-purple-500/100/20 border border-purple-500/20 rounded-xl">
+                        <div className="p-4 bg-purple-500/20 border border-purple-500/20 rounded-xl">
                             <div className="text-xs text-purple-400 uppercase font-bold tracking-wider mb-1">Total OPEX</div>
                             <div className="text-xl font-black text-card-foreground">Rp {splitSummary.opex.toLocaleString('id-ID')}</div>
                         </div>
@@ -1357,7 +1357,7 @@ export default function WorkOrderDetails({ workOrderId: propId }: WorkOrderDetai
                             variant="primary"
                             onClick={() => finalizeMutation.mutate()}
                             loading={finalizeMutation.isPending}
-                            className="bg-indigo-600 hover:bg-indigo-500/100/100 rounded-xl px-8 shadow-lg shadow-indigo-500/20 font-bold"
+                            className="bg-indigo-600 hover:bg-indigo-500 rounded-xl px-8 shadow-lg shadow-indigo-500/20 font-bold"
                         >
                             Confirm Finalization & Sign Off
                         </Button>

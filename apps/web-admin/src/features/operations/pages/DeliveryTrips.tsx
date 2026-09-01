@@ -123,7 +123,7 @@ const DeliveryTripsPage: React.FC = () => {
 
     const getStatusColor = (status: string) => {
         switch (status) {
-            case 'COMPLETED': return 'bg-emerald-500/100/10 text-emerald-400 border border-emerald-500/20';
+            case 'COMPLETED': return 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
             case 'IN_TRANSIT': return 'bg-blue-500/10 text-blue-400 border border-blue-500/20';
             case 'CANCELLED': return 'bg-rose-500/10 text-rose-400 border border-rose-500/20';
             default: return 'bg-secondary text-secondary-foreground';

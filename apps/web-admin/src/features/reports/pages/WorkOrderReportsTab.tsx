@@ -131,7 +131,7 @@ const WorkOrderReportsTab: React.FC = () => {
             {/* Summary Cards */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 flex items-center gap-4 shadow-lg hover:border-slate-700 transition-colors">
-                    <div className="p-3 bg-emerald-500/100/10 rounded-lg text-emerald-400"><CheckCircle2 size={24} /></div>
+                    <div className="p-3 bg-emerald-500/10 rounded-lg text-emerald-400"><CheckCircle2 size={24} /></div>
                     <div>
                         <p className="text-muted-foreground text-xs uppercase font-bold tracking-wider">Completed</p>
                         <h4 className="text-2xl font-bold text-white">{completedCount}</h4>
@@ -145,7 +145,7 @@ const WorkOrderReportsTab: React.FC = () => {
                     </div>
                 </div>
                 <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 flex items-center gap-4 shadow-lg hover:border-slate-700 transition-colors">
-                    <div className="p-3 bg-amber-500/100/10 rounded-lg text-amber-400"><AlertTriangle size={24} /></div>
+                    <div className="p-3 bg-amber-500/10 rounded-lg text-amber-400"><AlertTriangle size={24} /></div>
                     <div>
                         <p className="text-muted-foreground text-xs uppercase font-bold tracking-wider">Pending</p>
                         <h4 className="text-2xl font-bold text-white">{pendingCount}</h4>

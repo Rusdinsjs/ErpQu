@@ -135,20 +135,20 @@ const StockOpname: React.FC = () => {
                 </Card>
 
                 <Card className="relative overflow-hidden group p-6">
-                    <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/100/10 rounded-full -mr-4 -mt-4 transition-transform group-hover:scale-110" />
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/10 rounded-full -mr-4 -mt-4 transition-transform group-hover:scale-110" />
                     <div className="flex justify-between items-start relative z-10">
                         <div>
                             <p className="text-muted-foreground text-sm font-medium">Items Counted</p>
                             <h3 className="text-3xl font-bold text-foreground mt-1">{itemsCounted}</h3>
                         </div>
-                        <div className="p-3 bg-emerald-500/100/20 rounded-xl">
+                        <div className="p-3 bg-emerald-500/20 rounded-xl">
                             <ClipboardCheck className="text-emerald-400" size={24} />
                         </div>
                     </div>
                 </Card>
 
                 <Card className="relative overflow-hidden group p-6">
-                    <div className={`absolute top-0 right-0 w-24 h-24 rounded-full -mr-4 -mt-4 transition-transform group-hover:scale-110 ${itemsWithDiscrepancy > 0 ? 'bg-amber-500/100/10' : 'bg-muted/10'}`} />
+                    <div className={`absolute top-0 right-0 w-24 h-24 rounded-full -mr-4 -mt-4 transition-transform group-hover:scale-110 ${itemsWithDiscrepancy > 0 ? 'bg-amber-500/10' : 'bg-muted/10'}`} />
                     <div className="flex justify-between items-start relative z-10">
                         <div>
                             <p className="text-muted-foreground text-sm font-medium">Discrepancies</p>
@@ -156,7 +156,7 @@ const StockOpname: React.FC = () => {
                                 {itemsWithDiscrepancy}
                             </h3>
                         </div>
-                        <div className={`p-3 rounded-xl ${itemsWithDiscrepancy > 0 ? 'bg-amber-500/100/20' : 'bg-muted/20'}`}>
+                        <div className={`p-3 rounded-xl ${itemsWithDiscrepancy > 0 ? 'bg-amber-500/20' : 'bg-muted/20'}`}>
                             <AlertCircle className={itemsWithDiscrepancy > 0 ? 'text-amber-400' : 'text-muted-foreground'} size={24} />
                         </div>
                     </div>
@@ -212,7 +212,7 @@ const StockOpname: React.FC = () => {
                                     const hasChange = physical !== undefined && physical !== current;
 
                                     return (
-                                        <TableRow key={item.id} className={`border-border transition-colors ${hasChange ? 'bg-amber-500/100/5 hover:bg-amber-500/100/10' : 'hover:bg-muted/40'}`}>
+                                        <TableRow key={item.id} className={`border-border transition-colors ${hasChange ? 'bg-amber-500/5 hover:bg-amber-500/10' : 'hover:bg-muted/40'}`}>
                                             <TableTd>
                                                 <div className="flex flex-col">
                                                     <span className="font-medium text-foreground">{item.name}</span>
@@ -237,7 +237,7 @@ const StockOpname: React.FC = () => {
                                             <TableTd align="right">
                                                 {hasChange ? (
                                                     <span className={`font-bold font-mono px-2 py-1 rounded-lg text-sm ${diff > 0
-                                                        ? 'text-emerald-400 dark:text-emerald-400 bg-emerald-500/100/10 border border-emerald-500/20'
+                                                        ? 'text-emerald-400 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20'
                                                         : 'text-rose-600 dark:text-rose-400 bg-rose-500/10 border border-rose-500/20'
                                                         }`}>
                                                         {diff > 0 ? '+' : ''}{diff}

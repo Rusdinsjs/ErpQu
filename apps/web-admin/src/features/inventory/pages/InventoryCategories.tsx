@@ -224,8 +224,8 @@ export default function InventoryCategories() {
             </div>
 
             {/* Alert / Warning about Mapping */}
-            <div className="bg-amber-500/100/10 border border-amber-500/20 p-4 rounded-2xl flex gap-4">
-                <div className="w-10 h-10 rounded-xl bg-amber-500/100/20 flex items-center justify-center text-amber-500 shrink-0">
+            <div className="bg-amber-500/10 border border-amber-500/20 p-4 rounded-2xl flex gap-4">
+                <div className="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center text-amber-500 shrink-0">
                     <AlertCircle size={20} />
                 </div>
                 <div>
@@ -603,7 +603,7 @@ export default function InventoryCategories() {
                                                             <Link2 size={12} />
                                                         </span>
                                                     ) : (
-                                                        <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-amber-500/100/20 text-amber-400 animate-pulse">
+                                                        <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-amber-500/20 text-amber-400 animate-pulse">
                                                             <AlertCircle size={12} />
                                                         </span>
                                                     )}

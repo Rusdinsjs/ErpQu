@@ -160,7 +160,7 @@ export default function MaintenanceTeams() {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-900/60 p-6 rounded-2xl border border-slate-800 backdrop-blur-xl shadow-xl">
                 <div>
                     <div className="flex items-center gap-3">
-                        <div className="p-3 bg-emerald-500/100/10 text-emerald-400 rounded-xl border border-emerald-500/20">
+                        <div className="p-3 bg-emerald-500/10 text-emerald-400 rounded-xl border border-emerald-500/20">
                             <Users size={24} />
                         </div>
                         <div>
@@ -193,7 +193,7 @@ export default function MaintenanceTeams() {
                 </div>
 
                 <div className="bg-slate-900/60 p-5 rounded-2xl border border-slate-800 flex items-center gap-4">
-                    <div className="p-3 bg-emerald-500/100/10 text-emerald-400 rounded-xl">
+                    <div className="p-3 bg-emerald-500/10 text-emerald-400 rounded-xl">
                         <UserCheck size={22} />
                     </div>
                     <div>
@@ -203,7 +203,7 @@ export default function MaintenanceTeams() {
                 </div>
 
                 <div className="bg-slate-900/60 p-5 rounded-2xl border border-slate-800 flex items-center gap-4">
-                    <div className="p-3 bg-purple-500/100/10 text-purple-400 rounded-xl">
+                    <div className="p-3 bg-purple-500/10 text-purple-400 rounded-xl">
                         <Users size={22} />
                     </div>
                     <div>
@@ -213,7 +213,7 @@ export default function MaintenanceTeams() {
                 </div>
 
                 <div className="bg-slate-900/60 p-5 rounded-2xl border border-slate-800 flex items-center gap-4">
-                    <div className="p-3 bg-amber-500/100/10 text-amber-400 rounded-xl">
+                    <div className="p-3 bg-amber-500/10 text-amber-400 rounded-xl">
                         <Shield size={22} />
                     </div>
                     <div>
@@ -288,14 +288,14 @@ export default function MaintenanceTeams() {
                                         </div>
                                         <div>
                                             <div className="flex items-center gap-3 flex-wrap">
-                                                <span className="px-2.5 py-1 bg-emerald-500/100/10 text-emerald-400 text-xs font-mono font-semibold rounded-md border border-emerald-500/20">
+                                                <span className="px-2.5 py-1 bg-emerald-500/10 text-emerald-400 text-xs font-mono font-semibold rounded-md border border-emerald-500/20">
                                                     {team.team_code}
                                                 </span>
                                                 <h3 className="text-lg font-bold text-white tracking-tight">{team.team_name}</h3>
                                                 <span
                                                     className={`px-2.5 py-0.5 text-xs font-semibold rounded-full border ${
                                                         team.status === 'ACTIVE'
-                                                            ? 'bg-emerald-500/100/10 text-emerald-400 border-emerald-500/30'
+                                                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
                                                             : 'bg-slate-800 text-muted-foreground border-slate-700'
                                                     }`}
                                                 >
@@ -369,7 +369,7 @@ export default function MaintenanceTeams() {
                                                         className="p-3 bg-slate-900/90 rounded-xl border border-slate-800 flex items-center justify-between gap-2"
                                                     >
                                                         <div className="flex items-center gap-2.5 overflow-hidden">
-                                                            <div className="w-8 h-8 rounded-lg bg-emerald-500/100/10 text-emerald-400 flex items-center justify-center font-bold text-xs shrink-0">
+                                                            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center font-bold text-xs shrink-0">
                                                                 {m.member_name.charAt(0).toUpperCase()}
                                                             </div>
                                                             <div className="truncate">

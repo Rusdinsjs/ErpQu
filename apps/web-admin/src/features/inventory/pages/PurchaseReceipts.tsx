@@ -352,7 +352,7 @@ export default function PurchaseReceipts() {
                                                 <button
                                                     type="button"
                                                     onClick={() => handleRemoveLine(index)}
-                                                    className="p-2 text-rose-500 hover:bg-rose-500/100/10 rounded"
+                                                    className="p-2 text-rose-500 hover:bg-rose-500/10 rounded"
                                                 >
                                                     <X size={16} />
                                                 </button>

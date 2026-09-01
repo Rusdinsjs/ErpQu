@@ -447,7 +447,7 @@ export default function Assets() {
                 </Card>
 
                 <Card className="relative overflow-hidden group p-6">
-                    <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/100/10 rounded-full -mr-4 -mt-4 transition-transform group-hover:scale-110" />
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/10 rounded-full -mr-4 -mt-4 transition-transform group-hover:scale-110" />
                     <div className="flex justify-between items-start relative z-10">
                         <div>
                             <p className="text-muted-foreground text-sm font-medium">Maintenance</p>
@@ -457,7 +457,7 @@ export default function Assets() {
                                 ).reduce((acc: number, curr: any) => acc + curr.count, 0) || 0}
                             </h3>
                         </div>
-                        <div className="p-3 bg-amber-500/100/20 rounded-xl">
+                        <div className="p-3 bg-amber-500/20 rounded-xl">
                             <Wrench className="text-amber-400" size={24} />
                         </div>
                     </div>
@@ -485,9 +485,9 @@ export default function Assets() {
                     <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Active Filters:</span>
                     <div className="flex flex-wrap gap-2">
                         {categoryFilter && <span className="px-2 py-0.5 bg-blue-500/10 text-blue-400 text-xs rounded-full border border-blue-500/20">Category: {categoryFilter.split(',').length}</span>}
-                        {locationFilter && <span className="px-2 py-0.5 bg-purple-500/100/10 text-purple-400 text-xs rounded-full border border-purple-500/20">Location: {locationFilter.split(',').length}</span>}
+                        {locationFilter && <span className="px-2 py-0.5 bg-purple-500/10 text-purple-400 text-xs rounded-full border border-purple-500/20">Location: {locationFilter.split(',').length}</span>}
                         {departmentFilter && <span className="px-2 py-0.5 bg-green-500/10 text-green-400 text-xs rounded-full border border-green-500/20">Dept: {departmentFilter.split(',').length}</span>}
-                        {statusFilter && <span className="px-2 py-0.5 bg-amber-500/100/10 text-amber-400 text-xs rounded-full border border-amber-500/20">Status: {statusFilter.split(',').length}</span>}
+                        {statusFilter && <span className="px-2 py-0.5 bg-amber-500/10 text-amber-400 text-xs rounded-full border border-amber-500/20">Status: {statusFilter.split(',').length}</span>}
                         {exactMatch && <span className="px-2 py-0.5 bg-cyan-500/10 text-cyan-400 text-xs rounded-full border border-cyan-500/20">Exact Match</span>}
                         <button
                             onClick={() => {
@@ -640,7 +640,7 @@ export default function Assets() {
                                                         <ActionIcon
                                                             onClick={() => setQrModalAsset(asset)}
                                                             title="QR Code Label"
-                                                            className="hover:bg-purple-500/100/20 text-purple-400"
+                                                            className="hover:bg-purple-500/20 text-purple-400"
                                                         >
                                                             <QrCode size={16} />
                                                         </ActionIcon>
@@ -657,14 +657,14 @@ export default function Assets() {
                                                         <ActionIcon
                                                             onClick={() => navigate(`/assets/${asset.id}/lifecycle`)}
                                                             title="Manage Lifecycle"
-                                                            className="hover:bg-emerald-500/100/20 text-emerald-400"
+                                                            className="hover:bg-emerald-500/20 text-emerald-400"
                                                         >
                                                             <RefreshCw size={16} />
                                                         </ActionIcon>
                                                         <ActionIcon
                                                             onClick={() => handleEdit(asset)}
                                                             title="Edit Asset"
-                                                            className="hover:bg-amber-500/100/20 text-amber-400"
+                                                            className="hover:bg-amber-500/20 text-amber-400"
                                                         >
                                                             <Edit size={16} />
                                                         </ActionIcon>
@@ -749,7 +749,7 @@ export default function Assets() {
                                                         <div className="flex items-center gap-2 min-w-0 flex-1">
                                                             <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold border flex-shrink-0 ${
                                                                 asset.assigned_to_name 
-                                                                    ? 'bg-emerald-500/100/20 text-emerald-400 border-emerald-500/30' 
+                                                                    ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30' 
                                                                     : 'bg-slate-800 text-muted-foreground border-slate-700'
                                                             }`}>
                                                                 {asset.assigned_to_name ? asset.assigned_to_name.charAt(0).toUpperCase() : '?'}
@@ -760,9 +760,9 @@ export default function Assets() {
                                                         </div>
                                                         <div className="flex items-center gap-1 flex-shrink-0">
                                                             <ActionIcon onClick={() => { setPreviewAsset(asset); setIsPreviewOpen(true); }} title="Quick Preview" className="hover:bg-cyan-500/20 text-cyan-400 w-7 h-7 rounded-lg"><Eye size={14} /></ActionIcon>
-                                                            <ActionIcon onClick={() => setQrModalAsset(asset)} title="QR Code Label" className="hover:bg-purple-500/100/20 text-purple-400 w-7 h-7 rounded-lg"><QrCode size={14} /></ActionIcon>
-                                                            <ActionIcon onClick={() => navigate(`/assets/${asset.id}/lifecycle`)} title="Manage Lifecycle" className="hover:bg-emerald-500/100/20 text-emerald-400 w-7 h-7 rounded-lg"><RefreshCw size={14} /></ActionIcon>
-                                                            <ActionIcon onClick={() => handleEdit(asset)} title="Edit Asset" className="hover:bg-amber-500/100/20 text-amber-400 w-7 h-7 rounded-lg"><Edit size={14} /></ActionIcon>
+                                                            <ActionIcon onClick={() => setQrModalAsset(asset)} title="QR Code Label" className="hover:bg-purple-500/20 text-purple-400 w-7 h-7 rounded-lg"><QrCode size={14} /></ActionIcon>
+                                                            <ActionIcon onClick={() => navigate(`/assets/${asset.id}/lifecycle`)} title="Manage Lifecycle" className="hover:bg-emerald-500/20 text-emerald-400 w-7 h-7 rounded-lg"><RefreshCw size={14} /></ActionIcon>
+                                                            <ActionIcon onClick={() => handleEdit(asset)} title="Edit Asset" className="hover:bg-amber-500/20 text-amber-400 w-7 h-7 rounded-lg"><Edit size={14} /></ActionIcon>
                                                         </div>
                                                     </div>
                                                 </div>

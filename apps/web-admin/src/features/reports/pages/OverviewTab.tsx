@@ -87,7 +87,7 @@ const PremiumStatCard = ({ title, value, subtext, trend, icon: Icon, gradient }:
             <div className="flex items-center gap-2">
                 <span className={`
                     flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full 
-                    ${trend === 'up' ? 'bg-emerald-500/100/20 text-emerald-200' : 'bg-rose-500/20 text-rose-200'}
+                    ${trend === 'up' ? 'bg-emerald-500/20 text-emerald-200' : 'bg-rose-500/20 text-rose-200'}
                 `}>
                     {trend === 'up' ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
                     {subtext}
@@ -110,7 +110,7 @@ const ActivityItem = ({ item }: { item: APIRecentActivity }) => {
 
     const getColor = (action: string) => {
         const actionLower = action.toLowerCase();
-        if (actionLower.includes('create') || actionLower.includes('insert')) return 'text-emerald-500 bg-emerald-500/100/10 border-emerald-500/20';
+        if (actionLower.includes('create') || actionLower.includes('insert')) return 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20';
         if (actionLower.includes('delete')) return 'text-rose-500 bg-rose-500/10 border-rose-500/20';
         if (actionLower.includes('update')) return 'text-blue-500 bg-blue-500/10 border-blue-500/20';
         return 'text-foreground bg-muted border-border';
@@ -373,7 +373,7 @@ const OverviewTab: React.FC = () => {
                                     <span className="text-emerald-400 font-bold">Optimal</span>
                                 </div>
                                 <div className="h-1.5 bg-gray-700 rounded-full overflow-hidden">
-                                    <div className="h-full w-[98%] bg-emerald-500/100 rounded-full animate-pulse" />
+                                    <div className="h-full w-[98%] bg-emerald-500 rounded-full animate-pulse" />
                                 </div>
                             </div>
                             <div>
@@ -382,7 +382,7 @@ const OverviewTab: React.FC = () => {
                                     <span className="text-amber-400 font-bold">78%</span>
                                 </div>
                                 <div className="h-1.5 bg-gray-700 rounded-full overflow-hidden">
-                                    <div className="h-full w-[78%] bg-amber-500/100 rounded-full" />
+                                    <div className="h-full w-[78%] bg-amber-500 rounded-full" />
                                 </div>
                             </div>
                         </div>

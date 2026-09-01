@@ -147,7 +147,7 @@ const LoanRentalReportsTab: React.FC = () => {
                     </div>
                 </div>
                 <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 flex items-center gap-4 shadow-lg hover:border-slate-700 transition-colors">
-                    <div className="p-3 bg-purple-500/100/10 rounded-lg text-purple-400"><Package size={24} /></div>
+                    <div className="p-3 bg-purple-500/10 rounded-lg text-purple-400"><Package size={24} /></div>
                     <div>
                         <p className="text-muted-foreground text-xs uppercase font-bold tracking-wider">Total Transactions</p>
                         <h4 className="text-2xl font-bold text-white">{totalLoans}</h4>

@@ -6,10 +6,10 @@ export default function SalesOverview() {
     // For now, we mock or use basic stats
 
     const stats = [
-        { label: 'Total Penjualan Bulan Ini', value: 'Rp 150.000.000', change: '+12%', icon: TrendingUp, color: 'text-emerald-400', bg: 'bg-emerald-500/100/10' },
+        { label: 'Total Penjualan Bulan Ini', value: 'Rp 150.000.000', change: '+12%', icon: TrendingUp, color: 'text-emerald-400', bg: 'bg-emerald-500/10' },
         { label: 'Invoice Belum Dibayar', value: 'Rp 45.000.000', change: '5 Invoice', icon: AlertCircle, color: 'text-rose-400', bg: 'bg-rose-500/10' },
         { label: 'Pesanan Baru', value: '12', change: 'Hari ini', icon: ShoppingCart, color: 'text-blue-400', bg: 'bg-blue-500/10' },
-        { label: 'Dalam Pengiriman', value: '8', change: 'Sedang jalan', icon: Truck, color: 'text-amber-400', bg: 'bg-amber-500/100/10' },
+        { label: 'Dalam Pengiriman', value: '8', change: 'Sedang jalan', icon: Truck, color: 'text-amber-400', bg: 'bg-amber-500/10' },
     ];
 
     return (

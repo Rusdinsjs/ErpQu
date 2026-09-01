@@ -310,7 +310,7 @@ function StatCard({ title, value, icon: Icon, iconColor }: { title: string; valu
         'text-violet-400': 'bg-violet-500/10 shadow-violet-500/20',
         'text-blue-400': 'bg-blue-500/10 shadow-blue-500/20',
         'text-orange-400': 'bg-orange-500/10 shadow-orange-500/20',
-        'text-purple-400': 'bg-purple-500/100/10 shadow-purple-500/20',
+        'text-purple-400': 'bg-purple-500/10 shadow-purple-500/20',
         'text-teal-400': 'bg-teal-500/10 shadow-teal-500/20',
         'text-green-400': 'bg-green-500/10 shadow-green-500/20',
         'text-pink-400': 'bg-pink-500/10 shadow-pink-500/20',
@@ -648,7 +648,7 @@ export default function ApprovalCenter() {
 
     return (
         <div className="space-y-8 p-8 relative">
-            <div className="absolute top-0 left-1/4 w-96 h-96 bg-indigo-500/100/10 rounded-full blur-[120px] pointer-events-none" />
+            <div className="absolute top-0 left-1/4 w-96 h-96 bg-indigo-500/10 rounded-full blur-[120px] pointer-events-none" />
 
             <PageHeader
                 title="Approval Center"
