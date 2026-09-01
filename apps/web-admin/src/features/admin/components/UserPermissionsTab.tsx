@@ -1,14 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { UserCheck, Plus, Trash2, Shield, Search, Info, Building2, MapPin, Layers, FolderTree } from 'lucide-react';
 import { rbacApi } from '../api/rbac';
+import { usersApi, type UserSummary } from '../api/users';
 import { Button, Card, Select, Badge, useToast, Modal, LoadingOverlay } from '../../../components/ui';
-
-interface UserItem {
-    id: string;
-    email: string;
-    name: string;
-    role?: string;
-}
 
 interface UserPermRule {
     id: string;
@@ -28,7 +22,7 @@ const DOCTYPE_PRESETS = [
 ];
 
 export function UserPermissionsTab() {
-    const [users, setUsers] = useState<UserItem[]>([]);
+    const [users, setUsers] = useState<UserSummary[]>([]);
     const [selectedUserId, setSelectedUserId] = useState<string>('');
     const [userPerms, setUserPerms] = useState<UserPermRule[]>([]);
     const [loading, setLoading] = useState(true);
@@ -59,15 +53,11 @@ export function UserPermissionsTab() {
     const loadUsers = async () => {
         setLoading(true);
         try {
-            // list users from /users
-            const response = await fetch('/api/v1/users', { credentials: 'same-origin' });
-            if (response.ok) {
-                const data = await response.json();
-                const userList = Array.isArray(data) ? data : (data.data || []);
-                setUsers(userList);
-                if (userList.length > 0) {
-                    setSelectedUserId(userList[0].id);
-                }
+            const data = await usersApi.list(1, 100);
+            const userList: UserSummary[] = Array.isArray(data) ? data : (data?.data || []);
+            setUsers(userList);
+            if (userList.length > 0) {
+                setSelectedUserId(prev => prev && userList.some(u => u.id === prev) ? prev : userList[0].id);
             }
         } catch (err: any) {
             showError('Gagal memuat daftar pengguna', 'Error');
@@ -106,7 +96,7 @@ export function UserPermissionsTab() {
             setNewIsDefault(false);
             loadUserPerms(selectedUserId);
         } catch (err: any) {
-            showError(err.message || 'Gagal menambahkan aturan pembatasan');
+            showError(err?.response?.data?.message || err?.message || 'Gagal menambahkan aturan pembatasan');
         } finally {
             setSaving(false);
         }
@@ -118,14 +108,17 @@ export function UserPermissionsTab() {
             success('Aturan pembatasan berhasil dihapus');
             loadUserPerms(selectedUserId);
         } catch (err: any) {
-            showError(err.message || 'Gagal menghapus aturan');
+            showError(err?.response?.data?.message || err?.message || 'Gagal menghapus aturan');
         }
     };
 
     const filteredUsers = users.filter(u =>
-        u.name?.toLowerCase().includes(searchUser.toLowerCase()) ||
-        u.email?.toLowerCase().includes(searchUser.toLowerCase()) ||
-        u.role?.toLowerCase().includes(searchUser.toLowerCase())
+        (u.name || '').toLowerCase().includes(searchUser.toLowerCase()) ||
+        (u.email || '').toLowerCase().includes(searchUser.toLowerCase()) ||
+        (u.role_code || '').toLowerCase().includes(searchUser.toLowerCase()) ||
+        ((u as any).role || '').toLowerCase().includes(searchUser.toLowerCase()) ||
+        (u.department || '').toLowerCase().includes(searchUser.toLowerCase()) ||
+        (u.employee_name || '').toLowerCase().includes(searchUser.toLowerCase())
     );
 
     const selectedUser = users.find(u => u.id === selectedUserId);
@@ -181,15 +174,18 @@ export function UserPermissionsTab() {
                                         : 'bg-background/40 hover:bg-muted border-transparent hover:border-border'
                                         }`}
                                 >
-                                    <div className="flex items-center justify-between">
+                                    <div className="flex items-center justify-between gap-2">
                                         <span className="font-semibold text-xs text-foreground truncate">{u.name}</span>
-                                        {u.role && (
-                                            <span className="text-[10px] uppercase font-bold px-1.5 py-0.5 bg-muted rounded text-muted-foreground">
-                                                {u.role}
+                                        {(u.role_code || (u as any).role) && (
+                                            <span className="text-[10px] uppercase font-bold px-1.5 py-0.5 bg-muted rounded text-muted-foreground shrink-0">
+                                                {u.role_code || (u as any).role}
                                             </span>
                                         )}
                                     </div>
                                     <span className="text-[11px] text-muted-foreground truncate">{u.email}</span>
+                                    {u.department && (
+                                        <span className="text-[10px] text-blue-500/80 font-medium truncate">Dept: {u.department}</span>
+                                    )}
                                 </button>
                             ))
                         )}
@@ -204,7 +200,10 @@ export function UserPermissionsTab() {
                                 Aturan Akses: {selectedUser?.name || 'Pilih Pengguna'}
                             </h3>
                             <p className="text-xs text-muted-foreground mt-0.5">
-                                {selectedUser?.email} · Role: <span className="font-semibold uppercase">{selectedUser?.role || '-'}</span>
+                                {selectedUser?.email} · Role: <span className="font-semibold uppercase">{selectedUser?.role_code || (selectedUser as any)?.role || '-'}</span>
+                                {selectedUser?.department && (
+                                    <span className="ml-2">· Dept: <span className="font-semibold">{selectedUser.department}</span></span>
+                                )}
                             </p>
                         </div>
 
