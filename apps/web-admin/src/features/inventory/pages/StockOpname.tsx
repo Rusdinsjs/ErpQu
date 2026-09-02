@@ -1,20 +1,49 @@
-
 import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { inventoryApi, type InventoryItem, type BatchInventoryAdjustmentRequest } from'../api/inventory';
-import { Save, RefreshCw, Search, ClipboardCheck, AlertCircle, Package } from 'lucide-react';
-import { showToast } from'../../../components/ui/Toast';
+import { inventoryApi, type InventoryItem, type BatchInventoryAdjustmentRequest } from '../api/inventory';
+import {
+    Save, RefreshCw, Search, ClipboardCheck, AlertCircle, Package,
+    FileSpreadsheet, ArrowUpDown, CheckCircle2, ShieldAlert, BarChart3,
+    Filter, X, TrendingDown, TrendingUp
+} from 'lucide-react';
 import {
     Card,
     Button,
-    Table, TableHead, TableBody, TableRow, TableTh, TableTd, TableEmpty, TableSkeleton
-} from'../../../components/ui';
+    Table, TableHead, TableBody, TableRow, TableTh, TableTd, TableEmpty,
+    TableSkeleton,
+    Badge,
+    UniversalTableToolbar,
+    type TableColumnOption,
+    type FilterChip,
+    useToast
+} from '../../../components/ui';
 
 const StockOpname: React.FC = () => {
     const queryClient = useQueryClient();
+    const { success, error: showError, info } = useToast();
+
     const [searchTerm, setSearchTerm] = useState('');
+    const [filterMode, setFilterMode] = useState<'all' | 'discrepancy' | 'counted'>('all');
     const [physicalCounts, setPhysicalCounts] = useState<{ [itemId: string]: number }>({});
     const [globalNote, setGlobalNote] = useState('');
+
+    // Column visibility state
+    const [columns, setColumns] = useState<TableColumnOption[]>([
+        { key: 'item', label: 'Nama Barang & SKU', visible: true },
+        { key: 'system_qty', label: 'Stok Sistem', visible: true },
+        { key: 'physical_qty', label: 'Hasil Hitung Fisik', visible: true },
+        { key: 'diff_qty', label: 'Selisih Qty (+/-)', visible: true },
+        { key: 'diff_val', label: 'Nilai Selisih (Rp)', visible: true },
+    ]);
+
+    const toggleColumn = (key: string) => {
+        setColumns(prev => prev.map(c => c.key === key ? { ...c, visible: !c.visible } : c));
+    };
+
+    const isColVisible = (key: string) => {
+        const col = columns.find(c => c.key === key);
+        return col ? col.visible !== false : true;
+    };
 
     // Fetch Inventory Items
     const { data: rawItems = [], isLoading } = useQuery({
@@ -27,12 +56,12 @@ const StockOpname: React.FC = () => {
     const adjustMut = useMutation({
         mutationFn: inventoryApi.batchAdjust,
         onSuccess: () => {
-            showToast('Stock adjustment submitted successfully', 'success');
+            success('Rekonsiliasi Stock Opname berhasil disimpan ke sistem');
             queryClient.invalidateQueries({ queryKey: ['inventory-items'] });
             setPhysicalCounts({});
             setGlobalNote('');
         },
-        onError: () => showToast('Failed to submit stock adjustment', 'error')
+        onError: () => showError('Gagal menyimpan penyesuaian stok opname')
     });
 
     const handleCountChange = (itemId: string, val: string) => {
@@ -53,210 +82,393 @@ const StockOpname: React.FC = () => {
         }).map((item: any) => {
             const physical = physicalCounts[item.id];
             const current = parseFloat(item.current_quantity.toString());
+            const diff = physical - current;
+            const avgCost = Number(item.average_cost || item.purchase_price || 0);
             return {
                 ...item,
                 physical,
-                diff: physical - current
+                diff,
+                diffVal: diff * avgCost
             };
         });
     }, [items, physicalCounts]);
 
     const handleSubmit = () => {
         if (changes.length === 0) {
-            showToast('No changes to submit', 'info');
+            info('Tidak ada selisih stok yang perlu disesuaikan');
             return;
         }
 
         const payload: BatchInventoryAdjustmentRequest = {
-            items: changes.map((c: InventoryItem & { diff: number }) => ({
+            items: changes.map((c: any) => ({
                 item_id: c.id,
                 quantity: c.diff,
-                unit_price: c.average_cost,
+                unit_price: c.average_cost || 0,
             })),
-            notes: globalNote || 'Stock Opname'
+            notes: globalNote || 'Rekonsiliasi Fisik Stock Opname'
         };
 
-        if (confirm(`Submit ${changes.length} adjustments?`)) {
+        if (confirm(`Konfirmasi penyesuaian stok untuk ${changes.length} item barang yang memiliki selisih?`)) {
             adjustMut.mutate(payload);
         }
     };
 
-    const filteredItems = (items as InventoryItem[]).filter((item: InventoryItem) =>
-        item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.sku.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filteredItems = useMemo(() => {
+        return (items as InventoryItem[]).filter((item: InventoryItem) => {
+            const matchesSearch =
+                item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                item.sku.toLowerCase().includes(searchTerm.toLowerCase());
 
-    // Stats
+            const current = parseFloat(item.current_quantity.toString());
+            const physical = physicalCounts[item.id];
+            const hasCount = physical !== undefined;
+            const hasDiscrepancy = hasCount && physical !== current;
+
+            if (!matchesSearch) return false;
+            if (filterMode === 'discrepancy') return hasDiscrepancy;
+            if (filterMode === 'counted') return hasCount;
+
+            return true;
+        });
+    }, [items, searchTerm, filterMode, physicalCounts]);
+
+    // Stats calculations
     const totalItems = items.length;
     const itemsCounted = Object.keys(physicalCounts).length;
     const itemsWithDiscrepancy = changes.length;
+    const totalDiscrepancyValue = changes.reduce((acc, c) => acc + (c.diffVal || 0), 0);
+
+    // Export dataset mapping
+    const exportDataset = useMemo(() => {
+        return items.map((item: any) => {
+            const current = parseFloat(item.current_quantity.toString());
+            const physical = physicalCounts[item.id];
+            const diff = physical !== undefined ? physical - current : 0;
+            const avgCost = Number(item.average_cost || item.purchase_price || 0);
+
+            return {
+                'SKU': item.sku,
+                'Nama Barang': item.name,
+                'Stok Sistem': current,
+                'Stok Fisik Dihitung': physical !== undefined ? physical : '-',
+                'Selisih Qty': physical !== undefined ? diff : 0,
+                'Nilai Selisih (Rp)': physical !== undefined ? diff * avgCost : 0,
+                'Status': physical === undefined ? 'Belum Dihitung' : diff === 0 ? 'Cocok (Match)' : diff > 0 ? 'Surplus (+)' : 'Defisit (-)'
+            };
+        });
+    }, [items, physicalCounts]);
+
+    const activeFilterChips = useMemo<FilterChip[]>(() => {
+        if (filterMode === 'all') return [];
+        return [{
+            id: 'filterMode',
+            label: 'Filter Tampilan',
+            value: filterMode === 'discrepancy' ? 'Hanya Selisih' : 'Sudah Dihitung'
+        }];
+    }, [filterMode]);
 
     return (
-        <div className="p-8">
+        <div className="p-4 md:p-6 space-y-6 bg-background min-h-screen animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* Header Section */}
-            <div className="flex justify-between items-end mb-8">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-bold text-foreground tracking-tight">Stock Opname</h1>
-                    <p className="text-muted-foreground mt-2">Reconcile physical inventory with system records</p>
+                    <h1 className="text-2xl font-bold text-foreground tracking-tight flex items-center gap-2.5">
+                        <div className="p-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                            <ClipboardCheck size={24} />
+                        </div>
+                        Stock Opname & Rekonsiliasi Fisik Gudang
+                    </h1>
+                    <p className="text-sm text-muted-foreground mt-1">
+                        Pencocokan stok fisik lapangan dengan data sistem secara transparan dan auto-generate penyesuaian selisih
+                    </p>
                 </div>
-                <div className="flex gap-3">
+
+                <div className="flex items-center gap-2">
                     <Button
-                        variant="outline"
-                        leftIcon={<RefreshCw size={18} />}
-                        onClick={() => queryClient.invalidateQueries({ queryKey: ['inventory-items'] })}
-                        className="rounded-xl"
-                    >
-                        Refresh Data
-                    </Button>
-                    <Button
-                        leftIcon={<Save size={18} />}
+                        variant="filled"
                         onClick={handleSubmit}
-                        disabled={changes.length === 0 || adjustMut.isPending}
-                        className="rounded-xl shadow-lg shadow-emerald-500/20 bg-emerald-600 hover:bg-emerald-700 text-white border-none cursor-pointer"
+                        loading={adjustMut.isPending}
+                        disabled={changes.length === 0}
+                        className={`rounded-xl px-5 py-2.5 text-sm font-semibold flex items-center gap-2 shadow-lg transition-all ${
+                            changes.length > 0
+                                ? 'bg-amber-600 hover:bg-amber-500 text-white shadow-amber-600/20'
+                                : 'bg-muted text-muted-foreground opacity-60 cursor-not-allowed'
+                        }`}
                     >
-                        {adjustMut.isPending ? 'Submitting...' : `Submit Adjustments (${changes.length})`}
+                        <Save size={16} />
+                        Posting Penyesuaian ({changes.length} Item)
                     </Button>
                 </div>
             </div>
 
-            {/* Stats Overview */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <Card className="relative overflow-hidden group p-6">
-                    <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/10 rounded-full -mr-4 -mt-4 transition-transform group-hover:scale-110" />
-                    <div className="flex justify-between items-start relative z-10">
-                        <div>
-                            <p className="text-muted-foreground text-sm font-medium">Total Items</p>
-                            <h3 className="text-3xl font-bold text-foreground mt-1">{totalItems}</h3>
-                        </div>
-                        <div className="p-3 bg-blue-500/20 rounded-xl">
-                            <Package className="text-blue-400" size={24} />
-                        </div>
+            {/* Top KPI Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="p-4 rounded-2xl bg-card border border-border/60 shadow-sm flex items-center justify-between">
+                    <div>
+                        <span className="text-xs font-medium text-muted-foreground">Total Master Barang</span>
+                        <div className="text-2xl font-bold text-foreground mt-1">{totalItems} SKU</div>
+                        <span className="text-[11px] text-muted-foreground">Persediaan terdaftar</span>
                     </div>
-                </Card>
-
-                <Card className="relative overflow-hidden group p-6">
-                    <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/10 rounded-full -mr-4 -mt-4 transition-transform group-hover:scale-110" />
-                    <div className="flex justify-between items-start relative z-10">
-                        <div>
-                            <p className="text-muted-foreground text-sm font-medium">Items Counted</p>
-                            <h3 className="text-3xl font-bold text-foreground mt-1">{itemsCounted}</h3>
-                        </div>
-                        <div className="p-3 bg-emerald-500/20 rounded-xl">
-                            <ClipboardCheck className="text-emerald-400" size={24} />
-                        </div>
-                    </div>
-                </Card>
-
-                <Card className="relative overflow-hidden group p-6">
-                    <div className={`absolute top-0 right-0 w-24 h-24 rounded-full -mr-4 -mt-4 transition-transform group-hover:scale-110 ${itemsWithDiscrepancy > 0 ? 'bg-amber-500/10' : 'bg-muted/10'}`} />
-                    <div className="flex justify-between items-start relative z-10">
-                        <div>
-                            <p className="text-muted-foreground text-sm font-medium">Discrepancies</p>
-                            <h3 className={`text-3xl font-bold mt-1 ${itemsWithDiscrepancy > 0 ? 'text-amber-400' : 'text-foreground'}`}>
-                                {itemsWithDiscrepancy}
-                            </h3>
-                        </div>
-                        <div className={`p-3 rounded-xl ${itemsWithDiscrepancy > 0 ? 'bg-amber-500/20' : 'bg-muted/20'}`}>
-                            <AlertCircle className={itemsWithDiscrepancy > 0 ? 'text-amber-400' : 'text-muted-foreground'} size={24} />
-                        </div>
-                    </div>
-                </Card>
-            </div>
-
-            {/* Main Content Area */}
-            <Card className="overflow-hidden p-0">
-                {/* Search & Filters Bar */}
-                <div className="p-4 border-b border-border flex gap-4 bg-muted/20">
-                    <div className="flex-1 max-w-xl">
-                        <div className="relative">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
-                            <input
-                                type="text"
-                                placeholder="Search by name or SKU..."
-                                className="w-full pl-10 pr-4 py-2.5 bg-background border border-border rounded-xl text-foreground placeholder-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all"
-                                value={searchTerm}
-                                onChange={e => setSearchTerm(e.target.value)}
-                            />
-                        </div>
-                    </div>
-                    <div className="flex-1">
-                        <input
-                            type="text"
-                            placeholder="Batch Adjustment Note (e.g. End of Month Count)"
-                            className="w-full px-4 py-2.5 bg-background border border-border rounded-xl text-foreground placeholder-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-primary/40 transition-all"
-                            value={globalNote}
-                            onChange={e => setGlobalNote(e.target.value)}
-                        />
+                    <div className="w-10 h-10 rounded-xl bg-cyan-500/10 text-cyan-400 flex items-center justify-center">
+                        <Package size={20} />
                     </div>
                 </div>
 
-                {/* Table */}
+                <div
+                    onClick={() => setFilterMode(filterMode === 'counted' ? 'all' : 'counted')}
+                    className={`p-4 rounded-2xl border shadow-sm flex items-center justify-between cursor-pointer transition-all ${
+                        filterMode === 'counted'
+                            ? 'bg-emerald-500/20 border-emerald-500 ring-2 ring-emerald-500/30'
+                            : 'bg-emerald-500/10 border-emerald-500/20 hover:border-emerald-500/40'
+                    }`}
+                >
+                    <div>
+                        <span className="text-xs font-medium text-emerald-400">Item Terhitung</span>
+                        <div className="text-2xl font-bold text-emerald-300 mt-1">{itemsCounted} / {totalItems}</div>
+                        <span className="text-[11px] text-emerald-500/80">Progres {Math.round((itemsCounted / (totalItems || 1)) * 100)}%</span>
+                    </div>
+                    <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+                        <CheckCircle2 size={20} />
+                    </div>
+                </div>
+
+                <div
+                    onClick={() => setFilterMode(filterMode === 'discrepancy' ? 'all' : 'discrepancy')}
+                    className={`p-4 rounded-2xl border shadow-sm flex items-center justify-between cursor-pointer transition-all ${
+                        filterMode === 'discrepancy'
+                            ? 'bg-amber-500/20 border-amber-500 ring-2 ring-amber-500/30'
+                            : 'bg-amber-500/10 border-amber-500/20 hover:border-amber-500/40'
+                    }`}
+                >
+                    <div>
+                        <span className="text-xs font-medium text-amber-400">Item Selisih (Discrepancy)</span>
+                        <div className="text-2xl font-bold text-amber-300 mt-1">{itemsWithDiscrepancy} SKU</div>
+                        <span className="text-[11px] text-amber-500/80">Perlu penyesuaian</span>
+                    </div>
+                    <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center">
+                        <AlertCircle size={20} />
+                    </div>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-card border border-border/60 shadow-sm flex items-center justify-between">
+                    <div>
+                        <span className="text-xs font-medium text-muted-foreground">Nilai Nominal Selisih</span>
+                        <div className={`text-2xl font-bold mt-1 font-mono ${totalDiscrepancyValue < 0 ? 'text-rose-400' : totalDiscrepancyValue > 0 ? 'text-emerald-400' : 'text-foreground'}`}>
+                            Rp {Math.abs(totalDiscrepancyValue).toLocaleString('id-ID')}
+                        </div>
+                        <span className="text-[11px] text-muted-foreground">
+                            {totalDiscrepancyValue < 0 ? 'Defisit kerugian' : totalDiscrepancyValue > 0 ? 'Surplus kelebihan' : 'Seimbang (Match)'}
+                        </span>
+                    </div>
+                    <div className="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center">
+                        <BarChart3 size={20} />
+                    </div>
+                </div>
+            </div>
+
+            {/* Note Input */}
+            <div className="p-3.5 bg-muted/30 border border-border/60 rounded-2xl flex items-center gap-3">
+                <span className="text-xs font-bold text-foreground whitespace-nowrap uppercase tracking-wider">
+                    Catatan Opname:
+                </span>
+                <input
+                    type="text"
+                    placeholder="cth. Stock Opname Akhir Bulan Gudang Utama Samarinda..."
+                    value={globalNote}
+                    onChange={(e) => setGlobalNote(e.target.value)}
+                    className="flex-1 bg-background/60 border border-border/40 rounded-xl px-3 py-1.5 text-xs text-foreground focus:outline-none focus:border-primary transition-colors"
+                />
+            </div>
+
+            {/* Universal Table Toolbar */}
+            <UniversalTableToolbar
+                searchQuery={searchTerm}
+                onSearchChange={setSearchTerm}
+                searchPlaceholder="Cari item barang atau SKU..."
+                columns={columns}
+                onToggleColumn={toggleColumn}
+                activeFilterChips={activeFilterChips}
+                onRemoveFilterChip={() => setFilterMode('all')}
+                onResetAllFilters={() => { setSearchTerm(''); setFilterMode('all'); }}
+                exportData={exportDataset}
+                exportFilename="laporan_stock_opname_selisih"
+                actions={
+                    <div className="flex items-center gap-1 bg-muted/40 p-1 rounded-xl border border-border/40 text-xs">
+                        {[
+                            { id: 'all', label: 'Semua' },
+                            { id: 'counted', label: 'Terhitung' },
+                            { id: 'discrepancy', label: 'Selisih Saja' },
+                        ].map(tab => (
+                            <button
+                                key={tab.id}
+                                type="button"
+                                onClick={() => setFilterMode(tab.id as any)}
+                                className={`px-2.5 py-1.5 font-semibold rounded-lg transition-all ${
+                                    filterMode === tab.id
+                                        ? 'bg-primary text-primary-foreground shadow-sm'
+                                        : 'text-muted-foreground hover:text-foreground'
+                                }`}
+                            >
+                                {tab.label}
+                            </button>
+                        ))}
+                    </div>
+                }
+            />
+
+            {/* Main Table */}
+            <div className="bg-card border border-border/60 rounded-2xl overflow-hidden shadow-sm">
                 <div className="overflow-x-auto">
                     {isLoading ? (
-                        <div className="p-4"><TableSkeleton rows={5} cols={4} /></div>
+                        <TableSkeleton rows={5} columns={5} />
                     ) : (
-                        <Table className="border-none">
-                            <TableHead>
-                                <TableRow className="bg-muted/20 border-border">
-                                    <TableTh>Item Details</TableTh>
-                                    <TableTh align="right">System Qty</TableTh>
-                                    <TableTh align="right" className="w-48">Physical Qty</TableTh>
-                                    <TableTh align="right">Difference</TableTh>
-                                </TableRow>
-                            </TableHead>
-                            <TableBody>
-                                {filteredItems.map((item: any) => {
-                                    const current = parseFloat(item.current_quantity.toString());
-                                    const physical = physicalCounts[item.id];
-                                    const diff = physical !== undefined ? physical - current : 0;
-                                    const hasChange = physical !== undefined && physical !== current;
+                        <table className="w-full text-left text-sm border-collapse">
+                            <thead>
+                                <tr className="border-b border-border/40 bg-muted/40">
+                                    {isColVisible('item') && (
+                                        <th className="px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                                            Rincian Barang
+                                        </th>
+                                    )}
+                                    {isColVisible('system_qty') && (
+                                        <th className="px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-muted-foreground text-right">
+                                            Stok Sistem
+                                        </th>
+                                    )}
+                                    {isColVisible('physical_qty') && (
+                                        <th className="px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-muted-foreground text-right w-52">
+                                            Input Hitung Fisik
+                                        </th>
+                                    )}
+                                    {isColVisible('diff_qty') && (
+                                        <th className="px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-muted-foreground text-right">
+                                            Selisih Qty
+                                        </th>
+                                    )}
+                                    {isColVisible('diff_val') && (
+                                        <th className="px-5 py-3.5 text-xs font-bold uppercase tracking-wider text-muted-foreground text-right">
+                                            Nilai Selisih (Rp)
+                                        </th>
+                                    )}
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-border/30">
+                                {filteredItems.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={5} className="px-5 py-12 text-center text-muted-foreground">
+                                            <Package size={40} className="mx-auto mb-3 opacity-20" />
+                                            <p className="text-sm font-semibold">Tidak ada data item barang yang cocok</p>
+                                        </td>
+                                    </tr>
+                                ) : (
+                                    filteredItems.map((item: any) => {
+                                        const current = parseFloat(item.current_quantity.toString());
+                                        const physical = physicalCounts[item.id];
+                                        const diff = physical !== undefined ? physical - current : 0;
+                                        const hasChange = physical !== undefined && physical !== current;
+                                        const isCounted = physical !== undefined;
+                                        const avgCost = Number(item.average_cost || item.purchase_price || 0);
+                                        const diffVal = diff * avgCost;
 
-                                    return (
-                                        <TableRow key={item.id} className={`border-border transition-colors ${hasChange ? 'bg-amber-500/5 hover:bg-amber-500/10' : 'hover:bg-muted/40'}`}>
-                                            <TableTd>
-                                                <div className="flex flex-col">
-                                                    <span className="font-medium text-foreground">{item.name}</span>
-                                                    <span className="text-xs text-muted-foreground font-mono mt-0.5">{item.sku}</span>
-                                                </div>
-                                            </TableTd>
-                                            <TableTd align="right">
-                                                <span className="text-foreground/80 font-medium">{current}</span>
-                                            </TableTd>
-                                            <TableTd align="right">
-                                                <input
-                                                    type="number"
-                                                    className={`w-32 px-3 py-1.5 text-right bg-background border rounded-lg focus:ring-2 outline-none transition-all ${hasChange
-                                                        ? 'border-amber-500/50 focus:ring-amber-500/50 text-amber-400 dark:text-amber-100'
-                                                        : 'border-border focus:ring-primary/40 text-foreground focus:border-primary/40'
-                                                        }`}
-                                                    placeholder={current.toString()}
-                                                    value={physicalCounts[item.id] !== undefined ? physicalCounts[item.id] : ''}
-                                                    onChange={e => handleCountChange(item.id, e.target.value)}
-                                                />
-                                            </TableTd>
-                                            <TableTd align="right">
-                                                {hasChange ? (
-                                                    <span className={`font-bold font-mono px-2 py-1 rounded-lg text-sm ${diff > 0
-                                                        ? 'text-emerald-400 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20'
-                                                        : 'text-rose-600 dark:text-rose-400 bg-rose-500/10 border border-rose-500/20'
-                                                        }`}>
-                                                        {diff > 0 ? '+' : ''}{diff}
-                                                    </span>
-                                                ) : (
-                                                    <span className="text-muted-foreground">-</span>
+                                        return (
+                                            <tr
+                                                key={item.id}
+                                                className={`transition-colors ${
+                                                    hasChange
+                                                        ? 'bg-amber-500/10 hover:bg-amber-500/15'
+                                                        : isCounted
+                                                        ? 'bg-emerald-500/5 hover:bg-emerald-500/10'
+                                                        : 'hover:bg-muted/30'
+                                                }`}
+                                            >
+                                                {isColVisible('item') && (
+                                                    <td className="px-5 py-3.5">
+                                                        <div>
+                                                            <span className="font-semibold text-foreground text-sm block">
+                                                                {item.name}
+                                                            </span>
+                                                            <span className="text-[11px] font-mono text-muted-foreground">
+                                                                SKU: {item.sku}
+                                                            </span>
+                                                        </div>
+                                                    </td>
                                                 )}
-                                            </TableTd>
-                                        </TableRow>
-                                    );
-                                })}
-                                {filteredItems.length === 0 && (
-                                    <TableEmpty colSpan={4} message="No items found matching your search." />
+
+                                                {isColVisible('system_qty') && (
+                                                    <td className="px-5 py-3.5 text-right font-mono font-medium text-foreground">
+                                                        {current.toLocaleString()} Unit
+                                                    </td>
+                                                )}
+
+                                                {isColVisible('physical_qty') && (
+                                                    <td className="px-5 py-3.5 text-right">
+                                                        <div className="flex items-center justify-end gap-2">
+                                                            <input
+                                                                type="number"
+                                                                placeholder={current.toString()}
+                                                                value={physicalCounts[item.id] !== undefined ? physicalCounts[item.id] : ''}
+                                                                onChange={(e) => handleCountChange(item.id, e.target.value)}
+                                                                className={`w-28 px-3 py-1.5 text-right font-mono text-sm bg-background border rounded-xl focus:outline-none transition-all ${
+                                                                    hasChange
+                                                                        ? 'border-amber-500 ring-2 ring-amber-500/20 font-bold text-amber-300'
+                                                                        : isCounted
+                                                                        ? 'border-emerald-500 text-emerald-300 font-bold'
+                                                                        : 'border-border/60 text-foreground focus:border-primary'
+                                                                }`}
+                                                            />
+                                                            {isCounted && (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => handleCountChange(item.id, '')}
+                                                                    className="text-muted-foreground hover:text-foreground"
+                                                                    title="Reset input item ini"
+                                                                >
+                                                                    <X size={14} />
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    </td>
+                                                )}
+
+                                                {isColVisible('diff_qty') && (
+                                                    <td className="px-5 py-3.5 text-right font-mono">
+                                                        {hasChange ? (
+                                                            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-bold ${
+                                                                diff > 0
+                                                                    ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
+                                                                    : 'bg-rose-500/15 text-rose-400 border border-rose-500/30'
+                                                            }`}>
+                                                                {diff > 0 ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
+                                                                {diff > 0 ? `+${diff}` : diff}
+                                                            </span>
+                                                        ) : isCounted ? (
+                                                            <span className="text-emerald-400 text-xs font-semibold">Cocok (0)</span>
+                                                        ) : (
+                                                            <span className="text-muted-foreground text-xs">-</span>
+                                                        )}
+                                                    </td>
+                                                )}
+
+                                                {isColVisible('diff_val') && (
+                                                    <td className="px-5 py-3.5 text-right font-mono text-xs">
+                                                        {hasChange ? (
+                                                            <span className={`font-semibold ${diffVal < 0 ? 'text-rose-400' : 'text-emerald-400'}`}>
+                                                                {diffVal < 0 ? '-' : '+'}Rp {Math.abs(diffVal).toLocaleString('id-ID')}
+                                                            </span>
+                                                        ) : (
+                                                            <span className="text-muted-foreground">-</span>
+                                                        )}
+                                                    </td>
+                                                )}
+                                            </tr>
+                                        );
+                                    })
                                 )}
-                            </TableBody>
-                        </Table>
+                            </tbody>
+                        </table>
                     )}
                 </div>
-            </Card>
+            </div>
         </div>
     );
 };

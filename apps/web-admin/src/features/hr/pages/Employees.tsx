@@ -110,6 +110,25 @@ export default function Employees() {
     const [roles, setRoles] = useState<any[]>([]);
 
     const { success, error: showError } = useToast();
+    const [columns, setColumns] = useState<TableColumnOption[]>([
+        { key: 'employee', label: 'Nama & NIK', visible: true },
+        { key: 'email', label: 'Email', visible: true },
+        { key: 'department', label: 'Departemen', visible: true },
+        { key: 'position', label: 'Jabatan', visible: true },
+        { key: 'employment_status', label: 'Status Kerja', visible: true },
+        { key: 'user_account', label: 'Akun Login', visible: true },
+        { key: 'status', label: 'Status Aktif', visible: true },
+    ]);
+
+    const toggleColumn = (key: string) => {
+        setColumns(prev => prev.map(c => c.key === key ? { ...c, visible: !c.visible } : c));
+    };
+
+    const isColVisible = (key: string) => {
+        const col = columns.find(c => c.key === key);
+        return col ? col.visible !== false : true;
+    };
+
 
     const fetchCompaniesList = async () => {
         try {
@@ -414,15 +433,25 @@ export default function Employees() {
                 }
             />
 
-            <Card padding="md">
-                <div className="max-w-md">
-                    <SearchInput
-                        placeholder="Cari nama, NIK, atau email..."
-                        value={search}
-                        onChange={setSearch}
-                    />
-                </div>
-            </Card>
+            <UniversalTableToolbar
+                searchQuery={search}
+                onSearchChange={setSearch}
+                searchPlaceholder="Cari berdasarkan nama pegawai, NIK, atau email..."
+                columns={columns}
+                onToggleColumn={toggleColumn}
+                exportData={employees.map(emp => ({
+                    'NIK': emp.nik,
+                    'Nama Pegawai': emp.name,
+                    'Email': emp.email,
+                    'No HP': emp.phone,
+                    'Departemen': emp.department_name || '-',
+                    'Jabatan': emp.position || '-',
+                    'Status Kerja': emp.employment_status,
+                    'Gaji Pokok (Rp)': emp.basic_salary || 0,
+                    'Status': emp.is_active ? 'Aktif' : 'Non-Aktif'
+                }))}
+                exportFilename="daftar_pegawai_perusahaan"
+            />
 
             <Card padding="lg">
                 <div className="relative">
@@ -430,71 +459,79 @@ export default function Employees() {
                     <Table>
                         <TableHead>
                             <TableRow>
-                                <TableTh>Nama / NIK</TableTh>
-                                <TableTh>Perusahaan</TableTh>
-                                <TableTh>Departemen</TableTh>
-                                <TableTh>Jabatan</TableTh>
-                                <TableTh>Status Kerja</TableTh>
-                                <TableTh>User Akun</TableTh>
-                                <TableTh>Status</TableTh>
+                                {isColVisible('employee') && <TableTh>Nama / NIK</TableTh>}
+                                {isColVisible('email') && <TableTh>Email</TableTh>}
+                                {isColVisible('department') && <TableTh>Departemen</TableTh>}
+                                {isColVisible('position') && <TableTh>Jabatan</TableTh>}
+                                {isColVisible('employment_status') && <TableTh>Status Kerja</TableTh>}
+                                {isColVisible('user_account') && <TableTh>User Akun</TableTh>}
+                                {isColVisible('status') && <TableTh>Status</TableTh>}
                                 <TableTh align="center">Aksi</TableTh>
                             </TableRow>
                         </TableHead>
                         <TableBody>
                             {filteredEmployees.length > 0 ? filteredEmployees.map((employee) => (
                                 <TableRow key={employee.id}>
-                                    <TableTd>
-                                        <div className="flex items-center gap-3">
-                                            {employee.photo_url ? (
-                                                <img
-                                                    src={getImageUrl(employee.photo_url)}
-                                                    alt={employee.name}
-                                                    className="w-9 h-9 rounded-full object-cover ring-2 ring-slate-700/50 shadow-sm shrink-0"
-                                                    onError={(e) => {
-                                                        (e.target as HTMLImageElement).src = '/avatar-user.png';
-                                                    }}
-                                                />
-                                            ) : (
-                                                <div className="w-9 h-9 rounded-full bg-cyan-500/10 text-cyan-400 font-bold text-xs flex items-center justify-center border border-cyan-500/20 shrink-0">
-                                                    {employee.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+                                    {isColVisible('employee') && (
+                                        <TableTd>
+                                            <div className="flex items-center gap-3">
+                                                {employee.photo_url ? (
+                                                    <img
+                                                        src={getImageUrl(employee.photo_url)}
+                                                        alt={employee.name}
+                                                        className="w-9 h-9 rounded-full object-cover ring-2 ring-slate-700/50 shadow-sm shrink-0"
+                                                        onError={(e) => {
+                                                            (e.target as HTMLImageElement).src = '/avatar-user.png';
+                                                        }}
+                                                    />
+                                                ) : (
+                                                    <div className="w-9 h-9 rounded-full bg-cyan-500/10 text-cyan-400 font-bold text-xs flex items-center justify-center border border-cyan-500/20 shrink-0">
+                                                        {employee.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+                                                    </div>
+                                                )}
+                                                <div>
+                                                    <p className="font-medium text-white">{employee.name}</p>
+                                                    <p className="text-xs text-muted-foreground">{employee.nik}</p>
                                                 </div>
-                                            )}
-                                            <div>
-                                                <p className="font-medium text-white">{employee.name}</p>
-                                                <p className="text-xs text-muted-foreground">{employee.nik}</p>
                                             </div>
-                                        </div>
-                                    </TableTd>
-                                    <TableTd>{employee.email}</TableTd>
-                                    <TableTd>{employee.department_name || '-'}</TableTd>
-                                    <TableTd>{employee.position || '-'}</TableTd>
-                                    <TableTd>
-                                        <Badge variant={getStatusBadge(employee.employment_status)}>
-                                            {getStatusLabel(employee.employment_status)}
-                                        </Badge>
-                                    </TableTd>
-                                    <TableTd>
-                                        {employee.user_id ? (
-                                            <Badge variant="success">
-                                                <UserCheck size={12} className="mr-1" />
-                                                Linked
+                                        </TableTd>
+                                    )}
+                                    {isColVisible('email') && <TableTd>{employee.email}</TableTd>}
+                                    {isColVisible('department') && <TableTd>{employee.department_name || '-'}</TableTd>}
+                                    {isColVisible('position') && <TableTd>{employee.position || '-'}</TableTd>}
+                                    {isColVisible('employment_status') && (
+                                        <TableTd>
+                                            <Badge variant={getStatusBadge(employee.employment_status)}>
+                                                {getStatusLabel(employee.employment_status)}
                                             </Badge>
-                                        ) : (
-                                            <Button
-                                                size="sm"
-                                                variant="outline"
-                                                leftIcon={<UserPlus size={14} />}
-                                                onClick={() => openUserModal(employee)}
-                                            >
-                                                Account
-                                            </Button>
-                                        )}
-                                    </TableTd>
-                                    <TableTd>
-                                        <Badge variant={employee.is_active ? 'success' : 'danger'}>
-                                            {employee.is_active ? 'Aktif' : 'Non-Aktif'}
-                                        </Badge>
-                                    </TableTd>
+                                        </TableTd>
+                                    )}
+                                    {isColVisible('user_account') && (
+                                        <TableTd>
+                                            {employee.user_id ? (
+                                                <Badge variant="success">
+                                                    <UserCheck size={12} className="mr-1" />
+                                                    Linked
+                                                </Badge>
+                                            ) : (
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    leftIcon={<UserPlus size={14} />}
+                                                    onClick={() => openUserModal(employee)}
+                                                >
+                                                    Account
+                                                </Button>
+                                            )}
+                                        </TableTd>
+                                    )}
+                                    {isColVisible('status') && (
+                                        <TableTd>
+                                            <Badge variant={employee.is_active ? 'success' : 'danger'}>
+                                                {employee.is_active ? 'Aktif' : 'Non-Aktif'}
+                                            </Badge>
+                                        </TableTd>
+                                    )}
                                     <TableTd align="center">
                                         <div className="flex items-center justify-center gap-1">
                                             <ActionIcon onClick={() => navigate(`/employees/${employee.id}/360`)} title="Lihat Detail Pegawai">
@@ -765,11 +802,11 @@ export default function Employees() {
                                     onChange={(e) => setFormData({ ...formData, bank_account: e.target.value })}
                                 />
                             </div>
-                            <Input
-                                label="Gaji Pokok"
-                                type="number"
+                            <CurrencyInput
+                                label="Gaji Pokok Karyawan (Rp)"
                                 value={formData.basic_salary}
-                                onChange={(e) => setFormData({ ...formData, basic_salary: Number(e.target.value) })}
+                                onChange={(val) => setFormData({ ...formData, basic_salary: val })}
+                                helperText="Format Rupiah otomatis berseparator titik"
                             />
                             <div className="grid grid-cols-2 gap-4">
                                 <Input

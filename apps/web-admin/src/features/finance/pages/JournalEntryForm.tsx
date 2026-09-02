@@ -1,35 +1,32 @@
-import { useEffect, useState } from 'react';
-import { ArrowLeft, Save, Plus, Trash, AlertCircle } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
-import { journalApi, type CreateJournalEntryRequest } from'../api/journal';
-import { financeApi, type ChartOfAccount } from'../api/finance';
+import { financeApi, type Account } from '../api/finance';
+import { journalApi, type CreateJournalEntryRequest } from '../api/journal';
+import { Card, Button, CurrencyInput, useToast } from '../../../components/ui';
 import {
-    compareDecimalStrings,
-    formatCurrencyIDR,
-    subtractDecimalStrings,
-    sumDecimalStrings,
-} from'../../../utils/decimal';
+    Plus, Trash2, ArrowLeft, Save, CheckCircle2, AlertTriangle,
+    BookOpen, Scale, Sparkles, RefreshCw
+} from 'lucide-react';
+import { toast } from 'sonner';
 
 interface JournalLineItem {
     account_id: string;
     description: string;
-    debit: string; // Use string for input handling
-    credit: string;
+    debit: number;
+    credit: number;
 }
 
 export default function JournalEntryForm() {
     const navigate = useNavigate();
-    const [accounts, setAccounts] = useState<ChartOfAccount[]>([]);
     const [submitting, setSubmitting] = useState(false);
+    const [accounts, setAccounts] = useState<Account[]>([]);
 
-    // Form State
     const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
     const [reference, setReference] = useState('');
     const [description, setDescription] = useState('');
     const [lines, setLines] = useState<JournalLineItem[]>([
-        { account_id: '', description: '', debit: '', credit: '' },
-        { account_id: '', description: '', debit: '', credit: '' },
+        { account_id: '', description: '', debit: 0, credit: 0 },
+        { account_id: '', description: '', debit: 0, credit: 0 },
     ]);
 
     useEffect(() => {
@@ -41,59 +38,77 @@ export default function JournalEntryForm() {
             const data = await financeApi.listAccounts();
             setAccounts(data);
         } catch {
-            toast.error('Failed to load accounts');
+            toast.error('Gagal memuat bagan akun (COA)');
         }
     };
 
     const addLine = () => {
-        setLines([...lines, { account_id: '', description: '', debit: '', credit: '' }]);
+        setLines([...lines, { account_id: '', description: '', debit: 0, credit: 0 }]);
     };
 
     const removeLine = (index: number) => {
-        if (lines.length <= 2) return;
+        if (lines.length <= 2) {
+            toast.error('Jurnal umum minimal harus memiliki 2 baris transaksi');
+            return;
+        }
         setLines(lines.filter((_, i) => i !== index));
     };
 
-    const updateLine = (index: number, field: keyof JournalLineItem, value: string) => {
+    const updateLine = (index: number, field: keyof JournalLineItem, value: any) => {
         const newLines = [...lines];
         newLines[index] = { ...newLines[index], [field]: value };
 
-        // Auto-clear other side
-        if (field === 'debit' && value && compareDecimalStrings(value, '0') > 0) {
-            newLines[index].credit = '';
+        // Auto-clear opposite side
+        if (field === 'debit' && value > 0) {
+            newLines[index].credit = 0;
         }
-        if (field === 'credit' && value && compareDecimalStrings(value, '0') > 0) {
-            newLines[index].debit = '';
+        if (field === 'credit' && value > 0) {
+            newLines[index].debit = 0;
         }
 
         setLines(newLines);
     };
 
-    const calculateTotals = () => {
-        const totalDebit = sumDecimalStrings(lines.map((line) => line.debit || '0'));
-        const totalCredit = sumDecimalStrings(lines.map((line) => line.credit || '0'));
-        return { totalDebit, totalCredit, difference: subtractDecimalStrings(totalDebit, totalCredit) };
-    };
+    // Calculate Totals & Balance
+    const totalDebit = useMemo(() => lines.reduce((acc, l) => acc + (l.debit || 0), 0), [lines]);
+    const totalCredit = useMemo(() => lines.reduce((acc, l) => acc + (l.credit || 0), 0), [lines]);
+    const difference = Math.abs(totalDebit - totalCredit);
+    const isBalanced = totalDebit > 0 && totalCredit > 0 && totalDebit === totalCredit;
 
-    const { totalDebit, totalCredit, difference } = calculateTotals();
-    const isBalanced = compareDecimalStrings(difference, '0') === 0;
+    // Quick auto-balance helper
+    const handleAutoBalance = () => {
+        if (lines.length < 2) return;
+        const lastIdx = lines.length - 1;
+        const otherDebit = lines.slice(0, lastIdx).reduce((acc, l) => acc + (l.debit || 0), 0);
+        const otherCredit = lines.slice(0, lastIdx).reduce((acc, l) => acc + (l.credit || 0), 0);
+
+        const newLines = [...lines];
+        if (otherDebit > otherCredit) {
+            newLines[lastIdx].credit = otherDebit - otherCredit;
+            newLines[lastIdx].debit = 0;
+        } else if (otherCredit > otherDebit) {
+            newLines[lastIdx].debit = otherCredit - otherDebit;
+            newLines[lastIdx].credit = 0;
+        }
+        setLines(newLines);
+        toast.success('Nilai debit/kredit otomatis diselaraskan (Balanced)');
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
         if (!isBalanced) {
-            toast.error(`Journal is not balanced. Difference: ${formatCurrencyIDR(difference)}`);
+            toast.error(`Jurnal belum seimbang (Out of Balance). Selisih: Rp ${difference.toLocaleString('id-ID')}`);
             return;
         }
 
-        if (compareDecimalStrings(totalDebit, '0') === 0) {
-            toast.error('Total amount cannot be zero');
+        if (totalDebit <= 0) {
+            toast.error('Nilai nominal jurnal tidak boleh nol');
             return;
         }
 
-        // Validation: Check for empty accounts
         if (lines.some(l => !l.account_id)) {
-            toast.error('All lines must have an account selected');
+            toast.error('Setiap baris wajib memilih akun perkiraan COA');
             return;
         }
 
@@ -106,218 +121,257 @@ export default function JournalEntryForm() {
                 lines: lines.map(l => ({
                     account_id: l.account_id,
                     description: l.description,
-                    debit: l.debit || '0.0000',
-                    credit: l.credit || '0.0000',
+                    debit: l.debit.toString(),
+                    credit: l.credit.toString(),
                 }))
             };
 
             await journalApi.create(payload);
-            toast.success('Journal entry created successfully');
+            toast.success('Jurnal umum berhasil dibukukan');
             navigate('/finance/journals');
         } catch (error: unknown) {
             console.error(error);
-            toast.error(error instanceof Error ? error.message : 'Failed to create journal entry');
+            toast.error(error instanceof Error ? error.message : 'Gagal menyimpan jurnal umum');
         } finally {
             setSubmitting(false);
         }
     };
 
     return (
-        <div className="space-y-6 max-w-5xl mx-auto p-8">
-            <div className="flex items-center gap-4 mb-8">
-                <button
-                    onClick={() => navigate('/finance/journals')}
-                    className="p-3 bg-card/40 backdrop-blur-xl border border-border hover:bg-muted rounded-2xl text-muted-foreground hover:text-foreground transition-all hover:-translate-x-1"
-                >
-                    <ArrowLeft size={20} />
-                </button>
-                <div>
-                    <h2 className="text-3xl font-bold text-foreground tracking-tight">New Journal Entry</h2>
-                    <p className="text-muted-foreground mt-1">Record a manual double-entry transaction</p>
+        <div className="p-4 md:p-6 space-y-6 max-w-6xl mx-auto bg-background min-h-screen animate-in fade-in slide-in-from-bottom-4 duration-500">
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                    <Button
+                        variant="outline"
+                        onClick={() => navigate('/finance/journals')}
+                        className="rounded-xl p-2"
+                    >
+                        <ArrowLeft size={18} />
+                    </Button>
+                    <div>
+                        <h1 className="text-2xl font-bold text-foreground tracking-tight flex items-center gap-2">
+                            <BookOpen size={24} className="text-primary" />
+                            Buat Jurnal Umum Baru (Journal Entry)
+                        </h1>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                            Pencatatan transaksi akuntansi berpasangan (Double-Entry Bookkeeping)
+                        </p>
+                    </div>
+                </div>
+
+                {/* Real-time Balance Status Indicator */}
+                <div className={`px-4 py-2.5 rounded-2xl border flex items-center gap-3 shadow-sm transition-all ${
+                    isBalanced
+                        ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+                        : 'bg-rose-500/10 border-rose-500/30 text-rose-400 animate-pulse'
+                }`}>
+                    <Scale size={20} />
+                    <div>
+                        <div className="text-xs font-bold uppercase tracking-wider">
+                            {isBalanced ? 'Jurnal Seimbang (Balanced)' : 'Belum Seimbang (Out of Balance)'}
+                        </div>
+                        <div className="text-[11px] opacity-80 font-mono">
+                            {isBalanced
+                                ? `Total: Rp ${totalDebit.toLocaleString('id-ID')}`
+                                : `Selisih: Rp ${difference.toLocaleString('id-ID')}`}
+                        </div>
+                    </div>
+                    {!isBalanced && (
+                        <button
+                            type="button"
+                            onClick={handleAutoBalance}
+                            className="ml-2 px-2.5 py-1 text-[11px] font-bold bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 rounded-lg transition-colors inline-flex items-center gap-1"
+                            title="Auto Seimbangkan"
+                        >
+                            <Sparkles size={12} /> Auto-Balance
+                        </button>
+                    )}
                 </div>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-8 relative">
-                <div className="absolute top-1/4 right-0 w-96 h-96 bg-blue-500/5 rounded-full blur-[100px] pointer-events-none" />
-                <div className="absolute bottom-0 left-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-[80px] pointer-events-none" />
-
-                {/* Header Section */}
-                <div className="bg-card/40 backdrop-blur-xl border border-border rounded-3xl p-8 shadow-xl relative z-10">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="space-y-2">
-                        <label className="block text-sm font-medium text-muted-foreground">Date</label>
-                        <input
-                            type="date"
-                            required
-                            value={date}
-                            onChange={(e) => setDate(e.target.value)}
-                            className="w-full bg-background border border-input rounded-lg px-4 py-2.5 text-foreground focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
-                        />
-                    </div>
-                    <div className="space-y-2">
-                        <label className="block text-sm font-medium text-muted-foreground">Reference</label>
-                        <input
-                            type="text"
-                            value={reference}
-                            onChange={(e) => setReference(e.target.value)}
-                            placeholder="e.g. INV-001"
-                            className="w-full bg-background border border-input rounded-lg px-4 py-2.5 text-foreground focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
-                        />
-                    </div>
-                    <div className="space-y-2 md:col-span-3">
-                        <label className="block text-xs font-black uppercase tracking-widest text-muted-foreground mb-1">Description</label>
-                        <textarea
-                            required
-                            rows={2}
-                            value={description}
-                            onChange={(e) => setDescription(e.target.value)}
-                            placeholder="Transaction description"
-                            className="w-full bg-background/50 border border-border rounded-2xl px-4 py-3 text-foreground focus:ring-2 focus:ring-primary/50 focus:border-transparent outline-none resize-none transition-all hover:border-primary/30"
-                        />
-                    </div>
+            <form onSubmit={handleSubmit} className="space-y-6">
+                {/* General Info Card */}
+                <div className="bg-card border border-border/60 rounded-2xl p-4 md:p-6 shadow-sm space-y-4">
+                    <h2 className="text-sm font-bold text-foreground uppercase tracking-wider">
+                        Informasi Umum Transaksi
+                    </h2>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label className="block text-xs font-semibold text-foreground uppercase tracking-wider mb-1.5">
+                                Tanggal Transaksi *
+                            </label>
+                            <input
+                                type="date"
+                                required
+                                value={date}
+                                onChange={(e) => setDate(e.target.value)}
+                                className="w-full bg-muted/40 border border-border/60 rounded-xl px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary transition-colors font-medium"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-semibold text-foreground uppercase tracking-wider mb-1.5">
+                                Nomor Referensi / Bukti
+                            </label>
+                            <input
+                                type="text"
+                                placeholder="cth. BKK/2026/09/001"
+                                value={reference}
+                                onChange={(e) => setReference(e.target.value)}
+                                className="w-full bg-muted/40 border border-border/60 rounded-xl px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary transition-colors font-mono font-medium"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-semibold text-foreground uppercase tracking-wider mb-1.5">
+                                Keterangan / Deskripsi Umum *
+                            </label>
+                            <input
+                                type="text"
+                                required
+                                placeholder="cth. Pembayaran Beban Servis Unit Excavator"
+                                value={description}
+                                onChange={(e) => setDescription(e.target.value)}
+                                className="w-full bg-muted/40 border border-border/60 rounded-xl px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary transition-colors font-medium"
+                            />
+                        </div>
                     </div>
                 </div>
 
-                {/* Lines Section */}
-                <div className="bg-card/40 backdrop-blur-xl border border-border rounded-3xl overflow-hidden shadow-xl relative z-10">
-                    <div className="p-6 border-b border-border flex justify-between items-center bg-muted/20">
-                        <h3 className="font-bold text-foreground text-sm uppercase tracking-widest flex items-center gap-2">
-                            <Plus size={16} className="text-primary" /> Journal Lines
-                        </h3>
+                {/* Sub-table Journal Lines */}
+                <div className="bg-card border border-border/60 rounded-2xl p-4 md:p-6 shadow-sm space-y-4">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h2 className="text-sm font-bold text-foreground uppercase tracking-wider">
+                                Pos Akun Transaksi (Journal Lines)
+                            </h2>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                                Masukkan minimal 2 baris akun debit dan kredit
+                            </p>
+                        </div>
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={addLine}
+                            className="rounded-xl text-xs flex items-center gap-1.5"
+                        >
+                            <Plus size={14} />
+                            Tambah Baris Akun
+                        </Button>
                     </div>
 
-                    <div className="p-4">
-                        <table className="w-full">
-                            <thead>
-                                <tr className="text-left text-xs uppercase text-muted-foreground font-medium tracking-wider">
-                                    <th className="pb-3 w-[35%]">Account</th>
-                                    <th className="pb-3">Line Description</th>
-                                    <th className="pb-3 w-[15%]">Debit</th>
-                                    <th className="pb-3 w-[15%]">Credit</th>
-                                    <th className="pb-3 w-10"></th>
+                    <div className="border border-border/60 rounded-2xl overflow-hidden">
+                        <table className="w-full text-xs text-left">
+                            <thead className="bg-muted/60 border-b border-border/40">
+                                <tr>
+                                    <th className="p-3 font-bold w-1/3">Akun Perkiraan (COA) *</th>
+                                    <th className="p-3 font-bold">Keterangan Baris</th>
+                                    <th className="p-3 font-bold w-48">Debit (Rp)</th>
+                                    <th className="p-3 font-bold w-48">Kredit (Rp)</th>
+                                    <th className="p-3 font-bold text-center w-12"></th>
                                 </tr>
                             </thead>
-                            <tbody className="space-y-2">
+                            <tbody className="divide-y divide-border/30">
                                 {lines.map((line, index) => (
-                                    <tr key={index} className="group">
-                                        <td className="pr-3 py-1">
+                                    <tr key={index} className="hover:bg-muted/20">
+                                        <td className="p-2.5">
                                             <select
+                                                required
                                                 value={line.account_id}
                                                 onChange={(e) => updateLine(index, 'account_id', e.target.value)}
-                                                className="w-full bg-background border border-input rounded-lg px-3 py-2 text-foreground text-sm focus:ring-1 focus:ring-primary outline-none"
+                                                className="w-full bg-background border border-border/60 rounded-xl px-3 py-2 text-xs text-foreground focus:outline-none focus:border-primary font-medium"
                                             >
-                                                <option value="">Select Account</option>
+                                                <option value="">Pilih Akun Perkiraan...</option>
                                                 {accounts.map(acc => (
                                                     <option key={acc.id} value={acc.id}>
-                                                        {acc.code} - {acc.name}
+                                                        {acc.code} - {acc.name} ({acc.account_type})
                                                     </option>
                                                 ))}
                                             </select>
                                         </td>
-                                        <td className="pr-3 py-1">
+                                        <td className="p-2.5">
                                             <input
                                                 type="text"
+                                                placeholder="Keterangan spesifik..."
                                                 value={line.description}
                                                 onChange={(e) => updateLine(index, 'description', e.target.value)}
-                                                placeholder="Optional description"
-                                                className="w-full bg-background border border-input rounded-lg px-3 py-2 text-foreground text-sm focus:ring-1 focus:ring-primary outline-none"
+                                                className="w-full bg-background border border-border/60 rounded-xl px-3 py-2 text-xs text-foreground focus:outline-none focus:border-primary"
                                             />
                                         </td>
-                                        <td className="pr-3 py-1">
-                                            <input
-                                                type="number"
-                                                min="0"
-                                                step="0.01"
+                                        <td className="p-2.5">
+                                            <CurrencyInput
                                                 value={line.debit}
-                                                onChange={(e) => updateLine(index, 'debit', e.target.value)}
-                                                className="w-full bg-background border border-input rounded-lg px-3 py-2 text-foreground text-sm focus:ring-1 focus:ring-primary outline-none text-right placeholder-muted-foreground"
-                                                placeholder="0.00"
+                                                onChange={(val) => updateLine(index, 'debit', val)}
+                                                size="sm"
                                             />
                                         </td>
-                                        <td className="pr-3 py-1">
-                                            <input
-                                                type="number"
-                                                min="0"
-                                                step="0.01"
+                                        <td className="p-2.5">
+                                            <CurrencyInput
                                                 value={line.credit}
-                                                onChange={(e) => updateLine(index, 'credit', e.target.value)}
-                                                className="w-full bg-background border border-input rounded-lg px-3 py-2 text-foreground text-sm focus:ring-1 focus:ring-primary outline-none text-right placeholder-muted-foreground"
-                                                placeholder="0.00"
+                                                onChange={(val) => updateLine(index, 'credit', val)}
+                                                size="sm"
                                             />
                                         </td>
-                                        <td className="py-1 text-center">
-                                            {lines.length > 2 && (
-                                                <button
-                                                    type="button"
-                                                    onClick={() => removeLine(index)}
-                                                    className="text-muted-foreground hover:text-destructive transition-colors p-1"
-                                                >
-                                                    <Trash size={16} />
-                                                </button>
-                                            )}
+                                        <td className="p-2.5 text-center">
+                                            <button
+                                                type="button"
+                                                onClick={() => removeLine(index)}
+                                                disabled={lines.length <= 2}
+                                                className={`p-1.5 rounded-lg transition-colors ${
+                                                    lines.length <= 2
+                                                        ? 'text-muted-foreground/40 cursor-not-allowed'
+                                                        : 'text-muted-foreground hover:text-rose-400 hover:bg-rose-500/10'
+                                                }`}
+                                                title="Hapus Baris"
+                                            >
+                                                <Trash2 size={15} />
+                                            </button>
                                         </td>
                                     </tr>
                                 ))}
                             </tbody>
+                            <tfoot className="bg-muted/40 font-bold border-t border-border/60">
+                                <tr>
+                                    <td colSpan={2} className="p-3 text-right uppercase tracking-wider text-xs text-foreground">
+                                        Total Nominal Jurnal:
+                                    </td>
+                                    <td className="p-3 font-mono text-sm text-foreground">
+                                        Rp {totalDebit.toLocaleString('id-ID')}
+                                    </td>
+                                    <td className="p-3 font-mono text-sm text-foreground">
+                                        Rp {totalCredit.toLocaleString('id-ID')}
+                                    </td>
+                                    <td></td>
+                                </tr>
+                            </tfoot>
                         </table>
-
-                        <button
-                            type="button"
-                            onClick={addLine}
-                            className="mt-4 flex items-center gap-2 text-sm text-primary hover:text-primary/80 transition-colors"
-                        >
-                            <Plus size={16} /> Add Line
-                        </button>
-                    </div>
-
-                    {/* Totals Footer */}
-                    <div className={`px-8 py-6 border-t border-border transition-colors ${isBalanced ? 'bg-emerald-500/5' : 'bg-destructive/10'}`}>
-                        <div className="flex justify-end gap-16 max-w-2xl ml-auto mr-12">
-                            <div className="text-right">
-                                <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest mb-1">Total Debit</p>
-                                <p className="text-2xl font-black text-foreground font-mono">{formatCurrencyIDR(totalDebit)}</p>
-                            </div>
-                            <div className="text-right">
-                                <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest mb-1">Total Credit</p>
-                                <p className="text-2xl font-black text-foreground font-mono">{formatCurrencyIDR(totalCredit)}</p>
-                            </div>
-                            <div className="text-right">
-                                <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest mb-1">Difference</p>
-                                <p className={`text-2xl font-black font-mono ${isBalanced ? 'text-emerald-500' : 'text-destructive animate-pulse'}`}>
-                                    {formatCurrencyIDR(difference)}
-                                </p>
-                            </div>
-                        </div>
-                        {!isBalanced && (
-                            <div className="flex justify-end mt-4 mr-12 text-destructive text-sm items-center gap-2 font-bold bg-destructive/10 inline-flex px-4 py-2 rounded-lg ml-auto float-right">
-                                <AlertCircle size={16} />
-                                Entry must be balanced to save
-                            </div>
-                        )}
-                        <div className="clear-both"></div>
                     </div>
                 </div>
 
-                {/* Actions */}
-                <div className="flex justify-end gap-4 pt-4 relative z-10">
-                    <button
+                {/* Submit Actions */}
+                <div className="flex items-center justify-between pt-2">
+                    <Button
                         type="button"
+                        variant="outline"
                         onClick={() => navigate('/finance/journals')}
-                        className="px-8 py-3 rounded-2xl border border-border bg-card/50 hover:bg-muted text-foreground transition-all font-bold"
+                        className="rounded-xl"
                     >
-                        Cancel
-                    </button>
-                    <button
+                        Batal
+                    </Button>
+                    <Button
                         type="submit"
-                        disabled={!isBalanced || submitting || compareDecimalStrings(totalDebit, '0') === 0}
-                        className={`flex items-center gap-2 px-8 py-3 rounded-2xl font-bold uppercase tracking-widest transition-all ${!isBalanced || submitting || compareDecimalStrings(totalDebit, '0') === 0
-                            ? 'bg-muted text-muted-foreground cursor-not-allowed opacity-50'
-                            : 'bg-primary hover:bg-primary/90 text-primary-foreground shadow-xl shadow-primary/20 hover:-translate-y-1'
-                            }`}
+                        variant="filled"
+                        disabled={!isBalanced || totalDebit <= 0}
+                        loading={submitting}
+                        className={`rounded-xl px-6 py-2.5 font-semibold text-sm shadow-lg flex items-center gap-2 ${
+                            isBalanced && totalDebit > 0
+                                ? 'bg-primary hover:bg-primary/90 text-primary-foreground shadow-primary/20'
+                                : 'bg-muted text-muted-foreground opacity-50 cursor-not-allowed'
+                        }`}
                     >
-                        <Save size={18} />
-                        {submitting ? 'Saving...' : 'Save Journal'}
-                    </button>
+                        <Save size={16} />
+                        Posting & Simpan Jurnal
+                    </Button>
                 </div>
             </form>
         </div>
