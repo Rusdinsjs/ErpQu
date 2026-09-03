@@ -5,11 +5,36 @@ use axum::{
     Router,
 };
 
-use crate::api::handlers::{finance_handler, finance_report_handler, journal_handler};
+use crate::api::handlers::{
+    budget_handler, exchange_rate_handler, finance_handler, finance_report_handler,
+    journal_handler,
+};
 use crate::api::server::AppState;
 
 pub fn finance_routes() -> Router<AppState> {
     Router::new()
+        // Multi-Currency Exchange Rates (QACC-008)
+        .route(
+            "/exchange-rates",
+            post(exchange_rate_handler::set_exchange_rate),
+        )
+        .route(
+            "/exchange-rates/latest",
+            get(exchange_rate_handler::get_latest_rate),
+        )
+        .route(
+            "/exchange-rates/convert",
+            post(exchange_rate_handler::convert_currency),
+        )
+        // Budgets & Variance (QACC-010)
+        .route(
+            "/budgets",
+            get(budget_handler::list_budgets).post(budget_handler::create_budget),
+        )
+        .route(
+            "/budgets/variance",
+            get(budget_handler::get_budget_variance),
+        )
         // Accounts & COA
         .route(
             "/accounts",

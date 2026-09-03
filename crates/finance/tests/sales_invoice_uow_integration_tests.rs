@@ -14,6 +14,7 @@ fn test_3r_1_004_empty_invoice_lines_rejected_on_create() {
         date: NaiveDate::from_ymd_opt(2026, 8, 6).unwrap(),
         due_date: None,
         subject: Some("Empty Items Test".to_string()),
+        tax_rate: None,
         items: vec![], // Empty items!
         attachment_url: None,
     };

@@ -90,6 +90,56 @@ impl FinanceService {
             ));
         }
 
+        if req.invoice_type == "SALES_INVOICE" {
+            let invoice_opt = self.repo.get_sales_invoice_by_id(req.invoice_id).await?;
+            let invoice = invoice_opt.ok_or_else(|| {
+                DomainError::not_found("SalesInvoice", &req.invoice_id.to_string())
+            })?;
+
+            let new_amount_paid = invoice.amount_paid + req.allocated_amount;
+            if new_amount_paid > invoice.total_amount {
+                return Err(DomainError::business_rule(
+                    "AllocationExceedsBalance",
+                    "Allocated amount exceeds remaining balance",
+                ));
+            }
+
+            let new_status = if new_amount_paid >= invoice.total_amount {
+                "paid"
+            } else if new_amount_paid > rust_decimal::Decimal::ZERO {
+                "partially_paid"
+            } else {
+                &invoice.status
+            };
+
+            self.repo.update_sales_invoice_payment_status(req.invoice_id, new_amount_paid, new_status).await?;
+        } else if req.invoice_type == "PURCHASE_BILL" {
+            let bill_opt = self.repo.get_purchase_bill_by_id(req.invoice_id).await?;
+            let bill = bill_opt.ok_or_else(|| {
+                DomainError::not_found("PurchaseBill", &req.invoice_id.to_string())
+            })?;
+
+            let new_amount_paid = bill.amount_paid + req.allocated_amount;
+            if new_amount_paid > bill.total_amount {
+                return Err(DomainError::business_rule(
+                    "AllocationExceedsBalance",
+                    "Allocated amount exceeds remaining balance",
+                ));
+            }
+
+            let new_status = if new_amount_paid >= bill.total_amount {
+                "paid"
+            } else if new_amount_paid > rust_decimal::Decimal::ZERO {
+                "partially_paid"
+            } else {
+                &bill.status
+            };
+
+            self.repo.update_purchase_bill_payment_status(req.invoice_id, new_amount_paid, new_status).await?;
+        } else {
+            return Err(DomainError::validation("invoice_type", "Invalid invoice type"));
+        }
+
         let allocation = PaymentAllocation {
             id: Uuid::new_v4(),
             company_id: req.company_id,
@@ -105,19 +155,24 @@ impl FinanceService {
     }
 
     /// Financial Report Provider: Trial Balance (QRPT-003)
-    pub async fn get_trial_balance_report(&self) -> DomainResult<Vec<TrialBalanceEntry>> {
-        self.repo.get_trial_balance().await
+    pub async fn get_trial_balance_report(
+        &self,
+        company_id: Uuid,
+        start_date: Option<chrono::NaiveDate>,
+        end_date: Option<chrono::NaiveDate>,
+    ) -> DomainResult<Vec<TrialBalanceEntry>> {
+        self.repo.get_trial_balance(company_id, start_date, end_date).await
     }
 
     // --- Chart of Accounts Management ---
 
-    pub async fn list_accounts(&self) -> DomainResult<Vec<ChartOfAccount>> {
-        self.repo.list_accounts().await
+    pub async fn list_accounts(&self, company_id: Uuid) -> DomainResult<Vec<ChartOfAccount>> {
+        self.repo.list_accounts(company_id).await
     }
 
-    pub async fn get_account_tree(&self) -> DomainResult<Vec<AccountTreeNode>> {
-        let accounts = self.repo.list_accounts().await?;
-        let gl_entries = self.repo.get_trial_balance().await?;
+    pub async fn get_account_tree(&self, company_id: Uuid) -> DomainResult<Vec<AccountTreeNode>> {
+        let accounts = self.repo.list_accounts(company_id).await?;
+        let gl_entries = self.repo.get_trial_balance(company_id, None, None).await?;
 
         let mut balance_map = std::collections::HashMap::new();
         for entry in gl_entries {
@@ -166,12 +221,41 @@ impl FinanceService {
             .ok_or_else(|| DomainError::not_found("ChartOfAccount", id))
     }
 
-    pub async fn find_by_code(&self, code: &str) -> DomainResult<Option<ChartOfAccount>> {
-        self.repo.find_by_code(code).await
+    pub async fn find_by_code(
+        &self,
+        code: &str,
+        company_id: Option<Uuid>,
+    ) -> DomainResult<Option<ChartOfAccount>> {
+        self.repo.find_by_code(code, company_id).await
+    }
+
+    pub async fn resolve_account(
+        &self,
+        company_id: Uuid,
+        mapping_key: &str,
+    ) -> DomainResult<Option<ChartOfAccount>> {
+        self.repo.get_account_by_mapping(company_id, mapping_key).await
+    }
+
+    pub async fn upsert_account_mapping(
+        &self,
+        company_id: Uuid,
+        mapping_key: &str,
+        account_id: Uuid,
+        description: Option<&str>,
+    ) -> DomainResult<()> {
+        self.repo
+            .upsert_account_mapping(company_id, mapping_key, account_id, description)
+            .await
     }
 
     pub async fn create_account(&self, req: CreateAccountRequest) -> DomainResult<ChartOfAccount> {
-        if self.repo.find_by_code(&req.code).await?.is_some() {
+        if self
+            .repo
+            .find_by_code(&req.code, req.company_id)
+            .await?
+            .is_some()
+        {
             return Err(DomainError::business_rule(
                 "DuplicateAccountCode",
                 &format!("Account code '{}' already exists", req.code),
@@ -181,6 +265,7 @@ impl FinanceService {
         let now = Utc::now();
         let account = ChartOfAccount {
             id: Uuid::new_v4(),
+            company_id: req.company_id,
             code: req.code,
             name: req.name,
             account_type: req.account_type,
@@ -240,16 +325,25 @@ impl FinanceService {
             .await
     }
 
-    pub async fn get_trial_balance(&self) -> DomainResult<Vec<TrialBalanceEntry>> {
-        self.repo.get_trial_balance().await
+    pub async fn get_trial_balance(
+        &self,
+        company_id: Uuid,
+        start_date: Option<chrono::NaiveDate>,
+        end_date: Option<chrono::NaiveDate>,
+    ) -> DomainResult<Vec<TrialBalanceEntry>> {
+        self.repo.get_trial_balance(company_id, start_date, end_date).await
     }
 
     pub async fn get_income_statement(
         &self,
-        _start_date: Option<chrono::NaiveDate>,
-        _end_date: Option<chrono::NaiveDate>,
+        company_id: Uuid,
+        start_date: Option<chrono::NaiveDate>,
+        end_date: Option<chrono::NaiveDate>,
     ) -> DomainResult<Vec<FinancialReportEntry>> {
-        let trial_balance = self.repo.get_trial_balance().await?;
+        let trial_balance = self
+            .repo
+            .get_trial_balance(company_id, start_date, end_date)
+            .await?;
 
         let mut report = Vec::new();
         for entry in trial_balance {
@@ -273,9 +367,10 @@ impl FinanceService {
 
     pub async fn get_balance_sheet(
         &self,
-        _as_of_date: Option<chrono::NaiveDate>,
+        company_id: Uuid,
+        as_of_date: Option<chrono::NaiveDate>,
     ) -> DomainResult<Vec<FinancialReportEntry>> {
-        let trial_balance = self.repo.get_trial_balance().await?;
+        let trial_balance = self.repo.get_trial_balance(company_id, None, as_of_date).await?;
 
         let mut report = Vec::new();
         for entry in trial_balance {
@@ -340,6 +435,9 @@ impl FinanceService {
 
         let total: rust_decimal::Decimal =
             req.items.iter().map(|i| i.quantity * i.unit_price).sum();
+        let tax_rate = req.tax_rate.unwrap_or(rust_decimal::Decimal::new(11, 2)); // Default 11% PPN Indonesia
+        let tax = (total * tax_rate).round_dp(2);
+        
         let invoice_id = Uuid::new_v4();
         let invoice = SalesInvoice {
             id: invoice_id,
@@ -349,8 +447,8 @@ impl FinanceService {
             due_date: req.due_date,
             subject: req.subject.clone(),
             subtotal: total,
-            tax: rust_decimal::Decimal::ZERO,
-            total_amount: total,
+            tax,
+            total_amount: total + tax,
             amount_paid: rust_decimal::Decimal::ZERO,
             status: "draft".to_string(),
             journal_entry_id: None,
@@ -360,19 +458,36 @@ impl FinanceService {
             company_id: Some(company_id),
         };
 
-        // 1. Find Accounts (Piutang & Penjualan)
-        let receivable_acc = self.find_by_code("1-1300").await?.ok_or_else(|| {
-            DomainError::business_rule(
-                "Missing Account",
-                "Account 1-1300 (Piutang Usaha) not found",
-            )
-        })?;
-        let sales_acc = self.find_by_code("4-1100").await?.ok_or_else(|| {
-            DomainError::business_rule(
-                "Missing Account",
-                "Account 4-1100 (Pendapatan Penjualan) not found",
-            )
-        })?;
+        // 1. Find Accounts (Piutang & Penjualan & VAT Output) via Account Mapping (QSEC-ACMAP-001)
+        let receivable_acc = self
+            .resolve_account(company_id, mapping_keys::ACCOUNTS_RECEIVABLE)
+            .await?
+            .or(self.find_by_code("1-1300", Some(company_id)).await?)
+            .or(self.find_by_code("1-1300", None).await?)
+            .ok_or_else(|| {
+                DomainError::business_rule(
+                    "Missing Account",
+                    "Account for Accounts Receivable (Piutang Usaha) not configured or found",
+                )
+            })?;
+        let sales_acc = self
+            .resolve_account(company_id, mapping_keys::SALES_REVENUE)
+            .await?
+            .or(self.find_by_code("4-1100", Some(company_id)).await?)
+            .or(self.find_by_code("4-1100", None).await?)
+            .ok_or_else(|| {
+                DomainError::business_rule(
+                    "Missing Account",
+                    "Account for Sales Revenue (Pendapatan Penjualan) not configured or found",
+                )
+            })?;
+        let vat_out_acc = self
+            .resolve_account(company_id, mapping_keys::VAT_OUTPUT)
+            .await?
+            .or(self.find_by_code("2-1500", Some(company_id)).await?)
+            .or(self.find_by_code("2-1500", None).await?)
+            .or(self.find_by_code("21500", Some(company_id)).await?)
+            .or(self.find_by_code("21500", None).await?);
 
         // 2. Begin UnitOfWork transaction boundary (3R.1.1-004 & 3R.1.1-005)
         let mut uow = UnitOfWork::begin(self.repo.pool()).await?;
@@ -404,6 +519,43 @@ impl FinanceService {
             .await?;
 
         // 5. Create Draft Journal Entry in the SAME UnitOfWork
+        let mut journal_lines = vec![
+            CreateJournalLineRequest {
+                account_id: receivable_acc.id,
+                description: Some(format!(
+                    "Piutang Penjualan {}",
+                    created_invoice.invoice_number
+                )),
+                debit: total + tax,
+                credit: rust_decimal::Decimal::ZERO,
+            },
+            CreateJournalLineRequest {
+                account_id: sales_acc.id,
+                description: Some(format!(
+                    "Pendapatan Penjualan {}",
+                    created_invoice.invoice_number
+                )),
+                debit: rust_decimal::Decimal::ZERO,
+                credit: total,
+            },
+        ];
+
+        if tax > rust_decimal::Decimal::ZERO {
+            if let Some(vat_acc) = vat_out_acc {
+                journal_lines.push(CreateJournalLineRequest {
+                    account_id: vat_acc.id,
+                    description: Some(format!(
+                        "PPN Keluaran {}",
+                        created_invoice.invoice_number
+                    )),
+                    debit: rust_decimal::Decimal::ZERO,
+                    credit: tax,
+                });
+            } else {
+                journal_lines[1].credit = total + tax;
+            }
+        }
+
         let journal_req = CreateJournalEntryRequest {
             company_id: Some(company_id),
             date: created_invoice.date,
@@ -413,26 +565,7 @@ impl FinanceService {
                 created_invoice.subject.as_deref().unwrap_or("-")
             ),
             reference: Some(created_invoice.invoice_number.clone()),
-            lines: vec![
-                CreateJournalLineRequest {
-                    account_id: receivable_acc.id,
-                    description: Some(format!(
-                        "Piutang Penjualan {}",
-                        created_invoice.invoice_number
-                    )),
-                    debit: total,
-                    credit: rust_decimal::Decimal::ZERO,
-                },
-                CreateJournalLineRequest {
-                    account_id: sales_acc.id,
-                    description: Some(format!(
-                        "Pendapatan Penjualan {}",
-                        created_invoice.invoice_number
-                    )),
-                    debit: rust_decimal::Decimal::ZERO,
-                    credit: total,
-                },
-            ],
+            lines: journal_lines,
         };
 
         let journal = JournalRepository::create_journal_entry_with_uow(
@@ -600,17 +733,33 @@ impl FinanceService {
             .await?;
         updated_invoice.journal_status = invoice.journal_status;
 
-        // 4. Update/Rebuild Draft Journal Entry in SAME UoW (3R.1.1-004)
         if let Some(journal_id) = updated_invoice.journal_entry_id {
-            let receivable_acc = self.find_by_code("1-1300").await?.ok_or_else(|| {
-                DomainError::business_rule("Missing Account", "Account 1-1300 not found")
-            })?;
-            let sales_acc = self.find_by_code("4-1100").await?.ok_or_else(|| {
-                DomainError::business_rule("Missing Account", "Account 4-1100 not found")
-            })?;
+            let company_id = updated_invoice.company_id.unwrap_or(company_id);
+            let receivable_acc = self
+                .resolve_account(company_id, mapping_keys::ACCOUNTS_RECEIVABLE)
+                .await?
+                .or(self.find_by_code("1-1300", Some(company_id)).await?)
+                .or(self.find_by_code("1-1300", None).await?)
+                .ok_or_else(|| {
+                    DomainError::business_rule(
+                        "Missing Account",
+                        "Account for Accounts Receivable not configured or found",
+                    )
+                })?;
+            let sales_acc = self
+                .resolve_account(company_id, mapping_keys::SALES_REVENUE)
+                .await?
+                .or(self.find_by_code("4-1100", Some(company_id)).await?)
+                .or(self.find_by_code("4-1100", None).await?)
+                .ok_or_else(|| {
+                    DomainError::business_rule(
+                        "Missing Account",
+                        "Account for Sales Revenue not configured or found",
+                    )
+                })?;
 
             let journal_req = CreateJournalEntryRequest {
-                company_id: None,
+                company_id: Some(company_id),
                 date: updated_invoice.date,
                 description: format!(
                     "Penjualan: {} - {}",
@@ -726,7 +875,7 @@ impl FinanceService {
             journal_entry_id: None,
             created_at: Utc::now(),
             attachment_url: req.attachment_url,
-            company_id: None,
+            company_id: req.company_id,
         };
 
         let mut uow = UnitOfWork::begin(self.repo.pool()).await?;
@@ -735,19 +884,36 @@ impl FinanceService {
             .create_purchase_bill_with_uow(&mut uow, &bill)
             .await?;
 
-        // Find Accounts for GL Journal Entry (Hutang Usaha & Beban Ops)
-        let ap_acc = self
-            .find_by_code("2-1100")
-            .await?
-            .or(self.find_by_code("21100").await?);
-        let exp_acc = self
-            .find_by_code("6-1000")
-            .await?
-            .or(self.find_by_code("51000").await?);
+        // Find Accounts for GL Journal Entry (Hutang Usaha & Beban Ops) via Account Mapping (QSEC-ACMAP-001)
+        let ap_acc = if let Some(cid) = req.company_id {
+            self.resolve_account(cid, mapping_keys::ACCOUNTS_PAYABLE)
+                .await?
+                .or(self.find_by_code("2-1100", Some(cid)).await?)
+                .or(self.find_by_code("21100", Some(cid)).await?)
+                .or(self.find_by_code("2-1100", None).await?)
+                .or(self.find_by_code("21100", None).await?)
+        } else {
+            self.find_by_code("2-1100", None)
+                .await?
+                .or(self.find_by_code("21100", None).await?)
+        };
+
+        let exp_acc = if let Some(cid) = req.company_id {
+            self.resolve_account(cid, mapping_keys::OPERATING_EXPENSE)
+                .await?
+                .or(self.find_by_code("6-1000", Some(cid)).await?)
+                .or(self.find_by_code("51000", Some(cid)).await?)
+                .or(self.find_by_code("6-1000", None).await?)
+                .or(self.find_by_code("51000", None).await?)
+        } else {
+            self.find_by_code("6-1000", None)
+                .await?
+                .or(self.find_by_code("51000", None).await?)
+        };
 
         if let (Some(ap), Some(exp)) = (ap_acc, exp_acc) {
             let journal_req = CreateJournalEntryRequest {
-                company_id: None,
+                company_id: req.company_id,
                 date: created_bill.date,
                 description: format!("Tagihan Pembelian: {}", created_bill.bill_number),
                 reference: Some(created_bill.bill_number.clone()),
@@ -813,7 +979,7 @@ impl FinanceService {
             journal_entry_id: None,
             created_at: Utc::now(),
             attachment_url: req.attachment_url,
-            company_id: None,
+            company_id: req.company_id,
         };
 
         let mut uow = UnitOfWork::begin(self.repo.pool()).await?;
@@ -822,15 +988,23 @@ impl FinanceService {
             .create_expense_with_uow(&mut uow, &expense)
             .await?;
 
-        // Find Expense Account (Default 6-1000 / 51000)
-        let exp_acc = self
-            .find_by_code("6-1000")
-            .await?
-            .or(self.find_by_code("51000").await?);
+        // Find Expense Account via Account Mapping (Default OPERATING_EXPENSE / 6-1000 / 51000)
+        let exp_acc = if let Some(cid) = req.company_id {
+            self.resolve_account(cid, mapping_keys::OPERATING_EXPENSE)
+                .await?
+                .or(self.find_by_code("6-1000", Some(cid)).await?)
+                .or(self.find_by_code("51000", Some(cid)).await?)
+                .or(self.find_by_code("6-1000", None).await?)
+                .or(self.find_by_code("51000", None).await?)
+        } else {
+            self.find_by_code("6-1000", None)
+                .await?
+                .or(self.find_by_code("51000", None).await?)
+        };
 
         if let Some(exp) = exp_acc {
             let journal_req = CreateJournalEntryRequest {
-                company_id: None,
+                company_id: req.company_id,
                 date: created_expense.date,
                 description: format!("Pengeluaran Beban: {}", created_expense.expense_number),
                 reference: Some(created_expense.expense_number.clone()),
@@ -1179,5 +1353,44 @@ impl FinanceService {
             .collect();
 
         self.repo.create_purchase_receipt(&receipt, &items).await
+    }
+
+    // --- Budget Management (QACC-010) ---
+
+    pub async fn list_budgets(&self, company_id: Uuid) -> DomainResult<Vec<Budget>> {
+        self.repo.list_budgets(company_id).await
+    }
+
+    pub async fn create_budget(
+        &self,
+        company_id: Uuid,
+        req: CreateBudgetRequest,
+    ) -> DomainResult<Budget> {
+        let budget = Budget {
+            id: Uuid::new_v4(),
+            company_id: Some(company_id),
+            cost_center_id: req.cost_center_id,
+            fiscal_year: req.fiscal_year,
+            monthly_distribution: req.monthly_distribution,
+            action_if_accumulated_monthly_budget_exceeded: None,
+            action_if_annual_budget_exceeded: req
+                .action_if_annual_budget_exceeded
+                .or_else(|| Some("Warn".to_string())),
+            created_at: Utc::now(),
+        };
+
+        self.repo
+            .create_budget_with_items(&budget, &req.accounts)
+            .await
+    }
+
+    pub async fn get_budget_variance(
+        &self,
+        company_id: Uuid,
+        fiscal_year: Option<&str>,
+    ) -> DomainResult<Vec<BudgetVarianceReport>> {
+        self.repo
+            .get_budget_variance_report(company_id, fiscal_year)
+            .await
     }
 }

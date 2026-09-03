@@ -29,6 +29,7 @@ impl From<ExpenseAnalysisRow> for ExpenseAnalysis {
 #[derive(Debug, sqlx::FromRow)]
 struct ChartOfAccountRow {
     id: Uuid,
+    company_id: Option<Uuid>,
     code: String,
     name: String,
     account_type: String,
@@ -56,6 +57,7 @@ impl From<ChartOfAccountRow> for ChartOfAccount {
         };
         Self {
             id: r.id,
+            company_id: r.company_id,
             code: r.code,
             name: r.name,
             account_type,
@@ -563,12 +565,12 @@ impl FinanceRepository {
         self.get_account_by_id(id).await
     }
 
-    pub async fn find_by_code(&self, code: &str) -> DomainResult<Option<ChartOfAccount>> {
-        self.get_account_by_code(code).await
+    pub async fn find_by_code(&self, code: &str, company_id: Option<Uuid>) -> DomainResult<Option<ChartOfAccount>> {
+        self.get_account_by_code(code, company_id).await
     }
 
-    pub async fn list_all(&self) -> DomainResult<Vec<ChartOfAccount>> {
-        self.list_accounts().await
+    pub async fn list_all(&self, company_id: Uuid) -> DomainResult<Vec<ChartOfAccount>> {
+        self.list_accounts(company_id).await
     }
 
     pub async fn get_capex_opex_analysis(
@@ -812,14 +814,16 @@ impl FinanceRepository {
 
     // --- Chart of Accounts queries ---
 
-    pub async fn list_accounts(&self) -> DomainResult<Vec<ChartOfAccount>> {
+    pub async fn list_accounts(&self, company_id: Uuid) -> DomainResult<Vec<ChartOfAccount>> {
         let rows = sqlx::query_as::<_, ChartOfAccountRow>(
             r#"
-            SELECT id, code, name, account_type::text AS account_type, normal_balance::text AS normal_balance, parent_id, is_active, description, currency, created_at, updated_at
+            SELECT id, company_id, code, name, account_type::text AS account_type, normal_balance::text AS normal_balance, parent_id, is_active, description, currency, created_at, updated_at
             FROM chart_of_accounts
+            WHERE company_id = $1
             ORDER BY code ASC
             "#,
         )
+        .bind(company_id)
         .fetch_all(&self.pool)
         .await
         .map_err(|e| DomainError::Database(e.to_string()))?;
@@ -830,7 +834,7 @@ impl FinanceRepository {
     pub async fn get_account_by_id(&self, id: Uuid) -> DomainResult<Option<ChartOfAccount>> {
         let row = sqlx::query_as::<_, ChartOfAccountRow>(
             r#"
-            SELECT id, code, name, account_type::text AS account_type, normal_balance::text AS normal_balance, parent_id, is_active, description, currency, created_at, updated_at
+            SELECT id, company_id, code, name, account_type::text AS account_type, normal_balance::text AS normal_balance, parent_id, is_active, description, currency, created_at, updated_at
             FROM chart_of_accounts
             WHERE id = $1
             "#,
@@ -843,15 +847,16 @@ impl FinanceRepository {
         Ok(row.map(Into::into))
     }
 
-    pub async fn get_account_by_code(&self, code: &str) -> DomainResult<Option<ChartOfAccount>> {
+    pub async fn get_account_by_code(&self, code: &str, company_id: Option<Uuid>) -> DomainResult<Option<ChartOfAccount>> {
         let row = sqlx::query_as::<_, ChartOfAccountRow>(
             r#"
-            SELECT id, code, name, account_type::text AS account_type, normal_balance::text AS normal_balance, parent_id, is_active, description, currency, created_at, updated_at
+            SELECT id, company_id, code, name, account_type::text AS account_type, normal_balance::text AS normal_balance, parent_id, is_active, description, currency, created_at, updated_at
             FROM chart_of_accounts
-            WHERE code = $1
+            WHERE code = $1 AND ($2::uuid IS NULL OR company_id = $2)
             "#,
         )
         .bind(code)
+        .bind(company_id)
         .fetch_optional(&self.pool)
         .await
         .map_err(|e| DomainError::Database(e.to_string()))?;
@@ -874,12 +879,13 @@ impl FinanceRepository {
 
         let row = sqlx::query_as::<_, ChartOfAccountRow>(
             r#"
-            INSERT INTO chart_of_accounts (id, code, name, account_type, normal_balance, parent_id, is_active, description, currency, created_at, updated_at)
-            VALUES ($1, $2, $3, $4::account_type, $5::normal_balance, $6, $7, $8, $9, $10, $11)
-            RETURNING id, code, name, account_type::text AS account_type, normal_balance::text AS normal_balance, parent_id, is_active, description, currency, created_at, updated_at
+            INSERT INTO chart_of_accounts (id, company_id, code, name, account_type, normal_balance, parent_id, is_active, description, currency, created_at, updated_at)
+            VALUES ($1, $2, $3, $4, $5::account_type, $6::normal_balance, $7, $8, $9, $10, $11, $12)
+            RETURNING id, company_id, code, name, account_type::text AS account_type, normal_balance::text AS normal_balance, parent_id, is_active, description, currency, created_at, updated_at
             "#,
         )
         .bind(account.id)
+        .bind(account.company_id)
         .bind(&account.code)
         .bind(&account.name)
         .bind(acc_type_str)
@@ -903,7 +909,7 @@ impl FinanceRepository {
             UPDATE chart_of_accounts
             SET name = $1, parent_id = $2, is_active = $3, description = $4, updated_at = NOW()
             WHERE id = $5
-            RETURNING id, code, name, account_type::text AS account_type, normal_balance::text AS normal_balance, parent_id, is_active, description, currency, created_at, updated_at
+            RETURNING id, company_id, code, name, account_type::text AS account_type, normal_balance::text AS normal_balance, parent_id, is_active, description, currency, created_at, updated_at
             "#,
         )
         .bind(&account.name)
@@ -976,7 +982,12 @@ impl FinanceRepository {
         Ok(entries)
     }
 
-    pub async fn get_trial_balance(&self) -> DomainResult<Vec<TrialBalanceEntry>> {
+    pub async fn get_trial_balance(
+        &self,
+        company_id: Uuid,
+        start_date: Option<chrono::NaiveDate>,
+        end_date: Option<chrono::NaiveDate>,
+    ) -> DomainResult<Vec<TrialBalanceEntry>> {
         #[derive(sqlx::FromRow)]
         struct TBRow {
             account_id: Uuid,
@@ -998,11 +1009,19 @@ impl FinanceRepository {
                 COALESCE(SUM(gl.credit), 0.0000) AS credit
             FROM chart_of_accounts coa
             LEFT JOIN gl_entries gl ON coa.id = gl.account_id
-            WHERE COALESCE(coa.is_group, FALSE) = FALSE AND coa.is_active = TRUE
+                AND gl.company_id = $1
+                AND ($2::date IS NULL OR gl.posting_date >= $2)
+                AND ($3::date IS NULL OR gl.posting_date <= $3)
+            WHERE COALESCE(coa.is_group, FALSE) = FALSE
+                AND coa.is_active = TRUE
+                AND coa.company_id = $1
             GROUP BY coa.id, coa.code, coa.name, coa.account_type
             ORDER BY coa.code ASC
             "#,
         )
+        .bind(company_id)
+        .bind(start_date)
+        .bind(end_date)
         .fetch_all(&self.pool)
         .await
         .map_err(|e| DomainError::Database(e.to_string()))?;
@@ -1030,6 +1049,65 @@ impl FinanceRepository {
             .collect();
 
         Ok(entries)
+    }
+
+    // --- Account Mapping queries (QSEC-ACMAP-001) ---
+
+    /// Resolve a symbolic account mapping key to an actual CoA account for a specific company.
+    /// Falls back to code-based lookup if no mapping exists.
+    pub async fn get_account_by_mapping(
+        &self,
+        company_id: Uuid,
+        mapping_key: &str,
+    ) -> DomainResult<Option<ChartOfAccount>> {
+        let row = sqlx::query_as::<_, ChartOfAccountRow>(
+            r#"
+            SELECT coa.id, coa.company_id, coa.code, coa.name,
+                   coa.account_type::text AS account_type,
+                   coa.normal_balance::text AS normal_balance,
+                   coa.parent_id, coa.is_active, coa.description,
+                   coa.currency, coa.created_at, coa.updated_at
+            FROM account_mappings am
+            JOIN chart_of_accounts coa ON coa.id = am.account_id
+            WHERE am.company_id = $1 AND am.mapping_key = $2
+            "#,
+        )
+        .bind(company_id)
+        .bind(mapping_key)
+        .fetch_optional(&self.pool)
+        .await
+        .map_err(|e| DomainError::Database(e.to_string()))?;
+
+        Ok(row.map(Into::into))
+    }
+
+    /// Create or update an account mapping for a company
+    pub async fn upsert_account_mapping(
+        &self,
+        company_id: Uuid,
+        mapping_key: &str,
+        account_id: Uuid,
+        description: Option<&str>,
+    ) -> DomainResult<()> {
+        sqlx::query(
+            r#"
+            INSERT INTO account_mappings (company_id, mapping_key, account_id, description)
+            VALUES ($1, $2, $3, $4)
+            ON CONFLICT (company_id, mapping_key)
+            DO UPDATE SET account_id = EXCLUDED.account_id,
+                          description = EXCLUDED.description,
+                          updated_at = NOW()
+            "#,
+        )
+        .bind(company_id)
+        .bind(mapping_key)
+        .bind(account_id)
+        .bind(description)
+        .execute(&self.pool)
+        .await
+        .map_err(|e| DomainError::Database(e.to_string()))?;
+
+        Ok(())
     }
 
     // --- Other operational entity queries ---
@@ -1138,6 +1216,58 @@ impl FinanceRepository {
         .map_err(|e| DomainError::Database(e.to_string()))?;
 
         Ok(rows.into_iter().map(Into::into).collect())
+    }
+
+    pub async fn get_purchase_bill_by_id(&self, id: Uuid) -> DomainResult<Option<PurchaseBill>> {
+        let row = sqlx::query_as::<_, PurchaseBillRow>(
+            r#"
+            SELECT id, bill_number, vendor_id, date, due_date, total_amount, amount_paid, status, budget_type, journal_entry_id, created_at, attachment_url, company_id
+            FROM purchase_bills
+            WHERE id = $1
+            "#,
+        )
+        .bind(id)
+        .fetch_optional(&self.pool)
+        .await
+        .map_err(|e| DomainError::Database(e.to_string()))?;
+
+        Ok(row.map(Into::into))
+    }
+
+    pub async fn update_purchase_bill_payment_status(&self, id: Uuid, amount_paid: Decimal, status: &str) -> DomainResult<()> {
+        sqlx::query(
+            r#"
+            UPDATE purchase_bills
+            SET amount_paid = $1, status = $2
+            WHERE id = $3
+            "#,
+        )
+        .bind(amount_paid)
+        .bind(status)
+        .bind(id)
+        .execute(&self.pool)
+        .await
+        .map_err(|e| DomainError::Database(e.to_string()))?;
+
+        Ok(())
+    }
+
+    pub async fn update_sales_invoice_payment_status(&self, id: Uuid, amount_paid: Decimal, status: &str) -> DomainResult<()> {
+        sqlx::query(
+            r#"
+            UPDATE sales_invoices
+            SET amount_paid = $1, status = $2
+            WHERE id = $3
+            "#,
+        )
+        .bind(amount_paid)
+        .bind(status)
+        .bind(id)
+        .execute(&self.pool)
+        .await
+        .map_err(|e| DomainError::Database(e.to_string()))?;
+
+        Ok(())
     }
 
     pub async fn create_expense(&self, expense: &Expense) -> DomainResult<Expense> {
@@ -1850,5 +1980,180 @@ impl FinanceRepository {
                 },
             )
             .collect())
+    }
+
+    // --- Budget Management queries (QACC-010) ---
+
+    pub async fn list_budgets(&self, company_id: Uuid) -> DomainResult<Vec<Budget>> {
+        #[derive(sqlx::FromRow)]
+        struct BudgetRow {
+            id: Uuid,
+            company_id: Option<Uuid>,
+            cost_center_id: Option<Uuid>,
+            fiscal_year: String,
+            monthly_distribution: Option<String>,
+            action_if_accumulated_monthly_budget_exceeded: Option<String>,
+            action_if_annual_budget_exceeded: Option<String>,
+            created_at: DateTime<Utc>,
+        }
+
+        let rows = sqlx::query_as::<_, BudgetRow>(
+            r#"
+            SELECT id, company_id, cost_center_id, fiscal_year, monthly_distribution,
+                   action_if_accumulated_monthly_budget_exceeded, action_if_annual_budget_exceeded, created_at
+            FROM budgets
+            WHERE company_id = $1
+            ORDER BY fiscal_year DESC, created_at DESC
+            "#,
+        )
+        .bind(company_id)
+        .fetch_all(&self.pool)
+        .await
+        .map_err(|e| DomainError::Database(e.to_string()))?;
+
+        Ok(rows
+            .into_iter()
+            .map(|r| Budget {
+                id: r.id,
+                company_id: r.company_id,
+                cost_center_id: r.cost_center_id,
+                fiscal_year: r.fiscal_year,
+                monthly_distribution: r.monthly_distribution,
+                action_if_accumulated_monthly_budget_exceeded: r.action_if_accumulated_monthly_budget_exceeded,
+                action_if_annual_budget_exceeded: r.action_if_annual_budget_exceeded,
+                created_at: r.created_at,
+            })
+            .collect())
+    }
+
+    pub async fn create_budget_with_items(
+        &self,
+        budget: &Budget,
+        items: &[CreateBudgetAccountItem],
+    ) -> DomainResult<Budget> {
+        let mut tx = self.pool.begin().await.map_err(|e| DomainError::Database(e.to_string()))?;
+
+        sqlx::query(
+            r#"
+            INSERT INTO budgets (id, company_id, cost_center_id, fiscal_year, monthly_distribution,
+                                action_if_accumulated_monthly_budget_exceeded, action_if_annual_budget_exceeded, created_at)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+            "#,
+        )
+        .bind(budget.id)
+        .bind(budget.company_id)
+        .bind(budget.cost_center_id)
+        .bind(&budget.fiscal_year)
+        .bind(&budget.monthly_distribution)
+        .bind(&budget.action_if_accumulated_monthly_budget_exceeded)
+        .bind(&budget.action_if_annual_budget_exceeded)
+        .bind(budget.created_at)
+        .execute(&mut *tx)
+        .await
+        .map_err(|e| DomainError::Database(e.to_string()))?;
+
+        for item in items {
+            sqlx::query(
+                r#"
+                INSERT INTO budget_accounts (id, budget_id, account_id, budget_amount, created_at)
+                VALUES ($1, $2, $3, $4, $5)
+                "#,
+            )
+            .bind(Uuid::new_v4())
+            .bind(budget.id)
+            .bind(item.account_id)
+            .bind(item.budget_amount)
+            .bind(budget.created_at)
+            .execute(&mut *tx)
+            .await
+            .map_err(|e| DomainError::Database(e.to_string()))?;
+        }
+
+        tx.commit().await.map_err(|e| DomainError::Database(e.to_string()))?;
+
+        Ok(budget.clone())
+    }
+
+    pub async fn get_budget_variance_report(
+        &self,
+        company_id: Uuid,
+        fiscal_year: Option<&str>,
+    ) -> DomainResult<Vec<BudgetVarianceReport>> {
+        #[derive(sqlx::FromRow)]
+        struct VarianceRow {
+            budget_id: Uuid,
+            cost_center_name: Option<String>,
+            fiscal_year: String,
+            account_id: Option<Uuid>,
+            account_code: Option<String>,
+            account_name: Option<String>,
+            budget_amount: Decimal,
+            actual_spent: Decimal,
+        }
+
+        let rows = sqlx::query_as::<_, VarianceRow>(
+            r#"
+            SELECT 
+                b.id AS budget_id,
+                cc.name AS cost_center_name,
+                b.fiscal_year,
+                ba.account_id,
+                coa.code AS account_code,
+                coa.name AS account_name,
+                COALESCE(ba.budget_amount, 0.00) AS budget_amount,
+                COALESCE(SUM(gl.debit - gl.credit), 0.00) AS actual_spent
+            FROM budgets b
+            LEFT JOIN cost_centers cc ON cc.id = b.cost_center_id
+            JOIN budget_accounts ba ON ba.budget_id = b.id
+            LEFT JOIN chart_of_accounts coa ON coa.id = ba.account_id
+            LEFT JOIN gl_entries gl ON gl.account_id = ba.account_id 
+                AND gl.company_id = b.company_id
+                AND ($2::text IS NULL OR TO_CHAR(gl.posting_date, 'YYYY') = $2)
+            WHERE b.company_id = $1
+                AND ($2::text IS NULL OR b.fiscal_year = $2)
+            GROUP BY b.id, cc.name, b.fiscal_year, ba.account_id, coa.code, coa.name, ba.budget_amount
+            ORDER BY b.fiscal_year DESC, coa.code ASC
+            "#,
+        )
+        .bind(company_id)
+        .bind(fiscal_year)
+        .fetch_all(&self.pool)
+        .await
+        .map_err(|e| DomainError::Database(e.to_string()))?;
+
+        let report = rows
+            .into_iter()
+            .map(|r| {
+                let budget_amt = r.budget_amount;
+                let actual = r.actual_spent;
+                let variance = budget_amt - actual;
+                let util_pct = if budget_amt > Decimal::ZERO {
+                    ((actual / budget_amt) * Decimal::from(100)).round_dp(2)
+                } else {
+                    Decimal::ZERO
+                };
+                let status = if actual > budget_amt {
+                    "Overbudget".to_string()
+                } else {
+                    "On Track".to_string()
+                };
+
+                BudgetVarianceReport {
+                    budget_id: r.budget_id,
+                    cost_center_name: r.cost_center_name.unwrap_or_else(|| "General".to_string()),
+                    fiscal_year: r.fiscal_year,
+                    account_id: r.account_id,
+                    account_code: r.account_code.unwrap_or_default(),
+                    account_name: r.account_name.unwrap_or_else(|| "Unassigned Account".to_string()),
+                    budget_amount: budget_amt,
+                    actual_spent: actual,
+                    variance,
+                    utilization_percentage: util_pct,
+                    status,
+                }
+            })
+            .collect();
+
+        Ok(report)
     }
 }

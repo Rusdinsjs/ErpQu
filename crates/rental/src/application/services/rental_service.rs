@@ -85,7 +85,7 @@ impl RentalService {
 
             // Check availability
             let status = AssetState::from_str(&asset.status);
-            if !matches!(status, Some(AssetState::InInventory | AssetState::Deployed)) {
+            if !matches!(status, Some(AssetState::InInventory)) {
                 return Err(DomainError::business_rule(
                     "asset_availability",
                     &format!(

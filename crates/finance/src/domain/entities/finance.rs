@@ -30,6 +30,7 @@ pub enum NormalBalance {
 #[doctype(module = "Finance", description = "Entity ChartOfAccount")]
 pub struct ChartOfAccount {
     pub id: Uuid,
+    pub company_id: Option<Uuid>,
     pub code: String,
     pub name: String,
     pub account_type: AccountType,
@@ -47,6 +48,7 @@ pub type Account = ChartOfAccount;
 #[derive(Debug, Deserialize, DocType)]
 #[doctype(module = "Finance", description = "Entity CreateAccountRequest")]
 pub struct CreateAccountRequest {
+    pub company_id: Option<Uuid>,
     pub code: String,
     pub name: String,
     pub account_type: AccountType,
@@ -186,6 +188,7 @@ pub struct CreateSalesInvoiceRequest {
     pub date: NaiveDate,
     pub due_date: Option<NaiveDate>,
     pub subject: Option<String>,
+    pub tax_rate: Option<Decimal>,
     pub items: Vec<CreateInvoiceItemRequest>,
     pub attachment_url: Option<String>,
 }
@@ -221,6 +224,7 @@ pub struct PurchaseBill {
 #[derive(Debug, Deserialize, DocType)]
 #[doctype(module = "Finance", description = "Entity CreatePurchaseBillRequest")]
 pub struct CreatePurchaseBillRequest {
+    pub company_id: Option<Uuid>,
     pub bill_number: String,
     pub vendor_id: Uuid,
     pub date: NaiveDate,
@@ -260,6 +264,7 @@ pub struct Expense {
 #[derive(Debug, Deserialize, DocType)]
 #[doctype(module = "Finance", description = "Entity CreateExpenseRequest")]
 pub struct CreateExpenseRequest {
+    pub company_id: Option<Uuid>,
     pub expense_number: Option<String>,
     pub date: NaiveDate,
     pub pay_from_account_id: Uuid,

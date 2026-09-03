@@ -16,6 +16,8 @@ pub use depreciation_service::DepreciationService;
 pub use domain::entities::*;
 pub use finance_service::FinanceService;
 pub use journal_service::JournalService;
-pub use multicurrency_service::MultiCurrencyService;
+pub use multicurrency_service::{
+    ConversionResult, ExchangeRate, MultiCurrencyService, SetExchangeRateRequest,
+};
 pub use posting_engine::AccountingPostingEngine;
 pub use reconciliation_engine::{AuditVarianceItem, ReconciliationEngine, ReconciliationReport};

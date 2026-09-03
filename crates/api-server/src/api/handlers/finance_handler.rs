@@ -21,8 +21,12 @@ use management_system_finance::domain::entities::finance::{
 /// Create a new account
 pub async fn create_account(
     State(state): State<AppState>,
-    Json(payload): Json<CreateAccountRequest>,
+    Extension(tenant_ctx): Extension<TenantContext>,
+    Json(mut payload): Json<CreateAccountRequest>,
 ) -> Result<Json<Value>, AppError> {
+    if payload.company_id.is_none() {
+        payload.company_id = tenant_ctx.company_id.or(Some(tenant_ctx.tenant_id));
+    }
     let account = state.finance_service.create_account(payload).await?;
 
     Ok(Json(json!({
@@ -32,8 +36,12 @@ pub async fn create_account(
 }
 
 /// List all accounts
-pub async fn list_accounts(State(state): State<AppState>) -> Result<Json<Value>, AppError> {
-    let accounts = state.finance_service.list_accounts().await?;
+pub async fn list_accounts(
+    State(state): State<AppState>,
+    Extension(tenant_ctx): Extension<TenantContext>,
+) -> Result<Json<Value>, AppError> {
+    let company_id = tenant_ctx.company_id.unwrap_or(tenant_ctx.tenant_id);
+    let accounts = state.finance_service.list_accounts(company_id).await?;
 
     Ok(Json(json!({
         "success": true,
@@ -42,8 +50,12 @@ pub async fn list_accounts(State(state): State<AppState>) -> Result<Json<Value>,
 }
 
 /// List accounts tree
-pub async fn list_accounts_tree(State(state): State<AppState>) -> Result<Json<Value>, AppError> {
-    let tree = state.finance_service.get_account_tree().await?;
+pub async fn list_accounts_tree(
+    State(state): State<AppState>,
+    Extension(tenant_ctx): Extension<TenantContext>,
+) -> Result<Json<Value>, AppError> {
+    let company_id = tenant_ctx.company_id.unwrap_or(tenant_ctx.tenant_id);
+    let tree = state.finance_service.get_account_tree(company_id).await?;
 
     Ok(Json(json!({
         "success": true,

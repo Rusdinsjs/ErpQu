@@ -67,6 +67,7 @@ fn request(client_id: Uuid, invoice_number: String, amount: Decimal) -> CreateSa
         date: NaiveDate::from_ymd_opt(2026, 8, 6).unwrap(),
         due_date: Some(NaiveDate::from_ymd_opt(2026, 8, 20).unwrap()),
         subject: Some("3R.1.1 DB integration".to_string()),
+        tax_rate: Some(rust_decimal_macros::dec!(0.0000)),
         items: vec![CreateInvoiceItemRequest {
             description: "Line A".to_string(),
             quantity: dec!(1.0000),
@@ -196,6 +197,7 @@ async fn update_add_remove_lines_and_rebuild_draft_effect_atomically(pool: PgPoo
         date: created.date,
         due_date: created.due_date,
         subject: Some("updated".to_string()),
+        tax_rate: Some(rust_decimal_macros::dec!(0.0000)),
         items: vec![
             CreateInvoiceItemRequest {
                 description: "replacement".to_string(),
