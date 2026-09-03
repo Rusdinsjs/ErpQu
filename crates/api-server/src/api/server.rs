@@ -106,6 +106,9 @@ pub struct ServiceRegistry {
     pub pdf_service: management_system_core::application::services::PDFService,
     pub email_service: management_system_core::application::services::EmailService,
     pub tax_renewal_service: management_system_ops::TaxRenewalService,
+    pub crm_pipeline_service: management_system_crm::services::CrmPipelineService,
+    pub bom_service: management_system_ops::BomService,
+    pub multi_currency_service: management_system_finance::MultiCurrencyService,
     pub approval_workflow_service:
         management_system_core::application::services::ApprovalWorkflowService,
     pub approval_entity_type_service:
@@ -441,6 +444,12 @@ impl AppState {
         // Contract
         approval_service.register_callback(Box::new(contract_service.clone()));
 
+        let crm_pipeline_service =
+            management_system_crm::services::CrmPipelineService::new(pool.clone());
+        let bom_service = management_system_ops::BomService::new(pool.clone());
+        let multi_currency_service =
+            management_system_finance::MultiCurrencyService::new(pool.clone());
+
         let registry = Arc::new(ServiceRegistry {
             asset_service,
             asset_expense_service,
@@ -495,6 +504,9 @@ impl AppState {
             file_storage,
             contract_document_repo,
             tax_renewal_service,
+            crm_pipeline_service,
+            bom_service,
+            multi_currency_service,
         });
 
         Self {

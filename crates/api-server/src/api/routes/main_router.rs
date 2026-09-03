@@ -559,7 +559,36 @@ pub fn create_router(state: AppState) -> Router {
             crate::api::routes::inventory_routes::inventory_routes(),
         )
         .nest(
+            "/api/crm",
+            crate::api::routes::crm_routes::crm_routes(),
+        )
+        .nest(
+            "/api/manufacturing",
+            crate::api::routes::manufacturing_routes::manufacturing_routes(),
+        )
+        .nest(
             "/api/ops",
+            crate::api::routes::ops_quality_trip_routes::ops_quality_trip_routes(),
+        )
+        // API v1 Versioning Gateway (QARC-008)
+        .nest(
+            "/api/v1/inventory",
+            crate::api::routes::inventory_routes::inventory_routes(),
+        )
+        .nest(
+            "/api/v1/crm",
+            crate::api::routes::crm_routes::crm_routes(),
+        )
+        .nest(
+            "/api/v1/manufacturing",
+            crate::api::routes::manufacturing_routes::manufacturing_routes(),
+        )
+        .nest(
+            "/api/v1/finance",
+            crate::api::routes::finance_routes::finance_routes(),
+        )
+        .nest(
+            "/api/v1/ops",
             crate::api::routes::ops_quality_trip_routes::ops_quality_trip_routes(),
         )
         .nest(
