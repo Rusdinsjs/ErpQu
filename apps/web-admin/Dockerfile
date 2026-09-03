@@ -1,5 +1,5 @@
 # --- Build Stage ---
-FROM node:20-alpine as builder
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 
@@ -7,7 +7,7 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install
 
-# Copy source and build
+# Copy source and build production assets
 COPY . .
 ENV VITE_API_URL=/api
 ENV VITE_WS_URL=/ws
@@ -16,7 +16,7 @@ RUN npm run build
 # --- Runtime Stage ---
 FROM nginx:alpine
 
-# Copy build files to nginx static directory
+# Copy compiled SPA dist files to nginx html root
 COPY --from=builder /app/dist /usr/share/nginx/html
 
 # SPA Routing Config (All requests fallback to index.html for React Router)
