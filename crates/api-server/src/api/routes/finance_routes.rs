@@ -6,8 +6,7 @@ use axum::{
 };
 
 use crate::api::handlers::{
-    budget_handler, exchange_rate_handler, finance_handler, finance_report_handler,
-    journal_handler,
+    budget_handler, exchange_rate_handler, finance_handler, finance_report_handler, journal_handler,
 };
 use crate::api::server::AppState;
 

@@ -62,7 +62,11 @@ impl LeadRepository {
         .await
     }
 
-    pub async fn update(&self, id: Uuid, req: &UpdateLeadRequest) -> Result<Option<Lead>, sqlx::Error> {
+    pub async fn update(
+        &self,
+        id: Uuid,
+        req: &UpdateLeadRequest,
+    ) -> Result<Option<Lead>, sqlx::Error> {
         sqlx::query_as::<_, Lead>(
             r#"
             UPDATE leads

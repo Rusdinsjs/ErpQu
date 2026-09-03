@@ -25,11 +25,7 @@ impl BomService {
         }
     }
 
-    pub async fn create_bom(
-        &self,
-        company_id: Uuid,
-        req: CreateBomRequest,
-    ) -> DomainResult<Bom> {
+    pub async fn create_bom(&self, company_id: Uuid, req: CreateBomRequest) -> DomainResult<Bom> {
         let bom_id = Uuid::new_v4();
         let bom = Bom {
             id: bom_id,
@@ -61,9 +57,11 @@ impl BomService {
     }
 
     pub async fn get_bom(&self, id: Uuid) -> DomainResult<Option<(Bom, Vec<BomItem>)>> {
-        let bom = self.repo.get_bom(id).await.map_err(|e| {
-            DomainError::internal(format!("Failed to fetch BOM: {}", e))
-        })?;
+        let bom = self
+            .repo
+            .get_bom(id)
+            .await
+            .map_err(|e| DomainError::internal(format!("Failed to fetch BOM: {}", e)))?;
 
         match bom {
             Some(b) => {
@@ -154,7 +152,10 @@ impl BomService {
             .map_err(|e| DomainError::internal(format!("Failed to fetch production order: {}", e)))
     }
 
-    pub async fn list_production_orders(&self, company_id: Uuid) -> DomainResult<Vec<ProductionOrder>> {
+    pub async fn list_production_orders(
+        &self,
+        company_id: Uuid,
+    ) -> DomainResult<Vec<ProductionOrder>> {
         self.repo
             .list_production_orders(company_id)
             .await
@@ -169,6 +170,8 @@ impl BomService {
         self.repo
             .update_production_order_status(id, status)
             .await
-            .map_err(|e| DomainError::internal(format!("Failed to update production order status: {}", e)))
+            .map_err(|e| {
+                DomainError::internal(format!("Failed to update production order status: {}", e))
+            })
     }
 }

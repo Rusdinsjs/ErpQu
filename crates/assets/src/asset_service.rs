@@ -1364,7 +1364,11 @@ impl AssetService {
             gain_or_loss,
             req.reason.as_deref().unwrap_or("-")
         );
-        asset.notes = Some(format!("{}{}", asset.notes.unwrap_or_default(), disposal_note));
+        asset.notes = Some(format!(
+            "{}{}",
+            asset.notes.unwrap_or_default(),
+            disposal_note
+        ));
 
         self.repository
             .update(&asset)

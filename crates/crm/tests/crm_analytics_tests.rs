@@ -10,7 +10,8 @@ fn test_crm_win_loss_calculation() {
     let lost_deals = 2;
     let lost_value = dec!(200000000.0); // 200M IDR total lost
 
-    let report = CrmAnalyticsEngine::calculate_win_loss(won_deals, won_value, lost_deals, lost_value);
+    let report =
+        CrmAnalyticsEngine::calculate_win_loss(won_deals, won_value, lost_deals, lost_value);
 
     assert_eq!(report.total_closed_deals, 10);
     assert_eq!(report.total_won_deals, 8);

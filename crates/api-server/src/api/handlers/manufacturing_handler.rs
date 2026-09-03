@@ -92,10 +92,7 @@ pub async fn list_production_orders(
     Extension(tenant_ctx): Extension<TenantContext>,
 ) -> Result<Json<Value>, AppError> {
     let company_id = tenant_ctx.company_id.unwrap_or(tenant_ctx.tenant_id);
-    let orders = state
-        .bom_service
-        .list_production_orders(company_id)
-        .await?;
+    let orders = state.bom_service.list_production_orders(company_id).await?;
 
     Ok(Json(json!({
         "success": true,

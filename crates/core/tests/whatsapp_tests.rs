@@ -1,6 +1,4 @@
-use management_system_core::domain::entities::whatsapp::{
-    WhatsAppMessage, WhatsAppMessageType,
-};
+use management_system_core::domain::entities::whatsapp::{WhatsAppMessage, WhatsAppMessageType};
 
 #[test]
 fn test_indonesian_phone_normalization() {
@@ -31,7 +29,12 @@ fn test_whatsapp_smart_template_formatting() {
     assert!(spk.contains("SPK PRODUKSI TUNTAS"));
     assert!(spk.contains("Kuantitas Selesai: *5 unit*"));
 
-    let invoice = WhatsAppMessage::format_invoice_reminder("INV/001", "PT Adhi Karya", "Rp 100.000.000", "15/09/2026");
+    let invoice = WhatsAppMessage::format_invoice_reminder(
+        "INV/001",
+        "PT Adhi Karya",
+        "Rp 100.000.000",
+        "15/09/2026",
+    );
     assert!(invoice.contains("PENGINGAT TAGIHAN INVOICE"));
     assert!(invoice.contains("PT Adhi Karya"));
 }

@@ -1,8 +1,6 @@
 //! Quality Control & Quarantine Gatekeeping Invariant Tests (QQLT-001, QQLT-004)
 
-use management_system_ops::domain::quality_control::{
-    InspectionStatus, QualityParameterCriteria,
-};
+use management_system_ops::domain::quality_control::{InspectionStatus, QualityParameterCriteria};
 use management_system_ops::QualityService;
 use rust_decimal_macros::dec;
 use uuid::Uuid;
@@ -19,7 +17,7 @@ fn test_quality_parameter_numeric_bounds() {
     assert!(crit.evaluate_numeric(dec!(11.0)));
     assert!(crit.evaluate_numeric(dec!(10.0))); // Exact min
     assert!(crit.evaluate_numeric(dec!(12.0))); // Exact max
-    assert!(!crit.evaluate_numeric(dec!(9.9)));  // Below min
+    assert!(!crit.evaluate_numeric(dec!(9.9))); // Below min
     assert!(!crit.evaluate_numeric(dec!(12.1))); // Above max
 }
 

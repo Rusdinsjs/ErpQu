@@ -566,10 +566,7 @@ pub fn create_router(state: AppState) -> Router {
             "/api/inventory",
             crate::api::routes::inventory_routes::inventory_routes(),
         )
-        .nest(
-            "/api/crm",
-            crate::api::routes::crm_routes::crm_routes(),
-        )
+        .nest("/api/crm", crate::api::routes::crm_routes::crm_routes())
         .nest(
             "/api/manufacturing",
             crate::api::routes::manufacturing_routes::manufacturing_routes(),
@@ -583,10 +580,7 @@ pub fn create_router(state: AppState) -> Router {
             "/api/v1/inventory",
             crate::api::routes::inventory_routes::inventory_routes(),
         )
-        .nest(
-            "/api/v1/crm",
-            crate::api::routes::crm_routes::crm_routes(),
-        )
+        .nest("/api/v1/crm", crate::api::routes::crm_routes::crm_routes())
         .nest(
             "/api/v1/manufacturing",
             crate::api::routes::manufacturing_routes::manufacturing_routes(),

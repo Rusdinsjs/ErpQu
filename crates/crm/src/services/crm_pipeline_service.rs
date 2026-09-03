@@ -121,10 +121,9 @@ impl CrmPipelineService {
             created_at: Utc::now(),
         };
 
-        self.opportunity_repo
-            .create(&opp)
-            .await
-            .map_err(|e| DomainError::internal(format!("Failed to create opportunity from lead: {}", e)))
+        self.opportunity_repo.create(&opp).await.map_err(|e| {
+            DomainError::internal(format!("Failed to create opportunity from lead: {}", e))
+        })
     }
 
     // --- Opportunities ---
@@ -217,10 +216,7 @@ impl CrmPipelineService {
 
         Ok(
             crate::domain::entities::crm_analytics::CrmAnalyticsEngine::calculate_win_loss(
-                won_deals,
-                won_value,
-                lost_deals,
-                lost_value,
+                won_deals, won_value, lost_deals, lost_value,
             ),
         )
     }

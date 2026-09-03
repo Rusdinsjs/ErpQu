@@ -446,11 +446,13 @@ pub async fn apply_workflow_action(
                     .await;
             }
             "purchaseorder" => {
-                let _ = sqlx::query("UPDATE purchase_orders SET status = $1, updated_at = NOW() WHERE id = $2")
-                    .bind(status_val)
-                    .bind(payload.document_id)
-                    .execute(&state.pool)
-                    .await;
+                let _ = sqlx::query(
+                    "UPDATE purchase_orders SET status = $1, updated_at = NOW() WHERE id = $2",
+                )
+                .bind(status_val)
+                .bind(payload.document_id)
+                .execute(&state.pool)
+                .await;
             }
             "leaveapplication" => {
                 let _ = sqlx::query("UPDATE hr_leave_applications SET status = $1, updated_at = NOW() WHERE id = $2")
@@ -460,18 +462,22 @@ pub async fn apply_workflow_action(
                     .await;
             }
             "expenseclaim" => {
-                let _ = sqlx::query("UPDATE hr_expense_claims SET status = $1, updated_at = NOW() WHERE id = $2")
-                    .bind(status_val)
-                    .bind(payload.document_id)
-                    .execute(&state.pool)
-                    .await;
+                let _ = sqlx::query(
+                    "UPDATE hr_expense_claims SET status = $1, updated_at = NOW() WHERE id = $2",
+                )
+                .bind(status_val)
+                .bind(payload.document_id)
+                .execute(&state.pool)
+                .await;
             }
             "rentalcontract" => {
-                let _ = sqlx::query("UPDATE contracts SET status = $1, updated_at = NOW() WHERE id = $2")
-                    .bind(status_val)
-                    .bind(payload.document_id)
-                    .execute(&state.pool)
-                    .await;
+                let _ = sqlx::query(
+                    "UPDATE contracts SET status = $1, updated_at = NOW() WHERE id = $2",
+                )
+                .bind(status_val)
+                .bind(payload.document_id)
+                .execute(&state.pool)
+                .await;
             }
             _ => {}
         }

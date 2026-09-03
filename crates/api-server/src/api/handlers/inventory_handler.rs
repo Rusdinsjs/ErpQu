@@ -306,7 +306,10 @@ pub async fn list_low_stock_items(
 
 pub async fn get_abc_analysis(
     State(state): State<AppState>,
-) -> Result<Json<ApiResponse<management_system_inventory::domain::abc_analysis::AbcAnalysisReport>>, AppError> {
+) -> Result<
+    Json<ApiResponse<management_system_inventory::domain::abc_analysis::AbcAnalysisReport>>,
+    AppError,
+> {
     let report = state.inventory_service.get_abc_analysis().await?;
     Ok(Json(ApiResponse::success(report)))
 }

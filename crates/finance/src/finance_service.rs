@@ -112,7 +112,9 @@ impl FinanceService {
                 &invoice.status
             };
 
-            self.repo.update_sales_invoice_payment_status(req.invoice_id, new_amount_paid, new_status).await?;
+            self.repo
+                .update_sales_invoice_payment_status(req.invoice_id, new_amount_paid, new_status)
+                .await?;
         } else if req.invoice_type == "PURCHASE_BILL" {
             let bill_opt = self.repo.get_purchase_bill_by_id(req.invoice_id).await?;
             let bill = bill_opt.ok_or_else(|| {
@@ -135,9 +137,14 @@ impl FinanceService {
                 &bill.status
             };
 
-            self.repo.update_purchase_bill_payment_status(req.invoice_id, new_amount_paid, new_status).await?;
+            self.repo
+                .update_purchase_bill_payment_status(req.invoice_id, new_amount_paid, new_status)
+                .await?;
         } else {
-            return Err(DomainError::validation("invoice_type", "Invalid invoice type"));
+            return Err(DomainError::validation(
+                "invoice_type",
+                "Invalid invoice type",
+            ));
         }
 
         let allocation = PaymentAllocation {
@@ -161,7 +168,9 @@ impl FinanceService {
         start_date: Option<chrono::NaiveDate>,
         end_date: Option<chrono::NaiveDate>,
     ) -> DomainResult<Vec<TrialBalanceEntry>> {
-        self.repo.get_trial_balance(company_id, start_date, end_date).await
+        self.repo
+            .get_trial_balance(company_id, start_date, end_date)
+            .await
     }
 
     // --- Chart of Accounts Management ---
@@ -234,7 +243,9 @@ impl FinanceService {
         company_id: Uuid,
         mapping_key: &str,
     ) -> DomainResult<Option<ChartOfAccount>> {
-        self.repo.get_account_by_mapping(company_id, mapping_key).await
+        self.repo
+            .get_account_by_mapping(company_id, mapping_key)
+            .await
     }
 
     pub async fn upsert_account_mapping(
@@ -331,7 +342,9 @@ impl FinanceService {
         start_date: Option<chrono::NaiveDate>,
         end_date: Option<chrono::NaiveDate>,
     ) -> DomainResult<Vec<TrialBalanceEntry>> {
-        self.repo.get_trial_balance(company_id, start_date, end_date).await
+        self.repo
+            .get_trial_balance(company_id, start_date, end_date)
+            .await
     }
 
     pub async fn get_income_statement(
@@ -370,7 +383,10 @@ impl FinanceService {
         company_id: Uuid,
         as_of_date: Option<chrono::NaiveDate>,
     ) -> DomainResult<Vec<FinancialReportEntry>> {
-        let trial_balance = self.repo.get_trial_balance(company_id, None, as_of_date).await?;
+        let trial_balance = self
+            .repo
+            .get_trial_balance(company_id, None, as_of_date)
+            .await?;
 
         let mut report = Vec::new();
         for entry in trial_balance {
@@ -437,7 +453,7 @@ impl FinanceService {
             req.items.iter().map(|i| i.quantity * i.unit_price).sum();
         let tax_rate = req.tax_rate.unwrap_or(rust_decimal::Decimal::new(11, 2)); // Default 11% PPN Indonesia
         let tax = (total * tax_rate).round_dp(2);
-        
+
         let invoice_id = Uuid::new_v4();
         let invoice = SalesInvoice {
             id: invoice_id,
@@ -544,10 +560,7 @@ impl FinanceService {
             if let Some(vat_acc) = vat_out_acc {
                 journal_lines.push(CreateJournalLineRequest {
                     account_id: vat_acc.id,
-                    description: Some(format!(
-                        "PPN Keluaran {}",
-                        created_invoice.invoice_number
-                    )),
+                    description: Some(format!("PPN Keluaran {}", created_invoice.invoice_number)),
                     debit: rust_decimal::Decimal::ZERO,
                     credit: tax,
                 });
@@ -1400,7 +1413,9 @@ impl FinanceService {
         start_date: Option<chrono::NaiveDate>,
         end_date: Option<chrono::NaiveDate>,
     ) -> DomainResult<Vec<TaxInvoiceRecord>> {
-        self.repo.list_tax_invoices(company_id, start_date, end_date).await
+        self.repo
+            .list_tax_invoices(company_id, start_date, end_date)
+            .await
     }
 
     pub async fn create_tax_invoice(
@@ -1416,28 +1431,32 @@ impl FinanceService {
         start_date: Option<chrono::NaiveDate>,
         end_date: Option<chrono::NaiveDate>,
     ) -> DomainResult<String> {
-        let records = self.repo.list_tax_invoices(company_id, start_date, end_date).await?;
-        let headers: Vec<TaxInvoiceHeader> = records.into_iter().map(|rec| {
-            let dpp = rec.tax_base;
-            let ppn = rec.vat_amount;
-            TaxInvoiceHeader {
-                id: rec.id,
-                company_id: rec.company_id,
-                sales_invoice_id: rec.sales_invoice_id,
-                tax_invoice_number: rec.tax_invoice_number.clone(),
-                transaction_type_code: "01".to_string(),
-                is_replacement: false,
-                tax_period_month: rec.effective_date.month(),
-                tax_period_year: rec.effective_date.year(),
-                invoice_date: rec.effective_date,
-                buyer_npwp: rec.npwp_buyer,
-                buyer_name: rec.name_buyer,
-                buyer_address: "Indonesia".to_string(),
-                total_dpp: dpp,
-                total_ppn: ppn,
-                reference_number: rec.tax_invoice_number,
-                items: vec![
-                    TaxInvoiceItem {
+        let records = self
+            .repo
+            .list_tax_invoices(company_id, start_date, end_date)
+            .await?;
+        let headers: Vec<TaxInvoiceHeader> = records
+            .into_iter()
+            .map(|rec| {
+                let dpp = rec.tax_base;
+                let ppn = rec.vat_amount;
+                TaxInvoiceHeader {
+                    id: rec.id,
+                    company_id: rec.company_id,
+                    sales_invoice_id: rec.sales_invoice_id,
+                    tax_invoice_number: rec.tax_invoice_number.clone(),
+                    transaction_type_code: "01".to_string(),
+                    is_replacement: false,
+                    tax_period_month: rec.effective_date.month(),
+                    tax_period_year: rec.effective_date.year(),
+                    invoice_date: rec.effective_date,
+                    buyer_npwp: rec.npwp_buyer,
+                    buyer_name: rec.name_buyer,
+                    buyer_address: "Indonesia".to_string(),
+                    total_dpp: dpp,
+                    total_ppn: ppn,
+                    reference_number: rec.tax_invoice_number,
+                    items: vec![TaxInvoiceItem {
                         item_code: "INV-ITEM".to_string(),
                         item_name: "Penyerahan Barang/Jasa Kena Pajak".to_string(),
                         unit_price: dpp,
@@ -1448,10 +1467,10 @@ impl FinanceService {
                         ppn,
                         ppnbm_rate: rust_decimal_macros::dec!(0.0),
                         ppnbm_amount: rust_decimal_macros::dec!(0.0),
-                    }
-                ],
-            }
-        }).collect();
+                    }],
+                }
+            })
+            .collect();
 
         let batch = EFakturCsvBatch::new(headers);
         Ok(batch.generate_djp_csv())

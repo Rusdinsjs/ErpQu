@@ -71,7 +71,7 @@ jobs:
 
       - name: "1.4 ✅ Database Schema Preparation"
         env:
-          DATABASE_URL: postgres://postgres:postgrespassword@localhost:5432/erp_system_test
+          DATABASE_URL: postgres://postgres:postgrespassword@localhost:5432/erp_system_test?options=-c%20search_path=public,hr,crm,rental,inventory,commercial,finance,ops
         run: |
           # Create schemas required by multi-schema architecture
           PGPASSWORD=postgrespassword psql -h localhost -U postgres -d erp_system_test -c "
@@ -82,7 +82,7 @@ jobs:
             CREATE SCHEMA IF NOT EXISTS commercial;
             CREATE SCHEMA IF NOT EXISTS finance;
             CREATE SCHEMA IF NOT EXISTS ops;
-            CREATE ROLE erpqu_app NOLOGIN;
+            DO \$\$ BEGIN IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'erpqu_app') THEN CREATE ROLE erpqu_app NOLOGIN; END IF; END \$\$;
           "
 
       - name: "1.4.1 ⚡ Install SQLx CLI"
@@ -92,16 +92,16 @@ jobs:
 
       - name: "1.5 ✅ Database Migration Dry-Run"
         env:
-          DATABASE_URL: postgres://postgres:postgrespassword@localhost:5432/erp_system_test
-          MIGRATION_DATABASE_URL: postgres://postgres:postgrespassword@localhost:5432/erp_system_test
+          DATABASE_URL: postgres://postgres:postgrespassword@localhost:5432/erp_system_test?options=-c%20search_path=public,hr,crm,rental,inventory,commercial,finance,ops
+          MIGRATION_DATABASE_URL: postgres://postgres:postgrespassword@localhost:5432/erp_system_test?options=-c%20search_path=public,hr,crm,rental,inventory,commercial,finance,ops
         run: |
           sqlx migrate run --source database/migrations/ 2>&1 | tail -20
           echo "✅ All migrations applied successfully"
 
       - name: "1.6 ✅ Backend Integration Tests"
         env:
-          DATABASE_URL: postgres://postgres:postgrespassword@localhost:5432/erp_system_test
-          MIGRATION_DATABASE_URL: postgres://postgres:postgrespassword@localhost:5432/erp_system_test
+          DATABASE_URL: postgres://postgres:postgrespassword@localhost:5432/erp_system_test?options=-c%20search_path=public,hr,crm,rental,inventory,commercial,finance,ops
+          MIGRATION_DATABASE_URL: postgres://postgres:postgrespassword@localhost:5432/erp_system_test?options=-c%20search_path=public,hr,crm,rental,inventory,commercial,finance,ops
           REDIS_URL: redis://localhost:6379
           JWT_SECRET: super-secret-key-for-testing-only-minimum-32-chars!!
           ENVIRONMENT: test

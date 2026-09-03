@@ -51,7 +51,9 @@ pub async fn get_latest_rate(
     Query(query): Query<LatestRateQuery>,
 ) -> Result<Json<Value>, AppError> {
     let company_id = tenant_ctx.company_id.unwrap_or(tenant_ctx.tenant_id);
-    let target_date = query.date.unwrap_or_else(|| chrono::Utc::now().date_naive());
+    let target_date = query
+        .date
+        .unwrap_or_else(|| chrono::Utc::now().date_naive());
 
     let rate = state
         .multi_currency_service
@@ -75,7 +77,9 @@ pub async fn convert_currency(
     Json(payload): Json<ConvertCurrencyRequest>,
 ) -> Result<Json<Value>, AppError> {
     let company_id = tenant_ctx.company_id.unwrap_or(tenant_ctx.tenant_id);
-    let target_date = payload.date.unwrap_or_else(|| chrono::Utc::now().date_naive());
+    let target_date = payload
+        .date
+        .unwrap_or_else(|| chrono::Utc::now().date_naive());
 
     let result = state
         .multi_currency_service

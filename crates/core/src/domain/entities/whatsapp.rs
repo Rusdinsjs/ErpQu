@@ -101,7 +101,12 @@ impl WhatsAppMessage {
     }
 
     /// Smart Template: Format Sales Invoice Payment Reminder
-    pub fn format_invoice_reminder(invoice_num: &str, client_name: &str, amount_str: &str, due_date: &str) -> String {
+    pub fn format_invoice_reminder(
+        invoice_num: &str,
+        client_name: &str,
+        amount_str: &str,
+        due_date: &str,
+    ) -> String {
         format!(
             "📄 *[PENGINGAT TAGIHAN INVOICE - ERPQu]*\n\n\
             Kepada Yth. *{}*,\n\

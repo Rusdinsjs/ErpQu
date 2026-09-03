@@ -3,7 +3,9 @@
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use crate::domain::entities::opportunity::{Opportunity, PipelineSummary, UpdateOpportunityRequest};
+use crate::domain::entities::opportunity::{
+    Opportunity, PipelineSummary, UpdateOpportunityRequest,
+};
 
 #[derive(Clone)]
 pub struct OpportunityRepository {
@@ -62,7 +64,11 @@ impl OpportunityRepository {
         .await
     }
 
-    pub async fn update(&self, id: Uuid, req: &UpdateOpportunityRequest) -> Result<Option<Opportunity>, sqlx::Error> {
+    pub async fn update(
+        &self,
+        id: Uuid,
+        req: &UpdateOpportunityRequest,
+    ) -> Result<Option<Opportunity>, sqlx::Error> {
         sqlx::query_as::<_, Opportunity>(
             r#"
             UPDATE opportunities
@@ -93,7 +99,10 @@ impl OpportunityRepository {
         Ok(result.rows_affected() > 0)
     }
 
-    pub async fn get_pipeline_summary(&self, company_id: Uuid) -> Result<Vec<PipelineSummary>, sqlx::Error> {
+    pub async fn get_pipeline_summary(
+        &self,
+        company_id: Uuid,
+    ) -> Result<Vec<PipelineSummary>, sqlx::Error> {
         sqlx::query_as::<_, PipelineSummary>(
             r#"
             SELECT stage, COUNT(*)::bigint AS count, COALESCE(SUM(estimated_value), 0) AS total_value

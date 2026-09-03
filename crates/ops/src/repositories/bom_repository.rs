@@ -128,7 +128,10 @@ impl BomRepository {
         .await
     }
 
-    pub async fn get_production_order(&self, id: Uuid) -> Result<Option<ProductionOrder>, sqlx::Error> {
+    pub async fn get_production_order(
+        &self,
+        id: Uuid,
+    ) -> Result<Option<ProductionOrder>, sqlx::Error> {
         sqlx::query_as::<_, ProductionOrder>(
             r#"
             SELECT id, company_id, production_order_number, bom_id, item_id, target_qty, produced_qty, warehouse_id, status, wip_account_id, created_at
@@ -141,7 +144,10 @@ impl BomRepository {
         .await
     }
 
-    pub async fn list_production_orders(&self, company_id: Uuid) -> Result<Vec<ProductionOrder>, sqlx::Error> {
+    pub async fn list_production_orders(
+        &self,
+        company_id: Uuid,
+    ) -> Result<Vec<ProductionOrder>, sqlx::Error> {
         sqlx::query_as::<_, ProductionOrder>(
             r#"
             SELECT id, company_id, production_order_number, bom_id, item_id, target_qty, produced_qty, warehouse_id, status, wip_account_id, created_at

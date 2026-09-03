@@ -38,7 +38,10 @@ pub async fn create_lead(
     Json(payload): Json<CreateLeadRequest>,
 ) -> Result<Json<Value>, AppError> {
     let company_id = tenant_ctx.company_id.unwrap_or(tenant_ctx.tenant_id);
-    let lead = state.crm_pipeline_service.create_lead(company_id, payload).await?;
+    let lead = state
+        .crm_pipeline_service
+        .create_lead(company_id, payload)
+        .await?;
 
     Ok(Json(json!({
         "success": true,

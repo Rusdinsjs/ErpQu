@@ -36,7 +36,10 @@ pub async fn create_budget(
     Json(payload): Json<CreateBudgetRequest>,
 ) -> Result<Json<Value>, AppError> {
     let company_id = tenant_ctx.company_id.unwrap_or(tenant_ctx.tenant_id);
-    let budget = state.finance_service.create_budget(company_id, payload).await?;
+    let budget = state
+        .finance_service
+        .create_budget(company_id, payload)
+        .await?;
 
     Ok(Json(json!({
         "success": true,

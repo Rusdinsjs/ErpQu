@@ -600,7 +600,11 @@ impl FinanceRepository {
         self.get_account_by_id(id).await
     }
 
-    pub async fn find_by_code(&self, code: &str, company_id: Option<Uuid>) -> DomainResult<Option<ChartOfAccount>> {
+    pub async fn find_by_code(
+        &self,
+        code: &str,
+        company_id: Option<Uuid>,
+    ) -> DomainResult<Option<ChartOfAccount>> {
         self.get_account_by_code(code, company_id).await
     }
 
@@ -882,7 +886,11 @@ impl FinanceRepository {
         Ok(row.map(Into::into))
     }
 
-    pub async fn get_account_by_code(&self, code: &str, company_id: Option<Uuid>) -> DomainResult<Option<ChartOfAccount>> {
+    pub async fn get_account_by_code(
+        &self,
+        code: &str,
+        company_id: Option<Uuid>,
+    ) -> DomainResult<Option<ChartOfAccount>> {
         let row = sqlx::query_as::<_, ChartOfAccountRow>(
             r#"
             SELECT id, company_id, code, name, account_type::text AS account_type, normal_balance::text AS normal_balance, parent_id, is_active, description, currency, created_at, updated_at
@@ -1269,7 +1277,12 @@ impl FinanceRepository {
         Ok(row.map(Into::into))
     }
 
-    pub async fn update_purchase_bill_payment_status(&self, id: Uuid, amount_paid: Decimal, status: &str) -> DomainResult<()> {
+    pub async fn update_purchase_bill_payment_status(
+        &self,
+        id: Uuid,
+        amount_paid: Decimal,
+        status: &str,
+    ) -> DomainResult<()> {
         sqlx::query(
             r#"
             UPDATE purchase_bills
@@ -1287,7 +1300,12 @@ impl FinanceRepository {
         Ok(())
     }
 
-    pub async fn update_sales_invoice_payment_status(&self, id: Uuid, amount_paid: Decimal, status: &str) -> DomainResult<()> {
+    pub async fn update_sales_invoice_payment_status(
+        &self,
+        id: Uuid,
+        amount_paid: Decimal,
+        status: &str,
+    ) -> DomainResult<()> {
         sqlx::query(
             r#"
             UPDATE sales_invoices
@@ -2054,7 +2072,8 @@ impl FinanceRepository {
                 cost_center_id: r.cost_center_id,
                 fiscal_year: r.fiscal_year,
                 monthly_distribution: r.monthly_distribution,
-                action_if_accumulated_monthly_budget_exceeded: r.action_if_accumulated_monthly_budget_exceeded,
+                action_if_accumulated_monthly_budget_exceeded: r
+                    .action_if_accumulated_monthly_budget_exceeded,
                 action_if_annual_budget_exceeded: r.action_if_annual_budget_exceeded,
                 created_at: r.created_at,
             })
@@ -2066,7 +2085,11 @@ impl FinanceRepository {
         budget: &Budget,
         items: &[CreateBudgetAccountItem],
     ) -> DomainResult<Budget> {
-        let mut tx = self.pool.begin().await.map_err(|e| DomainError::Database(e.to_string()))?;
+        let mut tx = self
+            .pool
+            .begin()
+            .await
+            .map_err(|e| DomainError::Database(e.to_string()))?;
 
         sqlx::query(
             r#"
@@ -2104,7 +2127,9 @@ impl FinanceRepository {
             .map_err(|e| DomainError::Database(e.to_string()))?;
         }
 
-        tx.commit().await.map_err(|e| DomainError::Database(e.to_string()))?;
+        tx.commit()
+            .await
+            .map_err(|e| DomainError::Database(e.to_string()))?;
 
         Ok(budget.clone())
     }
@@ -2179,7 +2204,9 @@ impl FinanceRepository {
                     fiscal_year: r.fiscal_year,
                     account_id: r.account_id,
                     account_code: r.account_code.unwrap_or_default(),
-                    account_name: r.account_name.unwrap_or_else(|| "Unassigned Account".to_string()),
+                    account_name: r
+                        .account_name
+                        .unwrap_or_else(|| "Unassigned Account".to_string()),
                     budget_amount: budget_amt,
                     actual_spent: actual,
                     variance,
@@ -2202,7 +2229,7 @@ impl FinanceRepository {
             "SELECT id, company_id, sales_invoice_id, tax_invoice_number, npwp_buyer, name_buyer,
                     tax_base, vat_amount, vat_rate, effective_date, status, created_at
              FROM id_tax_invoices
-             WHERE company_id = $1"
+             WHERE company_id = $1",
         );
         if start_date.is_some() {
             query.push_str(" AND effective_date >= $2");
@@ -2224,7 +2251,10 @@ impl FinanceRepository {
             q = q.bind(ed);
         }
 
-        let rows = q.fetch_all(&self.pool).await.map_err(|e| DomainError::Database(e.to_string()))?;
+        let rows = q
+            .fetch_all(&self.pool)
+            .await
+            .map_err(|e| DomainError::Database(e.to_string()))?;
         Ok(rows.into_iter().map(Into::into).collect())
     }
 

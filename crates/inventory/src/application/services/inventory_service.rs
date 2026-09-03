@@ -764,13 +764,17 @@ impl InventoryService {
             .map_err(|e| DomainError::Database(e.to_string()))
     }
 
-    pub async fn get_abc_analysis(&self) -> DomainResult<crate::domain::abc_analysis::AbcAnalysisReport> {
+    pub async fn get_abc_analysis(
+        &self,
+    ) -> DomainResult<crate::domain::abc_analysis::AbcAnalysisReport> {
         let items = self
             .repository
             .list_items(None, None)
             .await
             .map_err(|e| DomainError::Database(e.to_string()))?;
 
-        Ok(crate::domain::abc_analysis::AbcAnalysisEngine::calculate(&items))
+        Ok(crate::domain::abc_analysis::AbcAnalysisEngine::calculate(
+            &items,
+        ))
     }
 }

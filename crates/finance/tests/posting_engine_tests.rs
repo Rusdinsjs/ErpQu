@@ -1,7 +1,9 @@
 //! Accounting Posting Engine & GL Invariants Integration Tests (QACC-003, QACC-004)
 
 use chrono::{NaiveDate, Utc};
-use management_system_finance::domain::entities::gl_entry::{GLEntry, PostingInstruction, PostingLineItem};
+use management_system_finance::domain::entities::gl_entry::{
+    GLEntry, PostingInstruction, PostingLineItem,
+};
 use rust_decimal::Decimal;
 use rust_decimal_macros::dec;
 use uuid::Uuid;

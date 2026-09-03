@@ -6,9 +6,7 @@ use std::sync::Arc;
 use tokio::sync::RwLock;
 use uuid::Uuid;
 
-use crate::domain::entities::whatsapp::{
-    WhatsAppConfig, WhatsAppDeliveryLog, WhatsAppMessage,
-};
+use crate::domain::entities::whatsapp::{WhatsAppConfig, WhatsAppDeliveryLog, WhatsAppMessage};
 use crate::domain::errors::DomainResult;
 
 #[derive(Clone)]

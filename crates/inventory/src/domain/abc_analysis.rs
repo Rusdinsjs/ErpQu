@@ -108,19 +108,20 @@ impl AbcAnalysisEngine {
             };
 
             // Categorize into A (<= 70%), B (70% - 90%), C (> 90%)
-            let class = if cum_pct <= dec!(70.0) || (class_a_count == 0 && total_val > Decimal::ZERO) {
-                class_a_count += 1;
-                class_a_val += val;
-                AbcClass::A
-            } else if cum_pct <= dec!(90.0) || (class_b_count == 0 && cum_pct <= dec!(95.0)) {
-                class_b_count += 1;
-                class_b_val += val;
-                AbcClass::B
-            } else {
-                class_c_count += 1;
-                class_c_val += val;
-                AbcClass::C
-            };
+            let class =
+                if cum_pct <= dec!(70.0) || (class_a_count == 0 && total_val > Decimal::ZERO) {
+                    class_a_count += 1;
+                    class_a_val += val;
+                    AbcClass::A
+                } else if cum_pct <= dec!(90.0) || (class_b_count == 0 && cum_pct <= dec!(95.0)) {
+                    class_b_count += 1;
+                    class_b_val += val;
+                    AbcClass::B
+                } else {
+                    class_c_count += 1;
+                    class_c_val += val;
+                    AbcClass::C
+                };
 
             entries.push(AbcItemEntry {
                 item_id: item.id,

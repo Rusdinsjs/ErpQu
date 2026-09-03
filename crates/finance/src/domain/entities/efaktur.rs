@@ -44,7 +44,7 @@ pub struct TaxInvoiceHeader {
     pub sales_invoice_id: Option<Uuid>,
     pub tax_invoice_number: String, // NSFP: e.g. 010.000-26.00000001
     pub transaction_type_code: String, // 01, 02, etc.
-    pub is_replacement: bool, // false = 0, true = 1
+    pub is_replacement: bool,       // false = 0, true = 1
     pub tax_period_month: u32,
     pub tax_period_year: i32,
     pub invoice_date: NaiveDate,

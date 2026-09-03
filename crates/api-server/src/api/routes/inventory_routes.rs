@@ -26,10 +26,7 @@ pub fn inventory_routes() -> Router<AppState> {
             "/alerts/low-stock",
             get(inventory_handler::list_low_stock_items),
         )
-        .route(
-            "/analytics/abc",
-            get(inventory_handler::get_abc_analysis),
-        )
+        .route("/analytics/abc", get(inventory_handler::get_abc_analysis))
         .route(
             "/items/:id",
             get(inventory_handler::get_item)

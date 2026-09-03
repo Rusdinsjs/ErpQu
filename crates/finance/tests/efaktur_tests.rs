@@ -35,20 +35,18 @@ fn test_djp_csv_generation_fk_and_of() {
         total_dpp: dec!(100000000.00),
         total_ppn: dec!(11000000.00),
         reference_number: "INV/2026/09/001".to_string(),
-        items: vec![
-            TaxInvoiceItem {
-                item_code: "SEWA-EXC".to_string(),
-                item_name: "Sewa Excavator PC200".to_string(),
-                unit_price: dec!(100000000.00),
-                quantity: dec!(1.0),
-                total_price: dec!(100000000.00),
-                discount: dec!(0.0),
-                dpp: dec!(100000000.00),
-                ppn: dec!(11000000.00),
-                ppnbm_rate: dec!(0.0),
-                ppnbm_amount: dec!(0.0),
-            }
-        ],
+        items: vec![TaxInvoiceItem {
+            item_code: "SEWA-EXC".to_string(),
+            item_name: "Sewa Excavator PC200".to_string(),
+            unit_price: dec!(100000000.00),
+            quantity: dec!(1.0),
+            total_price: dec!(100000000.00),
+            discount: dec!(0.0),
+            dpp: dec!(100000000.00),
+            ppn: dec!(11000000.00),
+            ppnbm_rate: dec!(0.0),
+            ppnbm_amount: dec!(0.0),
+        }],
     };
 
     let fk = inv.to_fk_line();

@@ -142,7 +142,10 @@ fn test_generate_double_declining_schedule_invariants() {
     let total_depreciated = schedule.last().unwrap().accumulated_depreciation;
     let expected_depreciable = purchase_cost - residual_value;
     assert_eq!(total_depreciated, expected_depreciable);
-    assert_eq!(schedule.last().unwrap().remaining_book_value, residual_value);
+    assert_eq!(
+        schedule.last().unwrap().remaining_book_value,
+        residual_value
+    );
 }
 
 #[test]
@@ -167,5 +170,8 @@ fn test_generate_sum_of_years_schedule_invariants() {
     let total_depreciated = schedule.last().unwrap().accumulated_depreciation;
     let expected_depreciable = purchase_cost - residual_value;
     assert_eq!(total_depreciated, expected_depreciable);
-    assert_eq!(schedule.last().unwrap().remaining_book_value, purchase_cost - total_depreciated);
+    assert_eq!(
+        schedule.last().unwrap().remaining_book_value,
+        purchase_cost - total_depreciated
+    );
 }

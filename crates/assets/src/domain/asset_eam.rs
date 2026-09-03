@@ -98,15 +98,24 @@ impl AssetEamEngine {
         total_months: usize,
     ) -> DomainResult<Vec<DepreciationScheduleItem>> {
         match method {
-            DepreciationMethod::StraightLine => {
-                Self::generate_straight_line_schedule(purchase_cost, residual_value, start_date, total_months)
-            }
-            DepreciationMethod::DoubleDecliningBalance => {
-                Self::generate_double_declining_schedule(purchase_cost, residual_value, start_date, total_months)
-            }
-            DepreciationMethod::SumOfTheYearsDigits => {
-                Self::generate_sum_of_years_schedule(purchase_cost, residual_value, start_date, total_months)
-            }
+            DepreciationMethod::StraightLine => Self::generate_straight_line_schedule(
+                purchase_cost,
+                residual_value,
+                start_date,
+                total_months,
+            ),
+            DepreciationMethod::DoubleDecliningBalance => Self::generate_double_declining_schedule(
+                purchase_cost,
+                residual_value,
+                start_date,
+                total_months,
+            ),
+            DepreciationMethod::SumOfTheYearsDigits => Self::generate_sum_of_years_schedule(
+                purchase_cost,
+                residual_value,
+                start_date,
+                total_months,
+            ),
         }
     }
 
