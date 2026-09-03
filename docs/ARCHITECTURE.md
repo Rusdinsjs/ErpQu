@@ -1,8 +1,8 @@
 # ERPQu System Architecture & Engineering Design
 
-## System Overview
+## 1. System Overview
 
-ERPQu is an enterprise-grade modular monolith ERP system engineered in **Rust** (backend) and **React / TypeScript / Vite** (web admin). The architecture emphasizes strict type safety, zero runtime panics, high concurrency performance, double-entry accounting integrity, and multi-tenant isolation.
+ERPQu is an enterprise-grade modular monolith ERP system engineered in **Rust** (backend) and **React 18 / TypeScript / Vite** (web admin). The architecture emphasizes strict type safety, zero runtime panics, high concurrency performance, double-entry accounting integrity, and multi-tenant corporate isolation.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
@@ -15,72 +15,106 @@ ERPQu is an enterprise-grade modular monolith ERP system engineered in **Rust** 
 │                      Nginx Reverse Proxy & TLS                          │
 │     • Rate Limiting (Zones)  • Let's Encrypt TLS 1.3  • Gzip / HTTP/2     │
 └────────────────────────────────────┬────────────────────────────────────┘
-                                     │ Reverse Proxy (:8080)
+                                     │ Reverse Proxy (:8181)
                                      ▼
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                           Axum API Gateway                              │
-│   • CORS Dynamic Policy  • Security Headers  • API Version Rewrite     │
-│   • Rate Limiting        • Request Tracing   • Tenant Context Auth      │
+│   • CORS Dynamic Policy   • Security Headers   • Dual Routing /api & /v1│
+│   • Token Blacklisting    • Request Tracing    • Multi-Tenant Isolation │
 └────────────────────────────────────┬────────────────────────────────────┘
                                      │
-           ┌─────────────────────────┼─────────────────────────┐
-           ▼                         ▼                         ▼
-┌────────────────────┐    ┌────────────────────┐    ┌────────────────────┐
-│   Asset Crate      │    │   Finance Crate    │    │      HR Crate      │
-│ Lifecycle & Assets │    │ Accounting Kernel  │    │ Attendance & Payroll│
-└──────────┬─────────┘    └──────────┬─────────┘    └──────────┬─────────┘
-           │                         │                         │
-           └─────────────────────────┼─────────────────────────┘
-                                     │
-                                     ▼
+       ┌───────────────────┬─────────┴─────────┬───────────────────┐
+       ▼                   ▼                   ▼                   ▼
+┌──────────────┐    ┌──────────────┐    ┌──────────────┐    ┌──────────────┐
+│Finance Crate │    │Inventory     │    │CRM Crate     │    │Ops & Mfg     │
+│• GL Isolation│    │• ABC Pareto  │    │• Pipeline    │    │• BOM Explode │
+│• PSAK COA    │    │• Stock Alert │    │• Win/Loss    │    │• SPK Orders  │
+│• e-Faktur DJP│    │• Ledger FIFO │    │• Leads       │    │• Quality Gate│
+└──────┬───────┘    └──────┬───────┘    └──────┬───────┘    └──────┬───────┘
+       │                   │                   │                   │
+       └───────────────────┼───────────────────┴───────────────────┘
+                           │
+                           ▼
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                          Core Infrastructure                            │
-│    • PostgreSQL 17 (6 Schemas: public, hr, crm, finance, inventory, ops)│
+│    • PostgreSQL 17 (Schemas: public, hr, crm, finance, inventory, ops)  │
 │    • Redis 7 (Authenticated Session Tracker & Token Revocation Cache)   │
 │    • Outbound Webhook Delivery Engine (HMAC-SHA256 Signed)             │
-│    • Prometheus Metrics Exporter (/metrics)                            │
+│    • WhatsApp Notification Gateway (Indonesian Telco Normalization)    │
+│    • Prometheus Metrics Exporter (/metrics) & Swagger UI (/swagger-ui)  │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Architectural Layers & Workspace Crates
+## 2. Architectural Layers & Workspace Crates
 
-| Crate | Responsibility | Technologies |
-|-------|----------------|--------------|
-| `crates/api-server` | HTTP Server, Routing, Handlers, Middleware, OpenAPI | Axum, Tokio, Utoipa, Tower-HTTP |
-| `crates/core` | Domain Entities, Value Objects, Repositories, DTOs, Auth | SQLx, Serde, Chrono, Rust Decimal |
-| `crates/finance` | Posting Engine, Closing Engine, Multi-Currency, Indonesian Tax | Double-Entry Kernel, Decimal |
-| `crates/assets` | Asset Master, Lifecycle State Machine, Depreciation | SQLx, Rust Decimal |
-| `crates/hr` | Employee Directory, Attendance, TER PPh 21, BPJS | SQLx, Chrono |
-| `crates/inventory` | Stock Balance, Stock Ledger, Warehouses, Opname | SQLx, Serde |
-| `crates/ops` | Quality Trips, P2H Inspections, Maintenance | SQLx |
-| `crates/rental` | Rented-Out Operations, Internal Loans, Contracts | SQLx |
-
----
-
-## Data Integrity & Financial Invariants
-
-1. **Double-Entry Accounting Rule**: $\sum \text{Debit} = \sum \text{Credit}$ enforced both in application posting engine (`posting_engine.rs`) and via PostgreSQL deferred `CONSTRAINT TRIGGER`.
-2. **General Ledger Immutability**: `gl_entries` table is append-only. UPDATE and DELETE operations trigger PostgreSQL exceptions (`prevent_gl_entries_mutation`). Reversals are written as distinct reversing entries.
-3. **Sequential Period Closing**: Month-end closing validates zero GL variance, zero unposted draft journals, and prior period closed state. Year-end closing automatically calculates P&L and posts net income to Retained Earnings.
-4. **Indonesian Tax Engines**:
-   - PPh 21 TER (Category A, B, C under PP 58/2023 & PMK 168/2023)
-   - Statutory BPJS Ketenagakerjaan & Kesehatan with salary ceilings
-   - Effective date-versioned VAT (PPN 10% → 11% → 12%)
+| Crate | Responsibility | Key Domain Logic |
+|---|---|---|
+| `crates/api-server` | HTTP Gateway, Route Versioning (`/api/v1/`), Handlers, Swagger UI | Axum, Tower-HTTP, Utoipa |
+| `crates/core` | Core Domain Entities, RBAC, Tenancy, WhatsApp Gateway, Outbox Engine | SQLx, Serde, Chrono, Rust Decimal |
+| `crates/finance` | Multi-Tenant CoA, Posting Engine, Budget Variance, e-Faktur DJP | Double-Entry Invariant, PSAK Standard |
+| `crates/inventory` | Stock Balance, Stock Documents, ABC Pareto Analysis, Low Stock Alerts | Pareto 80/20 Math, Deficit Engine |
+| `crates/crm` | Lead Management, Multi-Stage Opportunity Pipeline, Win/Loss Funnel | Funnel Analytics, Sales Stage Lifecycle |
+| `crates/ops` | Bill of Materials (BOM), Production Orders (SPK), Quality Control, Inspections | Scrap Multipliers, QC Tolerance Invariants |
+| `crates/assets` | Fixed Asset Master, Depreciation (Straight-Line, DDB, SYD), Asset Disposal | Capitalization, Book Value Validation |
+| `crates/rental` | Heavy Equipment Rental Contracts, Mobilization, Rental Billing Cycles | Billing Scheduling, Overdue Accruals |
+| `crates/hr` | Employee Directory, Attendance, Payroll, TER PPh 21, BPJS Ketenagakerjaan | Indonesian Tax & BPJS Formulas |
+| `crates/commercial` | Decoupled Pricing Rules, Quotations, Price Lists | Decoupled Sales Contracts |
 
 ---
 
-## Security Architecture
+## 3. Multi-Tenancy & Data Isolation Model
 
-- **Authentication**: JWT signed tokens with unique JTI identifiers.
-- **Session Revocation**: In-memory & Redis `SessionTracker` allowing instantaneous logouts and token rotation via `/api/auth/refresh`.
-- **RBAC & User Permissions**: Hierarchical role-level enforcement combined with Frappe/ERPNext-style `DocPerm` and `UserPermission` row-level filtering.
-- **Reverse Proxy Defense**: Per-endpoint rate limiting zones, security headers (CSP, HSTS, Referrer-Policy, Permissions-Policy), and IP proxy-aware rate limiters.
+ERPQu enforces a **Shared Database, Logical Schema & Row-Level Security (RLS)** multi-tenancy model:
+
+1. **Company Isolation**:
+   - Master entities (`chart_of_accounts`, `account_mappings`, `inventory_items`, `boms`, `production_orders`, `opportunities`) require a mandatory `company_id: Uuid`.
+   - SQL queries strictly bind `company_id = $1` resolved from the validated JWT token via `TenantExtractor` / `TenantContext`.
+2. **Schema Organization**:
+   - `public`: Core platforms, users, companies, roles, permissions.
+   - `inventory`: `inventory_items`, `inventory_categories`, `stock_ledger_entries`.
+   - `crm`: `leads`, `opportunities`, `crm_activities`.
+   - `ops`: `boms`, `bom_items`, `production_orders`, `work_orders`, `qc_inspections`.
+   - `rental`: `rentals`, `rental_billings`, `rental_assets`.
+   - `hr`: `employees`, `attendance`, `payroll`, `leaves`.
 
 ---
 
-## Multi-Tenancy Design
+## 4. Core Domain Invariants & Mathematical Guarantees
 
-1. **Tenant Context Resolution**: Resolved via `X-Company-ID` HTTP header or Subdomain matching (`acme.erpqu.com` → `domain_slug = 'acme'`).
-2. **Membership Enforcement**: Non-admin users are strictly blocked from requesting data outside their explicitly assigned company membership.
+### A. Double-Entry Accounting Invariant
+- Every journal voucher and invoice posting enforces $\sum \text{Debit} = \sum \text{Credit}$ down to the exact sub-unit (using `rust_decimal::Decimal`, never floating-point `f64`).
+- Imbalanced journals are rejected with atomic rollback before hitting persistence.
+
+### B. Bill of Materials (BOM) Material Exploding Math
+$$\text{Gross Required Qty} = \text{Target Order Qty} \times \text{Item Component Qty} \times \left(1 + \frac{\text{Scrap Rate \%}}{100}\right)$$
+This ensures material procurement always accounts for operational waste and manufacturing tolerances.
+
+### C. ABC Inventory Pareto Distribution
+- **Class A**: Top 70% of cumulative inventory valuation (Weekly cycle count audit).
+- **Class B**: Next 20% of cumulative inventory valuation (Monthly cycle count audit).
+- **Class C**: Remaining 10% of cumulative inventory valuation (Semi-annual audit).
+
+### D. Quality Control (QC) Gatekeeping Invariant
+- Items received under strict QC cannot transition to available stock without an accepted inspection record where all measured parameters fall within nominal tolerances $[\text{Min}, \text{Max}]$.
+
+---
+
+## 5. Security Architecture
+
+1. **Authentication**: JWT token with Bearer scheme, HS256 signature, and token revocation via Redis authenticated blacklist (`jti` tracking).
+2. **Brute-Force Protection**: Automatic login lockout after 5 consecutive failed attempts with a 15-minute exponential backoff window.
+3. **Password Hashing**: Argon2id cryptographic hashing with enterprise-grade salt and cost factors.
+4. **Database Privilege Separation**:
+   - `postgres` (Superuser): Only used during container initialization and `sqlx migrate run`.
+   - `erpqu_app` (Restricted Application User): Only possesses DML rights (`SELECT, INSERT, UPDATE, DELETE`) with no DDL permissions (`DROP TABLE, ALTER`).
+
+---
+
+## 6. Frontend Architecture (Web Admin)
+
+- **Framework**: React 18 with TypeScript and Vite.
+- **Styling**: Tailwind CSS with enterprise neutral palettes and responsive breakpoints.
+- **Dynamic Routing**: Accordion sidebar with automatic group discovery, dynamic Launchpad doc types, and React `lazy` code-splitting.
+- **State Management**: Zustand lightweight reactive stores with session persistence.
