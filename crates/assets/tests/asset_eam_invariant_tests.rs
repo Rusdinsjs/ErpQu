@@ -113,13 +113,59 @@ fn test_qast_005_asset_custody_history_append_only() {
 
 #[test]
 fn test_qast_007_maintenance_part_cost_accumulation() {
-    let part1_qty = dec!(2.00);
-    let part1_unit_cost = dec!(150000.00);
+    let part_cost_1 = dec!(150000.00);
+    let part_cost_2 = dec!(250000.50);
+    let total_part_cost = part_cost_1 + part_cost_2;
 
-    let part2_qty = dec!(5.00);
-    let part2_unit_cost = dec!(20000.00);
+    assert_eq!(total_part_cost, dec!(400000.50));
+}
 
-    let total_part_cost = (part1_qty * part1_unit_cost) + (part2_qty * part2_unit_cost);
+#[test]
+fn test_generate_double_declining_schedule_invariants() {
+    use chrono::NaiveDate;
+    use management_system_assets::domain::asset_eam::AssetEamEngine;
 
-    assert_eq!(total_part_cost, dec!(400000.00));
+    let start_date = NaiveDate::from_ymd_opt(2026, 1, 1).unwrap();
+    let purchase_cost = dec!(12000000.00);
+    let residual_value = dec!(1200000.00);
+    let total_months = 12;
+
+    let schedule = AssetEamEngine::generate_double_declining_schedule(
+        purchase_cost,
+        residual_value,
+        start_date,
+        total_months,
+    )
+    .unwrap();
+
+    assert_eq!(schedule.len(), total_months);
+    let total_depreciated = schedule.last().unwrap().accumulated_depreciation;
+    let expected_depreciable = purchase_cost - residual_value;
+    assert_eq!(total_depreciated, expected_depreciable);
+    assert_eq!(schedule.last().unwrap().remaining_book_value, residual_value);
+}
+
+#[test]
+fn test_generate_sum_of_years_schedule_invariants() {
+    use chrono::NaiveDate;
+    use management_system_assets::domain::asset_eam::AssetEamEngine;
+
+    let start_date = NaiveDate::from_ymd_opt(2026, 1, 1).unwrap();
+    let purchase_cost = dec!(15000000.00);
+    let residual_value = dec!(3000000.00);
+    let total_months = 24;
+
+    let schedule = AssetEamEngine::generate_sum_of_years_schedule(
+        purchase_cost,
+        residual_value,
+        start_date,
+        total_months,
+    )
+    .unwrap();
+
+    assert_eq!(schedule.len(), total_months);
+    let total_depreciated = schedule.last().unwrap().accumulated_depreciation;
+    let expected_depreciable = purchase_cost - residual_value;
+    assert_eq!(total_depreciated, expected_depreciable);
+    assert_eq!(schedule.last().unwrap().remaining_book_value, purchase_cost - total_depreciated);
 }

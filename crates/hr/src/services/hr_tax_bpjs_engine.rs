@@ -206,7 +206,9 @@ impl HrTaxBpjsEngine {
             }
         };
 
-        let rate = Decimal::from_f64_retain(rate_f).unwrap_or(Decimal::ZERO);
+        let rate = Decimal::from_f64_retain(rate_f)
+            .unwrap_or(Decimal::ZERO)
+            .round_dp(4);
         let tax_amount = (gross_pay * rate).round_dp(0);
 
         Pph21TerResult {

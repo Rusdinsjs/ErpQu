@@ -1,6 +1,7 @@
 //! Asset Service
 
 use chrono::Utc;
+use rust_decimal::Decimal;
 use serde::Serialize;
 use uuid::Uuid;
 
@@ -1329,5 +1330,64 @@ impl AssetService {
         }
 
         Ok(total_affected)
+    }
+
+    /// Process asset disposal / sale (QAST-004)
+    pub async fn dispose_asset(
+        &self,
+        req: crate::domain::AssetDisposalRequest,
+        _actor_id: Option<Uuid>,
+    ) -> DomainResult<Decimal> {
+        let mut asset = self.get_by_id(req.asset_id).await?;
+
+        let purchase_price = asset.purchase_price.unwrap_or(Decimal::ZERO);
+        let book_value = asset.calculate_book_value().unwrap_or(purchase_price);
+        let accumulated_depr = (purchase_price - book_value).max(Decimal::ZERO);
+
+        let gain_or_loss = crate::domain::AssetEamEngine::calculate_disposal_gain_loss(
+            purchase_price,
+            accumulated_depr,
+            req.sale_amount,
+        );
+
+        let new_status = if req.sale_amount > Decimal::ZERO {
+            AssetState::Sold.as_str().to_string()
+        } else {
+            AssetState::Disposed.as_str().to_string()
+        };
+
+        asset.status = new_status;
+        let disposal_note = format!(
+            "\n[Disposal {}] Sale: {}, Gain/Loss: {}, Reason: {}",
+            req.disposal_date,
+            req.sale_amount,
+            gain_or_loss,
+            req.reason.as_deref().unwrap_or("-")
+        );
+        asset.notes = Some(format!("{}{}", asset.notes.unwrap_or_default(), disposal_note));
+
+        self.repository
+            .update(&asset)
+            .await
+            .map_err(|e| DomainError::ExternalServiceError {
+                service: "database".to_string(),
+                message: e.to_string(),
+            })?;
+
+        // Broadcast real-time event
+        let _ = self
+            .notification_service
+            .broadcast(
+                "ASSET_DISPOSED",
+                serde_json::json!({
+                    "asset_id": req.asset_id,
+                    "sale_amount": req.sale_amount,
+                    "gain_or_loss": gain_or_loss,
+                    "disposal_date": req.disposal_date,
+                }),
+            )
+            .await;
+
+        Ok(gain_or_loss)
     }
 }
