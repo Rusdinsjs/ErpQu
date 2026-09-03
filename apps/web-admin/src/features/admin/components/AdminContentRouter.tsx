@@ -201,6 +201,8 @@ const ProductionOrdersView = lazy(() => import('../../operations/pages/Productio
 // Indonesia Localization & Integrations
 const EFakturManagementView = lazy(() => import('../../finance/pages/EFakturManagementView').then(m => ({ default: m.EFakturManagementView })));
 const WhatsAppGatewayView = lazy(() => import('../../settings/pages/WhatsAppGatewayView').then(m => ({ default: m.WhatsAppGatewayView })));
+const DataMigrationView = lazy(() => import('../../tools/pages/DataMigrationView').then(m => ({ default: m.DataMigrationView })));
+const ExecutiveBiDashboard = lazy(() => import('../../analytics/pages/ExecutiveBiDashboard').then(m => ({ default: m.ExecutiveBiDashboard })));
 
 interface AdminContentRouterProps {
     activeTab: string;
@@ -551,6 +553,10 @@ export function AdminContentRouter({
         'production-orders': () => <ProductionOrdersView />,
         'efaktur-management': () => <EFakturManagementView />,
         'whatsapp-gateway': () => <WhatsAppGatewayView />,
+        'data-migration': () => <DataMigrationView />,
+        'data-import': () => <DataMigrationView />,
+        'data-export': () => <DataMigrationView />,
+        'executive-bi': () => <ExecutiveBiDashboard />,
         'profile': () => <ProfileView />,
     };
 

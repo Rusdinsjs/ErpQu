@@ -415,6 +415,10 @@ pub fn create_router(state: AppState) -> Router {
             "/api/data-imports/:id/map-columns",
             put(crate::api::handlers::data_import_handler::map_data_import_columns),
         )
+        .route(
+            "/api/data-imports/export/:doctype",
+            get(crate::api::handlers::data_import_handler::export_active_data),
+        )
         // POS Module Routes
         .route(
             "/api/sales-pos/pos-profiles",
@@ -499,6 +503,10 @@ pub fn create_router(state: AppState) -> Router {
         .route(
             "/api/analytics/status",
             get(analytics_handler::get_asset_status_distribution),
+        )
+        .route(
+            "/api/analytics/executive-bi",
+            get(analytics_handler::get_executive_bi_summary),
         )
         // Settings
         // Settings route moved to settings_routes.rs

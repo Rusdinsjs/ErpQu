@@ -7,7 +7,7 @@ import {
     Briefcase, FileSpreadsheet, Database, Mail, ShoppingBag, Tag,
     Lock, CheckCircle2, DollarSign, BarChart2, Activity, CreditCard,
     HandCoins, Award, UserPlus, GraduationCap, AlertOctagon, UserCircle,
-    ClipboardCheck, RefreshCw, Gift, Globe, Radio, MessageSquare
+    ClipboardCheck, RefreshCw, Gift, Globe, Radio, MessageSquare, UploadCloud
 } from 'lucide-react';
 import type { NavItem } from '../types/navigation';
 
@@ -262,6 +262,8 @@ export const ALL_NAV_ITEMS: Record<string, NavItem> = {
     // Indonesia Localization & Integrations
     'efaktur-management': { id: 'efaktur-management', icon: FileText, label: 'e-Faktur DJP Online', minLevel: 3 },
     'whatsapp-gateway': { id: 'whatsapp-gateway', icon: MessageSquare, label: 'WhatsApp Gateway', minLevel: 2 },
+    'data-migration': { id: 'data-migration', icon: UploadCloud, label: 'Migrasi Data (Import/Export)', minLevel: 2 },
+    'executive-bi': { id: 'executive-bi', icon: BarChart2, label: 'Executive BI & Financial Analytics', minLevel: 3 },
 
     'approvals': { id: 'approvals', icon: CheckSquare, label: 'Approval Center', minLevel: 3, showBadge: true },
 

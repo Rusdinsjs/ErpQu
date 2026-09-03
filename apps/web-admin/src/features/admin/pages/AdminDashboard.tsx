@@ -211,7 +211,7 @@ export default function AdminDashboard() {
                                 'profit-loss', 'cash-flow', 'trial-balance', 'general-ledger-report',
                                 'ar-aging', 'ap-aging', 'finance', 'cash-bank', 'expenses', 'journal-entries',
                                 'financial-reports', 'sales-invoices', 'purchase-bills',
-                                'period-closing', 'exchange-rates', 'efaktur-management'
+                                'period-closing', 'exchange-rates', 'efaktur-management', 'executive-bi'
                             ];
                             accIds.forEach(id => {
                                 if (!ids.includes(id)) ids.push(id);
@@ -250,6 +250,7 @@ export default function AdminDashboard() {
                             if (!ids.includes('webhooks')) ids.push('webhooks');
                             if (!ids.includes('outbox-management')) ids.push('outbox-management');
                             if (!ids.includes('whatsapp-gateway')) ids.push('whatsapp-gateway');
+                            if (!ids.includes('data-migration')) ids.push('data-migration');
                             return { ...m, menuIds: ids };
                         }
                         return m;
