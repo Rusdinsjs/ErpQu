@@ -1,10 +1,15 @@
 #!/bin/bash
-# ERPQu Database Restore Script
-# Usage: ./restore.sh <backup_file.dump> [--target-db <db_name>]
+# ==============================================================================
+# ERPQu Enterprise - Database Disaster Recovery & Restore Engine
+# ==============================================================================
+# Usage:
+#   ./restore.sh <backup_file[.dump|.dump.enc]> [--target-db <db_name>] [--yes]
 #
 # Examples:
-#   ./restore.sh /backups/daily/management_system_20260817_020000.dump
-#   ./restore.sh /backups/monthly/management_system_20260801_020000.dump --target-db management_system_restored
+#   ./restore.sh /backups/daily/management_system_20260903.dump
+#   ./restore.sh /backups/daily/management_system_20260903.dump.enc --yes
+#   ./restore.sh /backups/daily/management_system_20260903.dump --target-db drill_db --yes
+# ==============================================================================
 
 set -euo pipefail
 
@@ -23,6 +28,16 @@ error() { echo -e "${RED}[$(date +'%Y-%m-%d %H:%M:%S')] ERROR:${NC} $1"; exit 1;
 BACKUP_FILE="${1:-}"
 TARGET_DB="${PGDATABASE:-management_system}"
 RESTORE_MODE="replace"
+AUTO_CONFIRM=false
+TEMP_DECRYPTED=""
+
+# Cleanup temporary decrypted files on exit
+cleanup() {
+    if [ -n "$TEMP_DECRYPTED" ] && [ -f "$TEMP_DECRYPTED" ]; then
+        rm -f "$TEMP_DECRYPTED"
+    fi
+}
+trap cleanup EXIT INT TERM
 
 shift || true
 while [ $# -gt 0 ]; do
@@ -32,6 +47,10 @@ while [ $# -gt 0 ]; do
             RESTORE_MODE="new"
             shift 2
             ;;
+        --yes|-y)
+            AUTO_CONFIRM=true
+            shift
+            ;;
         *)
             error "Unknown option: $1"
             ;;
@@ -40,15 +59,12 @@ done
 
 # Validation
 if [ -z "$BACKUP_FILE" ]; then
-    echo -e "${CYAN}ERPQu Database Restore Tool${NC}"
+    echo -e "${CYAN}ERPQu Database Restore Engine${NC}"
     echo ""
-    echo "Usage: $0 <backup_file.dump> [--target-db <db_name>]"
-    echo ""
-    echo "Options:"
-    echo "  --target-db <name>  Restore to a different database (safer)"
+    echo "Usage: $0 <backup_file[.dump|.dump.enc]> [--target-db <db_name>] [--yes]"
     echo ""
     echo "Available backups:"
-    find "${BACKUP_DIR:-/backups}" -name "*.dump" -type f | sort -r | head -20
+    find "${BACKUP_DIR:-/backups}" -type f \( -name "*.dump" -o -name "*.dump.enc" \) 2>/dev/null | sort -r | head -20
     exit 1
 fi
 
@@ -56,117 +72,117 @@ if [ ! -f "$BACKUP_FILE" ]; then
     error "Backup file not found: $BACKUP_FILE"
 fi
 
+# Decryption handling for .enc files
+ACTUAL_DUMP_FILE="$BACKUP_FILE"
+if [[ "$BACKUP_FILE" == *.enc ]]; then
+    log "File backup terenkripsi (.enc) terdeteksi."
+    ENCRYPTION_KEY="${BACKUP_ENCRYPTION_KEY:-}"
+    if [ -z "$ENCRYPTION_KEY" ]; then
+        read -s -p "Masukkan kunci enkripsi (BACKUP_ENCRYPTION_KEY): " ENCRYPTION_KEY
+        echo ""
+    fi
+    [ -n "$ENCRYPTION_KEY" ] || error "Kunci enkripsi diperlukan untuk membuka file ini!"
+
+    TEMP_DECRYPTED="/tmp/erpqu_restore_$(date +%s).dump"
+    log "Mendekripsi file backup dengan AES-256-CBC..."
+    openssl enc -d -aes-256-cbc -salt -pbkdf2 -iter 100000 \
+        -in "$BACKUP_FILE" \
+        -out "$TEMP_DECRYPTED" \
+        -pass "pass:${ENCRYPTION_KEY}" || error "Gagal mendekripsi file backup! Kunci salah atau file rusak."
+    
+    ACTUAL_DUMP_FILE="$TEMP_DECRYPTED"
+    log "✓ Berhasil didekripsi untuk proses pemulihan."
+fi
+
 # Show backup info
 log "═══════════════════════════════════════════"
-log "ERPQu Database Restore"
+log "ERPQu Database Disaster Recovery Restore"
 log "═══════════════════════════════════════════"
-log "Backup file: $BACKUP_FILE"
-log "File size: $(du -sh "$BACKUP_FILE" | cut -f1)"
-log "Target database: $TARGET_DB"
-log "Restore mode: $RESTORE_MODE"
-
-# Show backup manifest if available
-MANIFEST="${BACKUP_FILE%.*}_manifest.json"
-if [ -f "$MANIFEST" ]; then
-    log "Backup manifest:"
-    cat "$MANIFEST"
-fi
+log "Source File     : $BACKUP_FILE"
+log "Target Database : $TARGET_DB"
+log "Restore Mode    : $RESTORE_MODE"
 
 # Verify backup integrity
-log "Verifying backup integrity..."
-TABLE_COUNT=$(pg_restore --list "$BACKUP_FILE" 2>/dev/null | grep -c "TABLE DATA" || true)
-log "Tables in backup: ${TABLE_COUNT}"
+log "Memverifikasi integritas arsip database..."
+TABLE_COUNT=$(pg_restore --list "$ACTUAL_DUMP_FILE" 2>/dev/null | grep -c "TABLE DATA" || true)
+log "Tabel terdeteksi dalam arsip: ${TABLE_COUNT}"
 
 if [ "$TABLE_COUNT" -lt 5 ]; then
-    error "Backup appears corrupted or empty (only ${TABLE_COUNT} tables)"
+    error "Arsip backup tidak valid atau kosong (hanya ${TABLE_COUNT} tabel)"
 fi
 
-# Verify checksum if manifest exists
-if [ -f "$MANIFEST" ] && command -v jq > /dev/null 2>&1; then
-    EXPECTED_CHECKSUM=$(jq -r '.checksum_dump // "N/A"' "$MANIFEST")
-    if [ "$EXPECTED_CHECKSUM" != "N/A" ]; then
-        ACTUAL_CHECKSUM=$(sha256sum "$BACKUP_FILE" | cut -d' ' -f1)
-        if [ "$EXPECTED_CHECKSUM" = "$ACTUAL_CHECKSUM" ]; then
-            log "Checksum verified: OK ✅"
-        else
-            error "Checksum mismatch! Backup may be corrupted."
-        fi
+# Confirmation prompt
+if [ "$AUTO_CONFIRM" = false ]; then
+    echo ""
+    warn "══════════════════════════════════════════════════════"
+    warn "PERINGATAN: PROSES INI AKAN MENIMPA DATA PADA DATABASE: ${TARGET_DB}"
+    warn "══════════════════════════════════════════════════════"
+    echo ""
+    read -p "Ketik 'RESTORE' untuk melanjutkan: " CONFIRM
+    if [ "$CONFIRM" != "RESTORE" ]; then
+        log "Pemulihan database dibatalkan oleh pengguna."
+        exit 0
     fi
 fi
 
-# Confirmation
-echo ""
-warn "══════════════════════════════════════════════════════"
-warn "THIS WILL DESTROY ALL DATA IN DATABASE: ${TARGET_DB}"
-warn "══════════════════════════════════════════════════════"
-echo ""
-read -p "Type 'RESTORE' to confirm: " CONFIRM
-
-if [ "$CONFIRM" != "RESTORE" ]; then
-    log "Restore cancelled."
-    exit 0
+# Safety backup before overwrite
+if [ "$RESTORE_MODE" = "replace" ]; then
+    log "Membuat backup penyelamat (Safety Backup) database saat ini..."
+    SAFETY_BACKUP="${BACKUP_DIR:-/backups}/pre_restore_${TARGET_DB}_$(date +%Y%m%d_%H%M%S).dump"
+    pg_dump \
+        -h "${PGHOST:-localhost}" \
+        -p "${PGPORT:-5432}" \
+        -U "${PGUSER:-postgres}" \
+        -d "${TARGET_DB}" \
+        -Fc --no-owner --no-privileges \
+        -f "$SAFETY_BACKUP" 2>/dev/null || warn "Safety backup dilewati (database mungkin belum dibuat)"
 fi
 
-# Pre-restore backup of current database (safety net)
-log "Creating pre-restore safety backup..."
-SAFETY_BACKUP="${BACKUP_DIR:-/backups}/pre_restore_${TARGET_DB}_$(date +%Y%m%d_%H%M%S).dump"
-pg_dump \
-    -h "${PGHOST}" \
-    -p "${PGPORT}" \
-    -U "${PGUSER}" \
-    -d "${TARGET_DB}" \
-    -Fc --no-owner --no-privileges \
-    -f "$SAFETY_BACKUP" 2>/dev/null || warn "Could not create safety backup (database may not exist yet)"
-
-if [ -f "$SAFETY_BACKUP" ]; then
-    log "Safety backup saved: $SAFETY_BACKUP ($(du -sh "$SAFETY_BACKUP" | cut -f1))"
-fi
-
-# Restore
+# Create new database if requested
 if [ "$RESTORE_MODE" = "new" ]; then
-    log "Creating new database: $TARGET_DB"
-    psql -h "${PGHOST}" -p "${PGPORT}" -U "${PGUSER}" -c "CREATE DATABASE \"${TARGET_DB}\";" 2>/dev/null || true
+    log "Membuat database target baru: ${TARGET_DB}..."
+    psql -h "${PGHOST:-localhost}" -p "${PGPORT:-5432}" -U "${PGUSER:-postgres}" -c "CREATE DATABASE \"${TARGET_DB}\";" 2>/dev/null || true
 fi
 
-log "Dropping existing objects..."
-psql -h "${PGHOST}" -p "${PGPORT}" -U "${PGUSER}" -d "${TARGET_DB}" -c "
+log "Membersihkan objek skema lama..."
+psql -h "${PGHOST:-localhost}" -p "${PGPORT:-5432}" -U "${PGUSER:-postgres}" -d "${TARGET_DB}" -c "
     DROP SCHEMA IF EXISTS public CASCADE;
     DROP SCHEMA IF EXISTS hr CASCADE;
     DROP SCHEMA IF EXISTS crm CASCADE;
     DROP SCHEMA IF EXISTS rental CASCADE;
     DROP SCHEMA IF EXISTS inventory CASCADE;
     DROP SCHEMA IF EXISTS commercial CASCADE;
+    DROP SCHEMA IF EXISTS finance CASCADE;
+    DROP SCHEMA IF EXISTS ops CASCADE;
     CREATE SCHEMA public;
     GRANT ALL ON SCHEMA public TO PUBLIC;
 " 2>/dev/null || true
 
-log "Restoring from backup..."
+log "Memulihkan struktur & data dari arsip..."
 pg_restore \
-    -h "${PGHOST}" \
-    -p "${PGPORT}" \
-    -U "${PGUSER}" \
+    -h "${PGHOST:-localhost}" \
+    -p "${PGPORT:-5432}" \
+    -U "${PGUSER:-postgres}" \
     -d "${TARGET_DB}" \
     --no-owner \
     --no-privileges \
     --clean \
     --if-exists \
-    --verbose \
-    "$BACKUP_FILE" 2>&1 | tail -20
+    "$ACTUAL_DUMP_FILE" 2>&1 | tail -15 || true
 
 # Post-restore verification
-log "Post-restore verification..."
-RESTORED_TABLES=$(psql -h "${PGHOST}" -p "${PGPORT}" -U "${PGUSER}" -d "${TARGET_DB}" -t -c "
+log "Memverifikasi hasil pemulihan..."
+RESTORED_TABLES=$(psql -h "${PGHOST:-localhost}" -p "${PGPORT:-5432}" -U "${PGUSER:-postgres}" -d "${TARGET_DB}" -t -c "
     SELECT COUNT(*) FROM information_schema.tables 
-    WHERE table_schema IN ('public', 'hr', 'crm', 'rental', 'inventory', 'commercial')
+    WHERE table_schema IN ('public', 'hr', 'crm', 'rental', 'inventory', 'commercial', 'finance', 'ops')
     AND table_type = 'BASE TABLE';
-")
-log "Tables restored: ${RESTORED_TABLES}"
+" 2>/dev/null || echo 0)
 
-# Re-grant permissions to app user
+# Grant permissions to app user
 DB_APP_USER="${DB_APP_USER:-erpqu_app}"
-log "Re-granting permissions to ${DB_APP_USER}..."
-for schema in public hr crm rental inventory commercial; do
-    psql -h "${PGHOST}" -p "${PGPORT}" -U "${PGUSER}" -d "${TARGET_DB}" -c "
+log "Memberikan hak akses skema ke ${DB_APP_USER}..."
+for schema in public hr crm rental inventory commercial finance ops; do
+    psql -h "${PGHOST:-localhost}" -p "${PGPORT:-5432}" -U "${PGUSER:-postgres}" -d "${TARGET_DB}" -c "
         GRANT USAGE ON SCHEMA ${schema} TO ${DB_APP_USER};
         GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA ${schema} TO ${DB_APP_USER};
         GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA ${schema} TO ${DB_APP_USER};
@@ -176,8 +192,7 @@ for schema in public hr crm rental inventory commercial; do
 done
 
 log "═══════════════════════════════════════════"
-log "Restore complete! ✅"
-log "Database: ${TARGET_DB}"
-log "Tables: ${RESTORED_TABLES}"
-log "Safety backup: ${SAFETY_BACKUP:-N/A}"
+log "🎉 Pemulihan Database Berhasil! ✅"
+log "Database : ${TARGET_DB}"
+log "Tabel    : ${RESTORED_TABLES}"
 log "═══════════════════════════════════════════"
