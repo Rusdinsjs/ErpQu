@@ -209,11 +209,12 @@ impl TaxRenewalService {
         // Find "Utang Biaya Legal Armada" (2-1140)
         let _payable_account = self
             .finance_service
-            .find_by_code("2-1140")
+            .find_by_code("2-1140", None)
             .await
             .unwrap_or(None);
 
         let bill_req = CreatePurchaseBillRequest {
+            company_id: None,
             bill_number: format!("TAX-{}", Utc::now().timestamp()), // Generate unique bill number
             vendor_id: vendor.id,
             date: Utc::now().date_naive(),

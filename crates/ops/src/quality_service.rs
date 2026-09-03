@@ -109,4 +109,56 @@ impl QualityService {
             Ok(true)
         }
     }
+
+    /// Evaluates inspection parameter criteria deterministically (QQLT-004)
+    pub fn evaluate_inspection_criteria(
+        inspection_id: Uuid,
+        criteria: &[(
+            crate::domain::quality_control::QualityParameterCriteria,
+            Option<Decimal>,
+            Option<String>,
+        )],
+    ) -> crate::domain::quality_control::QualityInspectionEvaluation {
+        let mut passed = 0;
+        let mut failed = 0;
+
+        for (crit, num_val, text_val) in criteria {
+            let mut ok = true;
+            if let Some(val) = num_val {
+                if !crit.evaluate_numeric(*val) {
+                    ok = false;
+                }
+            }
+            if let Some(txt) = text_val {
+                if !crit.evaluate_text(txt) {
+                    ok = false;
+                }
+            }
+
+            if ok {
+                passed += 1;
+            } else {
+                failed += 1;
+            }
+        }
+
+        let overall_status = if failed == 0 {
+            crate::domain::quality_control::InspectionStatus::Passed
+        } else {
+            crate::domain::quality_control::InspectionStatus::Rejected
+        };
+
+        crate::domain::quality_control::QualityInspectionEvaluation {
+            inspection_id,
+            overall_status,
+            passed_parameters: passed,
+            failed_parameters: failed,
+            notes: Some(format!(
+                "Evaluated {} parameters: {} passed, {} failed",
+                criteria.len(),
+                passed,
+                failed
+            )),
+        }
+    }
 }

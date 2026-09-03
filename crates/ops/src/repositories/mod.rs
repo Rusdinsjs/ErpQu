@@ -1,4 +1,7 @@
+pub mod bom_repository;
 pub mod fuel_repository;
+
+pub use bom_repository::*;
 pub mod lifecycle_repository;
 pub mod loan_repository;
 pub mod maintenance_repository;

@@ -954,6 +954,54 @@ impl WorkOrderService {
 
         Ok(count)
     }
+
+    /// Automatically generate and schedule a Preventive Work Order directly from a Maintenance SOP Template
+    pub async fn generate_scheduled_work_order_from_template(
+        &self,
+        asset_id: Uuid,
+        template_id: Uuid,
+        scheduled_date: NaiveDate,
+        priority: Option<String>,
+        created_by: Option<Uuid>,
+    ) -> DomainResult<(WorkOrder, usize)> {
+        let template_with_tasks = self
+            .maintenance_template_repo
+            .get_template(template_id)
+            .await
+            .map_err(|e| DomainError::ExternalServiceError {
+                service: "database".to_string(),
+                message: e.to_string(),
+            })?
+            .ok_or_else(|| DomainError::not_found("MaintenanceTemplate", template_id))?;
+
+        let wo_req = CreateWorkOrderRequest {
+            asset_id,
+            wo_type: "preventive".to_string(),
+            priority: priority.or_else(|| Some("medium".to_string())),
+            scheduled_date: Some(scheduled_date),
+            due_date: Some(scheduled_date),
+            problem_description: Some(format!(
+                "Preventive Maintenance SOP: {}",
+                template_with_tasks.name
+            )),
+            estimated_hours: None,
+            estimated_cost: None,
+            safety_requirements: None,
+            lockout_tagout_required: None,
+            location_id: None,
+            target_category_id: None,
+            target_specifications: None,
+            conversion_notes: None,
+            conversion_type: None,
+            assigned_technician: None,
+            maintenance_team_id: None,
+        };
+
+        let wo = self.create(wo_req, created_by).await?;
+        let items_applied = self.apply_template(wo.id, template_id).await?;
+
+        Ok((wo, items_applied))
+    }
 }
 
 /// ModuleApprovalCallback implementation for WorkOrderService

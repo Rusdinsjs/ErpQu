@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 /// Bill of Materials (BOM) Entity (QMFG-001)
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct Bom {
     pub id: Uuid,
     pub company_id: Uuid,
@@ -17,13 +17,48 @@ pub struct Bom {
 }
 
 /// BOM Line Item Entity (QMFG-001)
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct BomItem {
     pub id: Uuid,
     pub bom_id: Uuid,
     pub item_id: Uuid,
     pub qty_required: Decimal,
     pub scrap_percentage: Option<Decimal>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct CreateBomItemRequest {
+    pub item_id: Uuid,
+    pub qty_required: Decimal,
+    pub scrap_percentage: Option<Decimal>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct CreateBomRequest {
+    pub company_id: Option<Uuid>,
+    pub item_id: Uuid,
+    pub bom_number: String,
+    pub quantity: Option<Decimal>,
+    pub items: Vec<CreateBomItemRequest>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct CreateProductionOrderRequest {
+    pub company_id: Option<Uuid>,
+    pub production_order_number: String,
+    pub bom_id: Uuid,
+    pub item_id: Uuid,
+    pub target_qty: Decimal,
+    pub warehouse_id: Uuid,
+    pub wip_account_id: Option<Uuid>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MaterialRequirement {
+    pub item_id: Uuid,
+    pub base_qty: Decimal,
+    pub scrap_percentage: Decimal,
+    pub total_qty_required: Decimal,
 }
 
 /// Production Order Entity (QMFG-003)

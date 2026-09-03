@@ -4,8 +4,11 @@ pub mod repositories;
 pub use domain::*;
 pub use repositories::*;
 
+pub mod bom_service;
 pub mod fuel_service;
 pub mod geofence_service;
+
+pub use bom_service::*;
 pub mod loan_service;
 pub mod maintenance_service;
 pub mod maintenance_team_service;
