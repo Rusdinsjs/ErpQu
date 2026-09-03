@@ -51,7 +51,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install Rust Toolchain
-        uses: dtolnay/rust-toolchain@1.94.1
+        uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy, rustfmt
 
@@ -80,6 +80,8 @@ jobs:
             CREATE SCHEMA IF NOT EXISTS rental;
             CREATE SCHEMA IF NOT EXISTS inventory;
             CREATE SCHEMA IF NOT EXISTS commercial;
+            CREATE SCHEMA IF NOT EXISTS finance;
+            CREATE SCHEMA IF NOT EXISTS ops;
             CREATE ROLE erpqu_app NOLOGIN;
           "
 
