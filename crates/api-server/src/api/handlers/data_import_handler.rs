@@ -81,6 +81,57 @@ pub async fn generate_template(
 ) -> AppResult<Response> {
     let import_type = payload.import_type.unwrap_or_else(|| "Insert".to_string());
     let is_update = import_type.to_lowercase() == "update";
+    let dt_lower = payload.doctype_name.to_lowercase();
+
+    if dt_lower == "item" || dt_lower == "inventory_item" {
+        let headers = vec!["kode_barang*", "nama_barang*", "kategori*", "satuan_uom*", "stok_minimum", "stok_maksimum", "biaya_rata_rata", "deskripsi"];
+        let sample_row = vec!["ITM-001", "Baut Baja M12 High Tensile", "SPAREPART", "PCS", "20", "500", "15000", "Baut baja kualitas industri berat"];
+        let csv_content = format!("{}\n{}", headers.join(","), sample_row.join(","));
+        let filename = format!("template_item_{}.csv", import_type.to_lowercase());
+        return Ok((
+            [
+                (header::CONTENT_TYPE, "text/csv; charset=utf-8"),
+                (header::CONTENT_DISPOSITION, &format!("attachment; filename=\"{}\"", filename)),
+            ],
+            csv_content,
+        ).into_response());
+    } else if dt_lower == "account" || dt_lower == "coa" {
+        let headers = vec!["kode_akun*", "nama_akun*", "tipe_akun*", "saldo_normal*", "deskripsi"];
+        let sample_row = vec!["1110", "Kas Kecil Operasional", "Asset", "Debit", "Akun kas operasional kantor"];
+        let csv_content = format!("{}\n{}", headers.join(","), sample_row.join(","));
+        let filename = format!("template_account_{}.csv", import_type.to_lowercase());
+        return Ok((
+            [
+                (header::CONTENT_TYPE, "text/csv; charset=utf-8"),
+                (header::CONTENT_DISPOSITION, &format!("attachment; filename=\"{}\"", filename)),
+            ],
+            csv_content,
+        ).into_response());
+    } else if dt_lower == "customer" || dt_lower == "lead" {
+        let headers = vec!["nama_pelanggan*", "nama_perusahaan", "email", "nomor_telepon", "status"];
+        let sample_row = vec!["Ir. Bambang Trihatmojo", "PT Adhi Karya (Persero) Tbk", "bambang@adhikarya.co.id", "081234567890", "qualified"];
+        let csv_content = format!("{}\n{}", headers.join(","), sample_row.join(","));
+        let filename = format!("template_customer_{}.csv", import_type.to_lowercase());
+        return Ok((
+            [
+                (header::CONTENT_TYPE, "text/csv; charset=utf-8"),
+                (header::CONTENT_DISPOSITION, &format!("attachment; filename=\"{}\"", filename)),
+            ],
+            csv_content,
+        ).into_response());
+    } else if dt_lower == "supplier" || dt_lower == "vendor" {
+        let headers = vec!["nama_pemasok*", "kontak_person", "email", "telepon", "alamat"];
+        let sample_row = vec!["PT United Tractors Tbk", "Agus Setiawan", "support@unitedtractors.com", "0214605959", "Jl. Raya Bekasi KM 22 Jakarta Timur"];
+        let csv_content = format!("{}\n{}", headers.join(","), sample_row.join(","));
+        let filename = format!("template_supplier_{}.csv", import_type.to_lowercase());
+        return Ok((
+            [
+                (header::CONTENT_TYPE, "text/csv; charset=utf-8"),
+                (header::CONTENT_DISPOSITION, &format!("attachment; filename=\"{}\"", filename)),
+            ],
+            csv_content,
+        ).into_response());
+    }
 
     let mut headers: Vec<String> = vec![
         // Mandatories
@@ -261,6 +312,84 @@ pub async fn generate_template(
         payload.doctype_name.to_lowercase(),
         import_type.to_lowercase()
     );
+
+    Ok((
+        [
+            (header::CONTENT_TYPE, "text/csv; charset=utf-8"),
+            (
+                header::CONTENT_DISPOSITION,
+                &format!("attachment; filename=\"{}\"", filename),
+            ),
+        ],
+        csv_content,
+    )
+        .into_response())
+}
+
+/// GET /api/data-import/export/:doctype - Export active master data directly to CSV
+pub async fn export_active_data(
+    State(state): State<AppState>,
+    Path(doctype): Path<String>,
+) -> AppResult<Response> {
+    let dt = doctype.to_lowercase();
+    let (filename, csv_content) = match dt.as_str() {
+        "item" | "inventory" => {
+            let rows = sqlx::query_as::<_, (String, String, Option<String>, rust_decimal::Decimal, rust_decimal::Decimal)>(
+                "SELECT sku, name, description, current_quantity, average_cost FROM inventory.inventory_items ORDER BY sku ASC LIMIT 5000"
+            )
+            .fetch_all(&state.pool)
+            .await
+            .unwrap_or_default();
+
+            let mut out = String::from("sku,name,description,current_quantity,average_cost\n");
+            for (sku, name, desc, qty, cost) in rows {
+                out.push_str(&format!("\"{}\",\"{}\",\"{}\",{},{}\n", sku, name, desc.unwrap_or_default(), qty, cost));
+            }
+            ("export_inventory_items.csv", out)
+        }
+        "account" | "coa" => {
+            let rows = sqlx::query_as::<_, (String, String, String, String, bool)>(
+                "SELECT code, name, account_type, normal_balance, is_active FROM chart_of_accounts ORDER BY code ASC LIMIT 5000"
+            )
+            .fetch_all(&state.pool)
+            .await
+            .unwrap_or_default();
+
+            let mut out = String::from("code,name,account_type,normal_balance,is_active\n");
+            for (code, name, atype, nbal, active) in rows {
+                out.push_str(&format!("\"{}\",\"{}\",\"{}\",\"{}\",{}\n", code, name, atype, nbal, active));
+            }
+            ("export_chart_of_accounts.csv", out)
+        }
+        "customer" | "lead" => {
+            let rows = sqlx::query_as::<_, (String, Option<String>, Option<String>, Option<String>, String)>(
+                "SELECT lead_name, organization_name, email, phone, status FROM crm.leads ORDER BY created_at DESC LIMIT 5000"
+            )
+            .fetch_all(&state.pool)
+            .await
+            .unwrap_or_default();
+
+            let mut out = String::from("lead_name,organization_name,email,phone,status\n");
+            for (name, org, email, phone, status) in rows {
+                out.push_str(&format!("\"{}\",\"{}\",\"{}\",\"{}\",\"{}\"\n", name, org.unwrap_or_default(), email.unwrap_or_default(), phone.unwrap_or_default(), status));
+            }
+            ("export_customers.csv", out)
+        }
+        _ => {
+            let rows = sqlx::query_as::<_, (String, String, String, String)>(
+                "SELECT asset_code, name, asset_class, status FROM assets ORDER BY asset_code ASC LIMIT 5000"
+            )
+            .fetch_all(&state.pool)
+            .await
+            .unwrap_or_default();
+
+            let mut out = String::from("asset_code,name,asset_class,status\n");
+            for (code, name, aclass, status) in rows {
+                out.push_str(&format!("\"{}\",\"{}\",\"{}\",\"{}\"\n", code, name, aclass, status));
+            }
+            ("export_assets.csv", out)
+        }
+    };
 
     Ok((
         [
