@@ -15,7 +15,8 @@ pub fn finance_routes() -> Router<AppState> {
         // Multi-Currency Exchange Rates (QACC-008)
         .route(
             "/exchange-rates",
-            post(exchange_rate_handler::set_exchange_rate),
+            get(exchange_rate_handler::list_exchange_rates)
+                .post(exchange_rate_handler::set_exchange_rate),
         )
         .route(
             "/exchange-rates/latest",
@@ -24,6 +25,10 @@ pub fn finance_routes() -> Router<AppState> {
         .route(
             "/exchange-rates/convert",
             post(exchange_rate_handler::convert_currency),
+        )
+        .route(
+            "/exchange-rates/sync-bi",
+            post(exchange_rate_handler::sync_bank_indonesia_rates),
         )
         // Budgets & Variance (QACC-010)
         .route(

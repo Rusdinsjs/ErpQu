@@ -219,7 +219,7 @@ export const ALL_NAV_ITEMS: Record<string, NavItem> = {
     'ar-aging': { id: 'ar-aging', icon: Clock, label: 'AR Aging Report', minLevel: 2 },
     'ap-aging': { id: 'ap-aging', icon: Clock, label: 'AP Aging Report', minLevel: 2 },
     'period-closing': { id: 'period-closing', icon: Lock, label: 'Period Closing (Tutup Buku)', minLevel: 2 },
-    'exchange-rates': { id: 'exchange-rates', icon: Globe, label: 'Multi-Currency Exchange Rates', minLevel: 2 },
+    'exchange-rates': { id: 'exchange-rates', icon: DollarSign, label: 'Kurs & Multi-Currency (JISDOR)', minLevel: 2 },
 
     'hr-workspace': { id: 'hr-workspace', icon: Users, label: 'HR Workspace', path: '/hr-workspace', minLevel: 4 },
     'employees': { id: 'employees', icon: Users, label: 'Employees', minLevel: 3 },

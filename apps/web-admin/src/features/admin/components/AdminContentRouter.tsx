@@ -176,7 +176,7 @@ const PosClosingEntriesView = lazy(() => import('../../selling/pages/PosClosingE
 const LoyaltyPointEntriesView = lazy(() => import('../../selling/pages/LoyaltyPointEntriesView'));
 const OutboxManagementView = lazy(() => import('../../settings/pages/OutboxManagementView'));
 const PeriodClosingView = lazy(() => import('../../finance/pages/PeriodClosingView'));
-const ExchangeRatesView = lazy(() => import('../../finance/pages/ExchangeRatesView'));
+const ExchangeRateManager = lazy(() => import('../../finance/pages/ExchangeRateManager'));
 const ItemPricesView = lazy(() => import('../../selling/pages/ItemPricesView'));
 const PriceListsView = lazy(() => import('../../selling/pages/PriceListsView'));
 const SellingSettingsView = lazy(() => import('../../selling/pages/SellingSettingsView'));
@@ -381,7 +381,8 @@ export function AdminContentRouter({
         'trial-balance': () => <TrialBalanceView />,
         'financial-reports': () => <FinancialReportsView />,
         'period-closing': () => <PeriodClosingView />,
-        'exchange-rates': () => <ExchangeRatesView />,
+        'exchange-rates': () => <ExchangeRateManager />,
+        'exchange-rate': () => <ExchangeRateManager />,
         'cash-bank': () => <CashBankView />,
         'expenses': () => <ExpensesView />,
         'sales': () => <SalesOverviewView />,
