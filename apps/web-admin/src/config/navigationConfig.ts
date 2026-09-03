@@ -202,6 +202,7 @@ export const ALL_NAV_ITEMS: Record<string, NavItem> = {
     'cashier-closing': { id: 'cashier-closing', icon: Lock, label: 'Cashier Closing Entry', minLevel: 2 },
     'cost-centers': { id: 'cost-centers', icon: Building2, label: 'Cost Center', minLevel: 2 },
     'accounting-dimensions': { id: 'accounting-dimensions', icon: Layers, label: 'Accounting Dimension', minLevel: 2 },
+    'budgets': { id: 'budgets', icon: DollarSign, label: 'Budget', minLevel: 2 },
     'budgets-view': { id: 'budgets-view', icon: DollarSign, label: 'Budget', minLevel: 2 },
     'sales-tax-templates': { id: 'sales-tax-templates', icon: Receipt, label: 'Sales Tax Template', minLevel: 2 },
     'purchase-tax-templates-view': { id: 'purchase-tax-templates-view', icon: Receipt, label: 'Purchase Tax Template', minLevel: 2 },
@@ -245,6 +246,19 @@ export const ALL_NAV_ITEMS: Record<string, NavItem> = {
     'driver-assignments': { id: 'driver-assignments', icon: Truck, label: 'Penugasan Driver & Alat', minLevel: 3 },
     'p2h-inspections': { id: 'p2h-inspections', icon: ClipboardCheck, label: 'Inspeksi Harian (P2H)', minLevel: 3 },
     'driver-safety-incidents': { id: 'driver-safety-incidents', icon: ShieldAlert, label: 'Insiden & Pelanggaran Driver', minLevel: 3 },
+
+    // Phase 3 CRM & Manufacturing & Finance
+    'crm-leads': { id: 'crm-leads', icon: UserPlus, label: 'CRM Leads', minLevel: 3 },
+    'crm-opportunities': { id: 'crm-opportunities', icon: HandCoins, label: 'CRM Opportunities', minLevel: 3 },
+    'crm-pipeline': { id: 'crm-pipeline', icon: TrendingUp, label: 'Sales Pipeline', minLevel: 3 },
+    'boms': { id: 'boms', icon: Layers, label: 'Bill of Materials (BOM)', minLevel: 3 },
+    'production-orders': { id: 'production-orders', icon: CheckSquare, label: 'Production Orders', minLevel: 3 },
+    'exchange-rates': { id: 'exchange-rates', icon: Globe, label: 'Currency Exchange Rates', minLevel: 3 },
+    'inventory-alerts': { id: 'inventory-alerts', icon: AlertOctagon, label: 'Low Stock Alerts', minLevel: 3 },
+
+    // Phase 4 Enterprise Analytics & Quality
+    'inventory-abc': { id: 'inventory-abc', icon: BarChart2, label: 'ABC Inventory Analysis', minLevel: 3 },
+    'crm-analytics': { id: 'crm-analytics', icon: Activity, label: 'CRM Sales Funnel & Win/Loss', minLevel: 3 },
 
     'approvals': { id: 'approvals', icon: CheckSquare, label: 'Approval Center', minLevel: 3, showBadge: true },
 

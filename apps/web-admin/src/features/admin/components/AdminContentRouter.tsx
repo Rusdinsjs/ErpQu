@@ -190,6 +190,13 @@ const AccountingDimensionsView = lazy(() => import('../../finance/pages/Accounti
 const BuyingPricingView = lazy(() => import('../../buying/pages/BuyingPricingView'));
 const WebhooksManagementView = lazy(() => import('../../settings/pages/WebhooksManagementView'));
 
+// Phase 3 & 4 Enterprise Views
+const AbcInventoryAnalysisView = lazy(() => import('../../inventory/pages/AbcInventoryAnalysisView'));
+const LowStockAlertsView = lazy(() => import('../../inventory/pages/LowStockAlertsView'));
+const CrmPipelineView = lazy(() => import('../../selling/pages/CrmPipelineView'));
+const CrmAnalyticsView = lazy(() => import('../../selling/pages/CrmAnalyticsView'));
+const BomManagementView = lazy(() => import('../../operations/pages/BomManagementView'));
+const ProductionOrdersView = lazy(() => import('../../operations/pages/ProductionOrdersView'));
 
 interface AdminContentRouterProps {
     activeTab: string;
@@ -529,6 +536,15 @@ export function AdminContentRouter({
         'settings': () => <SettingsView />,
         'system-reset': () => <SystemResetView />,
         'webhooks': () => <WebhooksManagementView />,
+        // Phase 3 & 4 Enterprise Views
+        'inventory-abc': () => <AbcInventoryAnalysisView />,
+        'inventory-alerts': () => <LowStockAlertsView />,
+        'crm-leads': () => <CrmPipelineView />,
+        'crm-opportunities': () => <CrmPipelineView />,
+        'crm-pipeline': () => <CrmPipelineView />,
+        'crm-analytics': () => <CrmAnalyticsView />,
+        'boms': () => <BomManagementView />,
+        'production-orders': () => <ProductionOrdersView />,
         'profile': () => <ProfileView />,
     };
 

@@ -697,7 +697,7 @@ export default function AdminDashboard() {
                         label: 'Products',
                         icon: Package,
                         minLevel: 4,
-                        children: getGroupItems(supplyChainIds, ['inventory-items', 'inventory-categories', 'stock-product-bundles', 'item-alternatives', 'item-manufacturers', 'manufacturers'])
+                        children: getGroupItems(supplyChainIds, ['inventory-items', 'inventory-categories', 'inventory-alerts', 'boms', 'production-orders', 'stock-product-bundles', 'item-alternatives', 'item-manufacturers', 'manufacturers'])
                     },
                     {
                         id: 'serial_batch_subgroup',
@@ -718,7 +718,7 @@ export default function AdminDashboard() {
                         label: 'Key Reports',
                         icon: FileText,
                         minLevel: 3,
-                        children: getGroupItems(supplyChainIds, ['stock-ledger', 'stock-balance', 'stock-summary', 'stock-ageing', 'stock-projected-qty'])
+                        children: getGroupItems(supplyChainIds, ['stock-ledger', 'stock-balance', 'stock-summary', 'inventory-abc', 'stock-ageing', 'stock-projected-qty'])
                     },
                     {
                         id: 'stock_other_reports_subgroup',
@@ -809,7 +809,7 @@ export default function AdminDashboard() {
                         label: 'Selling',
                         icon: TrendingUp,
                         minLevel: 3,
-                        children: getGroupItems(commercialIds, ['customers', 'quotations', 'sales-orders', 'sales-invoices', 'blanket-orders', 'sales-partners', 'sales-persons'])
+                        children: getGroupItems(commercialIds, ['crm-leads', 'crm-opportunities', 'crm-pipeline', 'customers', 'quotations', 'sales-orders', 'sales-invoices', 'blanket-orders', 'sales-partners', 'sales-persons'])
                     },
                     {
                         id: 'pos_subgroup',
@@ -837,7 +837,7 @@ export default function AdminDashboard() {
                         label: 'Key Reports',
                         icon: FileText,
                         minLevel: 3,
-                        children: getGroupItems(commercialIds, ['sales-analytics', 'so-analysis', 'sales-funnel', 'so-trends', 'quotation-trends', 'customer-acquisition', 'inactive-customers', 'salesperson-summary', 'item-sales-history'])
+                        children: getGroupItems(commercialIds, ['crm-analytics', 'sales-analytics', 'so-analysis', 'sales-funnel', 'so-trends', 'quotation-trends', 'customer-acquisition', 'inactive-customers', 'salesperson-summary', 'item-sales-history'])
                     },
                     {
                         id: 'selling_other_reports_subgroup',
@@ -888,7 +888,7 @@ export default function AdminDashboard() {
                         label: 'Cost Centers & Taxes',
                         icon: Settings,
                         minLevel: 2,
-                        children: getGroupItems(financeIds, ['cost-centers', 'accounting-dimensions', 'budgets-view', 'sales-tax-templates', 'purchase-tax-templates-view', 'tax-categories', 'tax-rules'])
+                        children: getGroupItems(financeIds, ['cost-centers', 'accounting-dimensions', 'budgets-view', 'sales-tax-templates', 'purchase-tax-templates-view', 'tax-categories', 'tax-rules', 'exchange-rates'])
                     },
                     {
                         id: 'fin_reports_subgroup',
