@@ -275,6 +275,7 @@ function AccountModal({
                     account_type: type,
                     normal_balance: balance,
                     parent_id: parentId || undefined,
+                    currency: 'IDR',
                     description,
                 });
                 success('Account created successfully');

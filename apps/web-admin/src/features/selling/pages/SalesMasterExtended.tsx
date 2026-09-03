@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { salesMasterDataApi, type CustomerGroup, type Territory } from'../api/sales-master-data';
-import { salesSetupDataApi, type Campaign } from'../api/sales-setup-data';
-import { Button, Input, Table, TableHead, TableBody, TableRow, TableTh, TableTd, TableSkeleton, Modal } from'../../../components/ui';
+import { salesMasterDataApi, type CustomerGroup, type Territory } from '../api/sales-master-data';
+import { salesSetupDataApi, type Campaign } from '../api/sales-setup-data';
+import { useAuthStore } from '../../../store/useAuthStore';
+import { Button, Input, Table, TableHead, TableBody, TableRow, TableTh, TableTd, TableSkeleton, Modal } from '../../../components/ui';
 import { Layers, MapPin, Megaphone, Plus, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function SalesMasterExtended() {
     const queryClient = useQueryClient();
+    const activeCompanyId = useAuthStore(s => s.activeCompanyId) || 'c0000000-0000-0000-0000-000000000001';
     const [tab, setTab] = useState<'groups' | 'territories' | 'campaigns'>('groups');
     const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -75,14 +77,14 @@ export default function SalesMasterExtended() {
         if (tab === 'groups') {
             if (!groupName.trim()) return toast.error('Nama kelompok wajib diisi.');
             createGroupMutation.mutate({
-                company_id: '00000000-0000-0000-0000-000000000001',
+                company_id: activeCompanyId,
                 group_name: groupName,
                 is_group: false,
             });
         } else if (tab === 'territories') {
             if (!territoryName.trim()) return toast.error('Nama wilayah wajib diisi.');
             createTerritoryMutation.mutate({
-                company_id: '00000000-0000-0000-0000-000000000001',
+                company_id: activeCompanyId,
                 territory_name: territoryName,
             });
         } else {

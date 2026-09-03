@@ -66,7 +66,18 @@ export default function CashBank() {
         }
     });
 
-    const cashAccounts = accounts?.filter(a => a.code.startsWith('1-11')) || [];
+    const cashAccounts = accounts?.filter(a =>
+        a.code.startsWith('1-11') ||
+        a.code.startsWith('110') ||
+        a.code.startsWith('111') ||
+        a.name.toLowerCase().includes('kas') ||
+        a.name.toLowerCase().includes('bank') ||
+        a.name.toLowerCase().includes('petty cash')
+    ) || [];
+
+    const displayCashAccounts = cashAccounts.length > 0
+        ? cashAccounts
+        : (accounts?.filter(a => a.account_type === 'asset') || accounts || []);
 
     const handleCreateAccount = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -78,7 +89,7 @@ export default function CashBank() {
             normal_balance: 'debit',
             description: formData.get('description') as string,
             currency: 'IDR',
-            parent_id: '',
+            parent_id: undefined,
         });
     };
 
@@ -170,7 +181,7 @@ export default function CashBank() {
                         <div key={i} className="h-48 bg-card animate-pulse rounded-2xl border border-border" />
                     ))
                 ) : (
-                    cashAccounts.map(account => (
+                    displayCashAccounts.map(account => (
                         <Card key={account.id} className="bg-card border-border hover:border-primary/50 transition-all group">
                             <div className="p-6">
                                 <div className="flex justify-between items-start mb-4">

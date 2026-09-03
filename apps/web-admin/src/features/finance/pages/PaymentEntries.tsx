@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { financeApi, type PaymentEntry, type CreatePaymentEntryRequest } from'../api/finance';
-import { Button, Input, Select, Table, TableHead, TableBody, TableRow, TableTh, TableTd, TableSkeleton, Modal, StatusBadge } from'../../../components/ui';
+import { financeApi, type PaymentEntry, type CreatePaymentEntryRequest } from '../api/finance';
+import { clientApi } from '../../clients/api/client-management';
+import { vendorApi } from '../../buying/api/vendors';
+import { Button, Input, Select, Table, TableHead, TableBody, TableRow, TableTh, TableTd, TableSkeleton, Modal, StatusBadge } from '../../../components/ui';
 import { Plus, Search, Filter, ArrowUpRight, ArrowDownLeft, CheckCircle2, DollarSign, Calendar, FileText, AlertCircle } from 'lucide-react';
-import { formatCurrencyIDR } from'../../../utils/decimal';
+import { formatCurrencyIDR } from '../../../utils/decimal';
 import { toast } from 'sonner';
 
 export default function PaymentEntries() {
@@ -14,7 +16,9 @@ export default function PaymentEntries() {
 
     // Form state
     const [paymentType, setPaymentType] = useState<'Receive' | 'Pay'>('Receive');
+    const [partyId, setPartyId] = useState('');
     const [partyName, setPartyName] = useState('');
+    const [bankAccountId, setBankAccountId] = useState('');
     const [amount, setAmount] = useState('');
     const [postingDate, setPostingDate] = useState(new Date().toISOString().split('T')[0]);
     const [modeOfPayment, setModeOfPayment] = useState('Bank Transfer');
@@ -25,6 +29,23 @@ export default function PaymentEntries() {
     const { data: entries, isLoading } = useQuery({
         queryKey: ['finance', 'payment-entries'],
         queryFn: financeApi.listPaymentEntries,
+    });
+
+    const { data: clientsResponse } = useQuery({
+        queryKey: ['clients'],
+        queryFn: () => clientApi.list({ limit: 100 })
+    });
+    const clients = Array.isArray(clientsResponse?.data) ? clientsResponse.data : (clientsResponse as any)?.data?.data || [];
+
+    const { data: vendorsResponse } = useQuery({
+        queryKey: ['vendors-list'],
+        queryFn: () => vendorApi.listVendors(1, 100)
+    });
+    const vendors = Array.isArray(vendorsResponse?.data) ? vendorsResponse.data : [];
+
+    const { data: accounts = [] } = useQuery({
+        queryKey: ['finance', 'accounts'],
+        queryFn: financeApi.listAccounts
     });
 
     const { data: salesInvoices } = useQuery({
@@ -56,7 +77,9 @@ export default function PaymentEntries() {
     });
 
     const resetForm = () => {
+        setPartyId('');
         setPartyName('');
+        setBankAccountId('');
         setAmount('');
         setReferenceNo('');
         setSelectedDocId('');
@@ -74,9 +97,12 @@ export default function PaymentEntries() {
         const payload: CreatePaymentEntryRequest = {
             payment_type: paymentType,
             party_type: paymentType === 'Receive' ? 'Customer' : 'Supplier',
+            party_id: partyId || undefined,
             party_name: partyName || (paymentType === 'Receive' ? 'Pelanggan' : 'Pemasok'),
             posting_date: postingDate,
             mode_of_payment: modeOfPayment,
+            paid_from_account_id: paymentType === 'Pay' ? (bankAccountId || undefined) : undefined,
+            paid_to_account_id: paymentType === 'Receive' ? (bankAccountId || undefined) : undefined,
             amount: numAmount,
             reference_no: referenceNo || undefined,
             references: selectedDocId ? [{
@@ -274,25 +300,79 @@ export default function PaymentEntries() {
 
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Nama Pihak (Party)</label>
-                            <Input
-                                placeholder={paymentType === 'Receive' ? 'PT Mitra Sukses...' : 'CV Sumber Jaya...'}
-                                value={partyName}
-                                onChange={(e) => setPartyName(e.target.value)}
-                                required
-                            />
+                            <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
+                                {paymentType === 'Receive' ? 'Pelanggan (Customer) *' : 'Pemasok (Vendor) *'}
+                            </label>
+                            <div className="space-y-1.5">
+                                {paymentType === 'Receive' ? (
+                                    <select
+                                        value={partyId}
+                                        onChange={(e) => {
+                                            const cId = e.target.value;
+                                            setPartyId(cId);
+                                            const c = clients.find((x: any) => x.id === cId);
+                                            if (c) setPartyName(c.name);
+                                        }}
+                                        className="w-full bg-background border border-border rounded-xl px-3 py-2 text-xs font-semibold text-foreground focus:ring-2 focus:ring-emerald-500/30 outline-none"
+                                    >
+                                        <option value="">-- Pilih Pelanggan Terdaftar --</option>
+                                        {clients.map((c: any) => (
+                                            <option key={c.id} value={c.id}>{c.name} ({c.phone || 'Pelanggan'})</option>
+                                        ))}
+                                    </select>
+                                ) : (
+                                    <select
+                                        value={partyId}
+                                        onChange={(e) => {
+                                            const vId = e.target.value;
+                                            setPartyId(vId);
+                                            const v = vendors.find((x: any) => x.id === vId);
+                                            if (v) setPartyName(v.name);
+                                        }}
+                                        className="w-full bg-background border border-border rounded-xl px-3 py-2 text-xs font-semibold text-foreground focus:ring-2 focus:ring-emerald-500/30 outline-none"
+                                    >
+                                        <option value="">-- Pilih Vendor Terdaftar --</option>
+                                        {vendors.map((v: any) => (
+                                            <option key={v.id} value={v.id}>{v.name} ({v.code || 'Vendor'})</option>
+                                        ))}
+                                    </select>
+                                )}
+                                <Input
+                                    placeholder={paymentType === 'Receive' ? 'Atau ketik nama pelanggan manual...' : 'Atau ketik nama pemasok manual...'}
+                                    value={partyName}
+                                    onChange={(e) => setPartyName(e.target.value)}
+                                    required
+                                />
+                            </div>
                         </div>
-                        <div>
-                            <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Metode Pembayaran</label>
-                            <select
-                                value={modeOfPayment}
-                                onChange={(e) => setModeOfPayment(e.target.value)}
-                                className="w-full bg-background border border-border rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500/30 outline-none"
-                            >
-                                <option value="Bank Transfer">Transfer Bank</option>
-                                <option value="Cash">Kas Tunai</option>
-                                <option value="Cheque / Giro">Cek / Bilyet Giro</option>
-                            </select>
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Metode Pembayaran</label>
+                                <select
+                                    value={modeOfPayment}
+                                    onChange={(e) => setModeOfPayment(e.target.value)}
+                                    className="w-full bg-background border border-border rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500/30 outline-none"
+                                >
+                                    <option value="Bank Transfer">Transfer Bank</option>
+                                    <option value="Cash">Kas Tunai</option>
+                                    <option value="Cheque / Giro">Cek / Bilyet Giro</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
+                                    {paymentType === 'Receive' ? 'Akun Kas Masuk (Deposit To)' : 'Akun Kas Keluar (Paid From)'}
+                                </label>
+                                <select
+                                    value={bankAccountId}
+                                    onChange={(e) => setBankAccountId(e.target.value)}
+                                    className="w-full bg-background border border-border rounded-xl px-3 py-2 text-xs text-foreground focus:ring-2 focus:ring-emerald-500/30 outline-none"
+                                >
+                                    <option value="">-- Rekening Kas / Bank Otomatis --</option>
+                                    {accounts.filter((a: any) => a.account_type === 'Asset' || a.account_type === 'Bank' || a.account_type === 'Cash' || !a.account_type).map((acc: any) => (
+                                        <option key={acc.id} value={acc.id}>{acc.account_number} - {acc.name}</option>
+                                    ))}
+                                </select>
+                            </div>
                         </div>
                     </div>
 
@@ -311,13 +391,22 @@ export default function PaymentEntries() {
                                     if (inv) {
                                         setSelectedDocNo(inv.invoice_number);
                                         setAmount(String(Number(inv.total_amount) - Number(inv.amount_paid)));
-                                        if (inv.client_id) setPartyName(inv.invoice_number);
+                                        if (inv.client_id) {
+                                            setPartyId(inv.client_id);
+                                            const cl = clients.find((c: any) => c.id === inv.client_id);
+                                            if (cl) setPartyName(cl.name);
+                                        }
                                     }
                                 } else {
                                     const bill = (purchaseBills || []).find(b => b.id === id);
                                     if (bill) {
                                         setSelectedDocNo(bill.bill_number);
                                         setAmount(String(Number(bill.total_amount) - Number(bill.amount_paid)));
+                                        if (bill.vendor_id) {
+                                            setPartyId(bill.vendor_id);
+                                            const vd = vendors.find((v: any) => v.id === bill.vendor_id);
+                                            if (vd) setPartyName(vd.name);
+                                        }
                                     }
                                 }
                             }}
@@ -327,13 +416,13 @@ export default function PaymentEntries() {
                             {paymentType === 'Receive' ? (
                                 (salesInvoices || []).filter(i => i.status !== 'paid').map(inv => (
                                     <option key={inv.id} value={inv.id}>
-                                        {inv.invoice_number} - Sisa: {formatCurrencyIDR(String(Number(inv.total_amount)) - Number(inv.amount_paid))}
+                                        {inv.invoice_number} - Sisa: {formatCurrencyIDR(String(Number(inv.total_amount) - Number(inv.amount_paid)))}
                                     </option>
                                 ))
                             ) : (
                                 (purchaseBills || []).filter(b => b.status !== 'paid').map(bill => (
                                     <option key={bill.id} value={bill.id}>
-                                        {bill.bill_number} - Sisa: {formatCurrencyIDR(String(Number(bill.total_amount)) - Number(bill.amount_paid))}
+                                        {bill.bill_number} - Sisa: {formatCurrencyIDR(String(Number(bill.total_amount) - Number(bill.amount_paid)))}
                                     </option>
                                 ))
                             )}

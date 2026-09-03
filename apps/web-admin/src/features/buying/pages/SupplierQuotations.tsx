@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { buyingQuotationDataApi, type SupplierQuotation } from'../api/buying-quotation-data';
-import { vendorApi } from'../api/vendors';
-import { Button, Input, Table, TableHead, TableBody, TableRow, TableTh, TableTd, TableSkeleton, Modal } from'../../../components/ui';
+import { buyingQuotationDataApi, type SupplierQuotation } from '../api/buying-quotation-data';
+import { vendorApi } from '../api/vendors';
+import { useAuthStore } from '../../../store/useAuthStore';
+import { Button, Input, Table, TableHead, TableBody, TableRow, TableTh, TableTd, TableSkeleton, Modal } from '../../../components/ui';
 import { Plus, Search, FileSpreadsheet, CheckCircle2 } from 'lucide-react';
-import { formatCurrencyIDR } from'../../../utils/decimal';
+import { formatCurrencyIDR } from '../../../utils/decimal';
 import { toast } from 'sonner';
 
 export default function SupplierQuotations() {
     const queryClient = useQueryClient();
+    const activeCompanyId = useAuthStore(s => s.activeCompanyId) || 'c0000000-0000-0000-0000-000000000001';
     const [searchTerm, setSearchTerm] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -51,7 +53,7 @@ export default function SupplierQuotations() {
         }
 
         createMutation.mutate({
-            company_id: '00000000-0000-0000-0000-000000000001',
+            company_id: activeCompanyId,
             quotation_number: quotationNo || `SQ-${Date.now().toString().slice(-6)}`,
             vendor_id: vendorId,
             transaction_date: transactionDate,

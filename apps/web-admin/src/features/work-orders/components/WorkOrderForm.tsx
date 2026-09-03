@@ -47,17 +47,25 @@ export function WorkOrderForm({ maintenanceId, initialAssetId, initialType, onCl
         maintenance_team_id: '',
     });
 
-    const customMaintenanceTypeOptions = useMemo(() => {
-        try {
-            const raw = localStorage.getItem('erp_maintenance_types');
-            const list = raw ? JSON.parse(raw) : [];
-            if (list.length > 0) {
-                return list.map((t: any) => ({
-                    value: t.code.toLowerCase(),
-                    label: `${t.name} (${t.code})`
-                }));
+    const { data: dbMaintenanceTypes = [] } = useQuery({
+        queryKey: ['lookups', 'maintenance-types'],
+        queryFn: async () => {
+            try {
+                const res = await api.get('/lookups/maintenance-types');
+                return Array.isArray(res.data) ? res.data : [];
+            } catch {
+                return [];
             }
-        } catch {}
+        }
+    });
+
+    const customMaintenanceTypeOptions = useMemo(() => {
+        if (dbMaintenanceTypes.length > 0) {
+            return dbMaintenanceTypes.map((t: any) => ({
+                value: t.code.toLowerCase(),
+                label: `${t.name} (${t.code})`
+            }));
+        }
         return [
             { value: 'preventive', label: 'Preventive Maintenance' },
             { value: 'corrective', label: 'Corrective / Repair' },
@@ -66,7 +74,7 @@ export function WorkOrderForm({ maintenanceId, initialAssetId, initialType, onCl
             { value: 'upgrade', label: 'Asset Upgrade' },
             { value: 'conversion', label: 'Asset Conversion' },
         ];
-    }, []);
+    }, [dbMaintenanceTypes]);
 
     const [errors, setErrors] = useState<Record<string, string>>({});
 

@@ -5,6 +5,7 @@ import {
     type UpdateSalesInvoiceRequest, type CreateInvoiceItemRequest
 } from '../api/finance';
 import { clientApi } from '../../clients/api/client-management';
+import { inventoryApi } from '../../inventory/api/inventory';
 import {
     Card, Button, Badge, Modal, CurrencyInput, UniversalTableToolbar,
     type TableColumnOption, type FilterChip, useToast
@@ -68,6 +69,27 @@ export default function SalesInvoices() {
         queryFn: () => clientApi.list({ limit: 100 })
     });
     const clients = Array.isArray(clientsResponse?.data) ? clientsResponse.data : (clientsResponse as any)?.data?.data || [];
+
+    const { data: rawInventoryItems = [] } = useQuery({
+        queryKey: ['inventory', 'items-for-sales-invoices'],
+        queryFn: inventoryApi.listItems
+    });
+    const inventoryItems = Array.isArray(rawInventoryItems) ? rawInventoryItems : (rawInventoryItems as any)?.data || [];
+
+    const handleSelectInventoryItem = (index: number, itemId: string) => {
+        const it = inventoryItems.find((x: any) => x.id === itemId);
+        if (!it) return;
+        const price = Number(it.standard_rate || it.selling_price || it.valuation_rate || 0);
+        setCreateItems(prev => {
+            const next = [...prev];
+            next[index] = {
+                ...next[index],
+                description: `[${it.sku || it.item_code}] ${it.name || it.item_name}`,
+                unit_price: price || next[index].unit_price,
+            };
+            return next;
+        });
+    };
 
     const createMutation = useMutation({
         mutationFn: financeApi.createSalesInvoice,
@@ -593,14 +615,30 @@ export default function SalesInvoices() {
                                     {createItems.map((item, idx) => (
                                         <tr key={idx} className="hover:bg-muted/20">
                                             <td className="p-2.5">
-                                                <input
-                                                    type="text"
-                                                    required
-                                                    placeholder="Deskripsi layanan / item..."
-                                                    value={item.description}
-                                                    onChange={(e) => handleUpdateItemRow(idx, 'description', e.target.value)}
-                                                    className="w-full bg-transparent border border-border/40 rounded-lg px-2.5 py-1.5 text-xs text-foreground focus:outline-none focus:border-primary"
-                                                />
+                                                <div className="space-y-1">
+                                                    {inventoryItems.length > 0 && (
+                                                        <select
+                                                            className="w-full bg-background border border-border/40 rounded-lg px-2 py-1 text-[11px] text-foreground focus:outline-none focus:border-primary"
+                                                            onChange={(e) => handleSelectInventoryItem(idx, e.target.value)}
+                                                            defaultValue=""
+                                                        >
+                                                            <option value="">-- Pilih dari Master Barang --</option>
+                                                            {inventoryItems.map((it: any) => (
+                                                                <option key={it.id} value={it.id}>
+                                                                    [{it.sku || it.item_code}] {it.name || it.item_name}
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                    )}
+                                                    <input
+                                                        type="text"
+                                                        required
+                                                        placeholder="Deskripsi layanan / item..."
+                                                        value={item.description}
+                                                        onChange={(e) => handleUpdateItemRow(idx, 'description', e.target.value)}
+                                                        className="w-full bg-transparent border border-border/40 rounded-lg px-2.5 py-1.5 text-xs text-foreground focus:outline-none focus:border-primary"
+                                                    />
+                                                </div>
                                             </td>
                                             <td className="p-2.5">
                                                 <input

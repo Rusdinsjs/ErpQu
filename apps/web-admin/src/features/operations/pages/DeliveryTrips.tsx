@@ -1,21 +1,21 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { opsApi, type DeliveryTrip, type DeliveryTripStop } from'../api/ops-quality-trip';
-import { employeeApi } from'../../hr/api/employee';
-import { assetApi } from'../../assets/api/assets';
-import { financeApi } from'../../finance/api/finance';
+import { opsApi, type DeliveryTrip, type DeliveryTripStop } from '../api/ops-quality-trip';
+import { employeeApi } from '../../hr/api/employee';
+import { assetApi } from '../../assets/api/assets';
+import { financeApi } from '../../finance/api/finance';
+import { useAuthStore } from '../../../store/useAuthStore';
 import {
     Plus, Truck, Play, CheckCircle2, X, Navigation
 } from 'lucide-react';
-import { showToast } from'../../../components/ui/Toast';
+import { showToast } from '../../../components/ui/Toast';
 import {
     Card, Button, Table, TableHead, TableBody, TableRow, TableTh, TableTd, TableEmpty, TableSkeleton, PageHeader
-} from'../../../components/ui';
-
-const DEFAULT_COMPANY_ID = '00000000-0000-0000-0000-000000000001';
+} from '../../../components/ui';
 
 const DeliveryTripsPage: React.FC = () => {
     const queryClient = useQueryClient();
+    const activeCompanyId = useAuthStore(s => s.activeCompanyId) || 'c0000000-0000-0000-0000-000000000001';
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [selectedTrip, setSelectedTrip] = useState<[DeliveryTrip, DeliveryTripStop[]] | null>(null);
 
@@ -26,8 +26,8 @@ const DeliveryTripsPage: React.FC = () => {
 
     // Queries
     const { data: trips = [], isLoading: tripsLoading } = useQuery({
-        queryKey: ['delivery-trips'],
-        queryFn: () => opsApi.listDeliveryTrips(DEFAULT_COMPANY_ID)
+        queryKey: ['delivery-trips', activeCompanyId],
+        queryFn: () => opsApi.listDeliveryTrips(activeCompanyId)
     });
 
     const { data: employees = [] } = useQuery({
@@ -105,7 +105,7 @@ const DeliveryTripsPage: React.FC = () => {
             return;
         }
         createMut.mutate({
-            company_id: DEFAULT_COMPANY_ID,
+            company_id: activeCompanyId,
             driver_id: driverId || undefined,
             vehicle_id: vehicleId || undefined,
             stops: selectedShipmentIds.map((id, index) => ({
@@ -254,7 +254,13 @@ const DeliveryTripsPage: React.FC = () => {
                                                 onChange={() => toggleShipmentSelection(ship.id)}
                                                 className="rounded bg-background border-border text-teal-600 focus:ring-teal-500"
                                             />
-                                            <span className="font-mono text-xs">{ship.shipment_number}</span> - <span>{ship.status}</span>
+                                            <span className="font-mono text-xs font-semibold">{ship.shipment_number}</span>
+                                            <span className="text-xs text-foreground truncate max-w-[220px]">
+                                                {ship.customer_name || ship.courier_name || 'Tujuan Pengiriman'}
+                                            </span>
+                                            <span className="text-[10px] uppercase font-bold text-muted-foreground ml-auto bg-muted px-1.5 py-0.5 rounded">
+                                                {ship.status}
+                                            </span>
                                         </label>
                                     ))}
                                     {shipments.length === 0 && (

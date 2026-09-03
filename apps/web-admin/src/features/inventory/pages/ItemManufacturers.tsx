@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Button, Modal, Table, TableHead, TableBody, TableRow, TableTh, TableTd } from'../../../components/ui';
+import { Card, Button, Modal, Table, TableHead, TableBody, TableRow, TableTh, TableTd } from '../../../components/ui';
 import { Plus, Trash2 } from 'lucide-react';
-import { masterDataExtendedApi, inventoryApi } from'../api/inventory';
+import { masterDataExtendedApi, inventoryApi } from '../api/inventory';
+import { useAuthStore } from '../../../store/useAuthStore';
 import { toast } from 'sonner';
 
 export default function ItemManufacturers() {
-    const companyId = '00000000-0000-0000-0000-000000000001';
+    const companyId = useAuthStore(s => s.activeCompanyId) || 'c0000000-0000-0000-0000-000000000001';
     
     const [items, setItems] = useState<any[]>([]);
     const [manufacturers, setManufacturers] = useState<any[]>([]);
@@ -23,7 +24,7 @@ export default function ItemManufacturers() {
         try {
             const [itemsData, mfgData] = await Promise.all([
                 inventoryApi.listItems(),
-                masterDataExtendedApi.listManufacturers('00000000-0000-0000-0000-000000000001')
+                masterDataExtendedApi.listManufacturers(companyId)
             ]);
             setItems(itemsData || []);
             setManufacturers(mfgData || []);

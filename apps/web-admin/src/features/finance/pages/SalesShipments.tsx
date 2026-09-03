@@ -38,7 +38,7 @@ export default function SalesShipments() {
         queryKey: ['finance', 'sales-orders'],
         queryFn: financeApi.listSalesOrders
     });
-    const salesOrders = ordersResponse?.data || [];
+    const salesOrders = Array.isArray(ordersResponse) ? ordersResponse : (ordersResponse?.data || []);
 
     const { data: clientsResponse } = useQuery({
         queryKey: ['clients'],
@@ -51,16 +51,24 @@ export default function SalesShipments() {
 
     useEffect(() => {
         if (selectedOrder) {
-            // Find the items of this sales order.
-            // Since salesOrders contains the full order details including items,
-            // let's grab them. If items are in selectedOrder.items:
             const orderItems = selectedOrder.items || [];
-            setLines(orderItems.map((item: any) => ({
-                order_item_id: item.id,
-                description: item.description,
-                quantity_shipped: item.quantity,
-                item_id: '' // User will choose which inventory item this maps to
-            })));
+            if (orderItems.length > 0) {
+                setLines(orderItems.map((item: any) => ({
+                    order_item_id: item.id || null,
+                    description: item.description || item.item_name || 'Item Pesanan',
+                    quantity_shipped: Number(item.quantity || 1),
+                    item_id: item.item_id || ''
+                })));
+            } else {
+                setLines([
+                    {
+                        order_item_id: null,
+                        description: `Pesanan ${selectedOrder.order_number || selectedOrder.name || ''}`,
+                        quantity_shipped: 1,
+                        item_id: ''
+                    }
+                ]);
+            }
         } else {
             setLines([]);
         }
@@ -279,10 +287,10 @@ export default function SalesShipments() {
                                             }}
                                             className="w-full bg-background border border-border rounded px-3 py-2 text-foreground"
                                         >
-                                            <option value="">Pilih Sales Order</option>
+                                            <option value="">-- Pilih Dokumen Pesanan Penjualan (SO) --</option>
                                             {salesOrders.map((so: any) => (
                                                 <option key={so.id} value={so.id}>
-                                                    {so.order_number} - {clients.find((c: any) => c.id === so.client_id)?.name || 'Unknown Customer'}
+                                                    {so.order_number || so.name} - {so.customer_name || clients.find((c: any) => c.id === (so.client_id || so.customer_id))?.name || 'Pelanggan'}
                                                 </option>
                                             ))}
                                         </select>

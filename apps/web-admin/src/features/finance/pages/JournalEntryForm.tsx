@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { financeApi, type Account } from '../api/finance';
 import { journalApi, type CreateJournalEntryRequest } from '../api/journal';
+import { useAuthStore } from '../../../store/useAuthStore';
 import { Card, Button, CurrencyInput, useToast } from '../../../components/ui';
 import {
     Plus, Trash2, ArrowLeft, Save, CheckCircle2, AlertTriangle,
@@ -18,6 +19,7 @@ interface JournalLineItem {
 
 export default function JournalEntryForm() {
     const navigate = useNavigate();
+    const activeCompanyId = useAuthStore(s => s.activeCompanyId) || 'c0000000-0000-0000-0000-000000000001';
     const [submitting, setSubmitting] = useState(false);
     const [accounts, setAccounts] = useState<Account[]>([]);
 
@@ -115,6 +117,7 @@ export default function JournalEntryForm() {
         try {
             setSubmitting(true);
             const payload: CreateJournalEntryRequest = {
+                company_id: activeCompanyId,
                 date,
                 description,
                 reference,

@@ -2,16 +2,25 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { FileText, Printer, Search, Download, Building2, CheckCircle2, DollarSign } from 'lucide-react';
 import dayjs from 'dayjs';
-import { hrPayrollApi, type HrSalarySlip } from'../../api/hr-payroll';
+import { hrPayrollApi, type HrSalarySlip } from '../../api/hr-payroll';
+import { useAuthStore } from '../../../../store/useAuthStore';
+import { fetchCompanies } from '../../../company/api/companyApi';
 import {
     Button, Card, Table, TableHead, TableBody, TableRow, TableTh, TableTd, TableEmpty,
     Badge, ActionIcon, Modal, Input, Select, LoadingOverlay
-} from'../../../../components/ui';
+} from '../../../../components/ui';
 
 export default function SalarySlipsView() {
     const [search, setSearch] = useState('');
     const [selectedSlip, setSelectedSlip] = useState<HrSalarySlip | null>(null);
     const [modalOpen, setModalOpen] = useState(false);
+
+    const activeCompanyId = useAuthStore(s => s.activeCompanyId);
+    const { data: companies = [] } = useQuery({
+        queryKey: ['companies'],
+        queryFn: fetchCompanies,
+    });
+    const activeCompany = companies.find((c: any) => c.id === activeCompanyId) || companies[0];
 
     const { data: slips = [], isLoading } = useQuery({
         queryKey: ['hr-salary-slips'],
@@ -116,9 +125,9 @@ export default function SalarySlipsView() {
                         {/* Company Header */}
                         <div className="border-b border-white/20 pb-4 flex justify-between items-start">
                             <div>
-                                <h2 className="text-xl font-bold text-emerald-400">PT. SJS GROUP INDONESIA</h2>
-                                <p className="text-xs text-gray-400">Jl. Jend. Sudirman Kav. 52-53, Jakarta Selatan</p>
-                                <p className="text-xs text-gray-400">NPWP: 01.234.567.8-011.000</p>
+                                <h2 className="text-xl font-bold text-emerald-400">{activeCompany?.name || 'PT. NUSANTARA PERKASA MANDIRI'}</h2>
+                                <p className="text-xs text-gray-400">{activeCompany?.address || 'Kawasan Industri & Pergudangan Terpadu'}</p>
+                                <p className="text-xs text-gray-400">NPWP: {activeCompany?.tax_id || '01.234.567.8-011.000'}</p>
                             </div>
                             <div className="text-right">
                                 <span className="px-3 py-1 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded text-xs font-bold uppercase">

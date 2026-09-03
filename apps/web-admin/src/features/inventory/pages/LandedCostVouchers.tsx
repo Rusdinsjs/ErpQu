@@ -3,16 +3,19 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { 
     FileText, Plus, Search, Loader2, X, Trash2
 } from 'lucide-react';
-import { landedCostVoucherApi, inventoryApi } from'../api/inventory';
-import { useToast } from'../../../components/ui/Toast';
-import { Input } from'../../../components/ui/Input';
-import { Button } from'../../../components/ui/Button';
+import { landedCostVoucherApi, inventoryApi } from '../api/inventory';
+import { financeApi } from '../../finance/api/finance';
+import { useAuthStore } from '../../../store/useAuthStore';
+import { useToast } from '../../../components/ui/Toast';
+import { Input } from '../../../components/ui/Input';
+import { Button } from '../../../components/ui/Button';
 
 export default function LandedCostVouchers() {
     const [searchTerm, setSearchTerm] = useState('');
     
-    // Default company ID for MVP
-    const companyId = '75d1be11-9669-42b7-a39f-26ec0398f6d6';
+    // Active company ID from auth store
+    const activeCompanyId = useAuthStore(s => s.activeCompanyId);
+    const companyId = activeCompanyId || 'c0000000-0000-0000-0000-000000000001';
     
     // Create state
     const [createModalOpen, setCreateModalOpen] = useState(false);
@@ -36,6 +39,18 @@ export default function LandedCostVouchers() {
     const { data: inventoryItems = [] } = useQuery({
         queryKey: ['inventory-items', companyId],
         queryFn: () => inventoryApi.listItems({ company_id: companyId })
+    });
+
+    // Fetch Purchase Receipts for document linking
+    const { data: purchaseReceipts = [] } = useQuery({
+        queryKey: ['purchase-receipts', companyId],
+        queryFn: () => financeApi.listPurchaseReceipts(companyId)
+    });
+
+    // Fetch Purchase Bills for document linking
+    const { data: purchaseBills = [] } = useQuery({
+        queryKey: ['finance', 'purchase-bills'],
+        queryFn: financeApi.listPurchaseBills
     });
 
     // Create Mutation
@@ -69,17 +84,22 @@ export default function LandedCostVouchers() {
 
     const handleCreate = (e: React.FormEvent) => {
         e.preventDefault();
-        if (!voucherNumber.trim()) return;
+        const vNum = voucherNumber.trim() || `LCV-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
 
-        // Validasi UUID untuk document id (simulasi)
+        const defaultDocId = purchaseReceipts[0]?.id || purchaseBills[0]?.id;
+        if (items.some(item => !item.receipt_document_id && !defaultDocId)) {
+            showError('Pilih dokumen penerimaan barang (Purchase Receipt / Bill) yang valid.');
+            return;
+        }
+
         const validItems = items.map(item => ({
             ...item,
-            receipt_document_id: item.receipt_document_id || '00000000-0000-0000-0000-000000000000'
+            receipt_document_id: item.receipt_document_id || defaultDocId
         }));
         
         createMutation.mutate({
             company_id: companyId,
-            voucher_number: voucherNumber,
+            voucher_number: vNum,
             posting_date: postingDate,
             total_freight_charge: totalFreightCharge,
             items: validItems
@@ -290,13 +310,28 @@ export default function LandedCostVouchers() {
                                                         </select>
                                                     </div>
                                                     <div>
-                                                        <label className="block text-xs font-medium mb-1">ID Dokumen</label>
-                                                        <Input
+                                                        <label className="block text-xs font-medium mb-1">Pilih Dokumen Penerimaan / Tagihan *</label>
+                                                        <select 
+                                                            className="w-full rounded-md border border-input bg-background px-3 py-1.5 text-xs"
                                                             value={item.receipt_document_id}
                                                             onChange={(e) => handleItemChange(index, 'receipt_document_id', e.target.value)}
-                                                            placeholder="UUID dokumen penerimaan"
-                                                            className="h-8 text-sm"
-                                                        />
+                                                            required
+                                                        >
+                                                            <option value="">-- Pilih Dokumen --</option>
+                                                            {item.receipt_document_type === 'Purchase Receipt' ? (
+                                                                purchaseReceipts.map((pr: any) => (
+                                                                    <option key={pr.id} value={pr.id}>
+                                                                        {pr.receipt_number || pr.id} - {pr.supplier_name || 'Vendor'} ({pr.posting_date || pr.created_at?.slice(0, 10)})
+                                                                    </option>
+                                                                ))
+                                                            ) : (
+                                                                purchaseBills.map((pb: any) => (
+                                                                    <option key={pb.id} value={pb.id}>
+                                                                        {pb.bill_number} - {pb.vendor_name || 'Vendor'} ({pb.posting_date})
+                                                                    </option>
+                                                                ))
+                                                            )}
+                                                        </select>
                                                     </div>
                                                 </div>
                                                 

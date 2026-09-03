@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Card } from'../../../components/ui';
-import { stockAnalyticsApi } from'../api/inventory';
+import { Card } from '../../../components/ui';
+import { stockAnalyticsApi } from '../api/inventory';
+import { useAuthStore } from '../../../store/useAuthStore';
 import { toast } from 'sonner';
 import {
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer,
@@ -15,7 +16,7 @@ const formatCurrency = (value: number) => {
 };
 
 export default function StockAnalytics() {
-    const companyId = '00000000-0000-0000-0000-000000000001';
+    const companyId = useAuthStore(s => s.activeCompanyId) || 'c0000000-0000-0000-0000-000000000001';
     
     const [warehouseValuations, setWarehouseValuations] = useState<any[]>([]);
     const [itemGroupValuations, setItemGroupValuations] = useState<any[]>([]);

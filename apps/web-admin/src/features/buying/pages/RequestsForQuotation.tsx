@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { buyingQuotationDataApi, type RequestForQuotation } from'../api/buying-quotation-data';
-import { Button, Input, Table, TableHead, TableBody, TableRow, TableTh, TableTd, TableSkeleton, Modal } from'../../../components/ui';
+import { buyingQuotationDataApi, type RequestForQuotation } from '../api/buying-quotation-data';
+import { useAuthStore } from '../../../store/useAuthStore';
+import { Button, Input, Table, TableHead, TableBody, TableRow, TableTh, TableTd, TableSkeleton, Modal } from '../../../components/ui';
 import { Plus, Search, FileQuestion, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function RequestsForQuotation() {
     const queryClient = useQueryClient();
+    const activeCompanyId = useAuthStore(s => s.activeCompanyId) || 'c0000000-0000-0000-0000-000000000001';
     const [searchTerm, setSearchTerm] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -36,7 +38,7 @@ export default function RequestsForQuotation() {
     const handleCreate = (e: React.FormEvent) => {
         e.preventDefault();
         createMutation.mutate({
-            company_id: '00000000-0000-0000-0000-000000000001',
+            company_id: activeCompanyId,
             rfq_number: rfqNumber || `RFQ-${Date.now().toString().slice(-6)}`,
             transaction_date: transactionDate,
             tc_name: tcName,

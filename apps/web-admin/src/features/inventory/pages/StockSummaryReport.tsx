@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Card, Table, TableHead, TableBody, TableRow, TableTh, TableTd } from'../../../components/ui';
-import { stockReportApi } from'../api/inventory';
+import { Card, Table, TableHead, TableBody, TableRow, TableTh, TableTd } from '../../../components/ui';
+import { stockReportApi } from '../api/inventory';
+import { useAuthStore } from '../../../store/useAuthStore';
 import { toast } from 'sonner';
 
 const formatCurrency = (value: number) => {
@@ -8,7 +9,7 @@ const formatCurrency = (value: number) => {
 };
 
 export default function StockSummaryReport() {
-    const companyId = '00000000-0000-0000-0000-000000000001';
+    const companyId = useAuthStore(s => s.activeCompanyId) || 'c0000000-0000-0000-0000-000000000001';
     const [data, setData] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 

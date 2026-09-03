@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { salesMasterDataApi, type SalesPartner, type SalesPerson } from'../api/sales-master-data';
-import { Button, Input, Table, TableHead, TableBody, TableRow, TableTh, TableTd, Modal } from'../../../components/ui';
+import { salesMasterDataApi, type SalesPartner, type SalesPerson } from '../api/sales-master-data';
+import { useAuthStore } from '../../../store/useAuthStore';
+import { Button, Input, Table, TableHead, TableBody, TableRow, TableTh, TableTd, Modal } from '../../../components/ui';
 import { UserCheck, Handshake, Plus, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function SalesTeamView() {
     const queryClient = useQueryClient();
+    const activeCompanyId = useAuthStore(s => s.activeCompanyId) || 'c0000000-0000-0000-0000-000000000001';
     const [tab, setTab] = useState<'partners' | 'persons'>('partners');
     const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -69,7 +71,7 @@ export default function SalesTeamView() {
         if (tab === 'partners') {
             if (!partnerName.trim()) return toast.error('Nama mitra wajib diisi.');
             createPartnerMutation.mutate({
-                company_id: '00000000-0000-0000-0000-000000000001',
+                company_id: activeCompanyId,
                 partner_name: partnerName,
                 partner_type: partnerType,
                 commission_rate: comm,
@@ -81,7 +83,7 @@ export default function SalesTeamView() {
         } else {
             if (!personName.trim()) return toast.error('Nama sales person wajib diisi.');
             createPersonMutation.mutate({
-                company_id: '00000000-0000-0000-0000-000000000001',
+                company_id: activeCompanyId,
                 sales_person_name: personName,
                 commission_rate: comm,
                 status: 'Active',

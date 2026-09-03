@@ -136,7 +136,7 @@ export default function P2hInspectionView() {
 
     const employeeOptions = employees.map((e: any) => ({
         value: e.id,
-        label: `${e.first_name || ''} ${e.last_name || ''} (${e.employee_code || e.id.substring(0, 6)})`.trim()
+        label: `${e.name || `${e.first_name || ''} ${e.last_name || ''}`.trim() || 'Karyawan'} (${e.nik || e.employee_code || e.id.substring(0, 8)})`
     }));
 
     const assetOptions = assets.map((a: any) => ({

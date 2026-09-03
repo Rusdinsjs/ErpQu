@@ -23,6 +23,7 @@ const StockOpname: React.FC = () => {
     const { success, error: showError, info } = useToast();
 
     const [searchTerm, setSearchTerm] = useState('');
+    const [selectedWarehouseId, setSelectedWarehouseId] = useState('');
     const [filterMode, setFilterMode] = useState<'all' | 'discrepancy' | 'counted'>('all');
     const [physicalCounts, setPhysicalCounts] = useState<{ [itemId: string]: number }>({});
     const [globalNote, setGlobalNote] = useState('');
@@ -45,10 +46,16 @@ const StockOpname: React.FC = () => {
         return col ? col.visible !== false : true;
     };
 
+    // Fetch Warehouses
+    const { data: warehouses = [] } = useQuery({
+        queryKey: ['inventory', 'warehouses'],
+        queryFn: inventoryApi.listWarehouses
+    });
+
     // Fetch Inventory Items
     const { data: rawItems = [], isLoading } = useQuery({
-        queryKey: ['inventory-items'],
-        queryFn: () => inventoryApi.listItems()
+        queryKey: ['inventory-items', selectedWarehouseId],
+        queryFn: () => inventoryApi.listItems(selectedWarehouseId ? { warehouse_id: selectedWarehouseId } : undefined)
     });
     const items: InventoryItem[] = (rawItems as any[]) || [];
 
@@ -266,18 +273,35 @@ const StockOpname: React.FC = () => {
                 </div>
             </div>
 
-            {/* Note Input */}
-            <div className="p-3.5 bg-muted/30 border border-border/60 rounded-2xl flex items-center gap-3">
-                <span className="text-xs font-bold text-foreground whitespace-nowrap uppercase tracking-wider">
-                    Catatan Opname:
-                </span>
-                <input
-                    type="text"
-                    placeholder="cth. Stock Opname Akhir Bulan Gudang Utama Samarinda..."
-                    value={globalNote}
-                    onChange={(e) => setGlobalNote(e.target.value)}
-                    className="flex-1 bg-background/60 border border-border/40 rounded-xl px-3 py-1.5 text-xs text-foreground focus:outline-none focus:border-primary transition-colors"
-                />
+            {/* Warehouse Selector & Note Input */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 p-3.5 bg-muted/30 border border-border/60 rounded-2xl">
+                <div>
+                    <label className="block text-[11px] font-bold text-foreground uppercase tracking-wider mb-1">
+                        Pilih Lokasi / Gudang Opname:
+                    </label>
+                    <select
+                        value={selectedWarehouseId}
+                        onChange={(e) => setSelectedWarehouseId(e.target.value)}
+                        className="w-full bg-background border border-border/60 rounded-xl px-3 py-1.5 text-xs text-foreground focus:outline-none focus:border-primary"
+                    >
+                        <option value="">-- Semua Gudang & Lokasi --</option>
+                        {warehouses.map((w: any) => (
+                            <option key={w.id} value={w.id}>{w.name} ({w.warehouse_type || 'Gudang'})</option>
+                        ))}
+                    </select>
+                </div>
+                <div className="md:col-span-2">
+                    <label className="block text-[11px] font-bold text-foreground uppercase tracking-wider mb-1">
+                        Catatan Berita Acara Opname:
+                    </label>
+                    <input
+                        type="text"
+                        placeholder="cth. Stock Opname Fisik Semester Gudang Utama..."
+                        value={globalNote}
+                        onChange={(e) => setGlobalNote(e.target.value)}
+                        className="w-full bg-background border border-border/60 rounded-xl px-3 py-1.5 text-xs text-foreground focus:outline-none focus:border-primary transition-colors"
+                    />
+                </div>
             </div>
 
             {/* Universal Table Toolbar */}

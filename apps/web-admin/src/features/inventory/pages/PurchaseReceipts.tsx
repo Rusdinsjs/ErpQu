@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { financeApi } from'../../finance/api/finance';
-import { inventoryApi } from'../api/inventory';
-import { clientApi } from'../../clients/api/client-management';
-import { Card, Button, Badge } from'../../../components/ui';
+import { financeApi } from '../../finance/api/finance';
+import { inventoryApi } from '../api/inventory';
+import { vendorApi } from '../../buying/api/vendors';
+import { useAuthStore } from '../../../store/useAuthStore';
+import { Card, Button, Badge } from '../../../components/ui';
 import {
     Plus, Search, Filter, Download, X, ClipboardCheck, Eye
 } from 'lucide-react';
@@ -15,15 +16,23 @@ export default function PurchaseReceipts() {
     const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
     const [selectedReceipt, setSelectedReceipt] = useState<any>(null);
 
-    const queryClient = useQueryClient();
+    const [selectedPoId, setSelectedPoId] = useState('');
+    const [selectedVendorId, setSelectedVendorId] = useState('');
+    const [selectedWarehouseId, setSelectedWarehouseId] = useState('');
 
-    // Default company ID
-    const companyId = '75d1be11-9669-42b7-a39f-26ec0398f6d6'; 
+    const queryClient = useQueryClient();
+    const activeCompanyId = useAuthStore(s => s.activeCompanyId) || 'c0000000-0000-0000-0000-000000000001';
 
     const { data: receipts, isLoading } = useQuery({
-        queryKey: ['finance', 'purchase-receipts', companyId],
-        queryFn: () => financeApi.listPurchaseReceipts(companyId)
+        queryKey: ['finance', 'purchase-receipts', activeCompanyId],
+        queryFn: () => financeApi.listPurchaseReceipts(activeCompanyId)
     });
+
+    const { data: purchaseOrdersResponse } = useQuery({
+        queryKey: ['finance', 'purchase-orders'],
+        queryFn: financeApi.listPurchaseOrders
+    });
+    const purchaseOrders = Array.isArray(purchaseOrdersResponse) ? purchaseOrdersResponse : (purchaseOrdersResponse as any)?.data || [];
 
     const { data: warehouses = [] } = useQuery({
         queryKey: ['inventory', 'warehouses'],
@@ -37,10 +46,10 @@ export default function PurchaseReceipts() {
     const items = itemsResponse || [];
 
     const { data: vendorsResponse } = useQuery({
-        queryKey: ['vendors'],
-        queryFn: () => clientApi.list({ limit: 100 })
+        queryKey: ['vendors-list'],
+        queryFn: () => vendorApi.listVendors(1, 100)
     });
-    const vendors = Array.isArray(vendorsResponse?.data) ? vendorsResponse.data : (vendorsResponse as any)?.data?.data || [];
+    const vendors = Array.isArray(vendorsResponse?.data) ? vendorsResponse.data : [];
 
     const createMutation = useMutation({
         mutationFn: financeApi.createPurchaseReceipt,
@@ -82,22 +91,45 @@ export default function PurchaseReceipts() {
         }
     };
 
-    const handleLineChange = (index: number, field: string, value: any) => {
-        const newLines = [...lines];
-        newLines[index][field] = value;
-        setLines(newLines);
+    const handlePoChange = (poId: string) => {
+        setSelectedPoId(poId);
+        if (!poId) return;
+        const po = purchaseOrders.find((p: any) => p.id === poId);
+        if (po) {
+            if (po.vendor_id) {
+                setSelectedVendorId(po.vendor_id);
+            }
+            if (po.warehouse_id) {
+                setSelectedWarehouseId(po.warehouse_id);
+            }
+            if (Array.isArray(po.items) && po.items.length > 0) {
+                setLines(po.items.map((pi: any) => ({
+                    item_id: pi.item_id || '',
+                    qty_received: Number(pi.quantity || 1),
+                    unit_cost: Number(pi.rate || pi.unit_price || 0)
+                })));
+            }
+        }
     };
 
     const handleCreate = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         const formData = new FormData(e.currentTarget);
 
+        const vId = selectedVendorId || (formData.get('vendor_id') as string);
+        const wId = selectedWarehouseId || (formData.get('warehouse_id') as string);
+
+        if (!vId) {
+            toast.error('Pilih supplier / vendor terlebih dahulu');
+            return;
+        }
+
         const payload = {
-            company_id: companyId,
+            company_id: activeCompanyId,
             receipt_number: formData.get('receipt_number'),
-            purchase_order_id: null,
-            vendor_id: formData.get('vendor_id'),
-            warehouse_id: formData.get('warehouse_id'),
+            purchase_order_id: selectedPoId || null,
+            vendor_id: vId,
+            warehouse_id: wId,
             posting_date: formData.get('posting_date'),
             notes: formData.get('notes'),
             items: lines.map(line => ({
@@ -244,6 +276,28 @@ export default function PurchaseReceipts() {
                             </div>
 
                             <form onSubmit={handleCreate} className="space-y-6">
+                                {/* Rujukan PO */}
+                                <div className="p-3 bg-muted/40 rounded-xl border border-border space-y-1.5">
+                                    <label className="text-xs font-bold text-foreground uppercase tracking-wider">
+                                        Rujukan Pesanan Pembelian (Purchase Order)
+                                    </label>
+                                    <select
+                                        value={selectedPoId}
+                                        onChange={(e) => handlePoChange(e.target.value)}
+                                        className="w-full bg-background border border-border rounded-lg px-3 py-2 text-xs text-foreground font-medium"
+                                    >
+                                        <option value="">-- Penerimaan Langsung Tanpa PO --</option>
+                                        {purchaseOrders.map((po: any) => (
+                                            <option key={po.id} value={po.id}>
+                                                {po.order_number || po.name || po.po_number} - {po.supplier_name || 'Vendor'} (Total: Rp {Number(po.total_amount || 0).toLocaleString('id-ID')})
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <span className="text-[11px] text-muted-foreground block">
+                                        Memilih PO akan otomatis mengisi vendor, gudang tujuan, dan rincian item barang.
+                                    </span>
+                                </div>
+
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
                                         <label className="text-sm font-medium text-muted-foreground">Nomor GRN</label>
@@ -265,26 +319,32 @@ export default function PurchaseReceipts() {
                                         />
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-sm font-medium text-muted-foreground">Vendor / Supplier</label>
+                                        <label className="text-sm font-medium text-muted-foreground">Vendor / Supplier *</label>
                                         <select
                                             name="vendor_id"
+                                            value={selectedVendorId}
+                                            onChange={(e) => setSelectedVendorId(e.target.value)}
                                             required
                                             className="w-full bg-background border border-border rounded px-3 py-2 text-foreground"
                                         >
-                                            <option value="">Pilih Vendor</option>
+                                            <option value="">-- Pilih Vendor Resmi --</option>
                                             {vendors.map((vendor: any) => (
-                                                <option key={vendor.id} value={vendor.id}>{vendor.name}</option>
+                                                <option key={vendor.id} value={vendor.id}>
+                                                    {vendor.name} ({vendor.code || 'Vendor'})
+                                                </option>
                                             ))}
                                         </select>
                                     </div>
                                     <div className="space-y-2">
-                                        <label className="text-sm font-medium text-muted-foreground">Gudang Penerima</label>
+                                        <label className="text-sm font-medium text-muted-foreground">Gudang Penerima *</label>
                                         <select
                                             name="warehouse_id"
+                                            value={selectedWarehouseId}
+                                            onChange={(e) => setSelectedWarehouseId(e.target.value)}
                                             required
                                             className="w-full bg-background border border-border rounded px-3 py-2 text-foreground"
                                         >
-                                            <option value="">Pilih Gudang</option>
+                                            <option value="">-- Pilih Gudang Tujuan --</option>
                                             {warehouses.map((wh: any) => (
                                                 <option key={wh.id} value={wh.id}>{wh.name}</option>
                                             ))}

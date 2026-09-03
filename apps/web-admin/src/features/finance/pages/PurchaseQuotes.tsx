@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { financeApi } from'../api/finance';
-import { clientApi } from'../../clients/api/client-management';
-import { Card, Button, Badge } from'../../../components/ui';
+import { financeApi } from '../api/finance';
+import { vendorApi } from '../../buying/api/vendors';
+import { inventoryApi } from '../../inventory/api/inventory';
+import { Card, Button, Badge } from '../../../components/ui';
 import {
     Plus,
     Search,
@@ -16,6 +17,9 @@ import { toast } from 'sonner';
 export default function PurchaseQuotes() {
     const [searchTerm, setSearchTerm] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [selectedItemId, setSelectedItemId] = useState('');
+    const [itemDesc, setItemDesc] = useState('');
+    const [itemPrice, setItemPrice] = useState<number | string>('');
     const queryClient = useQueryClient();
 
     const { data: quotesResponse, isLoading } = useQuery({
@@ -25,10 +29,15 @@ export default function PurchaseQuotes() {
     const quotes = Array.isArray(quotesResponse) ? quotesResponse : (quotesResponse as any)?.data || [];
 
     const { data: vendorsResponse } = useQuery({
-        queryKey: ['vendors'], // Assuming clients can act as vendors for now, or fetch specific vendors
-        queryFn: () => clientApi.list({ limit: 100 })
+        queryKey: ['vendors-list'],
+        queryFn: () => vendorApi.listVendors(1, 100)
     });
-    const vendors = Array.isArray(vendorsResponse?.data) ? vendorsResponse.data : (vendorsResponse as any)?.data?.data || [];
+    const vendors = Array.isArray(vendorsResponse?.data) ? vendorsResponse.data : [];
+
+    const { data: inventoryItems = [] } = useQuery({
+        queryKey: ['inventory-items-for-pq'],
+        queryFn: () => inventoryApi.listItems()
+    });
 
     const createMutation = useMutation({
         mutationFn: financeApi.createPurchaseQuote,
@@ -194,9 +203,9 @@ export default function PurchaseQuotes() {
                                         required
                                         className="w-full bg-background border border-border rounded-lg px-4 py-2 text-foreground focus:border-primary outline-none transition-all"
                                     >
-                                        <option value="">Pilih Vendor</option>
+                                        <option value="">-- Pilih Supplier / Vendor Resmi --</option>
                                         {vendors.map((vendor: any) => (
-                                            <option key={vendor.id} value={vendor.id}>{vendor.name}</option>
+                                            <option key={vendor.id} value={vendor.id}>{vendor.name} ({vendor.code || 'Vendor'})</option>
                                         ))}
                                     </select>
                                 </div>
@@ -233,12 +242,37 @@ export default function PurchaseQuotes() {
                             </div>
 
                             <div className="p-4 bg-muted/50 rounded-xl border border-border space-y-3">
-                                <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Item</h3>
+                                <div className="flex justify-between items-center">
+                                    <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Item Penawaran</h3>
+                                    {inventoryItems.length > 0 && (
+                                        <select
+                                            value={selectedItemId}
+                                            onChange={(e) => {
+                                                const itId = e.target.value;
+                                                setSelectedItemId(itId);
+                                                const it = inventoryItems.find((x: any) => x.id === itId);
+                                                if (it) {
+                                                    setItemDesc(`[${it.sku}] ${it.name}`);
+                                                    setItemPrice(Number(it.purchase_price || it.average_cost || 0));
+                                                }
+                                            }}
+                                            className="bg-background border border-border rounded px-2.5 py-1 text-xs text-foreground"
+                                        >
+                                            <option value="">-- Pilih dari Master Barang --</option>
+                                            {inventoryItems.map((it: any) => (
+                                                <option key={it.id} value={it.id}>[{it.sku}] {it.name}</option>
+                                            ))}
+                                        </select>
+                                    )}
+                                </div>
                                 <div className="grid grid-cols-12 gap-3 items-end">
                                     <div className="col-span-6 space-y-1">
-                                        <label className="text-[10px] text-muted-foreground uppercase">Deskripsi</label>
+                                        <label className="text-[10px] text-muted-foreground uppercase">Deskripsi Item</label>
                                         <input
                                             name="item_description"
+                                            value={itemDesc}
+                                            onChange={(e) => setItemDesc(e.target.value)}
+                                            placeholder="Deskripsi barang / jasa..."
                                             required
                                             className="w-full bg-background border border-border rounded px-2 py-1.5 text-sm text-foreground focus:border-primary outline-none"
                                         />
@@ -254,10 +288,12 @@ export default function PurchaseQuotes() {
                                         />
                                     </div>
                                     <div className="col-span-4 space-y-1">
-                                        <label className="text-[10px] text-muted-foreground uppercase">Estimasi Harga</label>
+                                        <label className="text-[10px] text-muted-foreground uppercase">Estimasi Harga Satuan</label>
                                         <input
                                             name="unit_price"
                                             type="number"
+                                            value={itemPrice}
+                                            onChange={(e) => setItemPrice(e.target.value)}
                                             placeholder="0"
                                             required
                                             className="w-full bg-background border border-border rounded px-2 py-1.5 text-sm text-foreground focus:border-primary outline-none"

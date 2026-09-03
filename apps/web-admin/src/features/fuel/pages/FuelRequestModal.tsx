@@ -35,7 +35,11 @@ export const FuelRequestModal: React.FC<FuelRequestModalProps> = ({ isOpen, onCl
     const loadAssets = async () => {
         try {
             const data = await assetApi.list({ page: 1, per_page: 1000, is_fuel: true });
-            const list = data.data || data;
+            let list = data.data || data;
+            if (!Array.isArray(list) || list.length === 0) {
+                const fallback = await assetApi.list({ page: 1, per_page: 1000 });
+                list = fallback.data || fallback;
+            }
             setAssets(Array.isArray(list) ? list : []);
         } catch (error) {
             console.error(error);

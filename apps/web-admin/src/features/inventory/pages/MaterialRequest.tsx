@@ -1,18 +1,18 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { inventoryApi, type MaterialRequest, type InventoryItem } from'../api/inventory';
+import { inventoryApi, type MaterialRequest, type InventoryItem } from '../api/inventory';
+import { useAuthStore } from '../../../store/useAuthStore';
 import {
     Plus, Search, RefreshCw, CheckCircle2, Trash2, X, Eye, AlertCircle
 } from 'lucide-react';
-import { showToast } from'../../../components/ui/Toast';
+import { showToast } from '../../../components/ui/Toast';
 import {
     Card, Button, Table, TableHead, TableBody, TableRow, TableTh, TableTd, TableEmpty, TableSkeleton
-} from'../../../components/ui';
-
-const DEFAULT_COMPANY_ID = '00000000-0000-0000-0000-000000000001';
+} from '../../../components/ui';
 
 const MaterialRequestPage: React.FC = () => {
     const queryClient = useQueryClient();
+    const activeCompanyId = useAuthStore(s => s.activeCompanyId) || 'c0000000-0000-0000-0000-000000000001';
     const [searchTerm, setSearchTerm] = useState('');
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [selectedRequest, setSelectedRequest] = useState<MaterialRequest | null>(null);
@@ -27,8 +27,8 @@ const MaterialRequestPage: React.FC = () => {
 
     // Queries
     const { data: requests = [], isLoading: requestsLoading } = useQuery({
-        queryKey: ['material-requests'],
-        queryFn: () => inventoryApi.listMaterialRequests(DEFAULT_COMPANY_ID)
+        queryKey: ['material-requests', activeCompanyId],
+        queryFn: () => inventoryApi.listMaterialRequests(activeCompanyId)
     });
 
     const { data: warehouses = [] } = useQuery({
@@ -108,7 +108,7 @@ const MaterialRequestPage: React.FC = () => {
         }
 
         const payload = {
-            company_id: DEFAULT_COMPANY_ID,
+            company_id: activeCompanyId,
             transaction_date: new Date().toISOString().split('T')[0],
             voucher_no: `MR-${Date.now()}`,
             material_request_type: requestType,

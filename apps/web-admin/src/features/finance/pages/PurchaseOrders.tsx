@@ -1,7 +1,8 @@
 import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { financeApi } from '../api/finance';
-import { clientApi } from '../../clients/api/client-management';
+import { vendorApi } from '../../buying/api/vendors';
+import { inventoryApi } from '../../inventory/api/inventory';
 import {
     Card, Button, Badge, Modal, CurrencyInput, UniversalTableToolbar,
     type TableColumnOption, type FilterChip
@@ -88,10 +89,38 @@ export default function PurchaseOrders() {
     const orders = Array.isArray(ordersResponse) ? ordersResponse : (ordersResponse as any)?.data || [];
 
     const { data: vendorsResponse } = useQuery({
-        queryKey: ['vendors'],
-        queryFn: () => clientApi.list({ limit: 100 })
+        queryKey: ['vendors-list'],
+        queryFn: () => vendorApi.listVendors(1, 100)
     });
-    const vendors = Array.isArray(vendorsResponse?.data) ? vendorsResponse.data : (vendorsResponse as any)?.data?.data || [];
+    const vendors = Array.isArray(vendorsResponse?.data) ? vendorsResponse.data : [];
+
+    const { data: inventoryItems = [] } = useQuery({
+        queryKey: ['inventory-items-for-po'],
+        queryFn: () => inventoryApi.listItems()
+    });
+
+    const { data: warehouses = [] } = useQuery({
+        queryKey: ['warehouses-list'],
+        queryFn: () => inventoryApi.listWarehouses()
+    });
+
+    const handleSelectInventoryItem = (index: number, itemId: string) => {
+        const item = inventoryItems.find((it: any) => it.id === itemId);
+        if (!item) return;
+        const rate = Number(item.purchase_price || item.average_cost || 0);
+        setItems(prev => {
+            const next = [...prev];
+            const qty = next[index]?.quantity || 1;
+            next[index] = {
+                ...next[index],
+                item_code: item.sku,
+                item_name: item.name,
+                rate: rate,
+                amount: qty * rate,
+            };
+            return next;
+        });
+    };
 
     const createMutation = useMutation({
         mutationFn: financeApi.createPurchaseOrder,
@@ -319,7 +348,7 @@ export default function PurchaseOrders() {
             >
                 <div className="space-y-4 max-h-[80vh] overflow-y-auto pr-1 custom-scrollbar">
                     {/* Header Info */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 p-4 bg-muted/30 border border-border/40 rounded-2xl">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-3 p-4 bg-muted/30 border border-border/40 rounded-2xl">
                         <div>
                             <label className="block text-xs font-semibold text-foreground uppercase tracking-wider mb-1">
                                 Vendor / Pemasok *
@@ -329,9 +358,24 @@ export default function PurchaseOrders() {
                                 value={supplierId}
                                 onChange={(e) => setSupplierId(e.target.value)}
                             >
-                                <option value="">Pilih Vendor...</option>
+                                <option value="">-- Pilih Vendor Resmi --</option>
                                 {vendors.map((v: any) => (
-                                    <option key={v.id} value={v.id}>{v.name}</option>
+                                    <option key={v.id} value={v.id}>{v.name} ({v.code || 'Vendor'})</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-xs font-semibold text-foreground uppercase tracking-wider mb-1">
+                                Gudang Tujuan
+                            </label>
+                            <select
+                                className="w-full bg-background border border-border/60 rounded-xl px-3 py-2 text-xs text-foreground focus:outline-none focus:border-primary font-medium"
+                                value={targetWarehouse}
+                                onChange={(e) => setTargetWarehouse(e.target.value)}
+                            >
+                                <option value="">-- Pilih Gudang --</option>
+                                {warehouses.map((w: any) => (
+                                    <option key={w.id} value={w.name || w.id}>{w.name}</option>
                                 ))}
                             </select>
                         </div>
@@ -401,13 +445,29 @@ export default function PurchaseOrders() {
                                         items.map((item, idx) => (
                                             <tr key={idx} className="hover:bg-muted/20">
                                                 <td className="p-2.5">
-                                                    <input
-                                                        type="text"
-                                                        placeholder="Nama item suku cadang / material..."
-                                                        value={item.item_name}
-                                                        onChange={(e) => handleUpdateItem(idx, 'item_name', e.target.value)}
-                                                        className="w-full bg-transparent border border-border/40 rounded-lg px-2.5 py-1.5 text-xs text-foreground focus:outline-none focus:border-primary"
-                                                    />
+                                                    <div className="space-y-1">
+                                                        {inventoryItems.length > 0 && (
+                                                            <select
+                                                                className="w-full bg-background border border-border/40 rounded-lg px-2 py-1 text-[11px] text-foreground focus:outline-none focus:border-primary"
+                                                                onChange={(e) => handleSelectInventoryItem(idx, e.target.value)}
+                                                                defaultValue=""
+                                                            >
+                                                                <option value="">-- Pilih dari Master Barang --</option>
+                                                                {inventoryItems.map((it: any) => (
+                                                                    <option key={it.id} value={it.id}>
+                                                                        [{it.sku}] {it.name}
+                                                                    </option>
+                                                                ))}
+                                                            </select>
+                                                        )}
+                                                        <input
+                                                            type="text"
+                                                            placeholder="Nama item suku cadang / material..."
+                                                            value={item.item_name}
+                                                            onChange={(e) => handleUpdateItem(idx, 'item_name', e.target.value)}
+                                                            className="w-full bg-transparent border border-border/40 rounded-lg px-2.5 py-1.5 text-xs text-foreground focus:outline-none focus:border-primary"
+                                                        />
+                                                    </div>
                                                 </td>
                                                 <td className="p-2.5">
                                                     <input

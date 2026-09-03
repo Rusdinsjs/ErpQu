@@ -1,19 +1,19 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { opsApi, type QualityInspection } from'../api/ops-quality-trip';
-import { inventoryApi } from'../../inventory/api/inventory';
+import { opsApi, type QualityInspection } from '../api/ops-quality-trip';
+import { inventoryApi } from '../../inventory/api/inventory';
+import { useAuthStore } from '../../../store/useAuthStore';
 import {
     Plus, Search, ClipboardCheck, X
 } from 'lucide-react';
-import { showToast } from'../../../components/ui/Toast';
+import { showToast } from '../../../components/ui/Toast';
 import {
     Card, Button, Table, TableHead, TableBody, TableRow, TableTh, TableTd, TableEmpty, TableSkeleton, PageHeader, SearchInput
-} from'../../../components/ui';
-
-const DEFAULT_COMPANY_ID = '00000000-0000-0000-0000-000000000001';
+} from '../../../components/ui';
 
 const QualityInspectionsPage: React.FC = () => {
     const queryClient = useQueryClient();
+    const activeCompanyId = useAuthStore(s => s.activeCompanyId) || 'c0000000-0000-0000-0000-000000000001';
     const [searchTerm, setSearchTerm] = useState('');
     const [isCreateOpen, setIsCreateOpen] = useState(false);
 
@@ -26,8 +26,8 @@ const QualityInspectionsPage: React.FC = () => {
 
     // Queries
     const { data: inspections = [], isLoading: inspectionsLoading } = useQuery({
-        queryKey: ['quality-inspections'],
-        queryFn: () => opsApi.listQualityInspections(DEFAULT_COMPANY_ID)
+        queryKey: ['quality-inspections', activeCompanyId],
+        queryFn: () => opsApi.listQualityInspections(activeCompanyId)
     });
 
     const { data: rawItems = [] } = useQuery({
@@ -77,7 +77,7 @@ const QualityInspectionsPage: React.FC = () => {
             return;
         }
         createMut.mutate({
-            company_id: DEFAULT_COMPANY_ID,
+            company_id: activeCompanyId,
             inspection_type: inspectionType,
             item_id: itemId,
             batch_no: batchNo || undefined,

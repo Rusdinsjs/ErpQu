@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { buyingScorecardDataApi, type SupplierScorecard } from'../api/buying-scorecard-data';
-import { vendorApi } from'../api/vendors';
-import { Button, Input, Table, TableHead, TableBody, TableRow, TableTh, TableTd, TableSkeleton, Modal } from'../../../components/ui';
+import { buyingScorecardDataApi, type SupplierScorecard } from '../api/buying-scorecard-data';
+import { vendorApi } from '../api/vendors';
+import { useAuthStore } from '../../../store/useAuthStore';
+import { Button, Input, Table, TableHead, TableBody, TableRow, TableTh, TableTd, TableSkeleton, Modal } from '../../../components/ui';
 import { Star, ShieldCheck, Award, AlertTriangle, Plus, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function SupplierScorecardView() {
     const queryClient = useQueryClient();
+    const activeCompanyId = useAuthStore(s => s.activeCompanyId) || 'c0000000-0000-0000-0000-000000000001';
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     const [vendorId, setVendorId] = useState('');
@@ -52,7 +54,7 @@ export default function SupplierScorecardView() {
         }
 
         createMutation.mutate({
-            company_id: '00000000-0000-0000-0000-000000000001',
+            company_id: activeCompanyId,
             vendor_id: vendorId,
             evaluation_date: evaluationDate,
             score: numScore,

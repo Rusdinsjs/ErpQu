@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { buyingMasterDataApi, type SupplierGroup, type SupplierContact, type SupplierAddress } from'../api/buying-master-data';
-import { vendorApi } from'../api/vendors';
-import { Button, Input, Table, TableHead, TableBody, TableRow, TableTh, TableTd, TableSkeleton, Modal } from'../../../components/ui';
+import { buyingMasterDataApi, type SupplierGroup, type SupplierContact, type SupplierAddress } from '../api/buying-master-data';
+import { vendorApi } from '../api/vendors';
+import { useAuthStore } from '../../../store/useAuthStore';
+import { Button, Input, Table, TableHead, TableBody, TableRow, TableTh, TableTd, TableSkeleton, Modal } from '../../../components/ui';
 import { Users, FolderTree, Phone, MapPin, Plus, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function SupplierMasterExtended() {
     const queryClient = useQueryClient();
+    const activeCompanyId = useAuthStore(s => s.activeCompanyId) || 'c0000000-0000-0000-0000-000000000001';
     const [tab, setTab] = useState<'groups' | 'contacts' | 'addresses'>('groups');
     const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -88,7 +90,7 @@ export default function SupplierMasterExtended() {
         e.preventDefault();
         if (tab === 'groups') {
             createGroupMutation.mutate({
-                company_id: '00000000-0000-0000-0000-000000000001',
+                company_id: activeCompanyId,
                 group_name: groupName,
             });
         } else if (tab === 'contacts') {

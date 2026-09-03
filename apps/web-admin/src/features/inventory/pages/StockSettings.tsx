@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Card, Button } from'../../../components/ui';
+import { Card, Button } from '../../../components/ui';
 import { toast } from 'sonner';
-import { stockSettingsApi } from'../api/inventory';
+import { stockSettingsApi } from '../api/inventory';
+import { useAuthStore } from '../../../store/useAuthStore';
 
 interface StockSettingsForm {
     default_valuation_method: string;
@@ -10,7 +11,7 @@ interface StockSettingsForm {
 }
 
 export default function StockSettings() {
-    const companyId = '00000000-0000-0000-0000-000000000001';
+    const companyId = useAuthStore(s => s.activeCompanyId) || 'c0000000-0000-0000-0000-000000000001';
     const [loading, setLoading] = useState(false);
     const [saving, setSaving] = useState(false);
     const [formData, setFormData] = useState<StockSettingsForm>({

@@ -1,20 +1,32 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { salesPosDataApi, type PosClosingEntry } from'../api/sales-pos-data';
-import { Button, Input, Table, TableHead, TableBody, TableRow, TableTh, TableTd, Modal } from'../../../components/ui';
-import { CheckCircle2, Plus, Clock, User, DollarSign } from 'lucide-react';
-import { formatCurrencyIDR } from'../../../utils/decimal';
+import { salesPosDataApi, type PosClosingEntry, type PosProfile } from '../api/sales-pos-data';
+import { useAuthStore } from '../../../store/useAuthStore';
+import { Button, Input, Select, Table, TableHead, TableBody, TableRow, TableTh, TableTd, Modal } from '../../../components/ui';
+import { CheckCircle2, Plus, Clock, User, Store, DollarSign } from 'lucide-react';
+import { formatCurrencyIDR } from '../../../utils/decimal';
 import { toast } from 'sonner';
 
 export default function PosClosingEntriesView() {
     const queryClient = useQueryClient();
+    const user = useAuthStore(s => s.user);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [countedCash, setCountedCash] = useState('1250000');
+    const [selectedProfileId, setSelectedProfileId] = useState('');
 
     const { data: closingsData, isLoading } = useQuery({
         queryKey: ['sales', 'pos-closings'],
         queryFn: salesPosDataApi.listPosClosingEntries,
     });
+
+    const { data: profilesData } = useQuery({
+        queryKey: ['sales', 'pos-profiles'],
+        queryFn: salesPosDataApi.listPosProfiles,
+    });
+
+    const profiles: PosProfile[] = Array.isArray((profilesData as any)?.data)
+        ? (profilesData as any).data
+        : Array.isArray(profilesData) ? (profilesData as any) : [];
 
     const createClosingMutation = useMutation({
         mutationFn: salesPosDataApi.createPosClosingEntry,
@@ -32,9 +44,14 @@ export default function PosClosingEntriesView() {
 
     const handleCreate = (e: React.FormEvent) => {
         e.preventDefault();
+        const profileId = selectedProfileId || profiles[0]?.id;
+        if (!profileId) {
+            toast.error('Belum ada terminal POS Profile. Buat POS Profile terlebih dahulu.');
+            return;
+        }
         createClosingMutation.mutate({
-            pos_profile_id: '00000000-0000-0000-0000-000000000001',
-            user_id: 'current-user',
+            pos_profile_id: profileId,
+            user_id: user?.id || 'current-user',
             period_start_date: new Date().toISOString(),
             grand_total: Number(countedCash) || 1250000,
             net_total: (Number(countedCash) || 1250000) * 0.9,
@@ -79,21 +96,29 @@ export default function PosClosingEntriesView() {
                         ) : closings.length === 0 ? (
                             <TableRow><TableTd colSpan={7} align="center" className="py-8 text-muted-foreground">Belum ada dokumen penutupan shift kasir.</TableTd></TableRow>
                         ) : (
-                            closings.map((row) => (
-                                <TableRow key={row.id} className="hover:bg-muted/30">
-                                    <TableTd className="font-mono font-bold text-emerald-600">{row.id}</TableTd>
-                                    <TableTd className="font-semibold text-foreground">Kasir Utama Toko Cabang Jakarta</TableTd>
-                                    <TableTd className="text-muted-foreground flex items-center gap-1.5 pt-3">
-                                        <User size={14} /> Kasir Shift Pagi
-                                    </TableTd>
-                                    <TableTd className="text-muted-foreground">{row.period_start_date ? new Date(row.period_start_date).toLocaleString('id-ID') : '-'}</TableTd>
-                                    <TableTd align="right" className="font-extrabold text-foreground">{formatCurrencyIDR((row.grand_total || 0).toString())}</TableTd>
-                                    <TableTd align="right" className="font-bold text-emerald-600">{formatCurrencyIDR((row.net_total || 0).toString())}</TableTd>
-                                    <TableTd align="center">
-                                        <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-gray-500/10 text-gray-600">Closed</span>
-                                    </TableTd>
-                                </TableRow>
-                            ))
+                            closings.map((row) => {
+                                const profile = profiles.find(p => p.id === row.pos_profile_id);
+                                return (
+                                    <TableRow key={row.id} className="hover:bg-muted/30">
+                                        <TableTd className="font-mono font-bold text-emerald-600">{row.id.substring(0, 8)}</TableTd>
+                                        <TableTd className="font-semibold text-foreground flex items-center gap-1.5 pt-3">
+                                            <Store size={14} className="text-emerald-500" />
+                                            {profile?.profile_name || 'Terminal POS Profile'}
+                                        </TableTd>
+                                        <TableTd className="text-muted-foreground">
+                                            <span className="flex items-center gap-1.5">
+                                                <User size={14} /> {user?.name || row.user_id}
+                                            </span>
+                                        </TableTd>
+                                        <TableTd className="text-muted-foreground">{row.period_start_date ? new Date(row.period_start_date).toLocaleString('id-ID') : '-'}</TableTd>
+                                        <TableTd align="right" className="font-extrabold text-foreground">{formatCurrencyIDR((row.grand_total || 0).toString())}</TableTd>
+                                        <TableTd align="right" className="font-bold text-emerald-600">{formatCurrencyIDR((row.net_total || 0).toString())}</TableTd>
+                                        <TableTd align="center">
+                                            <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-600">Closed</span>
+                                        </TableTd>
+                                    </TableRow>
+                                );
+                            })
                         )}
                     </TableBody>
                 </Table>
@@ -101,6 +126,17 @@ export default function PosClosingEntriesView() {
 
             <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Tutup Shift & Rekonsiliasi Kasir">
                 <form onSubmit={handleCreate} className="space-y-4 pt-2">
+                    <div>
+                        <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">Terminal POS Profile</label>
+                        <Select
+                            value={selectedProfileId}
+                            onChange={(val) => setSelectedProfileId(val)}
+                            options={[
+                                { value: '', label: 'Pilih Terminal POS Profile...' },
+                                ...profiles.map(p => ({ value: p.id, label: p.profile_name }))
+                            ]}
+                        />
+                    </div>
                     <div>
                         <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">Jumlah Uang Kas Fisik di Laci (Rp)</label>
                         <Input

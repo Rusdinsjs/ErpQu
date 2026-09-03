@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { financeApi, type CreatePurchaseBillRequest } from'../api/finance';
-import { clientApi } from'../../clients/api/client-management';
-import { Card, Button, Badge } from'../../../components/ui';
+import { financeApi, type CreatePurchaseBillRequest } from '../api/finance';
+import { vendorApi } from '../../buying/api/vendors';
+import { inventoryApi } from '../../inventory/api/inventory';
+import { Card, Button, Badge } from '../../../components/ui';
 import {
     Plus,
     Search,
@@ -17,17 +18,20 @@ import {
     Trash2,
     Save,
     ChevronDown,
-    ChevronUp
+    ChevronUp,
+    Package
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { formatCurrencyIDR, subtractDecimalStrings, sumDecimalStrings } from'../../../utils/decimal';
+import { formatCurrencyIDR, subtractDecimalStrings, sumDecimalStrings } from '../../../utils/decimal';
 
 interface BillItemRow {
+    item_id?: string;
     item_code: string;
     item_name: string;
     accepted_qty: number;
     rate: number;
     amount: number;
+    account_id?: string;
 }
 
 export default function PurchaseBills() {
@@ -96,10 +100,20 @@ export default function PurchaseBills() {
     });
 
     const { data: vendorsResponse } = useQuery({
-        queryKey: ['vendors'],
-        queryFn: () => clientApi.list({ limit: 100 })
+        queryKey: ['vendors-list'],
+        queryFn: () => vendorApi.listVendors(1, 100)
     });
-    const vendors = Array.isArray(vendorsResponse?.data) ? vendorsResponse.data : (vendorsResponse as any)?.data?.data || [];
+    const vendors = Array.isArray(vendorsResponse?.data) ? vendorsResponse.data : [];
+
+    const { data: inventoryItems = [] } = useQuery({
+        queryKey: ['inventory-items-for-bills'],
+        queryFn: () => inventoryApi.listItems()
+    });
+
+    const { data: accounts = [] } = useQuery({
+        queryKey: ['finance', 'accounts'],
+        queryFn: financeApi.listAccounts
+    });
 
     const createMutation = useMutation({
         mutationFn: financeApi.createPurchaseBill,
@@ -151,19 +165,45 @@ export default function PurchaseBills() {
         setItems(updated);
     };
 
+    const handleSelectInventoryItem = (index: number, itemId: string) => {
+        const item = inventoryItems.find((it: any) => it.id === itemId);
+        if (!item) return;
+        const updated = [...items];
+        const rate = Number(item.purchase_price || item.average_cost || 0);
+        const qty = updated[index]?.accepted_qty || 1;
+        updated[index] = {
+            ...updated[index],
+            item_id: item.id,
+            item_code: item.sku,
+            item_name: item.name,
+            rate: rate,
+            amount: qty * rate,
+        };
+        setItems(updated);
+    };
+
     const handleCreateBill = (e: React.FormEvent) => {
         e.preventDefault();
+        if (!supplierId) {
+            toast.error('Pilih supplier / vendor terlebih dahulu.');
+            return;
+        }
+        if (items.length === 0 || items.some(i => !i.item_name && !i.item_code)) {
+            toast.error('Lengkapi minimal satu item pada tagihan.');
+            return;
+        }
         const billNo = `ACC-PINV-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
         const payload: CreatePurchaseBillRequest = {
             bill_number: billNo,
             vendor_id: supplierId,
             date: postingDate,
-            due_date: dueDate,
+            due_date: dueDate || undefined,
             budget_type: budgetType,
             items: items.map(i => ({
-                description: i.item_name || i.item_code,
+                description: i.item_name ? `${i.item_code ? `[${i.item_code}] ` : ''}${i.item_name}` : i.item_code,
                 quantity: String(i.accepted_qty),
-                unit_price: String(i.rate)
+                unit_price: String(i.rate),
+                account_id: i.account_id || undefined,
             }))
         };
         createMutation.mutate(payload);
@@ -397,12 +437,10 @@ export default function PurchaseBills() {
                                                 required
                                                 className="w-full bg-background border border-border/80 rounded-xl px-3 py-2 text-xs text-foreground focus:ring-2 focus:ring-primary/20"
                                             >
-                                                <option value="">Pilih Supplier / Vendor</option>
+                                                <option value="">-- Pilih Supplier / Vendor Resmi --</option>
                                                 {vendors.map((v: any) => (
-                                                    <option key={v.id} value={v.id}>{v.name}</option>
+                                                    <option key={v.id} value={v.id}>{v.name} ({v.code || 'Vendor'})</option>
                                                 ))}
-                                                <option value="cv_teknik_jaya">CV Teknik Jaya Abadi</option>
-                                                <option value="pt_pertamina">PT Pertamina Lubricants</option>
                                             </select>
                                         </div>
 
@@ -664,10 +702,11 @@ export default function PurchaseBills() {
                                                 <thead className="bg-muted/40 text-muted-foreground uppercase text-[10px] font-bold tracking-wider border-b border-border/50">
                                                     <tr>
                                                         <th className="p-3 w-10 text-center">#</th>
-                                                        <th className="p-3 font-semibold min-w-[200px]">Item *</th>
-                                                        <th className="p-3 font-semibold w-28 text-right">Accepted Qty *</th>
-                                                        <th className="p-3 font-semibold w-36 text-right">Rate (IDR) *</th>
-                                                        <th className="p-3 font-semibold w-40 text-right">Amount (IDR) *</th>
+                                                        <th className="p-3 font-semibold min-w-[220px]">Item / Deskripsi *</th>
+                                                        <th className="p-3 font-semibold min-w-[180px]">Akun Biaya/Persediaan</th>
+                                                        <th className="p-3 font-semibold w-24 text-right">Accepted Qty *</th>
+                                                        <th className="p-3 font-semibold w-32 text-right">Rate (IDR) *</th>
+                                                        <th className="p-3 font-semibold w-36 text-right">Amount (IDR) *</th>
                                                         <th className="p-3 w-12 text-center">Aksi</th>
                                                     </tr>
                                                 </thead>
@@ -676,13 +715,43 @@ export default function PurchaseBills() {
                                                         <tr key={rIdx} className="hover:bg-muted/20 transition-colors">
                                                             <td className="p-3 text-center font-mono text-muted-foreground font-medium">{rIdx + 1}</td>
                                                             <td className="p-2">
-                                                                <input
-                                                                    type="text"
-                                                                    value={row.item_code}
-                                                                    onChange={(e) => handleItemChange(rIdx, 'item_code', e.target.value)}
-                                                                    placeholder="Kode / nama item..."
-                                                                    className="w-full bg-background border border-border/70 rounded-lg px-2.5 py-1.5 text-xs text-foreground focus:ring-1 focus:ring-primary/20 font-medium"
-                                                                />
+                                                                <div className="space-y-1">
+                                                                    {inventoryItems.length > 0 && (
+                                                                        <select
+                                                                            value={row.item_id || ''}
+                                                                            onChange={(e) => handleSelectInventoryItem(rIdx, e.target.value)}
+                                                                            className="w-full bg-background border border-border/70 rounded-lg px-2 py-1 text-[11px] text-foreground font-medium"
+                                                                        >
+                                                                            <option value="">-- Pilih dari Master Barang --</option>
+                                                                            {inventoryItems.map((it: any) => (
+                                                                                <option key={it.id} value={it.id}>
+                                                                                    [{it.sku}] {it.name}
+                                                                                </option>
+                                                                            ))}
+                                                                        </select>
+                                                                    )}
+                                                                    <input
+                                                                        type="text"
+                                                                        value={row.item_name || row.item_code}
+                                                                        onChange={(e) => handleItemChange(rIdx, 'item_name', e.target.value)}
+                                                                        placeholder="Deskripsi atau ketik manual..."
+                                                                        className="w-full bg-background border border-border/70 rounded-lg px-2.5 py-1 text-xs text-foreground focus:ring-1 focus:ring-primary/20 font-medium"
+                                                                    />
+                                                                </div>
+                                                            </td>
+                                                            <td className="p-2">
+                                                                <select
+                                                                    value={row.account_id || ''}
+                                                                    onChange={(e) => handleItemChange(rIdx, 'account_id', e.target.value)}
+                                                                    className="w-full bg-background border border-border/70 rounded-lg px-2 py-1.5 text-xs text-foreground"
+                                                                >
+                                                                    <option value="">-- Akun Beban Otomatis --</option>
+                                                                    {accounts.map((acc: any) => (
+                                                                        <option key={acc.id} value={acc.id}>
+                                                                            {acc.account_number} - {acc.name}
+                                                                        </option>
+                                                                    ))}
+                                                                </select>
                                                             </td>
                                                             <td className="p-2">
                                                                 <input

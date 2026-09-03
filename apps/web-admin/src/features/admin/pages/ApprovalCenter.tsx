@@ -474,7 +474,9 @@ export default function ApprovalCenter() {
 
     const createRequestMutation = useMutation({
         mutationFn: async () => {
-            const resource_id = window.crypto?.randomUUID ? window.crypto.randomUUID() : '00000000-0000-0000-0000-000000000000';
+            const resource_id = (typeof crypto !== 'undefined' && crypto.randomUUID)
+                ? crypto.randomUUID()
+                : '10000000-0000-4000-8000-' + Date.now().toString(16).padStart(12, '0');
             return approvalApi.create({
                 resource_type: createFormData.resource_type,
                 resource_id,

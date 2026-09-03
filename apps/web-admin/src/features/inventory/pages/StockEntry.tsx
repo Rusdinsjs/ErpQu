@@ -1,19 +1,18 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { inventoryApi, type StockEntry, type InventoryItem } from'../api/inventory';
+import { inventoryApi, type StockEntry, type InventoryItem } from '../api/inventory';
+import { useAuthStore } from '../../../store/useAuthStore';
 import {
     Plus, Search, RefreshCw, CheckCircle2, AlertCircle, Trash2, X, Eye
 } from 'lucide-react';
-import { showToast } from'../../../components/ui/Toast';
+import { showToast } from '../../../components/ui/Toast';
 import {
     Card, Button, Table, TableHead, TableBody, TableRow, TableTh, TableTd, TableEmpty, TableSkeleton
-} from'../../../components/ui';
-
-// Mock company ID (since we don't have multi-tenant company chooser yet, or we can use first company)
-const DEFAULT_COMPANY_ID = '00000000-0000-0000-0000-000000000001';
+} from '../../../components/ui';
 
 const StockEntryPage: React.FC = () => {
     const queryClient = useQueryClient();
+    const activeCompanyId = useAuthStore(s => s.activeCompanyId) || 'c0000000-0000-0000-0000-000000000001';
     const [searchTerm, setSearchTerm] = useState('');
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [selectedEntry, setSelectedEntry] = useState<StockEntry | null>(null);
@@ -35,8 +34,8 @@ const StockEntryPage: React.FC = () => {
 
     // Queries
     const { data: entries = [], isLoading: entriesLoading } = useQuery({
-        queryKey: ['stock-entries'],
-        queryFn: () => inventoryApi.listStockEntries(DEFAULT_COMPANY_ID)
+        queryKey: ['stock-entries', activeCompanyId],
+        queryFn: () => inventoryApi.listStockEntries(activeCompanyId)
     });
 
     const { data: warehouses = [] } = useQuery({
@@ -170,7 +169,7 @@ const StockEntryPage: React.FC = () => {
         }
 
         const payload = {
-            company_id: DEFAULT_COMPANY_ID,
+            company_id: activeCompanyId,
             posting_date: new Date().toISOString().split('T')[0],
             voucher_no: `STE-${Date.now()}`,
             stock_entry_type: entryType,

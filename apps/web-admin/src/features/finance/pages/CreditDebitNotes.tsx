@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { financeApi, type CreditNote, type DebitNote, type CreateCreditNoteRequest, type CreateDebitNoteRequest } from'../api/finance';
-import { Button, Input, Table, TableHead, TableBody, TableRow, TableTh, TableTd, TableSkeleton, Modal } from'../../../components/ui';
-import { Plus, Undo2, ArrowDownLeft, ArrowUpRight, CheckCircle2, FileText } from 'lucide-react';
-import { formatCurrencyIDR } from'../../../utils/decimal';
+import { financeApi, type CreditNote, type DebitNote, type CreateCreditNoteRequest, type CreateDebitNoteRequest } from '../api/finance';
+import { clientApi } from '../../clients/api/client-management';
+import { vendorApi } from '../../buying/api/vendors';
+import { Button, Input, Table, TableHead, TableBody, TableRow, TableTh, TableTd, TableSkeleton, Modal } from '../../../components/ui';
+import { Plus, Undo2, ArrowDownLeft, ArrowUpRight, CheckCircle2, FileText, User, Building2 } from 'lucide-react';
+import { formatCurrencyIDR } from '../../../utils/decimal';
 import { toast } from 'sonner';
 
 export default function CreditDebitNotes() {
@@ -12,9 +14,22 @@ export default function CreditDebitNotes() {
     const [isModalOpen, setIsModalOpen] = useState(false);
 
     const [noteNo, setNoteNo] = useState('');
+    const [partnerId, setPartnerId] = useState('');
     const [postingDate, setPostingDate] = useState(new Date().toISOString().split('T')[0]);
     const [reason, setReason] = useState('');
     const [totalAmount, setTotalAmount] = useState('');
+
+    const { data: clientsResponse } = useQuery({
+        queryKey: ['clients'],
+        queryFn: () => clientApi.list({ limit: 100 }),
+    });
+    const clients = Array.isArray(clientsResponse?.data) ? clientsResponse.data : (clientsResponse as any)?.data?.data || [];
+
+    const { data: vendorsResponse } = useQuery({
+        queryKey: ['vendors-list'],
+        queryFn: () => vendorApi.listVendors(1, 100),
+    });
+    const vendors = Array.isArray(vendorsResponse?.data) ? vendorsResponse.data : [];
 
     const { data: creditNotes, isLoading: creditLoading } = useQuery({
         queryKey: ['finance', 'credit-notes'],
@@ -52,6 +67,7 @@ export default function CreditDebitNotes() {
 
     const resetForm = () => {
         setNoteNo('');
+        setPartnerId('');
         setReason('');
         setTotalAmount('');
     };
@@ -67,6 +83,7 @@ export default function CreditDebitNotes() {
         if (tab === 'credit') {
             createCreditMutation.mutate({
                 credit_note_no: noteNo || undefined,
+                customer_id: partnerId || undefined,
                 posting_date: postingDate,
                 reason: reason || undefined,
                 total_amount: amt,
@@ -74,6 +91,7 @@ export default function CreditDebitNotes() {
         } else {
             createDebitMutation.mutate({
                 debit_note_no: noteNo || undefined,
+                supplier_id: partnerId || undefined,
                 posting_date: postingDate,
                 reason: reason || undefined,
                 total_amount: amt,
@@ -133,6 +151,7 @@ export default function CreditDebitNotes() {
                         <TableHead>
                             <TableRow className="bg-muted/40">
                                 <TableTh>No. Dokumen</TableTh>
+                                <TableTh>{tab === 'credit' ? 'Pelanggan (Customer)' : 'Pemasok (Vendor)'}</TableTh>
                                 <TableTh>Tanggal Posting</TableTh>
                                 <TableTh>Alasan Retur / Penyesuaian</TableTh>
                                 <TableTh align="right">Nilai Retur (Rp)</TableTh>
@@ -143,6 +162,12 @@ export default function CreditDebitNotes() {
                             {currentNotes.map((row: any) => (
                                 <TableRow key={row.id} className="hover:bg-muted/30">
                                     <TableTd className="font-semibold text-foreground">{row.credit_note_no || row.debit_note_no}</TableTd>
+                                    <TableTd className="text-xs font-medium text-foreground">
+                                        {tab === 'credit'
+                                            ? (clients.find((c: any) => c.id === row.customer_id)?.name || row.customer_name || 'Pelanggan Umum')
+                                            : (vendors.find((v: any) => v.id === row.supplier_id)?.name || row.supplier_name || 'Vendor Umum')
+                                        }
+                                    </TableTd>
                                     <TableTd className="text-muted-foreground">{row.posting_date}</TableTd>
                                     <TableTd className="text-muted-foreground">{row.reason || '-'}</TableTd>
                                     <TableTd align="right" className="font-bold text-foreground">{formatCurrencyIDR(String(Number(row.total_amount || 0)))}</TableTd>
@@ -169,6 +194,34 @@ export default function CreditDebitNotes() {
                             <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Tanggal Posting</label>
                             <Input type="date" value={postingDate} onChange={(e) => setPostingDate(e.target.value)} required />
                         </div>
+                    </div>
+                    <div>
+                        <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
+                            {tab === 'credit' ? 'Pilih Pelanggan (Customer)' : 'Pilih Pemasok (Vendor)'}
+                        </label>
+                        {tab === 'credit' ? (
+                            <select
+                                value={partnerId}
+                                onChange={(e) => setPartnerId(e.target.value)}
+                                className="w-full bg-background border border-border rounded-xl px-3 py-2 text-xs font-semibold text-foreground focus:ring-2 focus:ring-cyan-500/30 outline-none"
+                            >
+                                <option value="">-- Pilih Pelanggan Terdaftar --</option>
+                                {clients.map((c: any) => (
+                                    <option key={c.id} value={c.id}>{c.name} ({c.phone || 'Pelanggan'})</option>
+                                ))}
+                            </select>
+                        ) : (
+                            <select
+                                value={partnerId}
+                                onChange={(e) => setPartnerId(e.target.value)}
+                                className="w-full bg-background border border-border rounded-xl px-3 py-2 text-xs font-semibold text-foreground focus:ring-2 focus:ring-cyan-500/30 outline-none"
+                            >
+                                <option value="">-- Pilih Vendor Terdaftar --</option>
+                                {vendors.map((v: any) => (
+                                    <option key={v.id} value={v.id}>{v.name} ({v.code || 'Vendor'})</option>
+                                ))}
+                            </select>
+                        )}
                     </div>
                     <div>
                         <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">Alasan Retur / Penyesuaian Harga</label>

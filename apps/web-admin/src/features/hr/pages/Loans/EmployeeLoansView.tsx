@@ -74,11 +74,15 @@ export default function EmployeeLoansView() {
     });
 
     const handleApply = () => {
-        if (!form.employee_id || !form.loan_type_id || !form.loan_amount || !form.reason) {
+        const typeId = form.loan_type_id || loanTypes[0]?.id;
+        if (!form.employee_id || !typeId || !form.loan_amount || !form.reason) {
             showError('Lengkapi seluruh data pengajuan pinjaman');
             return;
         }
-        applyMutation.mutate(form);
+        applyMutation.mutate({
+            ...form,
+            loan_type_id: typeId
+        });
     };
 
     const handleReview = () => {

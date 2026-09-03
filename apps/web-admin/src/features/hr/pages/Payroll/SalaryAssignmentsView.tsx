@@ -16,8 +16,8 @@ export default function SalaryAssignmentsView() {
 
     const [form, setForm] = useState({
         employee_id: '',
-        salary_structure_id: '10000000-0000-0000-0000-000000000001',
-        from_date: '2026-01-01',
+        salary_structure_id: '',
+        from_date: new Date().toISOString().split('T')[0],
         base_salary: 7000000,
         tunjangan_jabatan: 500000,
         tunjangan_transport: 500000,
@@ -55,11 +55,15 @@ export default function SalaryAssignmentsView() {
     });
 
     const handleCreate = () => {
-        if (!form.employee_id || !form.base_salary) {
-            showError('Pilih karyawan dan tentukan gaji pokok');
+        const structId = form.salary_structure_id || structures[0]?.id;
+        if (!form.employee_id || !form.base_salary || !structId) {
+            showError('Pilih karyawan, struktur gaji, dan tentukan gaji pokok');
             return;
         }
-        createMutation.mutate(form);
+        createMutation.mutate({
+            ...form,
+            salary_structure_id: structId
+        });
     };
 
     const formatRp = (num: number) => `Rp ${Number(num || 0).toLocaleString('id-ID')}`;

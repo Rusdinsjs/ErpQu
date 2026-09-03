@@ -1,20 +1,32 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { salesPosDataApi, type PosOpeningEntry } from'../api/sales-pos-data';
-import { Button, Input, Table, TableHead, TableBody, TableRow, TableTh, TableTd, Modal } from'../../../components/ui';
+import { salesPosDataApi, type PosOpeningEntry, type PosProfile } from '../api/sales-pos-data';
+import { useAuthStore } from '../../../store/useAuthStore';
+import { Button, Input, Select, Table, TableHead, TableBody, TableRow, TableTh, TableTd, Modal } from '../../../components/ui';
 import { Clock, Plus, CheckCircle2, User, Store } from 'lucide-react';
-import { formatCurrencyIDR } from'../../../utils/decimal';
+import { formatCurrencyIDR } from '../../../utils/decimal';
 import { toast } from 'sonner';
 
 export default function PosOpeningEntriesView() {
     const queryClient = useQueryClient();
+    const user = useAuthStore(s => s.user);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [openingFloat, setOpeningFloat] = useState('500000');
+    const [selectedProfileId, setSelectedProfileId] = useState('');
 
     const { data: openingsData, isLoading } = useQuery({
         queryKey: ['sales', 'pos-openings'],
         queryFn: salesPosDataApi.listPosOpeningEntries,
     });
+
+    const { data: profilesData } = useQuery({
+        queryKey: ['sales', 'pos-profiles'],
+        queryFn: salesPosDataApi.listPosProfiles,
+    });
+
+    const profiles: PosProfile[] = Array.isArray((profilesData as any)?.data)
+        ? (profilesData as any).data
+        : Array.isArray(profilesData) ? (profilesData as any) : [];
 
     const createOpeningMutation = useMutation({
         mutationFn: salesPosDataApi.createPosOpeningEntry,
@@ -32,9 +44,14 @@ export default function PosOpeningEntriesView() {
 
     const handleCreate = (e: React.FormEvent) => {
         e.preventDefault();
+        const profileId = selectedProfileId || profiles[0]?.id;
+        if (!profileId) {
+            toast.error('Belum ada terminal POS Profile. Buat POS Profile terlebih dahulu.');
+            return;
+        }
         createOpeningMutation.mutate({
-            pos_profile_id: '00000000-0000-0000-0000-000000000001',
-            user_id: 'current-user',
+            pos_profile_id: profileId,
+            user_id: user?.id || 'current-user',
             period_start_date: new Date().toISOString(),
             opening_amount: Number(openingFloat) || 0,
             status: 'Open',
@@ -76,22 +93,30 @@ export default function PosOpeningEntriesView() {
                         ) : openings.length === 0 ? (
                             <TableRow><TableTd colSpan={6} align="center" className="py-8 text-muted-foreground">Belum ada dokumen pembukaan shift kasir.</TableTd></TableRow>
                         ) : (
-                            openings.map((row) => (
-                                <TableRow key={row.id} className="hover:bg-muted/30">
-                                    <TableTd className="font-mono font-bold text-amber-600">{row.id}</TableTd>
-                                    <TableTd className="font-semibold text-foreground">Kasir Utama Toko Cabang Jakarta</TableTd>
-                                    <TableTd className="text-muted-foreground flex items-center gap-1.5 pt-3">
-                                        <User size={14} /> Kasir Shift Pagi
-                                    </TableTd>
-                                    <TableTd className="text-muted-foreground">{row.period_start_date ? new Date(row.period_start_date).toLocaleString('id-ID') : '-'}</TableTd>
-                                    <TableTd align="right" className="font-extrabold text-foreground">{formatCurrencyIDR((row.opening_amount || 0).toString())}</TableTd>
-                                    <TableTd align="center">
-                                        <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-600 inline-flex items-center gap-1">
-                                            <CheckCircle2 size={12} /> {row.status || 'Open'}
-                                        </span>
-                                    </TableTd>
-                                </TableRow>
-                            ))
+                            openings.map((row) => {
+                                const profile = profiles.find(p => p.id === row.pos_profile_id);
+                                return (
+                                    <TableRow key={row.id} className="hover:bg-muted/30">
+                                        <TableTd className="font-mono font-bold text-amber-600">{row.id.substring(0, 8)}</TableTd>
+                                        <TableTd className="font-semibold text-foreground flex items-center gap-1.5 pt-3">
+                                            <Store size={14} className="text-amber-500" />
+                                            {profile?.profile_name || 'Terminal POS Profile'}
+                                        </TableTd>
+                                        <TableTd className="text-muted-foreground">
+                                            <span className="flex items-center gap-1.5">
+                                                <User size={14} /> {user?.name || row.user_id}
+                                            </span>
+                                        </TableTd>
+                                        <TableTd className="text-muted-foreground">{row.period_start_date ? new Date(row.period_start_date).toLocaleString('id-ID') : '-'}</TableTd>
+                                        <TableTd align="right" className="font-extrabold text-foreground">{formatCurrencyIDR((row.opening_amount || 0).toString())}</TableTd>
+                                        <TableTd align="center">
+                                            <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-500/10 text-emerald-600 inline-flex items-center gap-1">
+                                                <CheckCircle2 size={12} /> {row.status || 'Open'}
+                                            </span>
+                                        </TableTd>
+                                    </TableRow>
+                                );
+                            })
                         )}
                     </TableBody>
                 </Table>
@@ -99,6 +124,17 @@ export default function PosOpeningEntriesView() {
 
             <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Buka Shift Kasir (POS Opening Entry)">
                 <form onSubmit={handleCreate} className="space-y-4 pt-2">
+                    <div>
+                        <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">Terminal POS Profile</label>
+                        <Select
+                            value={selectedProfileId}
+                            onChange={(val) => setSelectedProfileId(val)}
+                            options={[
+                                { value: '', label: 'Pilih Terminal POS Profile...' },
+                                ...profiles.map(p => ({ value: p.id, label: p.profile_name }))
+                            ]}
+                        />
+                    </div>
                     <div>
                         <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">Modal Kas Awal di Laci (Rp)</label>
                         <Input
@@ -111,7 +147,7 @@ export default function PosOpeningEntriesView() {
                     </div>
                     <div className="flex justify-end gap-3 pt-4 border-t border-border">
                         <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>Batal</Button>
-                        <Button type="submit" className="bg-amber-600 hover:bg-amber-700 text-white font-bold">Mulai Shift Now</Button>
+                        <Button type="submit" className="bg-amber-600 hover:bg-amber-700 text-white font-bold">Mulai Shift Sekarang</Button>
                     </div>
                 </form>
             </Modal>

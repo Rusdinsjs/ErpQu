@@ -1,10 +1,13 @@
 import React, { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { salesPosDataApi, type PosProfile, type PosOpeningEntry, type PosClosingEntry, type LoyaltyProgram, type LoyaltyPointEntry } from'../api/sales-pos-data';
-import { inventoryApi } from'../../inventory/api/inventory';
-import { Button, Input, Table, TableHead, TableBody, TableRow, TableTh, TableTd, Modal } from'../../../components/ui';
+import { salesPosDataApi, type PosProfile, type PosOpeningEntry, type PosClosingEntry, type LoyaltyProgram, type LoyaltyPointEntry } from '../api/sales-pos-data';
+import { inventoryApi } from '../../inventory/api/inventory';
+import { clientApi } from '../../clients/api/client-management';
+import { financeApi } from '../../finance/api/finance';
+import { useAuthStore } from '../../../store/useAuthStore';
+import { Button, Input, Table, TableHead, TableBody, TableRow, TableTh, TableTd, Modal } from '../../../components/ui';
 import { Store, Clock, Award, Plus, CheckCircle2, ShoppingCart, Search, Trash2, CreditCard, QrCode, DollarSign, Printer, Check, ShieldAlert, ArrowRight, RefreshCw, X } from 'lucide-react';
-import { formatCurrencyIDR } from'../../../utils/decimal';
+import { formatCurrencyIDR } from '../../../utils/decimal';
 import { toast } from 'sonner';
 
 interface CartItem {
@@ -44,11 +47,31 @@ export default function PointOfSaleView() {
     // POS Profile Form Modal
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
     const [profileName, setProfileName] = useState('');
+    const [profileWarehouseId, setProfileWarehouseId] = useState('');
+    const [profileCashAccountId, setProfileCashAccountId] = useState('');
+
+    const activeCompanyId = useAuthStore(s => s.activeCompanyId) || 'c0000000-0000-0000-0000-000000000001';
 
     // Data Fetching
     const { data: inventoryData, isLoading: isLoadingInventory } = useQuery({
         queryKey: ['inventory', 'items-pos'],
         queryFn: inventoryApi.listItems,
+    });
+
+    const { data: clientsResponse } = useQuery({
+        queryKey: ['clients'],
+        queryFn: () => clientApi.list({ limit: 100 })
+    });
+    const clients = Array.isArray(clientsResponse?.data) ? clientsResponse.data : (clientsResponse as any)?.data?.data || [];
+
+    const { data: warehouses = [] } = useQuery({
+        queryKey: ['inventory', 'warehouses'],
+        queryFn: inventoryApi.listWarehouses
+    });
+
+    const { data: accounts = [] } = useQuery({
+        queryKey: ['finance', 'accounts'],
+        queryFn: financeApi.listAccounts
     });
 
     const { data: profilesData } = useQuery({
@@ -204,10 +227,12 @@ export default function PointOfSaleView() {
     const handleCreateProfile = (e: React.FormEvent) => {
         e.preventDefault();
         if (!profileName.trim()) return toast.error('Nama profil kasir wajib diisi.');
+        const defaultWhId = warehouses[0]?.id || 'c0000000-0000-0000-0000-000000000001';
+        const defaultAccId = accounts[0]?.id || 'c0000000-0000-0000-0000-000000000001';
         createProfileMutation.mutate({
             profile_name: profileName,
-            warehouse_id: '00000000-0000-0000-0000-000000000001',
-            cash_account_id: '00000000-0000-0000-0000-000000000001',
+            warehouse_id: profileWarehouseId || defaultWhId,
+            cash_account_id: profileCashAccountId || defaultAccId,
             is_active: true,
         });
     };
@@ -402,13 +427,28 @@ export default function PointOfSaleView() {
 
                         {/* Customer selector */}
                         <div>
-                            <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">Pelanggan / Member</label>
-                            <input
-                                type="text"
-                                value={customerName}
-                                onChange={(e) => setCustomerName(e.target.value)}
-                                className="w-full px-3 py-1.5 bg-background border border-border rounded-xl text-xs font-semibold"
-                            />
+                            <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">Pelanggan / Member Toko</label>
+                            <div className="flex gap-2">
+                                <select
+                                    value={clients.some((c: any) => c.name === customerName) ? customerName : ''}
+                                    onChange={(e) => {
+                                        if (e.target.value) setCustomerName(e.target.value);
+                                    }}
+                                    className="w-1/2 px-2.5 py-1.5 bg-background border border-border rounded-xl text-xs font-semibold text-foreground"
+                                >
+                                    <option value="">-- Pilih Member Terdaftar --</option>
+                                    {clients.map((c: any) => (
+                                        <option key={c.id} value={c.name}>{c.name} ({c.phone || c.email || 'Member'})</option>
+                                    ))}
+                                </select>
+                                <input
+                                    type="text"
+                                    value={customerName}
+                                    onChange={(e) => setCustomerName(e.target.value)}
+                                    placeholder="Ketik manual nama pelanggan..."
+                                    className="w-1/2 px-3 py-1.5 bg-background border border-border rounded-xl text-xs font-semibold"
+                                />
+                            </div>
                         </div>
 
                         {/* Cart Items List */}
@@ -790,8 +830,36 @@ export default function PointOfSaleView() {
             <Modal isOpen={isProfileModalOpen} onClose={() => setIsProfileModalOpen(false)} title="Buat Profil Terminal POS Kasir">
                 <form onSubmit={handleCreateProfile} className="space-y-4 pt-2">
                     <div>
-                        <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">Nama Profil / Posisi Kasir</label>
+                        <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">Nama Profil / Posisi Kasir *</label>
                         <Input placeholder="Contoh: Kasir Utama Toko Cabang 1" value={profileName} onChange={(e) => setProfileName(e.target.value)} required />
+                    </div>
+                    <div>
+                        <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">Gudang Sumber Stok *</label>
+                        <select
+                            value={profileWarehouseId}
+                            onChange={(e) => setProfileWarehouseId(e.target.value)}
+                            className="w-full px-3 py-2 bg-background border border-border rounded-xl text-xs font-semibold text-foreground"
+                            required
+                        >
+                            <option value="">-- Pilih Gudang Sumber Stok --</option>
+                            {warehouses.map((wh: any) => (
+                                <option key={wh.id} value={wh.id}>{wh.name}</option>
+                            ))}
+                        </select>
+                    </div>
+                    <div>
+                        <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">Akun Kas Masuk (Chart of Accounts) *</label>
+                        <select
+                            value={profileCashAccountId}
+                            onChange={(e) => setProfileCashAccountId(e.target.value)}
+                            className="w-full px-3 py-2 bg-background border border-border rounded-xl text-xs font-semibold text-foreground"
+                            required
+                        >
+                            <option value="">-- Pilih Akun Kas / Bank --</option>
+                            {accounts.filter((a: any) => a.account_type === 'Asset' || a.account_type === 'Bank' || a.account_type === 'Cash' || !a.account_type).map((acc: any) => (
+                                <option key={acc.id} value={acc.id}>{acc.account_number} - {acc.name}</option>
+                            ))}
+                        </select>
                     </div>
                     <div className="flex justify-end gap-3 pt-4 border-t border-border">
                         <Button type="button" variant="outline" onClick={() => setIsProfileModalOpen(false)}>Batal</Button>
