@@ -137,8 +137,8 @@ services:
         condition: service_healthy
     environment:
       # Database (migrations run as superuser, app runs as restricted user)
-      MIGRATION_DATABASE_URL: postgres://${DB_USER:-postgres}:${DB_PASSWORD}@postgres:5432/${DB_NAME:-management_system}?options=-c%20search_path=public,hr,crm,rental,inventory,commercial
-      DATABASE_URL: postgres://${DB_APP_USER:-erpqu_app}:${DB_APP_PASSWORD}@postgres:5432/${DB_NAME:-management_system}?options=-c%20search_path=public,hr,crm,rental,inventory,commercial
+      MIGRATION_DATABASE_URL: postgres://${DB_USER:-postgres}:${DB_PASSWORD}@postgres:5432/${DB_NAME:-management_system}?options=-c%20search_path=public,hr,crm,rental,inventory,commercial,finance,ops
+      DATABASE_URL: postgres://${DB_APP_USER:-erpqu_app}:${DB_APP_PASSWORD}@postgres:5432/${DB_NAME:-management_system}?options=-c%20search_path=public,hr,crm,rental,inventory,commercial,finance,ops
       # Redis
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
       # Auth
