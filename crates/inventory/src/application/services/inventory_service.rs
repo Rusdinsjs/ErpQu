@@ -756,4 +756,21 @@ impl InventoryService {
             .await
             .map_err(|e| DomainError::Database(e.to_string()))
     }
+
+    pub async fn list_low_stock_items(&self) -> DomainResult<Vec<InventoryItem>> {
+        self.repository
+            .list_low_stock_items()
+            .await
+            .map_err(|e| DomainError::Database(e.to_string()))
+    }
+
+    pub async fn get_abc_analysis(&self) -> DomainResult<crate::domain::abc_analysis::AbcAnalysisReport> {
+        let items = self
+            .repository
+            .list_items(None, None)
+            .await
+            .map_err(|e| DomainError::Database(e.to_string()))?;
+
+        Ok(crate::domain::abc_analysis::AbcAnalysisEngine::calculate(&items))
+    }
 }

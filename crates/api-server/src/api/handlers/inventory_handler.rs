@@ -296,3 +296,17 @@ pub async fn list_bin_balances_by_item(
         .await?;
     Ok(Json(ApiResponse::success(balances)))
 }
+
+pub async fn list_low_stock_items(
+    State(state): State<AppState>,
+) -> Result<Json<ApiResponse<Vec<InventoryItem>>>, AppError> {
+    let items = state.inventory_service.list_low_stock_items().await?;
+    Ok(Json(ApiResponse::success(items)))
+}
+
+pub async fn get_abc_analysis(
+    State(state): State<AppState>,
+) -> Result<Json<ApiResponse<management_system_inventory::domain::abc_analysis::AbcAnalysisReport>>, AppError> {
+    let report = state.inventory_service.get_abc_analysis().await?;
+    Ok(Json(ApiResponse::success(report)))
+}

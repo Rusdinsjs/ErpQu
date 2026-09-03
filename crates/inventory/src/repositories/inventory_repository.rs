@@ -625,4 +625,12 @@ impl InventoryRepository {
 
         Ok(())
     }
+
+    pub async fn list_low_stock_items(&self) -> Result<Vec<InventoryItem>, sqlx::Error> {
+        sqlx::query_as::<_, InventoryItem>(
+            "SELECT * FROM inventory.inventory_items WHERE is_active = TRUE AND current_quantity <= min_stock ORDER BY (current_quantity - min_stock) ASC"
+        )
+        .fetch_all(&self.pool)
+        .await
+    }
 }
