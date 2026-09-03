@@ -8,12 +8,14 @@ pub mod client_routes;
 pub mod contract_routes;
 pub mod conversion_routes;
 pub mod crm_routes;
+pub mod efaktur_routes;
 pub mod inventory_routes;
 pub mod main_router;
 pub mod maintenance_routes;
 pub mod manufacturing_routes;
 pub mod rental_routes;
 pub mod timesheet_routes;
+pub mod whatsapp_routes;
 
 pub use main_router::*;
 pub mod asset_routes;

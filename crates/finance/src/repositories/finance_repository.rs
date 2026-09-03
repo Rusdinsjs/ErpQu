@@ -114,6 +114,41 @@ impl From<SalesInvoiceRow> for SalesInvoice {
     }
 }
 
+#[derive(Debug, Clone, sqlx::FromRow)]
+struct TaxInvoiceRow {
+    pub id: Uuid,
+    pub company_id: Uuid,
+    pub sales_invoice_id: Option<Uuid>,
+    pub tax_invoice_number: String,
+    pub npwp_buyer: String,
+    pub name_buyer: String,
+    pub tax_base: Decimal,
+    pub vat_amount: Decimal,
+    pub vat_rate: Decimal,
+    pub effective_date: chrono::NaiveDate,
+    pub status: String,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+}
+
+impl From<TaxInvoiceRow> for crate::domain::entities::efaktur::TaxInvoiceRecord {
+    fn from(r: TaxInvoiceRow) -> Self {
+        Self {
+            id: r.id,
+            company_id: r.company_id,
+            sales_invoice_id: r.sales_invoice_id,
+            tax_invoice_number: r.tax_invoice_number,
+            npwp_buyer: r.npwp_buyer,
+            name_buyer: r.name_buyer,
+            tax_base: r.tax_base,
+            vat_amount: r.vat_amount,
+            vat_rate: r.vat_rate,
+            effective_date: r.effective_date,
+            status: r.status,
+            created_at: r.created_at,
+        }
+    }
+}
+
 #[derive(Debug, sqlx::FromRow)]
 struct SalesInvoiceItemRow {
     id: Uuid,
@@ -2155,5 +2190,72 @@ impl FinanceRepository {
             .collect();
 
         Ok(report)
+    }
+
+    pub async fn list_tax_invoices(
+        &self,
+        company_id: Uuid,
+        start_date: Option<chrono::NaiveDate>,
+        end_date: Option<chrono::NaiveDate>,
+    ) -> DomainResult<Vec<crate::domain::entities::efaktur::TaxInvoiceRecord>> {
+        let mut query = String::from(
+            "SELECT id, company_id, sales_invoice_id, tax_invoice_number, npwp_buyer, name_buyer,
+                    tax_base, vat_amount, vat_rate, effective_date, status, created_at
+             FROM id_tax_invoices
+             WHERE company_id = $1"
+        );
+        if start_date.is_some() {
+            query.push_str(" AND effective_date >= $2");
+        }
+        if end_date.is_some() {
+            if start_date.is_some() {
+                query.push_str(" AND effective_date <= $3");
+            } else {
+                query.push_str(" AND effective_date <= $2");
+            }
+        }
+        query.push_str(" ORDER BY effective_date DESC, tax_invoice_number DESC");
+
+        let mut q = sqlx::query_as::<_, TaxInvoiceRow>(&query).bind(company_id);
+        if let Some(sd) = start_date {
+            q = q.bind(sd);
+        }
+        if let Some(ed) = end_date {
+            q = q.bind(ed);
+        }
+
+        let rows = q.fetch_all(&self.pool).await.map_err(|e| DomainError::Database(e.to_string()))?;
+        Ok(rows.into_iter().map(Into::into).collect())
+    }
+
+    pub async fn create_tax_invoice(
+        &self,
+        record: &crate::domain::entities::efaktur::TaxInvoiceRecord,
+    ) -> DomainResult<crate::domain::entities::efaktur::TaxInvoiceRecord> {
+        let sql = "INSERT INTO id_tax_invoices (
+                id, company_id, sales_invoice_id, tax_invoice_number, npwp_buyer, name_buyer,
+                tax_base, vat_amount, vat_rate, effective_date, status, created_at
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+            RETURNING id, company_id, sales_invoice_id, tax_invoice_number, npwp_buyer, name_buyer,
+                      tax_base, vat_amount, vat_rate, effective_date, status, created_at";
+
+        let created: TaxInvoiceRow = sqlx::query_as::<_, TaxInvoiceRow>(sql)
+            .bind(record.id)
+            .bind(record.company_id)
+            .bind(record.sales_invoice_id)
+            .bind(&record.tax_invoice_number)
+            .bind(&record.npwp_buyer)
+            .bind(&record.name_buyer)
+            .bind(record.tax_base)
+            .bind(record.vat_amount)
+            .bind(record.vat_rate)
+            .bind(record.effective_date)
+            .bind(&record.status)
+            .bind(record.created_at)
+            .fetch_one(&self.pool)
+            .await
+            .map_err(|e| DomainError::Database(e.to_string()))?;
+
+        Ok(created.into())
     }
 }

@@ -236,6 +236,7 @@ mod architecture_tests {
             "setting.rs",
             "tier_config.rs",
             "user.rs",
+            "whatsapp.rs",
             "workflow.rs",
         ];
 
@@ -255,6 +256,7 @@ mod architecture_tests {
             "rbac_service.rs",
             "settings_service.rs",
             "user_service.rs",
+            "whatsapp_service.rs",
         ];
 
         let allowed_repositories = [

@@ -14,6 +14,7 @@ pub mod organization;
 pub mod rbac;
 pub mod setting;
 pub mod user;
+pub mod whatsapp;
 pub mod workflow;
 
 pub use approval_entity_type::*;
@@ -30,4 +31,5 @@ pub use organization::*;
 pub use rbac::*;
 pub use setting::*;
 pub use user::*;
+pub use whatsapp::*;
 pub use workflow::*;

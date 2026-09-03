@@ -109,6 +109,7 @@ pub struct ServiceRegistry {
     pub crm_pipeline_service: management_system_crm::services::CrmPipelineService,
     pub bom_service: management_system_ops::BomService,
     pub multi_currency_service: management_system_finance::MultiCurrencyService,
+    pub whatsapp_service: management_system_core::application::services::WhatsAppService,
     pub approval_workflow_service:
         management_system_core::application::services::ApprovalWorkflowService,
     pub approval_entity_type_service:
@@ -449,6 +450,8 @@ impl AppState {
         let bom_service = management_system_ops::BomService::new(pool.clone());
         let multi_currency_service =
             management_system_finance::MultiCurrencyService::new(pool.clone());
+        let whatsapp_service =
+            management_system_core::application::services::WhatsAppService::new();
 
         let registry = Arc::new(ServiceRegistry {
             asset_service,
@@ -507,6 +510,7 @@ impl AppState {
             crm_pipeline_service,
             bom_service,
             multi_currency_service,
+            whatsapp_service,
         });
 
         Self {

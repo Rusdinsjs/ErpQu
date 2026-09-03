@@ -198,6 +198,10 @@ const CrmAnalyticsView = lazy(() => import('../../selling/pages/CrmAnalyticsView
 const BomManagementView = lazy(() => import('../../operations/pages/BomManagementView'));
 const ProductionOrdersView = lazy(() => import('../../operations/pages/ProductionOrdersView'));
 
+// Indonesia Localization & Integrations
+const EFakturManagementView = lazy(() => import('../../finance/pages/EFakturManagementView').then(m => ({ default: m.EFakturManagementView })));
+const WhatsAppGatewayView = lazy(() => import('../../settings/pages/WhatsAppGatewayView').then(m => ({ default: m.WhatsAppGatewayView })));
+
 interface AdminContentRouterProps {
     activeTab: string;
     selectedAssetId: string | null;
@@ -545,6 +549,8 @@ export function AdminContentRouter({
         'crm-analytics': () => <CrmAnalyticsView />,
         'boms': () => <BomManagementView />,
         'production-orders': () => <ProductionOrdersView />,
+        'efaktur-management': () => <EFakturManagementView />,
+        'whatsapp-gateway': () => <WhatsAppGatewayView />,
         'profile': () => <ProfileView />,
     };
 

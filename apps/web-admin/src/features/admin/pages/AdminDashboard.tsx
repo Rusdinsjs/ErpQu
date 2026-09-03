@@ -211,7 +211,7 @@ export default function AdminDashboard() {
                                 'profit-loss', 'cash-flow', 'trial-balance', 'general-ledger-report',
                                 'ar-aging', 'ap-aging', 'finance', 'cash-bank', 'expenses', 'journal-entries',
                                 'financial-reports', 'sales-invoices', 'purchase-bills',
-                                'period-closing', 'exchange-rates'
+                                'period-closing', 'exchange-rates', 'efaktur-management'
                             ];
                             accIds.forEach(id => {
                                 if (!ids.includes(id)) ids.push(id);
@@ -249,6 +249,7 @@ export default function AdminDashboard() {
                             if (!ids.includes('roles')) ids.push('roles');
                             if (!ids.includes('webhooks')) ids.push('webhooks');
                             if (!ids.includes('outbox-management')) ids.push('outbox-management');
+                            if (!ids.includes('whatsapp-gateway')) ids.push('whatsapp-gateway');
                             return { ...m, menuIds: ids };
                         }
                         return m;
@@ -453,8 +454,10 @@ export default function AdminDashboard() {
                     setOpenGroups(prev => ({ ...prev, [foundGroup.id]: true }));
                 } else if (['assets-workspace', 'assets', 'categories', 'locations', 'asset-lifecycle', 'asset-audit'].includes(foundTab)) {
                     setOpenGroups(prev => ({ ...prev, asset_operations: true }));
-                } else if (['accounting-workspace', 'chart-of-accounts', 'cash-bank', 'journal-entries', 'payment-entries', 'payment-reconciliation', 'sales-invoices', 'purchase-bills', 'credit-notes', 'debit-notes', 'dunnings', 'bank-accounts', 'bank-transactions', 'cost-centers', 'accounting-dimensions', 'budgets', 'sales-tax-templates', 'purchase-tax-templates-view', 'tax-categories', 'tax-rules', 'balance-sheet', 'profit-loss', 'cash-flow', 'trial-balance', 'general-ledger-report', 'ar-aging', 'ap-aging'].includes(foundTab)) {
+                } else if (['accounting-workspace', 'chart-of-accounts', 'cash-bank', 'journal-entries', 'payment-entries', 'payment-reconciliation', 'sales-invoices', 'purchase-bills', 'credit-notes', 'debit-notes', 'dunnings', 'bank-accounts', 'bank-transactions', 'cost-centers', 'accounting-dimensions', 'budgets', 'sales-tax-templates', 'purchase-tax-templates-view', 'tax-categories', 'tax-rules', 'balance-sheet', 'profit-loss', 'cash-flow', 'trial-balance', 'general-ledger-report', 'ar-aging', 'ap-aging', 'efaktur-management'].includes(foundTab)) {
                     setOpenGroups(prev => ({ ...prev, finance_group: true }));
+                } else if (['webhooks', 'whatsapp-gateway'].includes(foundTab)) {
+                    setOpenGroups(prev => ({ ...prev, organization_group: true }));
                 } else if (['hr-workspace'].includes(foundTab)) {
                     setOpenGroups(prev => ({ ...prev, hr_group: true }));
                 } else if (foundTab === 'work-orders') {

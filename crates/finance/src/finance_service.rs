@@ -1,4 +1,4 @@
-use chrono::Utc;
+use chrono::{Datelike, Utc};
 use serde::Serialize;
 use sha2::{Digest, Sha256};
 use uuid::Uuid;
@@ -1392,5 +1392,68 @@ impl FinanceService {
         self.repo
             .get_budget_variance_report(company_id, fiscal_year)
             .await
+    }
+
+    pub async fn list_tax_invoices(
+        &self,
+        company_id: Uuid,
+        start_date: Option<chrono::NaiveDate>,
+        end_date: Option<chrono::NaiveDate>,
+    ) -> DomainResult<Vec<TaxInvoiceRecord>> {
+        self.repo.list_tax_invoices(company_id, start_date, end_date).await
+    }
+
+    pub async fn create_tax_invoice(
+        &self,
+        record: &TaxInvoiceRecord,
+    ) -> DomainResult<TaxInvoiceRecord> {
+        self.repo.create_tax_invoice(record).await
+    }
+
+    pub async fn export_djp_csv(
+        &self,
+        company_id: Uuid,
+        start_date: Option<chrono::NaiveDate>,
+        end_date: Option<chrono::NaiveDate>,
+    ) -> DomainResult<String> {
+        let records = self.repo.list_tax_invoices(company_id, start_date, end_date).await?;
+        let headers: Vec<TaxInvoiceHeader> = records.into_iter().map(|rec| {
+            let dpp = rec.tax_base;
+            let ppn = rec.vat_amount;
+            TaxInvoiceHeader {
+                id: rec.id,
+                company_id: rec.company_id,
+                sales_invoice_id: rec.sales_invoice_id,
+                tax_invoice_number: rec.tax_invoice_number.clone(),
+                transaction_type_code: "01".to_string(),
+                is_replacement: false,
+                tax_period_month: rec.effective_date.month(),
+                tax_period_year: rec.effective_date.year(),
+                invoice_date: rec.effective_date,
+                buyer_npwp: rec.npwp_buyer,
+                buyer_name: rec.name_buyer,
+                buyer_address: "Indonesia".to_string(),
+                total_dpp: dpp,
+                total_ppn: ppn,
+                reference_number: rec.tax_invoice_number,
+                items: vec![
+                    TaxInvoiceItem {
+                        item_code: "INV-ITEM".to_string(),
+                        item_name: "Penyerahan Barang/Jasa Kena Pajak".to_string(),
+                        unit_price: dpp,
+                        quantity: rust_decimal_macros::dec!(1.0),
+                        total_price: dpp,
+                        discount: rust_decimal_macros::dec!(0.0),
+                        dpp,
+                        ppn,
+                        ppnbm_rate: rust_decimal_macros::dec!(0.0),
+                        ppnbm_amount: rust_decimal_macros::dec!(0.0),
+                    }
+                ],
+            }
+        }).collect();
+
+        let batch = EFakturCsvBatch::new(headers);
+        Ok(batch.generate_djp_csv())
     }
 }

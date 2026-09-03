@@ -601,6 +601,10 @@ pub fn create_router(state: AppState) -> Router {
         )
         .merge(crate::api::routes::tax_renewal_routes::tax_renewal_routes())
         .merge(crate::api::routes::company_routes::company_routes())
+        .merge(crate::api::routes::efaktur_routes::router())
+        .merge(crate::api::routes::whatsapp_routes::router())
+        .nest("/api/v1", crate::api::routes::efaktur_routes::router())
+        .nest("/api/v1", crate::api::routes::whatsapp_routes::router())
         .route(
             "/api/test/email",
             axum::routing::post(crate::api::handlers::test_handler::send_test_email),

@@ -7,7 +7,7 @@ import {
     Briefcase, FileSpreadsheet, Database, Mail, ShoppingBag, Tag,
     Lock, CheckCircle2, DollarSign, BarChart2, Activity, CreditCard,
     HandCoins, Award, UserPlus, GraduationCap, AlertOctagon, UserCircle,
-    ClipboardCheck, RefreshCw, Gift, Globe, Radio
+    ClipboardCheck, RefreshCw, Gift, Globe, Radio, MessageSquare
 } from 'lucide-react';
 import type { NavItem } from '../types/navigation';
 
@@ -253,12 +253,15 @@ export const ALL_NAV_ITEMS: Record<string, NavItem> = {
     'crm-pipeline': { id: 'crm-pipeline', icon: TrendingUp, label: 'Sales Pipeline', minLevel: 3 },
     'boms': { id: 'boms', icon: Layers, label: 'Bill of Materials (BOM)', minLevel: 3 },
     'production-orders': { id: 'production-orders', icon: CheckSquare, label: 'Production Orders', minLevel: 3 },
-    'exchange-rates': { id: 'exchange-rates', icon: Globe, label: 'Currency Exchange Rates', minLevel: 3 },
     'inventory-alerts': { id: 'inventory-alerts', icon: AlertOctagon, label: 'Low Stock Alerts', minLevel: 3 },
 
     // Phase 4 Enterprise Analytics & Quality
     'inventory-abc': { id: 'inventory-abc', icon: BarChart2, label: 'ABC Inventory Analysis', minLevel: 3 },
     'crm-analytics': { id: 'crm-analytics', icon: Activity, label: 'CRM Sales Funnel & Win/Loss', minLevel: 3 },
+
+    // Indonesia Localization & Integrations
+    'efaktur-management': { id: 'efaktur-management', icon: FileText, label: 'e-Faktur DJP Online', minLevel: 3 },
+    'whatsapp-gateway': { id: 'whatsapp-gateway', icon: MessageSquare, label: 'WhatsApp Gateway', minLevel: 2 },
 
     'approvals': { id: 'approvals', icon: CheckSquare, label: 'Approval Center', minLevel: 3, showBadge: true },
 
