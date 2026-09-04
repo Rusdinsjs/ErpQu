@@ -5,9 +5,11 @@ import { inventoryApi } from'../../inventory/api/inventory';
 import { clientApi } from'../../clients/api/client-management';
 import { Card, Button, Badge } from'../../../components/ui';
 import {
-    Plus, Search, Filter, Download, X, ClipboardCheck, Eye
+    Plus, Search, Filter, Download, X, ClipboardCheck, Eye, Printer
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { OfficialDocumentPrintModal } from '../../../components/print/OfficialDocumentPrintModal';
+import { DeliveryNotePrintTemplate } from '../../../components/print/templates/DeliveryNotePrintTemplate';
 
 export default function SalesShipments() {
     const [searchTerm, setSearchTerm] = useState('');
@@ -15,6 +17,7 @@ export default function SalesShipments() {
     const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
     const [selectedShipment, setSelectedShipment] = useState<any>(null);
     const [selectedOrder, setSelectedOrder] = useState<any>(null);
+    const [printShipment, setPrintShipment] = useState<any>(null);
 
     const queryClient = useQueryClient();
 
@@ -217,17 +220,29 @@ export default function SalesShipments() {
                                                 </Badge>
                                             </td>
                                             <td className="px-6 py-4 text-right">
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    className="p-2 hover:bg-muted rounded-lg text-primary"
-                                                    onClick={() => {
-                                                        setSelectedShipment(ship);
-                                                        setIsDetailsModalOpen(true);
-                                                    }}
-                                                >
-                                                    <Eye size={16} />
-                                                </Button>
+                                                <div className="flex items-center justify-end gap-1">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        className="p-2 hover:bg-muted rounded-lg text-primary"
+                                                        title="Lihat Detail"
+                                                        onClick={() => {
+                                                            setSelectedShipment(ship);
+                                                            setIsDetailsModalOpen(true);
+                                                        }}
+                                                    >
+                                                        <Eye size={16} />
+                                                    </Button>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        className="p-2 hover:bg-muted rounded-lg text-primary"
+                                                        title="Cetak Surat Jalan Resmi"
+                                                        onClick={() => setPrintShipment(ship)}
+                                                    >
+                                                        <Printer size={16} />
+                                                    </Button>
+                                                </div>
                                             </td>
                                         </tr>
                                     ))
@@ -411,24 +426,93 @@ export default function SalesShipments() {
                                     </div>
                                 </div>
 
-                                <div className="flex justify-end gap-2 pt-4 border-t border-border">
-                                    <Button variant="ghost" onClick={() => setIsDetailsModalOpen(false)}>Tutup</Button>
-                                    {selectedShipment.status === 'pending' && (
-                                        <Button
-                                            onClick={() => submitMutation.mutate(selectedShipment.id)}
-                                            className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white"
-                                            disabled={submitMutation.isPending}
-                                        >
-                                            <ClipboardCheck size={16} />
-                                            {submitMutation.isPending ? 'Memproses...' : 'Submit & Potong Stok'}
-                                        </Button>
-                                    )}
+                                <div className="flex justify-between items-center pt-4 border-t border-border">
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => setPrintShipment(selectedShipment)}
+                                        className="gap-2 text-primary border-primary/30 hover:bg-primary/10"
+                                    >
+                                        <Printer size={16} /> Cetak Surat Jalan Resmi
+                                    </Button>
+                                    <div className="flex gap-2">
+                                        <Button variant="ghost" onClick={() => setIsDetailsModalOpen(false)}>Tutup</Button>
+                                        {selectedShipment.status === 'pending' && (
+                                            <Button
+                                                onClick={() => submitMutation.mutate(selectedShipment.id)}
+                                                className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white"
+                                                disabled={submitMutation.isPending}
+                                            >
+                                                <ClipboardCheck size={16} />
+                                                {submitMutation.isPending ? 'Memproses...' : 'Submit & Potong Stok'}
+                                            </Button>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </Card>
                 </div>
             )}
+
+            {/* Modal Cetak Surat Jalan Resmi */}
+            <OfficialDocumentPrintModal
+                isOpen={!!printShipment}
+                onClose={() => setPrintShipment(null)}
+                documentTitle="Surat Jalan"
+                documentNumber={printShipment?.shipment_number || ''}
+            >
+                {printShipment && (() => {
+                    const matchedSo = salesOrders.find((so: any) => so.id === printShipment.sales_order_id);
+                    const matchedClient = clients.find((c: any) => c.id === (matchedSo?.client_id || printShipment.client_id));
+                    const warehouseObj = warehouses.find((w: any) => w.id === printShipment.warehouse_id);
+
+                    const shipmentItems = (printShipment.items && printShipment.items.length > 0)
+                        ? printShipment.items.map((it: any) => ({
+                            itemCode: it.item_code || it.item_id || '-',
+                            itemName: it.description || it.item_name || 'Barang Pesanan',
+                            quantityShipped: Number(it.quantity_shipped || it.quantity || 1),
+                            uom: it.uom || 'Unit',
+                            notes: it.notes || 'Kondisi Baik & Utuh'
+                        }))
+                        : (matchedSo?.items && matchedSo.items.length > 0)
+                            ? matchedSo.items.map((it: any) => ({
+                                itemCode: it.item_code || it.item_id || '-',
+                                itemName: it.description || it.item_name || 'Barang Pesanan',
+                                quantityShipped: Number(it.quantity || 1),
+                                uom: it.uom || 'Unit',
+                                notes: 'Kondisi Baik & Utuh'
+                            }))
+                            : [{
+                                itemCode: '-',
+                                itemName: `Pengiriman Pesanan ${matchedSo?.order_number || printShipment.shipment_number}`,
+                                quantityShipped: 1,
+                                uom: 'Koli',
+                                notes: 'Sesuai Resi'
+                            }];
+
+                    return (
+                        <DeliveryNotePrintTemplate
+                            deliveryNumber={printShipment.shipment_number}
+                            deliveryDate={printShipment.date}
+                            salesOrderNumber={matchedSo?.order_number}
+                            status={printShipment.status}
+                            shipTo={{
+                                recipientName: matchedClient?.name || 'Pelanggan / Penerima',
+                                companyName: matchedClient?.company_name || matchedClient?.name,
+                                deliveryAddress: matchedClient?.address || 'Alamat Penerima Sesuai Purchase Order',
+                                contactPhone: matchedClient?.phone || '-'
+                            }}
+                            transport={{
+                                expeditionName: printShipment.courier_name || 'Armada Logistik Perusahaan',
+                                vehiclePlate: printShipment.vehicle_number || (printShipment.courier_name === 'Internal' ? 'B 9182 SJS' : undefined),
+                                driverName: printShipment.driver_name || printShipment.courier_name || 'Petugas Pengantar'
+                            }}
+                            items={shipmentItems}
+                            notes={printShipment.notes || `Barang dikirim dari ${warehouseObj?.name || 'Gudang Pusat'}. Harap periksa keutuhan barang dan segel sebelum menandatangani surat jalan ini.`}
+                        />
+                    );
+                })()}
+            </OfficialDocumentPrintModal>
         </div>
     );
 }

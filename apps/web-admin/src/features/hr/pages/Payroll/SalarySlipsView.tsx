@@ -9,11 +9,14 @@ import {
     Button, Card, Table, TableHead, TableBody, TableRow, TableTh, TableTd, TableEmpty,
     Badge, ActionIcon, Modal, Input, Select, LoadingOverlay
 } from '../../../../components/ui';
+import { OfficialDocumentPrintModal } from '../../../../components/print/OfficialDocumentPrintModal';
+import { SalarySlipPrintTemplate } from '../../../../components/print/templates/SalarySlipPrintTemplate';
 
 export default function SalarySlipsView() {
     const [search, setSearch] = useState('');
     const [selectedSlip, setSelectedSlip] = useState<HrSalarySlip | null>(null);
     const [modalOpen, setModalOpen] = useState(false);
+    const [printSlip, setPrintSlip] = useState<HrSalarySlip | null>(null);
 
     const activeCompanyId = useAuthStore(s => s.activeCompanyId);
     const { data: companies = [] } = useQuery({
@@ -106,9 +109,14 @@ export default function SalarySlipsView() {
                                         <TableTd className="font-bold text-emerald-400 text-base">{formatRp(s.net_pay)}</TableTd>
                                         <TableTd><Badge color="green">Diproses</Badge></TableTd>
                                         <TableTd className="text-right">
-                                            <Button size="sm" variant="outline" onClick={() => openSlipDetail(s)} leftIcon={<FileText className="h-3.5 w-3.5" />}>
-                                                Lihat Slip
-                                            </Button>
+                                            <div className="flex items-center justify-end gap-2">
+                                                <Button size="sm" variant="outline" onClick={() => openSlipDetail(s)} leftIcon={<FileText className="h-3.5 w-3.5" />}>
+                                                    Lihat
+                                                </Button>
+                                                <Button size="sm" variant="outline" onClick={() => setPrintSlip(s)} leftIcon={<Printer className="h-3.5 w-3.5" />}>
+                                                    Cetak
+                                                </Button>
+                                            </div>
                                         </TableTd>
                                     </TableRow>
                                 );
@@ -240,13 +248,65 @@ export default function SalarySlipsView() {
                         {/* Actions */}
                         <div className="flex justify-end gap-3 pt-2 border-t border-white/10 no-print">
                             <Button variant="outline" onClick={() => setModalOpen(false)}>Tutup</Button>
-                            <Button variant="filled" color="emerald" onClick={handlePrint} leftIcon={<Printer className="h-4 w-4" />}>
-                                Cetak Slip Gaji
+                            <Button
+                                variant="filled"
+                                color="emerald"
+                                onClick={() => setPrintSlip(selectedSlip)}
+                                leftIcon={<Printer className="h-4 w-4" />}
+                            >
+                                Cetak Slip Resmi
                             </Button>
                         </div>
                     </div>
                 )}
             </Modal>
+
+            {/* Modal Cetak Slip Gaji Resmi */}
+            <OfficialDocumentPrintModal
+                isOpen={!!printSlip}
+                onClose={() => setPrintSlip(null)}
+                documentTitle="Slip Gaji"
+                documentNumber={printSlip ? `SLIP-${printSlip.employee_nik}-${dayjs(printSlip.end_date).format('YYYYMM')}` : ''}
+            >
+                {printSlip && (
+                    <SalarySlipPrintTemplate
+                        letterhead={{
+                            companyName: activeCompany?.name || 'PT SJS GROUP INDONESIA',
+                            companyAddress: activeCompany?.address || 'Kawasan Industri & Pergudangan Terpadu',
+                            taxId: activeCompany?.tax_id || '01.234.567.8-011.000',
+                        }}
+                        slipNumber={`SLIP-${printSlip.employee_nik}-${dayjs(printSlip.end_date).format('YYYYMM')}`}
+                        payrollPeriod={`${dayjs(printSlip.start_date).format('DD MMMM YYYY')} - ${dayjs(printSlip.end_date).format('DD MMMM YYYY')}`}
+                        paymentDate={printSlip.payment_date || printSlip.end_date}
+                        employee={{
+                            name: printSlip.employee_name,
+                            nik: printSlip.employee_nik,
+                            department: printSlip.department_name || 'Umum',
+                            jobTitle: (printSlip as any).job_title || 'Staff',
+                            ptkpStatus: `${printSlip.ptkp_status} (Kategori TER ${printSlip.pph21_ter_category})`,
+                            bankAccount: `${printSlip.bank_name || 'Bank'} - ${printSlip.bank_account || '-'} a/n ${printSlip.bank_account_holder || printSlip.employee_name}`
+                        }}
+                        earnings={[
+                            { label: 'Gaji Pokok', amount: Number(printSlip.base_salary || 0) },
+                            { label: 'Tunjangan Jabatan', amount: Number(printSlip.tunjangan_jabatan || 0) },
+                            { label: 'Tunjangan Transportasi', amount: Number(printSlip.tunjangan_transport || 0) },
+                            { label: 'Tunjangan Uang Makan', amount: Number(printSlip.tunjangan_makan || 0) },
+                            { label: 'Upah Lembur (SPKL)', amount: Number(printSlip.overtime_pay || 0) }
+                        ]}
+                        deductions={[
+                            { label: 'BPJS Kesehatan (1% Pekerja)', amount: Number(printSlip.bpjs_kes_employee || 0) },
+                            { label: 'BPJS JHT (2% Pekerja)', amount: Number(printSlip.bpjs_jht_employee || 0) },
+                            { label: 'BPJS JP (1% Pekerja)', amount: Number(printSlip.bpjs_jp_employee || 0) },
+                            { label: `PPh 21 TER (${(Number(printSlip.pph21_ter_rate || 0) * 100).toFixed(2)}%)`, amount: Number(printSlip.pph21_amount || 0) },
+                            { label: 'Potongan Kasbon / Pinjaman', amount: Number(printSlip.kasbon_deduction || 0) }
+                        ]}
+                        grossPay={Number(printSlip.gross_pay || 0)}
+                        totalDeductions={Number(printSlip.total_deductions || 0)}
+                        netPay={Number(printSlip.net_pay || 0)}
+                        notes="Slip gaji ini bersifat RAHASIA (CONFIDENTIAL) dan diterbitkan secara otomatis oleh HR & Payroll System ERPQu."
+                    />
+                )}
+            </OfficialDocumentPrintModal>
         </div>
     );
 }

@@ -13,6 +13,8 @@ import {
     Printer, Building2, Calendar, CheckCircle2, Clock, AlertCircle
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { OfficialDocumentPrintModal } from '../../../components/print/OfficialDocumentPrintModal';
+import { PurchaseOrderPrintTemplate } from '../../../components/print/templates/PurchaseOrderPrintTemplate';
 
 interface POItemRow {
     item_code: string;
@@ -28,6 +30,7 @@ interface POItemRow {
 export default function PurchaseOrders() {
     const [searchTerm, setSearchTerm] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [printPO, setPrintPO] = useState<any>(null);
     const [activeTab, setActiveTab] = useState<'details' | 'address' | 'terms' | 'more'>('details');
     const queryClient = useQueryClient();
 
@@ -322,9 +325,9 @@ export default function PurchaseOrders() {
                                             <div className="flex items-center justify-center gap-1">
                                                 <button
                                                     type="button"
-                                                    onClick={() => window.print()}
+                                                    onClick={() => setPrintPO(order)}
                                                     className="p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
-                                                    title="Cetak Purchase Order"
+                                                    title="Cetak Purchase Order Resmi"
                                                 >
                                                     <Printer size={15} />
                                                 </button>
@@ -567,6 +570,62 @@ export default function PurchaseOrders() {
                     </div>
                 </div>
             </Modal>
+
+            {/* Modal Cetak Purchase Order Resmi */}
+            <OfficialDocumentPrintModal
+                isOpen={!!printPO}
+                onClose={() => setPrintPO(null)}
+                documentTitle="Purchase Order"
+                documentNumber={printPO?.po_number || ''}
+            >
+                {printPO && (() => {
+                    const vendorObj = vendors.find((v: any) => v.id === printPO.supplier_id);
+                    const poItems = (printPO.items && printPO.items.length > 0)
+                        ? printPO.items.map((it: any) => ({
+                            itemCode: it.item_code || '-',
+                            description: it.item_name || it.description || 'Barang / Material PO',
+                            quantity: Number(it.quantity || 1),
+                            uom: it.uom || 'Unit',
+                            unitPrice: Number(it.rate || it.unit_price || 0),
+                            amount: Number(it.amount || (Number(it.quantity || 1) * Number(it.rate || 0))),
+                            requiredDate: it.required_by
+                        }))
+                        : [{
+                            itemCode: '-',
+                            description: `Pengadaan Barang / Jasa PO ${printPO.po_number}`,
+                            quantity: 1,
+                            uom: 'Lot',
+                            unitPrice: Number(printPO.grand_total || printPO.total_amount || 0),
+                            amount: Number(printPO.grand_total || printPO.total_amount || 0)
+                        }];
+
+                    const calcTotal = Number(printPO.grand_total || printPO.total_amount || 0);
+                    const calcTax = Number(printPO.tax_amount || 0);
+                    const calcSubtotal = Number(printPO.subtotal || (calcTotal - calcTax));
+
+                    return (
+                        <PurchaseOrderPrintTemplate
+                            poNumber={printPO.po_number}
+                            poDate={printPO.order_date || printPO.date}
+                            deliveryDate={printPO.delivery_date || printPO.required_by}
+                            paymentTerms={printPO.payment_terms || 'Net 30 Hari'}
+                            status={printPO.status}
+                            supplier={{
+                                name: printPO.supplier_name || vendorObj?.name || 'Vendor / Mitra Rekanan',
+                                address: vendorObj?.address || printPO.supplier_address,
+                                phone: vendorObj?.phone || printPO.supplier_phone,
+                                email: vendorObj?.email,
+                                taxId: (vendorObj as any)?.tax_id || (vendorObj as any)?.npwp
+                            }}
+                            items={poItems}
+                            subtotal={calcSubtotal}
+                            taxAmount={calcTax}
+                            totalAmount={calcTotal}
+                            notes={printPO.terms_text || printPO.remarks || '1. Pembayaran akan ditransfer 30 hari setelah faktur dan barang diterima lengkap.\n2. Barang cacat atau tidak sesuai spesifikasi akan diretur.'}
+                        />
+                    );
+                })()}
+            </OfficialDocumentPrintModal>
         </div>
     );
 }

@@ -23,6 +23,8 @@ import {
     PlusCircle, Trash, DollarSign, Printer, Building2, AlertTriangle
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { OfficialDocumentPrintModal } from '../../../components/print/OfficialDocumentPrintModal';
+import { InvoicePrintTemplate } from '../../../components/print/templates/InvoicePrintTemplate';
 
 export default function SalesInvoices() {
     const [searchTerm, setSearchTerm] = useState('');
@@ -30,6 +32,7 @@ export default function SalesInvoices() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [viewInvoice, setViewInvoice] = useState<SalesInvoice | null>(null);
     const [editInvoice, setEditInvoice] = useState<SalesInvoice | null>(null);
+    const [printInvoice, setPrintInvoice] = useState<SalesInvoice | null>(null);
     const [createDefaults, setCreateDefaults] = useState({ invoiceNumber: '', date: '', dueDate: '' });
 
     // Dynamic line items state for create/edit modal
@@ -461,9 +464,9 @@ export default function SalesInvoices() {
                                                     </button>
                                                     <button
                                                         type="button"
-                                                        onClick={() => window.print()}
+                                                        onClick={() => setPrintInvoice(invoice)}
                                                         className="p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
-                                                        title="Cetak Faktur PDF"
+                                                        title="Cetak Faktur PDF Resmi"
                                                     >
                                                         <Printer size={15} />
                                                     </button>
@@ -759,8 +762,14 @@ export default function SalesInvoices() {
                         )}
 
                         <div className="flex justify-between items-center pt-2">
-                            <Button variant="outline" onClick={() => window.print()} className="rounded-xl flex items-center gap-1.5">
-                                <Printer size={15} /> Cetak Faktur PDF
+                            <Button
+                                variant="outline"
+                                onClick={() => {
+                                    setPrintInvoice(viewInvoice);
+                                }}
+                                className="rounded-xl flex items-center gap-1.5 text-primary border-primary/30 hover:bg-primary/10"
+                            >
+                                <Printer size={15} /> Cetak Faktur PDF Resmi
                             </Button>
                             <Button variant="outline" onClick={() => setViewInvoice(null)} className="rounded-xl">
                                 Tutup
@@ -769,6 +778,51 @@ export default function SalesInvoices() {
                     </div>
                 )}
             </Modal>
+
+            {/* Modal Cetak Dokumen Faktur Penjualan Resmi */}
+            <OfficialDocumentPrintModal
+                isOpen={!!printInvoice}
+                onClose={() => setPrintInvoice(null)}
+                documentTitle="Faktur Penjualan"
+                documentNumber={printInvoice?.invoice_number || ''}
+            >
+                {printInvoice && (() => {
+                    const clientObj = clients.find((c: any) => c.id === printInvoice.client_id);
+                    return (
+                        <InvoicePrintTemplate
+                            invoiceNumber={printInvoice.invoice_number}
+                            invoiceDate={printInvoice.date}
+                            dueDate={printInvoice.due_date}
+                            status={printInvoice.status}
+                            client={{
+                                name: printInvoice.client_name || clientObj?.name || 'Pelanggan Umum',
+                                address: clientObj?.address,
+                                phone: clientObj?.phone,
+                                taxId: (clientObj as any)?.tax_id || (clientObj as any)?.npwp,
+                            }}
+                            items={(printInvoice.items && printInvoice.items.length > 0)
+                                ? printInvoice.items.map((it: any) => ({
+                                    description: it.description || it.product_name || it.item_name || 'Item Penjualan',
+                                    quantity: parseFloat(it.quantity || '1'),
+                                    uom: it.uom || 'Unit',
+                                    unitPrice: parseFloat(it.unit_price || '0'),
+                                    amount: parseFloat(it.quantity || '1') * parseFloat(it.unit_price || '0'),
+                                }))
+                                : [{
+                                    description: `Faktur Penjualan ${printInvoice.invoice_number}`,
+                                    quantity: 1,
+                                    uom: 'Unit',
+                                    unitPrice: parseFloat(printInvoice.total_amount || '0'),
+                                    amount: parseFloat(printInvoice.total_amount || '0'),
+                                }]
+                            }
+                            subtotal={parseFloat(printInvoice.total_amount || '0')}
+                            totalAmount={parseFloat(printInvoice.total_amount || '0')}
+                            paidAmount={parseFloat(printInvoice.paid_amount || '0')}
+                        />
+                    );
+                })()}
+            </OfficialDocumentPrintModal>
         </div>
     );
 }

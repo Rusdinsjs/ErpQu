@@ -1,0 +1,32 @@
+/* Print Styles for Corporate Documents */
+@media print {
+    /* Hide all page contents except document */
+    body * {
+        visibility: hidden;
+    }
+
+    #official-printable-doc,
+    #official-printable-doc * {
+        visibility: visible;
+    }
+
+    #official-printable-doc {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 12mm 15mm !important;
+        box-shadow: none !important;
+        background-color: #ffffff !important;
+        color: #0f172a !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    @page {
+        size: A4 portrait;
+        margin: 0;
+    }
+}
