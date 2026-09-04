@@ -19,9 +19,15 @@ FROM nginx:alpine
 # Copy compiled SPA dist files to nginx html root
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# SPA Routing Config (All requests fallback to index.html for React Router)
+# SPA Routing Config (All requests fallback to index.html for React Router, assets return 404)
 RUN echo 'server { \
     listen 80; \
+    location /assets/ { \
+        root /usr/share/nginx/html; \
+        try_files $uri =404; \
+        expires 1y; \
+        add_header Cache-Control "public, immutable"; \
+    } \
     location / { \
         root /usr/share/nginx/html; \
         index index.html index.htm; \
@@ -31,6 +37,7 @@ RUN echo 'server { \
         add_header Expires "0"; \
     } \
 }' > /etc/nginx/conf.d/default.conf
+
 
 EXPOSE 80
 
