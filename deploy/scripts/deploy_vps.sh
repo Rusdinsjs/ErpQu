@@ -58,11 +58,18 @@ echo -e "  ${GREEN}✓ Compose file dan .env ditemukan.${NC}"
 # 2. Mandatory Pre-Deployment Database Backup
 echo -e "\n${CYAN}▶ [2/7] Menjalankan Backup Database Mandatori Sebelum Rilis...${NC}"
 mkdir -p "$BACKUP_DIR"
-if docker compose -f "$COMPOSE_FILE" exec -T postgres pg_dump -U postgres -Fc management_system > "$BACKUP_FILE" 2>/dev/null; then
-    BACKUP_SIZE=$(du -sh "$BACKUP_FILE" | cut -f1)
-    echo -e "  ${GREEN}✓ Backup tersimpan di: ${BOLD}${BACKUP_FILE}${NC} (${BACKUP_SIZE})"
+# Periksa apakah container postgres sedang aktif
+if docker compose -f "$COMPOSE_FILE" ps --status running --format '{{.Service}}' 2>/dev/null | grep -qx "postgres"; then
+    DB_USER_VAL=$(grep -E '^DB_USER=' .env 2>/dev/null | cut -d= -f2- || echo "postgres")
+    DB_NAME_VAL=$(grep -E '^DB_NAME=' .env 2>/dev/null | cut -d= -f2- || echo "management_system")
+    if docker compose -f "$COMPOSE_FILE" exec -T postgres pg_dump -U "${DB_USER_VAL}" -Fc "${DB_NAME_VAL}" > "$BACKUP_FILE" 2>/dev/null; then
+        BACKUP_SIZE=$(du -sh "$BACKUP_FILE" 2>/dev/null | cut -f1 || echo "OK")
+        echo -e "  ${GREEN}✓ Backup tersimpan di: ${BOLD}${BACKUP_FILE}${NC} (${BACKUP_SIZE})"
+    else
+        echo -e "  ${YELLOW}⚠️  Peringatan: Gagal mengekstrak dump, melanjutkan deployment...${NC}"
+    fi
 else
-    echo -e "  ${YELLOW}⚠️  Peringatan: Gagal membuat backup via container postgres (mungkin service belum running). Melanjutkan dengan hati-hati...${NC}"
+    echo -e "  ${YELLOW}ℹ️  Container postgres belum berjalan (inisialisasi awal). Melewati backup pra-rilis.${NC}"
 fi
 
 # 3. Pull / Build Image
@@ -73,10 +80,10 @@ if [ "${BUILD_LOCAL}" = "true" ]; then
 else
     echo "  - Menarik image terbaru dari GHCR [${IMAGE_TAG}]..."
     export IMAGE_TAG
-    docker compose -f "$COMPOSE_FILE" pull frontend backend migrate || {
-        echo -e "  ${YELLOW}⚠️ Pull gagal, melakukan fallback ke local build...${NC}"
+    if ! docker compose -f "$COMPOSE_FILE" pull frontend backend migrate; then
+        echo -e "  ${YELLOW}⚠️ Pull gagal / image belum ada di GHCR. Melakukan auto-build lokal di VPS...${NC}"
         docker compose -f "$COMPOSE_FILE" build frontend backend migrate
-    }
+    fi
 fi
 
 # 4. Database Migrations (Fail-Closed)
