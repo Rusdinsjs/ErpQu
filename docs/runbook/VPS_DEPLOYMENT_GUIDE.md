@@ -139,3 +139,59 @@ docker compose -f /opt/erpqu/docker-compose.prod.yml exec -T postgres \
 ```bash
 cd /opt/erpqu && docker compose -f docker-compose.prod.yml restart
 ```
+
+---
+
+## 🔄 7. Alur Kerja Rutin: Local ➔ GitHub ➔ Deploy VPS
+
+Berikut adalah Standar Operasional Prosedur (SOP) rutin saat Anda melakukan perbaikan bug atau penambahan fitur baru:
+
+### 1. Di Komputer Lokal (Development & Testing)
+1. **Buat Branch Kerja Baru** (opsional tapi disarankan):
+   ```bash
+   git checkout -b fix/nama-perbaikan
+   ```
+2. **Lakukan Koding / Modifikasi**:
+   - Jika membuat migrasi database, pastikan trigger menggunakan `DROP TRIGGER IF EXISTS <nama_trigger> ON <tabel>;` sebelum `CREATE TRIGGER`.
+3. **Jalankan Verifikasi Kualitas Otomatis Sebelum Push**:
+   ```bash
+   ./scripts/dev/pre-push.sh
+   ```
+   *Skrip ini akan menguji kompilasi Rust, test integrasi akuntansi/inventori, type check TypeScript, build bundle Vite, serta mengaudit idempotency SQL secara otomatis.*
+
+### 2. Di GitHub (Version Control & CI Quality Gate)
+1. **Commit & Push**:
+   ```bash
+   git add .
+   git commit -m "fix(modul): deskripsi perbaikan"
+   git push origin main
+   ```
+2. **Pantau Pipeline CI**:
+   - Buka tab **Actions** di repositori GitHub.
+   - Pastikan alur `ERPQu Quality Gate CI Pipeline` berwarna hijau (lulus).
+
+### 3. Di Server VPS (Deployment)
+
+#### Cara A: Otomatis via GitHub Actions (Rekomendasi)
+Jika Secret `VPS_HOST`, `VPS_USERNAME`, `VPS_SSH_KEY`, serta `CLOUDFLARE_ZONE_ID` & `CLOUDFLARE_API_TOKEN` telah dikonfigurasi di GitHub Secrets, deployment berjalan 100% otomatis saat push ke `main`.
+
+#### Cara B: Manual / One-Click Script di Terminal VPS
+Jika Anda login langsung ke terminal VPS, cukup jalankan skrip resmi yang telah disediakan:
+```bash
+cd /opt/erpqu
+
+# Tarik kode terbaru
+git pull origin main
+
+# Jalankan deployment aman dengan backup mandatori, migrasi, dan health check
+./deploy/scripts/deploy_vps.sh
+```
+
+*Skrip `deploy_vps.sh` secara otomatis:*
+- Membuat file cadangan database (`pg_dump`) ke `/backups/pre_deploy_<timestamp>.dump`.
+- Memperbarui image container frontend & backend.
+- Menjalankan migrasi database (*fail-closed* — jika migrasi gagal, sistem batal deploy dan DB tetap utuh).
+- Melakukan rolling restart container.
+- Menunggu hingga backend siap merespons `/health` (jika gagal, otomatis me-restore database dan container versi lama).
+- Melakukan pembersihan cache CDN Cloudflare (jika `CLOUDFLARE_API_TOKEN` diset di `.env`).
+
