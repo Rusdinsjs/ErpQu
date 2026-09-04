@@ -972,6 +972,10 @@ impl FinanceService {
         self.repo.list_purchase_bills().await
     }
 
+    pub async fn get_purchase_bill(&self, id: Uuid) -> DomainResult<Option<PurchaseBill>> {
+        self.repo.get_purchase_bill_by_id(id).await
+    }
+
     pub async fn create_expense(
         &self,
         actor_id: Option<Uuid>,
@@ -1475,4 +1479,113 @@ impl FinanceService {
         let batch = EFakturCsvBatch::new(headers);
         Ok(batch.generate_djp_csv())
     }
+
+    pub async fn update_sales_invoice_status(
+        &self,
+        id: Uuid,
+        status: &str,
+    ) -> DomainResult<()> {
+        self.repo.update_sales_invoice_status(id, status).await
+    }
+
+    pub async fn update_purchase_bill_status(
+        &self,
+        id: Uuid,
+        status: &str,
+    ) -> DomainResult<()> {
+        self.repo.update_purchase_bill_status(id, status).await
+    }
+
+    pub async fn import_bank_statement(
+        &self,
+        company_id: Uuid,
+        uploaded_by: Uuid,
+        req: crate::domain::entities::ImportBankStatementRequest,
+    ) -> DomainResult<crate::domain::entities::BankStatement> {
+        let stmt_id = Uuid::new_v4();
+        let open_bal = req.opening_balance.unwrap_or(rust_decimal::Decimal::ZERO);
+        let mut running_bal = open_bal;
+        for line in &req.lines {
+            running_bal += line.amount;
+        }
+        let close_bal = req.closing_balance.unwrap_or(running_bal);
+
+        let stmt = crate::domain::entities::BankStatement {
+            id: stmt_id,
+            company_id,
+            account_id: req.account_id,
+            statement_date: req.statement_date,
+            reference_number: req.reference_number,
+            opening_balance: open_bal,
+            closing_balance: close_bal,
+            status: "DRAFT".to_string(),
+            uploaded_by,
+            created_at: chrono::Utc::now(),
+            updated_at: chrono::Utc::now(),
+        };
+
+        let lines: Vec<crate::domain::entities::BankStatementLine> = req
+            .lines
+            .into_iter()
+            .map(|l| crate::domain::entities::BankStatementLine {
+                id: Uuid::new_v4(),
+                statement_id: stmt_id,
+                company_id,
+                transaction_date: l.transaction_date,
+                description: l.description,
+                reference_number: l.reference_number,
+                amount: l.amount,
+                is_reconciled: false,
+                matched_gl_entry_id: None,
+                created_at: chrono::Utc::now(),
+            })
+            .collect();
+
+        self.repo.create_bank_statement(&stmt, &lines).await
+    }
+
+    pub async fn list_bank_statements(
+        &self,
+        company_id: Uuid,
+    ) -> DomainResult<Vec<crate::domain::entities::BankStatement>> {
+        self.repo.list_bank_statements(company_id).await
+    }
+
+    pub async fn get_bank_statement(
+        &self,
+        id: Uuid,
+    ) -> DomainResult<Option<crate::domain::entities::BankStatementDetailResponse>> {
+        let opt = self.repo.get_bank_statement(id).await?;
+        Ok(opt.map(|(statement, lines)| crate::domain::entities::BankStatementDetailResponse {
+            statement,
+            lines,
+        }))
+    }
+
+    pub async fn auto_match_bank_statement(
+        &self,
+        id: Uuid,
+    ) -> DomainResult<crate::domain::entities::AutoMatchResult> {
+        self.repo.auto_match_bank_statement_lines(id).await
+    }
+
+    pub async fn reconcile_bank_statement(
+        &self,
+        id: Uuid,
+        reconciled_by: Uuid,
+        as_of_date: Option<chrono::NaiveDate>,
+    ) -> DomainResult<crate::domain::entities::BankReconciliation> {
+        let stmt = self.repo.get_bank_statement(id).await?
+            .ok_or_else(|| DomainError::not_found("BankStatement", id))?.0;
+        let date = as_of_date.unwrap_or(stmt.statement_date);
+        self.repo.finalize_bank_reconciliation(id, reconciled_by, date).await
+    }
+
+    pub async fn list_bank_reconciliations(
+        &self,
+        company_id: Uuid,
+    ) -> DomainResult<Vec<crate::domain::entities::BankReconciliation>> {
+        self.repo.list_bank_reconciliations(company_id).await
+    }
+
 }

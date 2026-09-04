@@ -19,7 +19,8 @@ import {
     Save,
     ChevronDown,
     ChevronUp,
-    Package
+    Package,
+    BookOpen
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatCurrencyIDR, subtractDecimalStrings, sumDecimalStrings } from '../../../utils/decimal';
@@ -124,6 +125,18 @@ export default function PurchaseBills() {
         },
         onError: (error: unknown) => {
             toast.error('Gagal membuat tagihan: ' + (error instanceof Error ? error.message : 'Unknown error'));
+        }
+    });
+
+    const postGlMutation = useMutation({
+        mutationFn: (billId: string) => financeApi.postPurchaseBillGl(billId),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['finance', 'purchase-bills'] });
+            queryClient.invalidateQueries({ queryKey: ['finance', 'journal-entries'] });
+            toast.success('Jurnal Pembelian (GL Posting) berhasil dibukukan otomatis ke Buku Besar!');
+        },
+        onError: (error: unknown) => {
+            toast.error('Gagal membukukan jurnal GL: ' + (error instanceof Error ? error.message : 'Unknown error'));
         }
     });
 
@@ -325,9 +338,25 @@ export default function PurchaseBills() {
                                             </Badge>
                                         </td>
                                         <td className="px-6 py-4 text-center">
-                                            <button className="p-2 hover:bg-muted rounded-lg transition-colors">
-                                                <MoreVertical size={16} />
-                                            </button>
+                                            <div className="flex items-center justify-center gap-1">
+                                                <button
+                                                    type="button"
+                                                    disabled={postGlMutation.isPending}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        if (confirm(`Posting tagihan pembelian ${bill.bill_number} ke Buku Besar (General Ledger)?`)) {
+                                                            postGlMutation.mutate(bill.id);
+                                                        }
+                                                    }}
+                                                    className="p-1.5 text-muted-foreground hover:text-indigo-400 hover:bg-indigo-500/10 rounded-lg transition-colors disabled:opacity-50"
+                                                    title="Posting Tagihan ke Jurnal Umum / GL"
+                                                >
+                                                    <BookOpen size={16} />
+                                                </button>
+                                                <button className="p-1.5 hover:bg-muted rounded-lg transition-colors text-muted-foreground">
+                                                    <MoreVertical size={16} />
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))

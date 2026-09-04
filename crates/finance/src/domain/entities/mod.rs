@@ -1,5 +1,6 @@
 pub mod account_mapping;
 pub mod asset_expense;
+pub mod bank_reconciliation;
 pub mod budget;
 pub mod commercial_graph;
 pub mod efaktur;
@@ -10,6 +11,7 @@ pub mod journal;
 
 pub use account_mapping::*;
 pub use asset_expense::*;
+pub use bank_reconciliation::*;
 pub use budget::*;
 pub use commercial_graph::*;
 pub use efaktur::*;

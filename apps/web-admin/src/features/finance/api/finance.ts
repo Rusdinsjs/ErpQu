@@ -509,4 +509,40 @@ export const financeApi = {
         return response.data?.data || response.data;
     },
 
+    // 8. GL Auto-Posting
+    postSalesInvoiceGl: async (id: string): Promise<any> => {
+        const response = await api.post(`/finance/sales/invoices/${id}/post-gl`);
+        return response.data;
+    },
+    postPurchaseBillGl: async (id: string): Promise<any> => {
+        const response = await api.post(`/finance/purchase/bills/${id}/post-gl`);
+        return response.data;
+    },
+
+    // 9. Bank Statement & Reconciliation
+    importBankStatement: async (data: any): Promise<any> => {
+        const response = await api.post('/finance/bank-statements', data);
+        return response.data?.data || response.data;
+    },
+    listBankStatements: async (): Promise<any[]> => {
+        const response = await api.get('/finance/bank-statements');
+        return extractArray(response.data);
+    },
+    getBankStatement: async (id: string): Promise<any> => {
+        const response = await api.get(`/finance/bank-statements/${id}`);
+        return response.data?.data || response.data;
+    },
+    autoMatchBankStatement: async (id: string): Promise<any> => {
+        const response = await api.post(`/finance/bank-statements/${id}/auto-match`);
+        return response.data?.data || response.data;
+    },
+    reconcileBankStatement: async (id: string): Promise<any> => {
+        const response = await api.post(`/finance/bank-statements/${id}/reconcile`);
+        return response.data?.data || response.data;
+    },
+    listBankReconciliations: async (): Promise<any[]> => {
+        const response = await api.get('/finance/bank-reconciliations');
+        return extractArray(response.data);
+    },
 };
+

@@ -200,7 +200,7 @@ export const ALL_NAV_ITEMS: Record<string, NavItem> = {
     'chart-of-accounts': { id: 'chart-of-accounts', icon: FolderTree, label: 'Chart of Accounts', minLevel: 2 },
     'journal-entries-view': { id: 'journal-entries-view', icon: FileText, label: 'Journal Entry', minLevel: 2 },
     'payment-entries': { id: 'payment-entries', icon: Receipt, label: 'Payment Entry', minLevel: 2 },
-    'payment-reconciliation': { id: 'payment-reconciliation', icon: RefreshCw, label: 'Payment Reconciliation', minLevel: 2 },
+    'payment-reconciliation': { id: 'payment-reconciliation', icon: RefreshCw, label: 'Rekonsiliasi Bank & Kas', minLevel: 2 },
     'bank-accounts': { id: 'bank-accounts', icon: Wallet, label: 'Bank Account', minLevel: 2 },
     'bank-transactions': { id: 'bank-transactions', icon: TrendingUp, label: 'Bank Transaction', minLevel: 2 },
     'bank-clearance': { id: 'bank-clearance', icon: CheckCircle2, label: 'Bank Clearance', minLevel: 2 },

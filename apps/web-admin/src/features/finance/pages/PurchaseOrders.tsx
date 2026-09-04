@@ -10,11 +10,13 @@ import {
 import {
     Plus, Search, Filter, Download, MoreVertical, X, Barcode,
     Trash2, Save, ChevronDown, ChevronUp, ShoppingBag, FileText,
-    Printer, Building2, Calendar, CheckCircle2, Clock, AlertCircle
+    Printer, Building2, Calendar, CheckCircle2, Clock, AlertCircle,
+    MessageSquare
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { OfficialDocumentPrintModal } from '../../../components/print/OfficialDocumentPrintModal';
 import { PurchaseOrderPrintTemplate } from '../../../components/print/templates/PurchaseOrderPrintTemplate';
+import { SendWhatsAppModal } from '../../../components/whatsapp/SendWhatsAppModal';
 
 interface POItemRow {
     item_code: string;
@@ -31,6 +33,7 @@ export default function PurchaseOrders() {
     const [searchTerm, setSearchTerm] = useState('');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [printPO, setPrintPO] = useState<any>(null);
+    const [whatsAppPO, setWhatsAppPO] = useState<any>(null);
     const [activeTab, setActiveTab] = useState<'details' | 'address' | 'terms' | 'more'>('details');
     const queryClient = useQueryClient();
 
@@ -331,6 +334,14 @@ export default function PurchaseOrders() {
                                                 >
                                                     <Printer size={15} />
                                                 </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setWhatsAppPO(order)}
+                                                    className="p-1.5 text-muted-foreground hover:text-emerald-400 hover:bg-emerald-500/10 rounded-lg transition-colors"
+                                                    title="Kirim PO Resmi ke WhatsApp Vendor"
+                                                >
+                                                    <MessageSquare size={15} />
+                                                </button>
                                             </div>
                                         </td>
                                     </tr>
@@ -626,6 +637,37 @@ export default function PurchaseOrders() {
                     );
                 })()}
             </OfficialDocumentPrintModal>
+
+            {/* Modal Kirim Purchase Order Resmi via WhatsApp ke Vendor */}
+            {whatsAppPO && (() => {
+                const vendorObj = vendors.find((v: any) => v.id === whatsAppPO.supplier_id || v.name === whatsAppPO.supplier_name || v.id === whatsAppPO.vendor_id);
+                const vendorName = whatsAppPO.supplier_name || vendorObj?.name || 'Mitra Rekanan / Vendor';
+                const vendorPhone = vendorObj?.phone || whatsAppPO.supplier_phone || '';
+                const poNumber = whatsAppPO.po_number || whatsAppPO.name || whatsAppPO.id?.substring(0, 8);
+                const poDate = whatsAppPO.transaction_date || whatsAppPO.order_date || '-';
+                const totalFormatted = `Rp ${Number(whatsAppPO.grand_total || whatsAppPO.total_amount || 0).toLocaleString('id-ID')}`;
+
+                const defaultMsg = `Yth. *${vendorName}*,\n\nBerikut kami sampaikan Surat Pesanan Pembelian (*Purchase Order*) resmi dari SJS Group:\n\n` +
+                    `📦 No. PO: ${poNumber}\n` +
+                    `📅 Tanggal Order: ${poDate}\n` +
+                    `💰 Total Nilai: ${totalFormatted}\n` +
+                    `⏱ Ketentuan: ${whatsAppPO.payment_terms || 'Net 30 Hari'}\n\n` +
+                    `Mohon untuk dapat memeriksa rincian pesanan dan mengonfirmasi jadwal pengiriman barang.\n\n` +
+                    `Terima kasih atas kerja samanya.\n\n` +
+                    `Salam,\nDivisi Procurement & Purchasing SJS Group`;
+
+                return (
+                    <SendWhatsAppModal
+                        isOpen={!!whatsAppPO}
+                        onClose={() => setWhatsAppPO(null)}
+                        recipientName={vendorName}
+                        recipientPhone={vendorPhone}
+                        documentType="PURCHASE_ORDER"
+                        documentNumber={poNumber}
+                        defaultMessage={defaultMsg}
+                    />
+                );
+            })()}
         </div>
     );
 }

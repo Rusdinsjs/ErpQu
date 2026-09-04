@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { FileText, Printer, Search, Download, Building2, CheckCircle2, DollarSign } from 'lucide-react';
+import { FileText, Printer, Search, Download, Building2, CheckCircle2, DollarSign, MessageSquare } from 'lucide-react';
 import dayjs from 'dayjs';
 import { hrPayrollApi, type HrSalarySlip } from '../../api/hr-payroll';
 import { useAuthStore } from '../../../../store/useAuthStore';
@@ -11,12 +11,14 @@ import {
 } from '../../../../components/ui';
 import { OfficialDocumentPrintModal } from '../../../../components/print/OfficialDocumentPrintModal';
 import { SalarySlipPrintTemplate } from '../../../../components/print/templates/SalarySlipPrintTemplate';
+import { SendWhatsAppModal } from '../../../../components/whatsapp/SendWhatsAppModal';
 
 export default function SalarySlipsView() {
     const [search, setSearch] = useState('');
     const [selectedSlip, setSelectedSlip] = useState<HrSalarySlip | null>(null);
     const [modalOpen, setModalOpen] = useState(false);
     const [printSlip, setPrintSlip] = useState<HrSalarySlip | null>(null);
+    const [whatsAppSlip, setWhatsAppSlip] = useState<HrSalarySlip | null>(null);
 
     const activeCompanyId = useAuthStore(s => s.activeCompanyId);
     const { data: companies = [] } = useQuery({
@@ -115,6 +117,9 @@ export default function SalarySlipsView() {
                                                 </Button>
                                                 <Button size="sm" variant="outline" onClick={() => setPrintSlip(s)} leftIcon={<Printer className="h-3.5 w-3.5" />}>
                                                     Cetak
+                                                </Button>
+                                                <Button size="sm" variant="outline" onClick={() => setWhatsAppSlip(s)} className="text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10" leftIcon={<MessageSquare className="h-3.5 w-3.5" />}>
+                                                    WA
                                                 </Button>
                                             </div>
                                         </TableTd>
@@ -307,6 +312,35 @@ export default function SalarySlipsView() {
                     />
                 )}
             </OfficialDocumentPrintModal>
+
+            {/* Modal Kirim Slip Gaji via WhatsApp */}
+            {whatsAppSlip && (() => {
+                const empName = whatsAppSlip.employee_name || 'Karyawan';
+                const period = `${dayjs(whatsAppSlip.start_date).format('DD MMM')} - ${dayjs(whatsAppSlip.end_date).format('DD MMM YYYY')}`;
+                const takeHomePay = formatRp(whatsAppSlip.net_pay);
+                const grossPay = formatRp(whatsAppSlip.gross_pay);
+                const pph21 = formatRp(whatsAppSlip.pph21_amount);
+
+                const defaultMsg = `Halo *${empName}*,\n\nBerikut rincian Slip Gaji resmi Anda untuk periode *${period}*:\n\n` +
+                    `👤 NIK: ${whatsAppSlip.employee_nik}\n` +
+                    `🏢 Departemen: ${whatsAppSlip.department_name || 'Umum'}\n` +
+                    `💰 Gaji Bruto: ${grossPay}\n` +
+                    `📉 PPh 21: ${pph21}\n` +
+                    `💵 *Take Home Pay (Diterima): ${takeHomePay}*\n\n` +
+                    `Slip gaji ini bersifat rahasia (confidential). Hubungi divisi HR / Finance jika ada pertanyaan.\n\n` +
+                    `Salam,\nHR & Payroll Team ERPQu`;
+
+                return (
+                    <SendWhatsAppModal
+                        isOpen={!!whatsAppSlip}
+                        onClose={() => setWhatsAppSlip(null)}
+                        recipientName={empName}
+                        documentType="SALARY_SLIP"
+                        documentNumber={`SLIP-${whatsAppSlip.employee_nik}-${dayjs(whatsAppSlip.end_date).format('YYYYMM')}`}
+                        defaultMessage={defaultMsg}
+                    />
+                );
+            })()}
         </div>
     );
 }

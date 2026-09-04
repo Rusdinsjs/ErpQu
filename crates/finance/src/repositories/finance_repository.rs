@@ -2288,4 +2288,432 @@ impl FinanceRepository {
 
         Ok(created.into())
     }
+
+    pub async fn update_sales_invoice_status(
+        &self,
+        id: Uuid,
+        status: &str,
+    ) -> DomainResult<()> {
+        sqlx::query("UPDATE sales_invoices SET status = $1, updated_at = NOW() WHERE id = $2")
+            .bind(status)
+            .bind(id)
+            .execute(&self.pool)
+            .await
+            .map_err(|e| DomainError::Database(e.to_string()))?;
+        Ok(())
+    }
+
+    pub async fn update_purchase_bill_status(
+        &self,
+        id: Uuid,
+        status: &str,
+    ) -> DomainResult<()> {
+        sqlx::query("UPDATE purchase_bills SET status = $1 WHERE id = $2")
+            .bind(status)
+            .bind(id)
+            .execute(&self.pool)
+            .await
+            .map_err(|e| DomainError::Database(e.to_string()))?;
+        Ok(())
+    }
+
+    pub async fn create_bank_statement(
+        &self,
+        stmt: &crate::domain::entities::BankStatement,
+        lines: &[crate::domain::entities::BankStatementLine],
+    ) -> DomainResult<crate::domain::entities::BankStatement> {
+        let mut tx = self.pool.begin().await.map_err(|e| DomainError::Database(e.to_string()))?;
+
+        sqlx::query(
+            r#"
+            INSERT INTO bank_statements (
+                id, company_id, account_id, statement_date, reference_number,
+                opening_balance, closing_balance, status, uploaded_by, created_at, updated_at
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+            "#
+        )
+        .bind(stmt.id)
+        .bind(stmt.company_id)
+        .bind(stmt.account_id)
+        .bind(stmt.statement_date)
+        .bind(&stmt.reference_number)
+        .bind(stmt.opening_balance)
+        .bind(stmt.closing_balance)
+        .bind(&stmt.status)
+        .bind(stmt.uploaded_by)
+        .bind(stmt.created_at)
+        .bind(stmt.updated_at)
+        .execute(&mut *tx)
+        .await
+        .map_err(|e| DomainError::Database(e.to_string()))?;
+
+        for line in lines {
+            sqlx::query(
+                r#"
+                INSERT INTO bank_statement_lines (
+                    id, statement_id, company_id, transaction_date, description,
+                    reference_number, amount, is_reconciled, matched_gl_entry_id, created_at
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+                "#
+            )
+            .bind(line.id)
+            .bind(line.statement_id)
+            .bind(line.company_id)
+            .bind(line.transaction_date)
+            .bind(&line.description)
+            .bind(&line.reference_number)
+            .bind(line.amount)
+            .bind(line.is_reconciled)
+            .bind(line.matched_gl_entry_id)
+            .bind(line.created_at)
+            .execute(&mut *tx)
+            .await
+            .map_err(|e| DomainError::Database(e.to_string()))?;
+        }
+
+        tx.commit().await.map_err(|e| DomainError::Database(e.to_string()))?;
+        Ok(stmt.clone())
+    }
+
+    pub async fn list_bank_statements(
+        &self,
+        company_id: Uuid,
+    ) -> DomainResult<Vec<crate::domain::entities::BankStatement>> {
+        let rows = sqlx::query_as::<_, BankStatementRow>(
+            r#"
+            SELECT id, company_id, account_id, statement_date, reference_number,
+                   opening_balance, closing_balance, status, uploaded_by, created_at, updated_at
+            FROM bank_statements
+            WHERE company_id = $1
+            ORDER BY statement_date DESC, created_at DESC
+            "#
+        )
+        .bind(company_id)
+        .fetch_all(&self.pool)
+        .await
+        .map_err(|e| DomainError::Database(e.to_string()))?;
+
+        Ok(rows.into_iter().map(Into::into).collect())
+    }
+
+    pub async fn get_bank_statement(
+        &self,
+        id: Uuid,
+    ) -> DomainResult<Option<(crate::domain::entities::BankStatement, Vec<crate::domain::entities::BankStatementLine>)>> {
+        let stmt_row = sqlx::query_as::<_, BankStatementRow>(
+            r#"
+            SELECT id, company_id, account_id, statement_date, reference_number,
+                   opening_balance, closing_balance, status, uploaded_by, created_at, updated_at
+            FROM bank_statements
+            WHERE id = $1
+            "#
+        )
+        .bind(id)
+        .fetch_optional(&self.pool)
+        .await
+        .map_err(|e| DomainError::Database(e.to_string()))?;
+
+        let Some(stmt) = stmt_row else {
+            return Ok(None);
+        };
+
+        let line_rows = sqlx::query_as::<_, BankStatementLineRow>(
+            r#"
+            SELECT id, statement_id, company_id, transaction_date, description,
+                   reference_number, amount, is_reconciled, matched_gl_entry_id, created_at
+            FROM bank_statement_lines
+            WHERE statement_id = $1
+            ORDER BY transaction_date ASC, created_at ASC
+            "#
+        )
+        .bind(id)
+        .fetch_all(&self.pool)
+        .await
+        .map_err(|e| DomainError::Database(e.to_string()))?;
+
+        Ok(Some((stmt.into(), line_rows.into_iter().map(Into::into).collect())))
+    }
+
+    pub async fn auto_match_bank_statement_lines(
+        &self,
+        statement_id: Uuid,
+    ) -> DomainResult<crate::domain::entities::AutoMatchResult> {
+        let (stmt, lines) = self.get_bank_statement(statement_id).await?
+            .ok_or_else(|| DomainError::not_found("BankStatement", statement_id))?;
+
+        let mut matched_count = 0;
+
+        for line in lines {
+            if line.is_reconciled || line.matched_gl_entry_id.is_some() {
+                continue;
+            }
+
+            // Find matching candidate in gl_entries
+            // Line amount > 0 means money in (Cash Debit)
+            // Line amount < 0 means money out (Cash Credit)
+            let gl_match: Option<(Uuid,)> = if line.amount > rust_decimal::Decimal::ZERO {
+                sqlx::query_as(
+                    r#"
+                    SELECT id FROM gl_entries
+                    WHERE account_id = $1
+                      AND debit = $2
+                      AND posting_date BETWEEN ($3::date - INTERVAL '5 days') AND ($3::date + INTERVAL '5 days')
+                      AND is_cancelled = false
+                    ORDER BY ABS(EXTRACT(DAY FROM (posting_date::timestamp - $3::timestamp))) ASC
+                    LIMIT 1
+                    "#
+                )
+                .bind(stmt.account_id)
+                .bind(line.amount)
+                .bind(line.transaction_date)
+                .fetch_optional(&self.pool)
+                .await
+                .map_err(|e| DomainError::Database(e.to_string()))?
+            } else {
+                sqlx::query_as(
+                    r#"
+                    SELECT id FROM gl_entries
+                    WHERE account_id = $1
+                      AND credit = $2
+                      AND posting_date BETWEEN ($3::date - INTERVAL '5 days') AND ($3::date + INTERVAL '5 days')
+                      AND is_cancelled = false
+                    ORDER BY ABS(EXTRACT(DAY FROM (posting_date::timestamp - $3::timestamp))) ASC
+                    LIMIT 1
+                    "#
+                )
+                .bind(stmt.account_id)
+                .bind(line.amount.abs())
+                .bind(line.transaction_date)
+                .fetch_optional(&self.pool)
+                .await
+                .map_err(|e| DomainError::Database(e.to_string()))?
+            };
+
+            if let Some((gl_id,)) = gl_match {
+                sqlx::query("UPDATE bank_statement_lines SET matched_gl_entry_id = $1, is_reconciled = true WHERE id = $2")
+                    .bind(gl_id)
+                    .bind(line.id)
+                    .execute(&self.pool)
+                    .await
+                    .map_err(|e| DomainError::Database(e.to_string()))?;
+                matched_count += 1;
+            }
+        }
+
+        let total_lines = sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM bank_statement_lines WHERE statement_id = $1")
+            .bind(statement_id)
+            .fetch_one(&self.pool)
+            .await
+            .map_err(|e| DomainError::Database(e.to_string()))? as usize;
+
+        Ok(crate::domain::entities::AutoMatchResult {
+            matched_count,
+            total_lines,
+        })
+    }
+
+    pub async fn finalize_bank_reconciliation(
+        &self,
+        statement_id: Uuid,
+        reconciled_by: Uuid,
+        as_of_date: chrono::NaiveDate,
+    ) -> DomainResult<crate::domain::entities::BankReconciliation> {
+        let (stmt, _lines) = self.get_bank_statement(statement_id).await?
+            .ok_or_else(|| DomainError::not_found("BankStatement", statement_id))?;
+
+        // Calculate GL ending balance for that account as of date
+        let gl_balance: rust_decimal::Decimal = sqlx::query_scalar(
+            r#"
+            SELECT COALESCE(SUM(debit - credit), 0)
+            FROM gl_entries
+            WHERE account_id = $1
+              AND posting_date <= $2
+              AND is_cancelled = false
+            "#
+        )
+        .bind(stmt.account_id)
+        .bind(as_of_date)
+        .fetch_one(&self.pool)
+        .await
+        .map_err(|e| DomainError::Database(e.to_string()))?;
+
+        let diff = stmt.closing_balance - gl_balance;
+
+        let rec = crate::domain::entities::BankReconciliation {
+            id: Uuid::new_v4(),
+            company_id: stmt.company_id,
+            account_id: stmt.account_id,
+            statement_id,
+            as_of_date,
+            statement_ending_balance: stmt.closing_balance,
+            gl_ending_balance: gl_balance,
+            unreconciled_difference: diff,
+            status: "COMPLETED".to_string(),
+            reconciled_by,
+            reconciled_at: chrono::Utc::now(),
+        };
+
+        let mut tx = self.pool.begin().await.map_err(|e| DomainError::Database(e.to_string()))?;
+
+        sqlx::query(
+            r#"
+            INSERT INTO bank_reconciliations (
+                id, company_id, account_id, statement_id, as_of_date,
+                statement_ending_balance, gl_ending_balance, unreconciled_difference,
+                status, reconciled_by, reconciled_at
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+            "#
+        )
+        .bind(rec.id)
+        .bind(rec.company_id)
+        .bind(rec.account_id)
+        .bind(rec.statement_id)
+        .bind(rec.as_of_date)
+        .bind(rec.statement_ending_balance)
+        .bind(rec.gl_ending_balance)
+        .bind(rec.unreconciled_difference)
+        .bind(&rec.status)
+        .bind(rec.reconciled_by)
+        .bind(rec.reconciled_at)
+        .execute(&mut *tx)
+        .await
+        .map_err(|e| DomainError::Database(e.to_string()))?;
+
+        sqlx::query("UPDATE bank_statements SET status = 'RECONCILED', updated_at = NOW() WHERE id = $1")
+            .bind(statement_id)
+            .execute(&mut *tx)
+            .await
+            .map_err(|e| DomainError::Database(e.to_string()))?;
+
+        sqlx::query("UPDATE bank_statement_lines SET is_reconciled = true WHERE statement_id = $1")
+            .bind(statement_id)
+            .execute(&mut *tx)
+            .await
+            .map_err(|e| DomainError::Database(e.to_string()))?;
+
+        tx.commit().await.map_err(|e| DomainError::Database(e.to_string()))?;
+
+        Ok(rec)
+    }
+
+    pub async fn list_bank_reconciliations(
+        &self,
+        company_id: Uuid,
+    ) -> DomainResult<Vec<crate::domain::entities::BankReconciliation>> {
+        let rows = sqlx::query_as::<_, BankReconciliationRow>(
+            r#"
+            SELECT id, company_id, account_id, statement_id, as_of_date,
+                   statement_ending_balance, gl_ending_balance, unreconciled_difference,
+                   status, reconciled_by, reconciled_at
+            FROM bank_reconciliations
+            WHERE company_id = $1
+            ORDER BY as_of_date DESC, reconciled_at DESC
+            "#
+        )
+        .bind(company_id)
+        .fetch_all(&self.pool)
+        .await
+        .map_err(|e| DomainError::Database(e.to_string()))?;
+
+        Ok(rows.into_iter().map(Into::into).collect())
+    }
+
 }
+
+#[derive(Debug, sqlx::FromRow)]
+struct BankStatementRow {
+    id: Uuid,
+    company_id: Uuid,
+    account_id: Uuid,
+    statement_date: chrono::NaiveDate,
+    reference_number: String,
+    opening_balance: Decimal,
+    closing_balance: Decimal,
+    status: String,
+    uploaded_by: Uuid,
+    created_at: DateTime<Utc>,
+    updated_at: DateTime<Utc>,
+}
+
+impl From<BankStatementRow> for crate::domain::entities::BankStatement {
+    fn from(r: BankStatementRow) -> Self {
+        Self {
+            id: r.id,
+            company_id: r.company_id,
+            account_id: r.account_id,
+            statement_date: r.statement_date,
+            reference_number: r.reference_number,
+            opening_balance: r.opening_balance,
+            closing_balance: r.closing_balance,
+            status: r.status,
+            uploaded_by: r.uploaded_by,
+            created_at: r.created_at,
+            updated_at: r.updated_at,
+        }
+    }
+}
+
+#[derive(Debug, sqlx::FromRow)]
+struct BankStatementLineRow {
+    id: Uuid,
+    statement_id: Uuid,
+    company_id: Uuid,
+    transaction_date: chrono::NaiveDate,
+    description: String,
+    reference_number: Option<String>,
+    amount: Decimal,
+    is_reconciled: bool,
+    matched_gl_entry_id: Option<Uuid>,
+    created_at: DateTime<Utc>,
+}
+
+impl From<BankStatementLineRow> for crate::domain::entities::BankStatementLine {
+    fn from(r: BankStatementLineRow) -> Self {
+        Self {
+            id: r.id,
+            statement_id: r.statement_id,
+            company_id: r.company_id,
+            transaction_date: r.transaction_date,
+            description: r.description,
+            reference_number: r.reference_number,
+            amount: r.amount,
+            is_reconciled: r.is_reconciled,
+            matched_gl_entry_id: r.matched_gl_entry_id,
+            created_at: r.created_at,
+        }
+    }
+}
+
+#[derive(Debug, sqlx::FromRow)]
+struct BankReconciliationRow {
+    id: Uuid,
+    company_id: Uuid,
+    account_id: Uuid,
+    statement_id: Uuid,
+    as_of_date: chrono::NaiveDate,
+    statement_ending_balance: Decimal,
+    gl_ending_balance: Decimal,
+    unreconciled_difference: Decimal,
+    status: String,
+    reconciled_by: Uuid,
+    reconciled_at: DateTime<Utc>,
+}
+
+impl From<BankReconciliationRow> for crate::domain::entities::BankReconciliation {
+    fn from(r: BankReconciliationRow) -> Self {
+        Self {
+            id: r.id,
+            company_id: r.company_id,
+            account_id: r.account_id,
+            statement_id: r.statement_id,
+            as_of_date: r.as_of_date,
+            statement_ending_balance: r.statement_ending_balance,
+            gl_ending_balance: r.gl_ending_balance,
+            unreconciled_difference: r.unreconciled_difference,
+            status: r.status,
+            reconciled_by: r.reconciled_by,
+            reconciled_at: r.reconciled_at,
+        }
+    }
+}
+

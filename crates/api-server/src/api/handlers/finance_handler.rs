@@ -369,3 +369,123 @@ pub async fn submit_sales_shipment(
         .await?;
     Ok(Json(json!({ "success": true })))
 }
+
+pub async fn post_sales_invoice_gl(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Extension(tenant_ctx): Extension<TenantContext>,
+    Path(id): Path<Uuid>,
+) -> Result<Json<Value>, AppError> {
+    let company_id = tenant_ctx.company_id.unwrap_or(tenant_ctx.tenant_id);
+    let actor_id = claims.user_id();
+
+    let invoice = state.finance_service.get_sales_invoice(id).await?;
+    let journal_id = invoice.journal_entry_id.ok_or_else(|| {
+        AppError::BadRequest("Faktur tidak memiliki entri jurnal terkait".to_string())
+    })?;
+
+    state.journal_service.post_journal_entry(journal_id, company_id, Some(actor_id)).await?;
+    state.finance_service.update_sales_invoice_status(id, "posted").await?;
+
+    Ok(Json(json!({
+        "success": true,
+        "message": "Faktur penjualan berhasil diposting ke Buku Besar (General Ledger)",
+        "data": { "invoice_id": id, "journal_entry_id": journal_id, "status": "posted" }
+    })))
+}
+
+pub async fn post_purchase_bill_gl(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Extension(tenant_ctx): Extension<TenantContext>,
+    Path(id): Path<Uuid>,
+) -> Result<Json<Value>, AppError> {
+    let company_id = tenant_ctx.company_id.unwrap_or(tenant_ctx.tenant_id);
+    let actor_id = claims.user_id();
+
+    let bill = state.finance_service.get_purchase_bill(id).await?
+        .ok_or_else(|| AppError::NotFound("PurchaseBill not found".to_string()))?;
+    let journal_id = bill.journal_entry_id.ok_or_else(|| {
+        AppError::BadRequest("Tagihan pembelian tidak memiliki entri jurnal terkait".to_string())
+    })?;
+
+    state.journal_service.post_journal_entry(journal_id, company_id, Some(actor_id)).await?;
+    state.finance_service.update_purchase_bill_status(id, "posted").await?;
+
+    Ok(Json(json!({
+        "success": true,
+        "message": "Tagihan pembelian berhasil diposting ke Buku Besar (General Ledger)",
+        "data": { "bill_id": id, "journal_entry_id": journal_id, "status": "posted" }
+    })))
+}
+
+pub async fn import_bank_statement(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Extension(tenant_ctx): Extension<TenantContext>,
+    Json(payload): Json<management_system_finance::domain::entities::ImportBankStatementRequest>,
+) -> Result<Json<Value>, AppError> {
+    let company_id = tenant_ctx.company_id.unwrap_or(tenant_ctx.tenant_id);
+    let uploaded_by = claims.user_id();
+
+    let stmt = state
+        .finance_service
+        .import_bank_statement(company_id, uploaded_by, payload)
+        .await?;
+
+    Ok(Json(json!({ "success": true, "data": stmt })))
+}
+
+pub async fn list_bank_statements(
+    State(state): State<AppState>,
+    Extension(_claims): Extension<Claims>,
+    Extension(tenant_ctx): Extension<TenantContext>,
+) -> Result<Json<Value>, AppError> {
+    let company_id = tenant_ctx.company_id.unwrap_or(tenant_ctx.tenant_id);
+    let statements = state.finance_service.list_bank_statements(company_id).await?;
+    Ok(Json(json!({ "success": true, "data": statements })))
+}
+
+pub async fn get_bank_statement(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+) -> Result<Json<Value>, AppError> {
+    let detail = state.finance_service.get_bank_statement(id).await?;
+    match detail {
+        Some(data) => Ok(Json(json!({ "success": true, "data": data }))),
+        None => Err(AppError::NotFound("Bank statement not found".to_string())),
+    }
+}
+
+pub async fn auto_match_bank_statement(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+) -> Result<Json<Value>, AppError> {
+    let result = state.finance_service.auto_match_bank_statement(id).await?;
+    Ok(Json(json!({ "success": true, "data": result })))
+}
+
+pub async fn reconcile_bank_statement(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+) -> Result<Json<Value>, AppError> {
+    let reconciled_by = claims.user_id();
+    let rec = state
+        .finance_service
+        .reconcile_bank_statement(id, reconciled_by, None)
+        .await?;
+
+    Ok(Json(json!({ "success": true, "data": rec })))
+}
+
+pub async fn list_bank_reconciliations(
+    State(state): State<AppState>,
+    Extension(_claims): Extension<Claims>,
+    Extension(tenant_ctx): Extension<TenantContext>,
+) -> Result<Json<Value>, AppError> {
+    let company_id = tenant_ctx.company_id.unwrap_or(tenant_ctx.tenant_id);
+    let list = state.finance_service.list_bank_reconciliations(company_id).await?;
+    Ok(Json(json!({ "success": true, "data": list })))
+}
+

@@ -20,11 +20,13 @@ import {
 import {
     Plus, Search, Filter, Download, MoreVertical, TrendingUp,
     Clock, CheckCircle2, X, Eye, Edit, Trash2, FileText,
-    PlusCircle, Trash, DollarSign, Printer, Building2, AlertTriangle
+    PlusCircle, Trash, DollarSign, Printer, Building2, AlertTriangle,
+    MessageSquare, BookOpen
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { OfficialDocumentPrintModal } from '../../../components/print/OfficialDocumentPrintModal';
 import { InvoicePrintTemplate } from '../../../components/print/templates/InvoicePrintTemplate';
+import { SendWhatsAppModal } from '../../../components/whatsapp/SendWhatsAppModal';
 
 export default function SalesInvoices() {
     const [searchTerm, setSearchTerm] = useState('');
@@ -33,6 +35,7 @@ export default function SalesInvoices() {
     const [viewInvoice, setViewInvoice] = useState<SalesInvoice | null>(null);
     const [editInvoice, setEditInvoice] = useState<SalesInvoice | null>(null);
     const [printInvoice, setPrintInvoice] = useState<SalesInvoice | null>(null);
+    const [whatsAppInvoice, setWhatsAppInvoice] = useState<SalesInvoice | null>(null);
     const [createDefaults, setCreateDefaults] = useState({ invoiceNumber: '', date: '', dueDate: '' });
 
     // Dynamic line items state for create/edit modal
@@ -104,6 +107,18 @@ export default function SalesInvoices() {
         },
         onError: (error: unknown) => {
             toast.error('Gagal membuat invoice: ' + (error instanceof Error ? error.message : 'Unknown error'));
+        }
+    });
+
+    const postGlMutation = useMutation({
+        mutationFn: (invoiceId: string) => financeApi.postSalesInvoiceGl(invoiceId),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['finance', 'sales-invoices'] });
+            queryClient.invalidateQueries({ queryKey: ['finance', 'journal-entries'] });
+            toast.success('Jurnal Umum (GL Posting) berhasil dibukukan otomatis ke Buku Besar!');
+        },
+        onError: (error: unknown) => {
+            toast.error('Gagal membukukan jurnal GL: ' + (error instanceof Error ? error.message : 'Unknown error'));
         }
     });
 
@@ -472,6 +487,27 @@ export default function SalesInvoices() {
                                                     </button>
                                                     <button
                                                         type="button"
+                                                        onClick={() => setWhatsAppInvoice(invoice)}
+                                                        className="p-1.5 text-muted-foreground hover:text-emerald-400 hover:bg-emerald-500/10 rounded-lg transition-colors"
+                                                        title="Kirim Notifikasi WhatsApp Resmi"
+                                                    >
+                                                        <MessageSquare size={15} />
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        disabled={postGlMutation.isPending}
+                                                        onClick={() => {
+                                                            if (confirm(`Posting faktur ${invoice.invoice_number} ke Buku Besar (General Ledger)?`)) {
+                                                                postGlMutation.mutate(invoice.id);
+                                                            }
+                                                        }}
+                                                        className="p-1.5 text-muted-foreground hover:text-indigo-400 hover:bg-indigo-500/10 rounded-lg transition-colors disabled:opacity-50"
+                                                        title="Posting ke Jurnal Umum / GL"
+                                                    >
+                                                        <BookOpen size={15} />
+                                                    </button>
+                                                    <button
+                                                        type="button"
                                                         onClick={() => {
                                                             if (confirm(`Hapus faktur ${invoice.invoice_number}?`)) {
                                                                 deleteMutation.mutate(invoice.id);
@@ -823,6 +859,35 @@ export default function SalesInvoices() {
                     );
                 })()}
             </OfficialDocumentPrintModal>
+
+            {/* Modal Kirim Notifikasi WhatsApp Dokumen Resmi */}
+            {whatsAppInvoice && (() => {
+                const clientObj = clients.find((c: any) => c.id === whatsAppInvoice.client_id);
+                const clientName = whatsAppInvoice.client_name || clientObj?.name || 'Pelanggan Terhormat';
+                const clientPhone = clientObj?.phone || '';
+                const totalFormatted = `Rp ${parseFloat(whatsAppInvoice.total_amount || '0').toLocaleString('id-ID')}`;
+                const dueText = whatsAppInvoice.due_date ? `sebelum tanggal ${whatsAppInvoice.due_date}` : 'segera';
+                
+                const defaultMsg = `Halo ${clientName},\n\nTerima kasih atas kerja samanya. Kami menginformasikan Faktur Penjualan resmi Anda:\n\n` +
+                    `📄 No. Faktur: ${whatsAppInvoice.invoice_number}\n` +
+                    `📅 Tanggal: ${whatsAppInvoice.date}\n` +
+                    `💰 Total Tagihan: ${totalFormatted}\n` +
+                    `⏱ Jatuh Tempo: ${dueText}\n\n` +
+                    `Silakan melakukan konfirmasi atau pembayaran sesuai informasi yang tertera pada faktur.\n\n` +
+                    `Salam hangat,\nTim Keuangan SJS Group`;
+
+                return (
+                    <SendWhatsAppModal
+                        isOpen={!!whatsAppInvoice}
+                        onClose={() => setWhatsAppInvoice(null)}
+                        recipientName={clientName}
+                        recipientPhone={clientPhone}
+                        documentType="SALES_INVOICE"
+                        documentNumber={whatsAppInvoice.invoice_number}
+                        defaultMessage={defaultMsg}
+                    />
+                );
+            })()}
         </div>
     );
 }

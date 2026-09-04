@@ -156,4 +156,35 @@ pub fn finance_routes() -> Router<AppState> {
             get(finance_handler::list_cash_bank_transactions)
                 .post(finance_handler::create_cash_bank_transaction),
         )
+        // GL Auto-Posting actions
+        .route(
+            "/sales/invoices/:id/post-gl",
+            post(finance_handler::post_sales_invoice_gl),
+        )
+        .route(
+            "/purchase/bills/:id/post-gl",
+            post(finance_handler::post_purchase_bill_gl),
+        )
+        // Bank Statement & Reconciliation
+        .route(
+            "/bank-statements",
+            get(finance_handler::list_bank_statements)
+                .post(finance_handler::import_bank_statement),
+        )
+        .route(
+            "/bank-statements/:id",
+            get(finance_handler::get_bank_statement),
+        )
+        .route(
+            "/bank-statements/:id/auto-match",
+            post(finance_handler::auto_match_bank_statement),
+        )
+        .route(
+            "/bank-statements/:id/reconcile",
+            post(finance_handler::reconcile_bank_statement),
+        )
+        .route(
+            "/bank-reconciliations",
+            get(finance_handler::list_bank_reconciliations),
+        )
 }
