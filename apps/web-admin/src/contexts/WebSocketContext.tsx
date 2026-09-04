@@ -23,55 +23,67 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
     const connect = useCallback(() => {
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const host = window.location.host; // includes hostname and port
-        const wsUrl = import.meta.env.VITE_WS_URL || `${protocol}//${host}/ws`;
+        const host = window.location.host;
+        const rawEnvUrl = import.meta.env.VITE_WS_URL;
+        let wsUrl: string;
+        if (rawEnvUrl && (rawEnvUrl.startsWith('ws://') || rawEnvUrl.startsWith('wss://'))) {
+            if (window.location.protocol === 'https:' && rawEnvUrl.startsWith('ws://')) {
+                wsUrl = rawEnvUrl.replace(/^ws:\/\//, 'wss://');
+            } else {
+                wsUrl = rawEnvUrl;
+            }
+        } else {
+            const path = (rawEnvUrl && rawEnvUrl.startsWith('/')) ? rawEnvUrl : '/ws';
+            wsUrl = `${protocol}//${host}${path}`;
+        }
 
         // Close existing if any
         if (ws.current) {
-            // Remove listeners to prevent 'onclose' from triggering reconnect for this closed socket
             ws.current.onclose = null;
             ws.current.onerror = null;
             ws.current.onopen = null;
             ws.current.close();
         }
 
-        const socket = new WebSocket(wsUrl);
-        ws.current = socket;
+        try {
+            const socket = new WebSocket(wsUrl);
+            ws.current = socket;
 
-        socket.onopen = () => {
-            if (socket !== ws.current) return;
-            console.log('WebSocket Connected');
-            setIsConnected(true);
-        };
+            socket.onopen = () => {
+                if (socket !== ws.current) return;
+                setIsConnected(true);
+            };
 
-        socket.onclose = () => {
-            if (socket !== ws.current) return;
-            console.log('WebSocket Disconnected');
-            setIsConnected(false);
-            // Reconnect logic
-            reconnectTimeout.current = window.setTimeout(() => {
-                connect();
-            }, 3000); // Retry every 3s
-        };
+            socket.onclose = () => {
+                if (socket !== ws.current) return;
+                setIsConnected(false);
+                reconnectTimeout.current = window.setTimeout(() => {
+                    connect();
+                }, 5000);
+            };
 
-        socket.onerror = (error) => {
-            if (socket !== ws.current) return;
-            console.error('WebSocket Error:', error);
-            // socket.close() will trigger onclose
-        };
+            socket.onerror = () => {
+                if (socket !== ws.current) return;
+            };
 
-        socket.onmessage = (event) => {
-            if (socket !== ws.current) return;
-            try {
+            socket.onmessage = (event) => {
+                if (socket !== ws.current) return;
+                try {
                 const data = JSON.parse(event.data);
                 if (data.event_type) {
                     setLastMessage(data); // Trigger updates
                     handleGlobalNotification(data);
                 }
-            } catch (e) {
-                console.error('WS Parse Error', e);
-            }
-        };
+                } catch (e) {
+                    console.error('WS Parse Error', e);
+                }
+            };
+        } catch (err) {
+            console.warn('WebSocket init failed:', err);
+            reconnectTimeout.current = window.setTimeout(() => {
+                connect();
+            }, 5000);
+        }
     }, []);
 
     useEffect(() => {
