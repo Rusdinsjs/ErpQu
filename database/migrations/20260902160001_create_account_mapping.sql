@@ -26,9 +26,7 @@ CREATE INDEX IF NOT EXISTS idx_account_mappings_company ON account_mappings(comp
 
 COMMENT ON TABLE account_mappings IS 'Maps symbolic account keys to actual CoA accounts per company. Eliminates hardcoded account codes in business logic.';
 
-DROP TRIGGER IF EXISTS update_account_mappings_updated_at ON account_mappings;
 CREATE TRIGGER update_account_mappings_updated_at
 BEFORE UPDATE ON account_mappings
 FOR EACH ROW
 EXECUTE FUNCTION update_updated_at_column();
-
