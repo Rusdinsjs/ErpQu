@@ -60,12 +60,9 @@ echo -e "${GREEN}   PostgreSQL Siap!${NC}"
 echo -e "${GREEN}3.5. Menjalankan Database Migrations...${NC}"
 export SQLX_OFFLINE=false
 
-# Fix: Hapus entry migration orphan yang tidak ada di repositori
-docker exec -e PGPASSWORD=${POSTGRES_PASSWORD:-postgres} mgmt-db psql -U ${POSTGRES_USER:-postgres} -d ${DB_NAME:-management_system} -c "
-  DELETE FROM _sqlx_migrations WHERE version > 20260824000001;
-" > /dev/null 2>&1 || true
+cargo sqlx migrate run --source database/migrations > migrate.log 2>&1 || true
 
-cargo sqlx migrate run > migrate.log 2>&1 || true
+
 
 # Fix: Grant permissions ke role aplikasi untuk semua schema
 docker exec -e PGPASSWORD=${POSTGRES_PASSWORD:-postgres} mgmt-db psql -U ${POSTGRES_USER:-postgres} -d ${DB_NAME:-management_system} -c "
