@@ -60,13 +60,17 @@ echo -e "\n${CYAN}▶ [2/7] Menjalankan Backup Database Mandatori Sebelum Rilis.
 mkdir -p "$BACKUP_DIR"
 # Periksa apakah container postgres sedang aktif
 if docker compose -f "$COMPOSE_FILE" ps --status running --format '{{.Service}}' 2>/dev/null | grep -qx "postgres"; then
-    DB_USER_VAL=$(grep -E '^DB_USER=' .env 2>/dev/null | cut -d= -f2- || echo "postgres")
-    DB_NAME_VAL=$(grep -E '^DB_NAME=' .env 2>/dev/null | cut -d= -f2- || echo "management_system")
-    if docker compose -f "$COMPOSE_FILE" exec -T postgres pg_dump -U "${DB_USER_VAL}" -Fc "${DB_NAME_VAL}" > "$BACKUP_FILE" 2>/dev/null; then
+    DB_USER_VAL=$(grep -E '^DB_USER=' .env 2>/dev/null | cut -d= -f2- | tr -d '\r\n"' || echo "postgres")
+    DB_PASS_VAL=$(grep -E '^DB_PASSWORD=' .env 2>/dev/null | cut -d= -f2- | tr -d '\r\n"' || true)
+    DB_NAME_VAL=$(grep -E '^DB_NAME=' .env 2>/dev/null | cut -d= -f2- | tr -d '\r\n"' || echo "management_system")
+    
+    # Eksekusi pg_dump dengan timeout 60 detik & PGPASSWORD agar tidak pernah menggantung (stagnan)
+    if timeout 60s docker compose -f "$COMPOSE_FILE" exec -T -e PGPASSWORD="${DB_PASS_VAL}" postgres pg_dump -U "${DB_USER_VAL}" -Fc "${DB_NAME_VAL}" > "$BACKUP_FILE" 2>/dev/null && [ -s "$BACKUP_FILE" ]; then
         BACKUP_SIZE=$(du -sh "$BACKUP_FILE" 2>/dev/null | cut -f1 || echo "OK")
         echo -e "  ${GREEN}✓ Backup tersimpan di: ${BOLD}${BACKUP_FILE}${NC} (${BACKUP_SIZE})"
     else
-        echo -e "  ${YELLOW}⚠️  Peringatan: Gagal mengekstrak dump, melanjutkan deployment...${NC}"
+        rm -f "$BACKUP_FILE" 2>/dev/null || true
+        echo -e "  ${YELLOW}⚠️  Peringatan: Gagal mengekstrak dump (atau timeout), melanjutkan deployment...${NC}"
     fi
 else
     echo -e "  ${YELLOW}ℹ️  Container postgres belum berjalan (inisialisasi awal). Melewati backup pra-rilis.${NC}"
@@ -76,18 +80,31 @@ fi
 echo -e "\n${CYAN}▶ [3/7] Mengambil / Menyiapkan Container Images...${NC}"
 if [ "${BUILD_LOCAL}" = "true" ]; then
     echo "  - Mem-build container frontend & backend secara lokal di VPS..."
-    docker compose -f "$COMPOSE_FILE" build frontend backend migrate
+    docker compose -f "$COMPOSE_FILE" build frontend backend
+    docker compose -f "$COMPOSE_FILE" build migrate
 else
     echo "  - Menarik image terbaru dari GHCR [${IMAGE_TAG}]..."
     export IMAGE_TAG
-    if ! docker compose -f "$COMPOSE_FILE" pull frontend backend migrate; then
+    if ! docker compose -f "$COMPOSE_FILE" pull frontend backend; then
         echo -e "  ${YELLOW}⚠️ Pull gagal / image belum ada di GHCR. Melakukan auto-build lokal di VPS...${NC}"
-        docker compose -f "$COMPOSE_FILE" build frontend backend migrate
+        docker compose -f "$COMPOSE_FILE" build frontend backend
     fi
+    # Build container migrate (sangat cepat karena menggunakan cache lokal)
+    docker compose -f "$COMPOSE_FILE" build migrate >/dev/null 2>&1 || true
 fi
 
 # 4. Database Migrations (Fail-Closed)
 echo -e "\n${CYAN}▶ [4/7] Menjalankan Database Migrations (Fail-Closed)...${NC}"
+# Pastikan dependency postgres & redis berjalan dan siap
+docker compose -f "$COMPOSE_FILE" up -d postgres redis
+echo "  - Memastikan database postgres siap menerima koneksi migrasi..."
+for m in $(seq 1 30); do
+    if docker compose -f "$COMPOSE_FILE" exec -T postgres pg_isready >/dev/null 2>&1; then
+        break
+    fi
+    sleep 1
+done
+
 if docker compose -f "$COMPOSE_FILE" run --rm migrate; then
     echo -e "  ${GREEN}✓ Migrasi database berhasil diaplikasikan.${NC}"
 else

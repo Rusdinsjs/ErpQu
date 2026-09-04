@@ -132,12 +132,17 @@ jobs:
             echo ">> Creating MANDATORY production backup..."
             BACKUP_FILE="/backups/pre_deploy_$(date +%Y%m%d_%H%M%S).dump"
             mkdir -p /backups
-            docker compose -f docker-compose.prod.yml exec -T postgres \
-              pg_dump -U postgres -Fc management_system > "$BACKUP_FILE" 2>/dev/null || {
+            DB_USER_VAL=$(grep -E '^DB_USER=' .env 2>/dev/null | cut -d= -f2- | tr -d '\r\n"' || echo "postgres")
+            DB_PASS_VAL=$(grep -E '^DB_PASSWORD=' .env 2>/dev/null | cut -d= -f2- | tr -d '\r\n"' || true)
+            DB_NAME_VAL=$(grep -E '^DB_NAME=' .env 2>/dev/null | cut -d= -f2- | tr -d '\r\n"' || echo "management_system")
+            docker compose -f docker-compose.prod.yml exec -T -e PGPASSWORD="${DB_PASS_VAL}" postgres \
+              pg_dump -U "${DB_USER_VAL}" -Fc "${DB_NAME_VAL}" > "$BACKUP_FILE" 2>/dev/null || {
                 echo "WARNING: Pre-deploy backup failed. Proceeding with caution."
               }
-            if [ -f "$BACKUP_FILE" ]; then
+            if [ -s "$BACKUP_FILE" ]; then
               echo "   Backup: $BACKUP_FILE ($(du -sh "$BACKUP_FILE" | cut -f1))"
+            else
+              rm -f "$BACKUP_FILE" 2>/dev/null || true
             fi
 
             # Pull new images
