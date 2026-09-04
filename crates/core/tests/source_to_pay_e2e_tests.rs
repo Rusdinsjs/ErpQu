@@ -84,9 +84,10 @@ async fn setup_s2p_db_env(pool: &PgPool) -> S2pDbTestEnv {
         (env.acc_bank, "1020", "Bank Operasional", "asset", "debit"),
     ] {
         sqlx::query(
-            "INSERT INTO public.chart_of_accounts (id, code, name, account_type, normal_balance) VALUES ($1, $2, $3, $4::account_type, $5::normal_balance) ON CONFLICT (code) DO NOTHING",
+            "INSERT INTO public.chart_of_accounts (id, company_id, code, name, account_type, normal_balance) VALUES ($1, $2, $3, $4, $5::account_type, $6::normal_balance) ON CONFLICT (company_id, code) WHERE company_id IS NOT NULL DO NOTHING",
         )
         .bind(id)
+        .bind(env.company_id)
         .bind(code)
         .bind(name)
         .bind(acct_type)

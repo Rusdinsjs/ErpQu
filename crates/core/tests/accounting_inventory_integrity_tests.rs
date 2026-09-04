@@ -45,14 +45,16 @@ async fn setup_test_company_and_accounts(pool: &PgPool) -> (Uuid, Uuid, Uuid) {
         .await
         .unwrap();
 
-    sqlx::query("INSERT INTO public.chart_of_accounts (id, code, name, account_type, normal_balance) VALUES ($1, '1010', 'Kas Utama', 'asset'::account_type, 'debit'::normal_balance) ON CONFLICT (code) DO NOTHING")
+    sqlx::query("INSERT INTO public.chart_of_accounts (id, company_id, code, name, account_type, normal_balance) VALUES ($1, $2, '1010', 'Kas Utama', 'asset'::account_type, 'debit'::normal_balance) ON CONFLICT (company_id, code) WHERE company_id IS NOT NULL DO NOTHING")
         .bind(acc_cash)
+        .bind(company_id)
         .execute(&mut *tx)
         .await
         .unwrap();
 
-    sqlx::query("INSERT INTO public.chart_of_accounts (id, code, name, account_type, normal_balance) VALUES ($1, '3010', 'Modal Disetor', 'equity'::account_type, 'credit'::normal_balance) ON CONFLICT (code) DO NOTHING")
+    sqlx::query("INSERT INTO public.chart_of_accounts (id, company_id, code, name, account_type, normal_balance) VALUES ($1, $2, '3010', 'Modal Disetor', 'equity'::account_type, 'credit'::normal_balance) ON CONFLICT (company_id, code) WHERE company_id IS NOT NULL DO NOTHING")
         .bind(acc_equity)
+        .bind(company_id)
         .execute(&mut *tx)
         .await
         .unwrap();
