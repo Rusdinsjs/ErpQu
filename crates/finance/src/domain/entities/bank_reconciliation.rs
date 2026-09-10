@@ -70,7 +70,10 @@ pub struct ImportBankStatementRequest {
 }
 
 #[derive(Debug, Deserialize, DocType)]
-#[doctype(module = "Finance", description = "Entity ImportBankStatementLineRequest")]
+#[doctype(
+    module = "Finance",
+    description = "Entity ImportBankStatementLineRequest"
+)]
 pub struct ImportBankStatementLineRequest {
     pub transaction_date: NaiveDate,
     pub description: String,

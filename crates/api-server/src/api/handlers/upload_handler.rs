@@ -83,10 +83,8 @@ fn detect_and_validate_magic_bytes(
         return Ok("application/zip");
     }
     // CSV / Text: UTF-8 check without null bytes
-    if claimed_ext == "csv" {
-        if !data.contains(&0) && std::str::from_utf8(data).is_ok() {
-            return Ok("text/csv");
-        }
+    if claimed_ext == "csv" && !data.contains(&0) && std::str::from_utf8(data).is_ok() {
+        return Ok("text/csv");
     }
 
     Err(AppError::BadRequest(
@@ -191,7 +189,7 @@ pub async fn upload_file(
                 })?;
 
                 tenant_ctx
-                    .apply_to_transaction(&mut *quota_tx)
+                    .apply_to_transaction(&mut quota_tx)
                     .await
                     .map_err(|e| {
                         AppError::Internal(format!("Failed to apply RLS context: {}", e))
@@ -317,7 +315,7 @@ pub async fn upload_file(
                     AppError::Internal(format!("Failed to start transaction: {}", e))
                 })?;
 
-            if let Err(e) = tenant_ctx.apply_to_transaction(&mut *tx).await {
+            if let Err(e) = tenant_ctx.apply_to_transaction(&mut tx).await {
                 let _ = fs::remove_file(&file_path).await;
                 return Err(AppError::Internal(format!(
                     "Failed to apply RLS context: {}",

@@ -168,8 +168,7 @@ pub fn finance_routes() -> Router<AppState> {
         // Bank Statement & Reconciliation
         .route(
             "/bank-statements",
-            get(finance_handler::list_bank_statements)
-                .post(finance_handler::import_bank_statement),
+            get(finance_handler::list_bank_statements).post(finance_handler::import_bank_statement),
         )
         .route(
             "/bank-statements/:id",

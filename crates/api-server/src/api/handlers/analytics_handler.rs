@@ -312,7 +312,9 @@ pub struct WorkingCapitalResponse {
 }
 
 /// GET /api/analytics/working-capital - Working Capital & CCC Intelligence
-pub async fn get_working_capital_analytics(State(state): State<AppState>) -> Result<Response, AppError> {
+pub async fn get_working_capital_analytics(
+    State(state): State<AppState>,
+) -> Result<Response, AppError> {
     // Attempt to query receivables from chart_of_accounts or sales_invoices
     let db_ar = sqlx::query_scalar::<_, Option<rust_decimal::Decimal>>(
         "SELECT SUM(current_balance) FROM chart_of_accounts WHERE account_type = 'Asset' AND (code LIKE '112%' OR code LIKE '113%')"
@@ -369,12 +371,54 @@ pub async fn get_working_capital_analytics(State(state): State<AppState>) -> Res
     };
 
     let trends = vec![
-        WorkingCapitalTrend { period: "Jul".into(), ccc_days: 68.5, dso: 46.0, dio: 58.0, dpo: 35.5, nwc_amount: 5_120_000_000.0 },
-        WorkingCapitalTrend { period: "Agu".into(), ccc_days: 66.0, dso: 44.5, dio: 56.5, dpo: 35.0, nwc_amount: 5_210_000_000.0 },
-        WorkingCapitalTrend { period: "Sep".into(), ccc_days: 64.2, dso: 44.0, dio: 55.0, dpo: 34.8, nwc_amount: 5_350_000_000.0 },
-        WorkingCapitalTrend { period: "Okt".into(), ccc_days: 63.0, dso: 43.5, dio: 54.5, dpo: 35.0, nwc_amount: 5_240_000_000.0 },
-        WorkingCapitalTrend { period: "Nov".into(), ccc_days: 62.1, dso: 43.0, dio: 54.2, dpo: 35.1, nwc_amount: 5_280_000_000.0 },
-        WorkingCapitalTrend { period: "Des".into(), ccc_days: ccc, dso, dio, dpo, nwc_amount: nwc },
+        WorkingCapitalTrend {
+            period: "Jul".into(),
+            ccc_days: 68.5,
+            dso: 46.0,
+            dio: 58.0,
+            dpo: 35.5,
+            nwc_amount: 5_120_000_000.0,
+        },
+        WorkingCapitalTrend {
+            period: "Agu".into(),
+            ccc_days: 66.0,
+            dso: 44.5,
+            dio: 56.5,
+            dpo: 35.0,
+            nwc_amount: 5_210_000_000.0,
+        },
+        WorkingCapitalTrend {
+            period: "Sep".into(),
+            ccc_days: 64.2,
+            dso: 44.0,
+            dio: 55.0,
+            dpo: 34.8,
+            nwc_amount: 5_350_000_000.0,
+        },
+        WorkingCapitalTrend {
+            period: "Okt".into(),
+            ccc_days: 63.0,
+            dso: 43.5,
+            dio: 54.5,
+            dpo: 35.0,
+            nwc_amount: 5_240_000_000.0,
+        },
+        WorkingCapitalTrend {
+            period: "Nov".into(),
+            ccc_days: 62.1,
+            dso: 43.0,
+            dio: 54.2,
+            dpo: 35.1,
+            nwc_amount: 5_280_000_000.0,
+        },
+        WorkingCapitalTrend {
+            period: "Des".into(),
+            ccc_days: ccc,
+            dso,
+            dio,
+            dpo,
+            nwc_amount: nwc,
+        },
     ];
 
     let breakdown = vec![
@@ -447,7 +491,9 @@ pub struct ProfitabilityMatrixResponse {
 }
 
 /// GET /api/analytics/profitability-matrix - Branch & Cost Center Profitability
-pub async fn get_profitability_matrix(State(_state): State<AppState>) -> Result<Response, AppError> {
+pub async fn get_profitability_matrix(
+    State(_state): State<AppState>,
+) -> Result<Response, AppError> {
     let branches = vec![
         BranchProfitability {
             branch_id: "BR-HQ".into(),
@@ -527,7 +573,11 @@ pub async fn get_profitability_matrix(State(_state): State<AppState>) -> Result<
     let total_gp: f64 = branches.iter().map(|b| b.gross_profit).sum();
     let total_opex: f64 = branches.iter().map(|b| b.opex).sum();
     let total_np: f64 = branches.iter().map(|b| b.net_profit).sum();
-    let margin = if total_rev > 0.0 { (total_np / total_rev) * 100.0 } else { 0.0 };
+    let margin = if total_rev > 0.0 {
+        (total_np / total_rev) * 100.0
+    } else {
+        0.0
+    };
 
     Ok(Json(ProfitabilityMatrixResponse {
         total_revenue: total_rev,
@@ -581,25 +631,191 @@ pub async fn get_pivot_dataset(
 
     let records = match dataset.as_str() {
         "procurement" => vec![
-            PivotRecord { id: "PO-001".into(), date: "2026-01-12".into(), branch: "Balikpapan HQ".into(), category: "Spare Parts".into(), entity: "PT Samudra Jaya Selaras".into(), partner: "PT United Tractors Tbk".into(), status: "Completed".into(), payment_method: "Bank Transfer".into(), amount: 480_000_000.0, count: 1.0 },
-            PivotRecord { id: "PO-002".into(), date: "2026-01-20".into(), branch: "Samarinda".into(), category: "Fuel & Lubricant".into(), entity: "SJS Mining Logistics".into(), partner: "PT Pertamina Patra Niaga".into(), status: "Completed".into(), payment_method: "Credit 30 Days".into(), amount: 620_000_000.0, count: 1.0 },
-            PivotRecord { id: "PO-003".into(), date: "2026-02-05".into(), branch: "Banjarmasin".into(), category: "Safety Gear".into(), entity: "PT Samudra Jaya Selaras".into(), partner: "CV Borneo Safety".into(), status: "Approved".into(), payment_method: "Bank Transfer".into(), amount: 75_000_000.0, count: 1.0 },
-            PivotRecord { id: "PO-004".into(), date: "2026-02-18".into(), branch: "Balikpapan HQ".into(), category: "Marine Supplies".into(), entity: "PT Samudra Jaya Selaras".into(), partner: "PT Bahtera Supplies".into(), status: "Completed".into(), payment_method: "Credit 30 Days".into(), amount: 310_000_000.0, count: 1.0 },
-            PivotRecord { id: "PO-005".into(), date: "2026-03-02".into(), branch: "Samarinda".into(), category: "Tyres & Tracks".into(), entity: "SJS Mining Logistics".into(), partner: "PT Gajah Tunggal".into(), status: "Submitted".into(), payment_method: "Bank Transfer".into(), amount: 240_000_000.0, count: 1.0 },
+            PivotRecord {
+                id: "PO-001".into(),
+                date: "2026-01-12".into(),
+                branch: "Balikpapan HQ".into(),
+                category: "Spare Parts".into(),
+                entity: "PT Samudra Jaya Selaras".into(),
+                partner: "PT United Tractors Tbk".into(),
+                status: "Completed".into(),
+                payment_method: "Bank Transfer".into(),
+                amount: 480_000_000.0,
+                count: 1.0,
+            },
+            PivotRecord {
+                id: "PO-002".into(),
+                date: "2026-01-20".into(),
+                branch: "Samarinda".into(),
+                category: "Fuel & Lubricant".into(),
+                entity: "SJS Mining Logistics".into(),
+                partner: "PT Pertamina Patra Niaga".into(),
+                status: "Completed".into(),
+                payment_method: "Credit 30 Days".into(),
+                amount: 620_000_000.0,
+                count: 1.0,
+            },
+            PivotRecord {
+                id: "PO-003".into(),
+                date: "2026-02-05".into(),
+                branch: "Banjarmasin".into(),
+                category: "Safety Gear".into(),
+                entity: "PT Samudra Jaya Selaras".into(),
+                partner: "CV Borneo Safety".into(),
+                status: "Approved".into(),
+                payment_method: "Bank Transfer".into(),
+                amount: 75_000_000.0,
+                count: 1.0,
+            },
+            PivotRecord {
+                id: "PO-004".into(),
+                date: "2026-02-18".into(),
+                branch: "Balikpapan HQ".into(),
+                category: "Marine Supplies".into(),
+                entity: "PT Samudra Jaya Selaras".into(),
+                partner: "PT Bahtera Supplies".into(),
+                status: "Completed".into(),
+                payment_method: "Credit 30 Days".into(),
+                amount: 310_000_000.0,
+                count: 1.0,
+            },
+            PivotRecord {
+                id: "PO-005".into(),
+                date: "2026-03-02".into(),
+                branch: "Samarinda".into(),
+                category: "Tyres & Tracks".into(),
+                entity: "SJS Mining Logistics".into(),
+                partner: "PT Gajah Tunggal".into(),
+                status: "Submitted".into(),
+                payment_method: "Bank Transfer".into(),
+                amount: 240_000_000.0,
+                count: 1.0,
+            },
         ],
         "inventory" => vec![
-            PivotRecord { id: "STK-001".into(), date: "2026-01-15".into(), branch: "Balikpapan HQ".into(), category: "Spare Parts".into(), entity: "Gudang Utama Kariangau".into(), partner: "Internal Transfer".into(), status: "Delivered".into(), payment_method: "Internal".into(), amount: 150_000_000.0, count: 12.0 },
-            PivotRecord { id: "STK-002".into(), date: "2026-01-28".into(), branch: "Samarinda".into(), category: "Solar B35".into(), entity: "Tangki Site Palaran".into(), partner: "Mining Fleet".into(), status: "Consumed".into(), payment_method: "Cost Center".into(), amount: 540_000_000.0, count: 45000.0 },
-            PivotRecord { id: "STK-003".into(), date: "2026-02-11".into(), branch: "Banjarmasin".into(), category: "Filter & Oil".into(), entity: "Workshop Trisakti".into(), partner: "Tugboat Crew".into(), status: "Consumed".into(), payment_method: "Cost Center".into(), amount: 85_000_000.0, count: 40.0 },
-            PivotRecord { id: "STK-004".into(), date: "2026-02-25".into(), branch: "Balikpapan HQ".into(), category: "Hydraulic Pump".into(), entity: "Gudang Utama Kariangau".into(), partner: "Excavator Unit 14".into(), status: "Delivered".into(), payment_method: "Work Order".into(), amount: 195_000_000.0, count: 2.0 },
+            PivotRecord {
+                id: "STK-001".into(),
+                date: "2026-01-15".into(),
+                branch: "Balikpapan HQ".into(),
+                category: "Spare Parts".into(),
+                entity: "Gudang Utama Kariangau".into(),
+                partner: "Internal Transfer".into(),
+                status: "Delivered".into(),
+                payment_method: "Internal".into(),
+                amount: 150_000_000.0,
+                count: 12.0,
+            },
+            PivotRecord {
+                id: "STK-002".into(),
+                date: "2026-01-28".into(),
+                branch: "Samarinda".into(),
+                category: "Solar B35".into(),
+                entity: "Tangki Site Palaran".into(),
+                partner: "Mining Fleet".into(),
+                status: "Consumed".into(),
+                payment_method: "Cost Center".into(),
+                amount: 540_000_000.0,
+                count: 45000.0,
+            },
+            PivotRecord {
+                id: "STK-003".into(),
+                date: "2026-02-11".into(),
+                branch: "Banjarmasin".into(),
+                category: "Filter & Oil".into(),
+                entity: "Workshop Trisakti".into(),
+                partner: "Tugboat Crew".into(),
+                status: "Consumed".into(),
+                payment_method: "Cost Center".into(),
+                amount: 85_000_000.0,
+                count: 40.0,
+            },
+            PivotRecord {
+                id: "STK-004".into(),
+                date: "2026-02-25".into(),
+                branch: "Balikpapan HQ".into(),
+                category: "Hydraulic Pump".into(),
+                entity: "Gudang Utama Kariangau".into(),
+                partner: "Excavator Unit 14".into(),
+                status: "Delivered".into(),
+                payment_method: "Work Order".into(),
+                amount: 195_000_000.0,
+                count: 2.0,
+            },
         ],
-        _ => vec![ // default: sales
-            PivotRecord { id: "INV-001".into(), date: "2026-01-10".into(), branch: "Balikpapan HQ".into(), category: "Marine Charter".into(), entity: "PT Samudra Jaya Selaras".into(), partner: "PT Kaltim Prima Coal".into(), status: "Paid".into(), payment_method: "Bank Transfer".into(), amount: 1_250_000_000.0, count: 1.0 },
-            PivotRecord { id: "INV-002".into(), date: "2026-01-22".into(), branch: "Samarinda".into(), category: "Coal Hauling".into(), entity: "SJS Mining Logistics".into(), partner: "PT Bayan Resources Tbk".into(), status: "Paid".into(), payment_method: "Bank Transfer".into(), amount: 980_000_000.0, count: 1.0 },
-            PivotRecord { id: "INV-003".into(), date: "2026-02-08".into(), branch: "Banjarmasin".into(), category: "Port Stevedoring".into(), entity: "PT Samudra Jaya Selaras".into(), partner: "PT Adaro Energy".into(), status: "Unpaid".into(), payment_method: "Credit 30 Days".into(), amount: 740_000_000.0, count: 1.0 },
-            PivotRecord { id: "INV-004".into(), date: "2026-02-19".into(), branch: "Balikpapan HQ".into(), category: "Equipment Rental".into(), entity: "PT Samudra Jaya Selaras".into(), partner: "PT Petrosea Tbk".into(), status: "Paid".into(), payment_method: "Bank Transfer".into(), amount: 1_450_000_000.0, count: 1.0 },
-            PivotRecord { id: "INV-005".into(), date: "2026-03-01".into(), branch: "Samarinda".into(), category: "Coal Hauling".into(), entity: "SJS Mining Logistics".into(), partner: "PT Bayan Resources Tbk".into(), status: "Unpaid".into(), payment_method: "Credit 30 Days".into(), amount: 1_120_000_000.0, count: 1.0 },
-            PivotRecord { id: "INV-006".into(), date: "2026-03-04".into(), branch: "Balikpapan HQ".into(), category: "Marine Charter".into(), entity: "PT Samudra Jaya Selaras".into(), partner: "PT Berau Coal".into(), status: "Unpaid".into(), payment_method: "Credit 30 Days".into(), amount: 1_650_000_000.0, count: 1.0 },
+        _ => vec![
+            // default: sales
+            PivotRecord {
+                id: "INV-001".into(),
+                date: "2026-01-10".into(),
+                branch: "Balikpapan HQ".into(),
+                category: "Marine Charter".into(),
+                entity: "PT Samudra Jaya Selaras".into(),
+                partner: "PT Kaltim Prima Coal".into(),
+                status: "Paid".into(),
+                payment_method: "Bank Transfer".into(),
+                amount: 1_250_000_000.0,
+                count: 1.0,
+            },
+            PivotRecord {
+                id: "INV-002".into(),
+                date: "2026-01-22".into(),
+                branch: "Samarinda".into(),
+                category: "Coal Hauling".into(),
+                entity: "SJS Mining Logistics".into(),
+                partner: "PT Bayan Resources Tbk".into(),
+                status: "Paid".into(),
+                payment_method: "Bank Transfer".into(),
+                amount: 980_000_000.0,
+                count: 1.0,
+            },
+            PivotRecord {
+                id: "INV-003".into(),
+                date: "2026-02-08".into(),
+                branch: "Banjarmasin".into(),
+                category: "Port Stevedoring".into(),
+                entity: "PT Samudra Jaya Selaras".into(),
+                partner: "PT Adaro Energy".into(),
+                status: "Unpaid".into(),
+                payment_method: "Credit 30 Days".into(),
+                amount: 740_000_000.0,
+                count: 1.0,
+            },
+            PivotRecord {
+                id: "INV-004".into(),
+                date: "2026-02-19".into(),
+                branch: "Balikpapan HQ".into(),
+                category: "Equipment Rental".into(),
+                entity: "PT Samudra Jaya Selaras".into(),
+                partner: "PT Petrosea Tbk".into(),
+                status: "Paid".into(),
+                payment_method: "Bank Transfer".into(),
+                amount: 1_450_000_000.0,
+                count: 1.0,
+            },
+            PivotRecord {
+                id: "INV-005".into(),
+                date: "2026-03-01".into(),
+                branch: "Samarinda".into(),
+                category: "Coal Hauling".into(),
+                entity: "SJS Mining Logistics".into(),
+                partner: "PT Bayan Resources Tbk".into(),
+                status: "Unpaid".into(),
+                payment_method: "Credit 30 Days".into(),
+                amount: 1_120_000_000.0,
+                count: 1.0,
+            },
+            PivotRecord {
+                id: "INV-006".into(),
+                date: "2026-03-04".into(),
+                branch: "Balikpapan HQ".into(),
+                category: "Marine Charter".into(),
+                entity: "PT Samudra Jaya Selaras".into(),
+                partner: "PT Berau Coal".into(),
+                status: "Unpaid".into(),
+                payment_method: "Credit 30 Days".into(),
+                amount: 1_650_000_000.0,
+                count: 1.0,
+            },
         ],
     };
 
@@ -611,4 +827,3 @@ pub async fn get_pivot_dataset(
     })
     .into_response())
 }
-

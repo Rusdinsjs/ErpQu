@@ -1480,19 +1480,11 @@ impl FinanceService {
         Ok(batch.generate_djp_csv())
     }
 
-    pub async fn update_sales_invoice_status(
-        &self,
-        id: Uuid,
-        status: &str,
-    ) -> DomainResult<()> {
+    pub async fn update_sales_invoice_status(&self, id: Uuid, status: &str) -> DomainResult<()> {
         self.repo.update_sales_invoice_status(id, status).await
     }
 
-    pub async fn update_purchase_bill_status(
-        &self,
-        id: Uuid,
-        status: &str,
-    ) -> DomainResult<()> {
+    pub async fn update_purchase_bill_status(&self, id: Uuid, status: &str) -> DomainResult<()> {
         self.repo.update_purchase_bill_status(id, status).await
     }
 
@@ -1556,10 +1548,12 @@ impl FinanceService {
         id: Uuid,
     ) -> DomainResult<Option<crate::domain::entities::BankStatementDetailResponse>> {
         let opt = self.repo.get_bank_statement(id).await?;
-        Ok(opt.map(|(statement, lines)| crate::domain::entities::BankStatementDetailResponse {
-            statement,
-            lines,
-        }))
+        Ok(opt.map(
+            |(statement, lines)| crate::domain::entities::BankStatementDetailResponse {
+                statement,
+                lines,
+            },
+        ))
     }
 
     pub async fn auto_match_bank_statement(
@@ -1575,10 +1569,16 @@ impl FinanceService {
         reconciled_by: Uuid,
         as_of_date: Option<chrono::NaiveDate>,
     ) -> DomainResult<crate::domain::entities::BankReconciliation> {
-        let stmt = self.repo.get_bank_statement(id).await?
-            .ok_or_else(|| DomainError::not_found("BankStatement", id))?.0;
+        let stmt = self
+            .repo
+            .get_bank_statement(id)
+            .await?
+            .ok_or_else(|| DomainError::not_found("BankStatement", id))?
+            .0;
         let date = as_of_date.unwrap_or(stmt.statement_date);
-        self.repo.finalize_bank_reconciliation(id, reconciled_by, date).await
+        self.repo
+            .finalize_bank_reconciliation(id, reconciled_by, date)
+            .await
     }
 
     pub async fn list_bank_reconciliations(
@@ -1587,5 +1587,4 @@ impl FinanceService {
     ) -> DomainResult<Vec<crate::domain::entities::BankReconciliation>> {
         self.repo.list_bank_reconciliations(company_id).await
     }
-
 }

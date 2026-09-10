@@ -384,8 +384,14 @@ pub async fn post_sales_invoice_gl(
         AppError::BadRequest("Faktur tidak memiliki entri jurnal terkait".to_string())
     })?;
 
-    state.journal_service.post_journal_entry(journal_id, company_id, Some(actor_id)).await?;
-    state.finance_service.update_sales_invoice_status(id, "posted").await?;
+    state
+        .journal_service
+        .post_journal_entry(journal_id, company_id, Some(actor_id))
+        .await?;
+    state
+        .finance_service
+        .update_sales_invoice_status(id, "posted")
+        .await?;
 
     Ok(Json(json!({
         "success": true,
@@ -403,14 +409,23 @@ pub async fn post_purchase_bill_gl(
     let company_id = tenant_ctx.company_id.unwrap_or(tenant_ctx.tenant_id);
     let actor_id = claims.user_id();
 
-    let bill = state.finance_service.get_purchase_bill(id).await?
+    let bill = state
+        .finance_service
+        .get_purchase_bill(id)
+        .await?
         .ok_or_else(|| AppError::NotFound("PurchaseBill not found".to_string()))?;
     let journal_id = bill.journal_entry_id.ok_or_else(|| {
         AppError::BadRequest("Tagihan pembelian tidak memiliki entri jurnal terkait".to_string())
     })?;
 
-    state.journal_service.post_journal_entry(journal_id, company_id, Some(actor_id)).await?;
-    state.finance_service.update_purchase_bill_status(id, "posted").await?;
+    state
+        .journal_service
+        .post_journal_entry(journal_id, company_id, Some(actor_id))
+        .await?;
+    state
+        .finance_service
+        .update_purchase_bill_status(id, "posted")
+        .await?;
 
     Ok(Json(json!({
         "success": true,
@@ -442,7 +457,10 @@ pub async fn list_bank_statements(
     Extension(tenant_ctx): Extension<TenantContext>,
 ) -> Result<Json<Value>, AppError> {
     let company_id = tenant_ctx.company_id.unwrap_or(tenant_ctx.tenant_id);
-    let statements = state.finance_service.list_bank_statements(company_id).await?;
+    let statements = state
+        .finance_service
+        .list_bank_statements(company_id)
+        .await?;
     Ok(Json(json!({ "success": true, "data": statements })))
 }
 
@@ -485,7 +503,9 @@ pub async fn list_bank_reconciliations(
     Extension(tenant_ctx): Extension<TenantContext>,
 ) -> Result<Json<Value>, AppError> {
     let company_id = tenant_ctx.company_id.unwrap_or(tenant_ctx.tenant_id);
-    let list = state.finance_service.list_bank_reconciliations(company_id).await?;
+    let list = state
+        .finance_service
+        .list_bank_reconciliations(company_id)
+        .await?;
     Ok(Json(json!({ "success": true, "data": list })))
 }
-
