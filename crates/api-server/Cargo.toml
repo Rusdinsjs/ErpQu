@@ -43,9 +43,6 @@ genpdf = { workspace = true }
 csv = { workspace = true }
 inventory = { workspace = true }
 
-[profile.dev]
-debug = 0
-
 [[bin]]
 name = "management-system"
 path = "src/main.rs"

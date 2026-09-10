@@ -711,14 +711,28 @@ export const DEFAULT_LAUNCHPAD_CONFIG: LaunchpadConfig = {
         {
             id: 'insights',
             title: 'Insights & Reporting',
-            subtitle: 'Business Intelligence',
+            subtitle: 'Executive BI & Decision Intelligence',
             icon: 'BarChart3',
             gradient: 'from-blue-500/20 to-cyan-500/20',
             iconBg: 'bg-gradient-to-br from-blue-500 to-cyan-500',
-            defaultRoute: '/dashboard',
-            minLevel: 5,
-            features: ['Dashboard Overview', 'Analytics', 'Reports'],
-            menuIds: ['dashboard', 'analytics', 'reports'],
+            defaultRoute: '/insights/executive-cockpit',
+            minLevel: 3,
+            features: [
+                'Executive Cockpit BI',
+                'Working Capital & CCC',
+                'Profitability Matrix',
+                'Central Report Hub',
+                'Interactive Pivot Explorer'
+            ],
+            menuIds: [
+                'executive-cockpit',
+                'working-capital',
+                'profitability-matrix',
+                'central-reports',
+                'pivot-explorer',
+                'analytics',
+                'reports'
+            ],
             order: 2,
             enabled: true,
         },

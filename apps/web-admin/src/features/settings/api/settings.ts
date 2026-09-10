@@ -1,4 +1,4 @@
-import { api } from'../../../api/http';
+import { api } from '../../../api/http';
 
 export interface Setting {
     key: string;
@@ -39,18 +39,22 @@ export const settingsApi = {
         }
     },
 
-    uploadFile: async (file: File): Promise<{ url: string; id: string }> => {
+    uploadFile: async (file: File, companyId?: string): Promise<{ url: string; id: string }> => {
         const formData = new FormData();
         formData.append('file', file);
 
         // Gunakan fetch native (bukan axios) agar Content-Type multipart/boundary di-set otomatis
         // dan tidak ada masalah dengan proxy atau interceptor axios
         const { useAuthStore } = await import('../../../store/useAuthStore');
-        const token = useAuthStore.getState().token;
+        const { token, activeCompanyId } = useAuthStore.getState();
 
         const headers: Record<string, string> = {};
         if (token) {
             headers['Authorization'] = 'Bearer ' + token;
+        }
+        const effectiveCompanyId = companyId || activeCompanyId;
+        if (effectiveCompanyId) {
+            headers['X-Company-ID'] = effectiveCompanyId;
         }
         // JANGAN set Content-Type — biarkan browser set otomatis dengan boundary yang benar
 

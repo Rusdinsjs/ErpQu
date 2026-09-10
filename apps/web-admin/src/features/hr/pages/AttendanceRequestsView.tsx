@@ -6,8 +6,8 @@ import { hrAttendanceRequestApi, type HrAttendanceRequest } from'../api/hr-shift
 import { employeeApi } from'../api/employee';
 import {
     Button, Card, Table, TableHead, TableBody, TableRow, TableTh, TableTd, TableEmpty,
-    Badge, Modal, Input, Select, useToast, LoadingOverlay, DateInput,
-} from'../../../components/ui';
+    Badge, Modal, Input, Select, useToast, LoadingOverlay, DateInput, PageHeader,
+} from '../../../components/ui';
 
 const REQ_TYPES = [
     { value: 'correction', label: 'Koreksi Jam Kehadiran' },
@@ -49,6 +49,9 @@ export default function AttendanceRequestsView() {
         queryFn: () => employeeApi.list(),
     });
 
+    const requestList = Array.isArray(requests) ? requests : [];
+    const employeeList = Array.isArray(employees) ? employees : [];
+
     const createMutation = useMutation({
         mutationFn: hrAttendanceRequestApi.create,
         onSuccess: () => {
@@ -87,19 +90,17 @@ export default function AttendanceRequestsView() {
     };
 
     return (
-        <div className="p-6 space-y-6">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-                        <ClipboardCheck className="h-6 w-6 text-teal-400" />
-                        Koreksi Absensi & Dinas Luar
-                    </h1>
-                    <p className="text-gray-400 text-sm mt-1">Pengajuan dan persetujuan koreksi lupa absen, dinas luar lapangan, atau WFH</p>
-                </div>
-                <Button onClick={() => setModalOpen(true)} leftIcon={<Plus className="h-4 w-4" />} variant="filled" color="teal">
-                    Ajukan Permohonan
-                </Button>
-            </div>
+        <div className="space-y-6">
+            <PageHeader
+                title="Koreksi Absensi & Dinas Luar"
+                description="Pengajuan dan persetujuan koreksi lupa absen, dinas luar lapangan, atau WFH"
+                badge={`${requestList.length} Permohonan`}
+                action={
+                    <Button onClick={() => setModalOpen(true)} leftIcon={<Plus className="h-4 w-4" />} variant="primary">
+                        Ajukan Permohonan
+                    </Button>
+                }
+            />
 
             <Card>
                 <div className="relative">
@@ -116,29 +117,29 @@ export default function AttendanceRequestsView() {
                             </TableRow>
                         </TableHead>
                         <TableBody>
-                            {requests.length === 0 ? (
+                            {requestList.length === 0 ? (
                                 <TableEmpty colSpan={6} message="Belum ada permohonan koreksi absensi" />
-                            ) : requests.map(r => (
+                            ) : requestList.map(r => (
                                 <TableRow key={r.id}>
                                     <TableTd className="font-mono text-sm">{dayjs(r.attendance_date).format('DD MMM YYYY')}</TableTd>
                                     <TableTd>
-                                        <div className="font-medium text-white">{r.employee_name}</div>
-                                        <div className="text-xs text-gray-400">{r.employee_nik}</div>
+                                        <div className="font-medium text-foreground">{r.employee_name}</div>
+                                        <div className="text-xs text-muted-foreground">{r.employee_nik}</div>
                                     </TableTd>
                                     <TableTd>
-                                        <Badge color={r.request_type === 'on_duty' ? 'blue' : r.request_type === 'wfh' ? 'purple' : 'yellow'}>
+                                        <Badge variant={r.request_type === 'on_duty' ? 'info' : r.request_type === 'wfh' ? 'default' : 'warning'}>
                                             {REQ_TYPES.find(t => t.value === r.request_type)?.label || r.request_type}
                                         </Badge>
                                     </TableTd>
-                                    <TableTd className="text-xs text-gray-300 max-w-xs truncate">{r.reason}</TableTd>
+                                    <TableTd className="text-xs text-muted-foreground max-w-xs truncate">{r.reason}</TableTd>
                                     <TableTd>
-                                        <Badge color={r.status === 'approved' ? 'green' : r.status === 'rejected' ? 'red' : 'yellow'}>
+                                        <Badge variant={r.status === 'approved' ? 'success' : r.status === 'rejected' ? 'danger' : 'warning'}>
                                             {r.status === 'approved' ? 'Disetujui' : r.status === 'rejected' ? 'Ditolak' : 'Menunggu Approval'}
                                         </Badge>
                                     </TableTd>
                                     <TableTd className="text-right">
                                         {r.status === 'pending' && (
-                                            <Button size="sm" variant="filled" color="teal" onClick={() => handleOpenReview(r)}>
+                                            <Button size="sm" variant="outline" onClick={() => handleOpenReview(r)}>
                                                 Review
                                             </Button>
                                         )}
@@ -157,7 +158,7 @@ export default function AttendanceRequestsView() {
                         label="Karyawan *"
                         value={form.employee_id}
                         onChange={v => setForm(p => ({ ...p, employee_id: v }))}
-                        options={[{ value: '', label: 'Pilih Karyawan' }, ...employees.map(e => ({ value: e.id, label: `${e.nik} - ${e.name}` }))]}
+                        options={[{ value: '', label: 'Pilih Karyawan' }, ...employeeList.map(e => ({ value: e.id, label: `${e.nik} - ${e.name}` }))]}
                     />
                     <Select
                         label="Jenis Permohonan *"
@@ -169,7 +170,7 @@ export default function AttendanceRequestsView() {
                     <Input label="Alasan / Keterangan *" value={form.reason} onChange={e => setForm(p => ({ ...p, reason: e.target.value }))} placeholder="Jelaskan alasan koreksi/dinas..." />
                     <Input label="URL Lampiran Bukti (Opsional)" value={form.attachment_url} onChange={e => setForm(p => ({ ...p, attachment_url: e.target.value }))} placeholder="https://..." />
                     <div className="flex gap-3 pt-2">
-                        <Button variant="filled" color="teal" onClick={handleSubmit} loading={createMutation.isPending} className="flex-1">Kirim Pengajuan</Button>
+                        <Button variant="primary" onClick={handleSubmit} loading={createMutation.isPending} className="flex-1">Kirim Pengajuan</Button>
                         <Button variant="outline" onClick={() => setModalOpen(false)}>Batal</Button>
                     </div>
                 </div>
@@ -179,9 +180,9 @@ export default function AttendanceRequestsView() {
             <Modal opened={reviewModalOpen} onClose={() => setReviewModalOpen(false)} title="Persetujuan Koreksi Absensi" size="md">
                 {selectedReq && (
                     <div className="space-y-4">
-                        <div className="p-3 bg-white/5 rounded-lg border border-white/10 text-sm space-y-1">
-                            <div><span className="text-gray-400">Karyawan: </span><span className="text-white font-semibold">{selectedReq.employee_name}</span></div>
-                            <div><span className="text-gray-400">Alasan: </span><span className="text-white">{selectedReq.reason}</span></div>
+                        <div className="p-3 bg-muted/40 rounded-lg border border-border text-sm space-y-1">
+                            <div><span className="text-muted-foreground">Karyawan: </span><span className="text-foreground font-semibold">{selectedReq.employee_name}</span></div>
+                            <div><span className="text-muted-foreground">Alasan: </span><span className="text-foreground">{selectedReq.reason}</span></div>
                         </div>
                         <Select
                             label="Keputusan *"
@@ -193,7 +194,7 @@ export default function AttendanceRequestsView() {
                             <Input label="Alasan Penolakan *" value={reviewForm.rejection_reason} onChange={e => setReviewForm(p => ({ ...p, rejection_reason: e.target.value }))} />
                         )}
                         <div className="flex gap-3 pt-2">
-                            <Button variant="filled" color={reviewForm.status === 'approved' ? 'green' : 'red'} onClick={handleSaveReview} loading={reviewMutation.isPending} className="flex-1">
+                            <Button variant={reviewForm.status === 'approved' ? 'primary' : 'danger'} onClick={handleSaveReview} loading={reviewMutation.isPending} className="flex-1">
                                 Simpan Keputusan
                             </Button>
                             <Button variant="outline" onClick={() => setReviewModalOpen(false)}>Batal</Button>

@@ -129,42 +129,53 @@ export interface EmployeeAttendanceRecap {
     total_overtime_pay: number;
 }
 
+const safeArray = <T>(res: any): T[] => {
+    if (Array.isArray(res)) return res;
+    if (res && Array.isArray(res.data)) return res.data;
+    return [];
+};
+
+const safeData = <T>(res: any): T => {
+    if (res && res.data !== undefined) return res.data;
+    return res;
+};
+
 // API Functions
 export const hrShiftApi = {
-    listShifts: () => api.get<HrShiftType[]>('/hr/shifts').then(r => r.data),
-    getShift: (id: string) => api.get<HrShiftType>(`/hr/shifts/${id}`).then(r => r.data),
-    createShift: (data: Partial<HrShiftType>) => api.post<{ data: HrShiftType }>('/hr/shifts', data).then(r => r.data.data),
-    updateShift: (id: string, data: Partial<HrShiftType>) => api.put<{ data: HrShiftType }>(`/hr/shifts/${id}`, data).then(r => r.data.data),
+    listShifts: () => api.get<any>('/hr/shifts').then(r => safeArray<HrShiftType>(r.data)),
+    getShift: (id: string) => api.get<any>(`/hr/shifts/${id}`).then(r => safeData<HrShiftType>(r.data)),
+    createShift: (data: Partial<HrShiftType>) => api.post<any>('/hr/shifts', data).then(r => safeData<HrShiftType>(r.data)),
+    updateShift: (id: string, data: Partial<HrShiftType>) => api.put<any>(`/hr/shifts/${id}`, data).then(r => safeData<HrShiftType>(r.data)),
     deleteShift: (id: string) => api.delete(`/hr/shifts/${id}`),
 
-    listAssignments: (employee_id?: string) => api.get<HrShiftAssignment[]>('/hr/shift-assignments', { params: { employee_id } }).then(r => r.data),
-    createAssignment: (data: Partial<HrShiftAssignment>) => api.post<{ data: HrShiftAssignment }>('/hr/shift-assignments', data).then(r => r.data.data),
+    listAssignments: (employee_id?: string) => api.get<any>('/hr/shift-assignments', { params: { employee_id } }).then(r => safeArray<HrShiftAssignment>(r.data)),
+    createAssignment: (data: Partial<HrShiftAssignment>) => api.post<any>('/hr/shift-assignments', data).then(r => safeData<HrShiftAssignment>(r.data)),
     bulkAssign: (data: { employee_ids: string[]; shift_type_id: string; start_date: string; end_date?: string; notes?: string }) =>
-        api.post<{ data: HrShiftAssignment[] }>('/hr/shift-assignments/bulk', data).then(r => r.data.data),
+        api.post<any>('/hr/shift-assignments/bulk', data).then(r => safeArray<HrShiftAssignment>(r.data)),
     deleteAssignment: (id: string) => api.delete(`/hr/shift-assignments/${id}`),
 };
 
 export const hrAttendanceRequestApi = {
     list: (params?: { employee_id?: string; status?: string; request_type?: string }) =>
-        api.get<HrAttendanceRequest[]>('/hr/attendance-requests', { params }).then(r => r.data),
+        api.get<any>('/hr/attendance-requests', { params }).then(r => safeArray<HrAttendanceRequest>(r.data)),
     create: (data: Partial<HrAttendanceRequest>) =>
-        api.post<{ data: HrAttendanceRequest }>('/hr/attendance-requests', data).then(r => r.data.data),
+        api.post<any>('/hr/attendance-requests', data).then(r => safeData<HrAttendanceRequest>(r.data)),
     review: (id: string, data: { status: 'approved' | 'rejected'; rejection_reason?: string }) =>
-        api.post<{ data: HrAttendanceRequest }>(`/hr/attendance-requests/${id}/review`, data).then(r => r.data.data),
+        api.post<any>(`/hr/attendance-requests/${id}/review`, data).then(r => safeData<HrAttendanceRequest>(r.data)),
 };
 
 export const hrOvertimeApi = {
     list: (params?: { employee_id?: string; status?: string; start_date?: string; end_date?: string }) =>
-        api.get<HrOvertimeRequest[]>('/hr/overtime-requests', { params }).then(r => r.data),
+        api.get<any>('/hr/overtime-requests', { params }).then(r => safeArray<HrOvertimeRequest>(r.data)),
     create: (data: Partial<HrOvertimeRequest>) =>
-        api.post<{ data: HrOvertimeRequest }>('/hr/overtime-requests', data).then(r => r.data.data),
+        api.post<any>('/hr/overtime-requests', data).then(r => safeData<HrOvertimeRequest>(r.data)),
     review: (id: string, data: { status: 'approved' | 'rejected'; actual_hours?: number; rejection_reason?: string }) =>
-        api.post<{ data: HrOvertimeRequest }>(`/hr/overtime-requests/${id}/review`, data).then(r => r.data.data),
+        api.post<any>(`/hr/overtime-requests/${id}/review`, data).then(r => safeData<HrOvertimeRequest>(r.data)),
 };
 
 export const hrAttendanceLogsApi = {
     listLogs: (params?: { start_date?: string; end_date?: string; employee_id?: string; department_id?: string; attendance_status?: string }) =>
-        api.get<HrAttendanceDetail[]>('/hr/attendance-logs', { params }).then(r => r.data),
+        api.get<any>('/hr/attendance-logs', { params }).then(r => safeArray<HrAttendanceDetail>(r.data)),
     getRecap: (params: { start_date: string; end_date: string; department_id?: string }) =>
-        api.get<EmployeeAttendanceRecap[]>('/hr/attendance-recap', { params }).then(r => r.data),
+        api.get<any>('/hr/attendance-recap', { params }).then(r => safeArray<EmployeeAttendanceRecap>(r.data)),
 };

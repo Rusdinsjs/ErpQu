@@ -6,9 +6,9 @@ import { hrOvertimeApi, type HrOvertimeRequest } from'../api/hr-shift-overtime';
 import { employeeApi } from'../api/employee';
 import {
     Button, Card, Table, TableHead, TableBody, TableRow, TableTh, TableTd, TableEmpty,
-    Badge, ActionIcon, Modal, Input, Select, useToast, LoadingOverlay, DateInput,
-} from'../../../components/ui';
-import { formatCurrencyIDR } from'../../../utils/decimal';
+    Badge, ActionIcon, Modal, Input, Select, useToast, LoadingOverlay, DateInput, PageHeader,
+} from '../../../components/ui';
+import { formatCurrencyIDR } from '../../../utils/decimal';
 
 export default function OvertimeManagementView() {
     const qc = useQueryClient();
@@ -44,6 +44,9 @@ export default function OvertimeManagementView() {
         queryKey: ['employees'],
         queryFn: () => employeeApi.list(),
     });
+
+    const overtimeList = Array.isArray(overtimes) ? overtimes : [];
+    const employeeList = Array.isArray(employees) ? employees : [];
 
     const createMutation = useMutation({
         mutationFn: hrOvertimeApi.create,
@@ -100,19 +103,17 @@ export default function OvertimeManagementView() {
     };
 
     return (
-        <div className="p-6 space-y-6">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-                        <FileSpreadsheet className="h-6 w-6 text-purple-400" />
-                        Persetujuan Lembur (SPKL & Depnaker)
-                    </h1>
-                    <p className="text-gray-400 text-sm mt-1">Pengajuan Surat Perintah Kerja Lembur, verifikasi jam aktual, dan kalkulasi tarif upah lembur regulasi Depnaker</p>
-                </div>
-                <Button onClick={() => setModalOpen(true)} leftIcon={<Plus className="h-4 w-4" />} variant="filled" color="purple">
-                    Buat Pengajuan SPKL
-                </Button>
-            </div>
+        <div className="space-y-6">
+            <PageHeader
+                title="Persetujuan Lembur (SPKL & Depnaker)"
+                description="Pengajuan Surat Perintah Kerja Lembur, verifikasi jam aktual, dan kalkulasi tarif upah lembur regulasi Depnaker"
+                badge={`${overtimeList.length} Pengajuan`}
+                action={
+                    <Button onClick={() => setModalOpen(true)} leftIcon={<Plus className="h-4 w-4" />} variant="primary">
+                        Buat Pengajuan SPKL
+                    </Button>
+                }
+            />
 
             <Card>
                 <div className="relative">
@@ -132,36 +133,36 @@ export default function OvertimeManagementView() {
                             </TableRow>
                         </TableHead>
                         <TableBody>
-                            {overtimes.length === 0 ? (
+                            {overtimeList.length === 0 ? (
                                 <TableEmpty colSpan={9} message="Belum ada pengajuan lembur" />
-                            ) : overtimes.map(ov => (
+                            ) : overtimeList.map(ov => (
                                 <TableRow key={ov.id}>
                                     <TableTd className="font-mono text-sm">{dayjs(ov.overtime_date).format('DD MMM YYYY')}</TableTd>
                                     <TableTd>
-                                        <div className="font-medium text-white">{ov.employee_name}</div>
-                                        <div className="text-xs text-gray-400">{ov.employee_nik}</div>
+                                        <div className="font-medium text-foreground">{ov.employee_name}</div>
+                                        <div className="text-xs text-muted-foreground">{ov.employee_nik}</div>
                                     </TableTd>
                                     <TableTd className="font-mono text-xs">{ov.start_time} - {ov.end_time}</TableTd>
                                     <TableTd className="font-mono text-xs">
                                         {ov.planned_hours} Jam {ov.actual_hours ? `(Aktual: ${ov.actual_hours} Jam)` : ''}
                                     </TableTd>
                                     <TableTd>
-                                        {ov.is_holiday ? <Badge color="red">Hari Libur (2x-4x)</Badge> : <Badge color="gray">Hari Kerja (1.5x-2x)</Badge>}
+                                        {ov.is_holiday ? <Badge variant="danger">Hari Libur (2x-4x)</Badge> : <Badge variant="default">Hari Kerja (1.5x-2x)</Badge>}
                                     </TableTd>
-                                    <TableTd className="text-xs text-gray-300 max-w-xs truncate">
+                                    <TableTd className="text-xs text-muted-foreground max-w-xs truncate">
                                         {ov.reason}
                                     </TableTd>
-                                    <TableTd className="font-mono font-bold text-white text-xs">
+                                    <TableTd className="font-mono font-bold text-foreground text-xs">
                                         {ov.calculated_overtime_pay ? formatCurrencyIDR(ov.calculated_overtime_pay) : '-'}
                                     </TableTd>
                                     <TableTd>
-                                        <Badge color={ov.status === 'approved' ? 'green' : ov.status === 'rejected' ? 'red' : 'yellow'}>
+                                        <Badge variant={ov.status === 'approved' ? 'success' : ov.status === 'rejected' ? 'danger' : 'warning'}>
                                             {ov.status === 'approved' ? 'Disetujui' : ov.status === 'rejected' ? 'Ditolak' : 'Menunggu Approval'}
                                         </Badge>
                                     </TableTd>
                                     <TableTd className="text-right">
                                         {ov.status === 'pending' && (
-                                            <Button size="sm" variant="filled" color="purple" onClick={() => handleOpenReview(ov)}>
+                                            <Button size="sm" variant="outline" onClick={() => handleOpenReview(ov)}>
                                                 Review
                                             </Button>
                                         )}
@@ -180,7 +181,7 @@ export default function OvertimeManagementView() {
                         label="Pilih Karyawan *"
                         value={form.employee_id}
                         onChange={v => setForm(p => ({ ...p, employee_id: v }))}
-                        options={[{ value: '', label: 'Pilih Karyawan' }, ...employees.map(e => ({ value: e.id, label: `${e.nik} - ${e.name}` }))]}
+                        options={[{ value: '', label: 'Pilih Karyawan' }, ...employeeList.map(e => ({ value: e.id, label: `${e.nik} - ${e.name}` }))]}
                     />
                     <DateInput label="Tanggal Lembur *" value={form.overtime_date} onChange={v => setForm(p => ({ ...p, overtime_date: v }))} />
                     <div className="grid grid-cols-2 gap-4">
@@ -191,11 +192,11 @@ export default function OvertimeManagementView() {
                     <Input label="Alasan Lembur *" value={form.reason} onChange={e => setForm(p => ({ ...p, reason: e.target.value }))} placeholder="cth. Pengerjaan closing laporan bulanan" />
                     <Input label="Rincian Tugas" value={form.task_description} onChange={e => setForm(p => ({ ...p, task_description: e.target.value }))} placeholder="Deskripsi pekerjaan yang diselesaikan..." />
                     <div className="flex items-center gap-2">
-                        <input type="checkbox" id="hol" checked={form.is_holiday} onChange={e => setForm(p => ({ ...p, is_holiday: e.target.checked }))} className="w-4 h-4 accent-red-500" />
-                        <label htmlFor="hol" className="text-sm text-gray-300">Lembur di Hari Libur Resmi / Akhir Pekan</label>
+                        <input type="checkbox" id="hol" checked={form.is_holiday} onChange={e => setForm(p => ({ ...p, is_holiday: e.target.checked }))} className="w-4 h-4 accent-red-500 cursor-pointer" />
+                        <label htmlFor="hol" className="text-sm text-foreground cursor-pointer">Lembur di Hari Libur Resmi / Akhir Pekan</label>
                     </div>
                     <div className="flex gap-3 pt-2">
-                        <Button variant="filled" color="purple" onClick={handleSubmit} loading={createMutation.isPending} className="flex-1">Ajukan SPKL</Button>
+                        <Button variant="primary" onClick={handleSubmit} loading={createMutation.isPending} className="flex-1">Ajukan SPKL</Button>
                         <Button variant="outline" onClick={() => setModalOpen(false)}>Batal</Button>
                     </div>
                 </div>
@@ -205,10 +206,10 @@ export default function OvertimeManagementView() {
             <Modal opened={reviewModalOpen} onClose={() => setReviewModalOpen(false)} title="Persetujuan & Kalkulasi Upah Lembur" size="md">
                 {selectedOvertime && (
                     <div className="space-y-4">
-                        <div className="p-3 bg-white/5 rounded-lg border border-white/10 text-sm space-y-1">
-                            <div className="flex justify-between"><span className="text-gray-400">Karyawan:</span><span className="font-semibold text-white">{selectedOvertime.employee_name}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-400">Tanggal:</span><span className="text-white">{dayjs(selectedOvertime.overtime_date).format('DD MMM YYYY')}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-400">Rencana:</span><span className="text-white">{selectedOvertime.planned_hours} Jam ({selectedOvertime.start_time} - {selectedOvertime.end_time})</span></div>
+                        <div className="p-3 bg-muted/40 rounded-lg border border-border text-sm space-y-1">
+                            <div className="flex justify-between"><span className="text-muted-foreground">Karyawan:</span><span className="font-semibold text-foreground">{selectedOvertime.employee_name}</span></div>
+                            <div className="flex justify-between"><span className="text-muted-foreground">Tanggal:</span><span className="text-foreground">{dayjs(selectedOvertime.overtime_date).format('DD MMM YYYY')}</span></div>
+                            <div className="flex justify-between"><span className="text-muted-foreground">Rencana:</span><span className="text-foreground">{selectedOvertime.planned_hours} Jam ({selectedOvertime.start_time} - {selectedOvertime.end_time})</span></div>
                         </div>
                         <Select
                             label="Keputusan *"
@@ -222,7 +223,7 @@ export default function OvertimeManagementView() {
                             <Input label="Alasan Penolakan *" value={reviewForm.rejection_reason} onChange={e => setReviewForm(p => ({ ...p, rejection_reason: e.target.value }))} placeholder="Alasan lembur ditolak..." />
                         )}
                         <div className="flex gap-3 pt-2">
-                            <Button variant="filled" color={reviewForm.status === 'approved' ? 'green' : 'red'} onClick={handleSaveReview} loading={reviewMutation.isPending} className="flex-1">
+                            <Button variant={reviewForm.status === 'approved' ? 'primary' : 'danger'} onClick={handleSaveReview} loading={reviewMutation.isPending} className="flex-1">
                                 {reviewForm.status === 'approved' ? 'Setujui & Hitung Tarif Depnaker' : 'Tolak Pengajuan'}
                             </Button>
                             <Button variant="outline" onClick={() => setReviewModalOpen(false)}>Batal</Button>

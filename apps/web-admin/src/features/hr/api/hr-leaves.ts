@@ -96,36 +96,47 @@ export interface HrLeaveBlockList {
     is_active: boolean;
 }
 
+const safeArray = <T>(res: any): T[] => {
+    if (Array.isArray(res)) return res;
+    if (res && Array.isArray(res.data)) return res.data;
+    return [];
+};
+
+const safeData = <T>(res: any): T => {
+    if (res && res.data !== undefined) return res.data;
+    return res;
+};
+
 // API CLIENT
 export const hrLeavesApi = {
     // Leave Types
-    listTypes: () => api.get<HrLeaveType[]>('/hr/leave-types').then(r => r.data),
-    createType: (data: any) => api.post('/hr/leave-types', data).then(r => r.data),
-    updateType: (id: string, data: any) => api.put(`/hr/leave-types/${id}`, data).then(r => r.data),
-    deleteType: (id: string) => api.delete(`/hr/leave-types/${id}`).then(r => r.data),
+    listTypes: () => api.get<any>('/hr/leave-types').then(r => safeArray<HrLeaveType>(r.data)),
+    createType: (data: any) => api.post('/hr/leave-types', data).then(r => safeData<any>(r.data)),
+    updateType: (id: string, data: any) => api.put(`/hr/leave-types/${id}`, data).then(r => safeData<any>(r.data)),
+    deleteType: (id: string) => api.delete(`/hr/leave-types/${id}`).then(r => safeData<any>(r.data)),
 
     // Allocations
     listAllocations: (employeeId?: string) =>
-        api.get<HrLeaveAllocation[]>('/hr/leave-allocations', { params: { employee_id: employeeId } }).then(r => r.data),
-    createAllocation: (data: any) => api.post('/hr/leave-allocations', data).then(r => r.data),
-    bulkAllocate: (data: any) => api.post('/hr/leave-allocations/bulk', data).then(r => r.data),
+        api.get<any>('/hr/leave-allocations', { params: { employee_id: employeeId } }).then(r => safeArray<HrLeaveAllocation>(r.data)),
+    createAllocation: (data: any) => api.post('/hr/leave-allocations', data).then(r => safeData<any>(r.data)),
+    bulkAllocate: (data: any) => api.post('/hr/leave-allocations/bulk', data).then(r => safeData<any>(r.data)),
     getBalance: (employeeId: string) =>
-        api.get<LeaveBalanceSummary[]>(`/hr/employees/${employeeId}/leave-balance`).then(r => r.data),
+        api.get<any>(`/hr/employees/${employeeId}/leave-balance`).then(r => safeArray<LeaveBalanceSummary>(r.data)),
 
     // Applications
     listApplications: (params?: any) =>
-        api.get<HrLeaveApplication[]>('/hr/leave-applications', { params }).then(r => r.data),
+        api.get<any>('/hr/leave-applications', { params }).then(r => safeArray<HrLeaveApplication>(r.data)),
     getApplication: (id: string) =>
-        api.get<HrLeaveApplication>(`/hr/leave-applications/${id}`).then(r => r.data),
-    createApplication: (data: any) => api.post('/hr/leave-applications', data).then(r => r.data),
+        api.get<any>(`/hr/leave-applications/${id}`).then(r => safeData<HrLeaveApplication>(r.data)),
+    createApplication: (data: any) => api.post('/hr/leave-applications', data).then(r => safeData<any>(r.data)),
     reviewApplication: (id: string, status: string, rejectionReason?: string) =>
-        api.post(`/hr/leave-applications/${id}/review`, { status, rejection_reason: rejectionReason }).then(r => r.data),
+        api.post(`/hr/leave-applications/${id}/review`, { status, rejection_reason: rejectionReason }).then(r => safeData<any>(r.data)),
 
     // Holidays
-    listHolidayLists: () => api.get<HrHolidayList[]>('/hr/holiday-lists').then(r => r.data),
-    listHolidays: (listId: string) => api.get<HrHoliday[]>(`/hr/holiday-lists/${listId}/holidays`).then(r => r.data),
-    addHoliday: (listId: string, data: any) => api.post(`/hr/holiday-lists/${listId}/holidays`, data).then(r => r.data),
+    listHolidayLists: () => api.get<any>('/hr/holiday-lists').then(r => safeArray<HrHolidayList>(r.data)),
+    listHolidays: (listId: string) => api.get<any>(`/hr/holiday-lists/${listId}/holidays`).then(r => safeArray<HrHoliday>(r.data)),
+    addHoliday: (listId: string, data: any) => api.post(`/hr/holiday-lists/${listId}/holidays`, data).then(r => safeData<any>(r.data)),
 
     // Block lists
-    listBlockLists: () => api.get<HrLeaveBlockList[]>('/hr/leave-block-lists').then(r => r.data),
+    listBlockLists: () => api.get<any>('/hr/leave-block-lists').then(r => safeArray<HrLeaveBlockList>(r.data)),
 };

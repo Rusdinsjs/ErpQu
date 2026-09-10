@@ -114,30 +114,41 @@ export interface HrSalarySlip {
     created_at: string;
 }
 
+const safeArray = <T>(res: any): T[] => {
+    if (Array.isArray(res)) return res;
+    if (res && Array.isArray(res.data)) return res.data;
+    return [];
+};
+
+const safeData = <T>(res: any): T => {
+    if (res && res.data !== undefined) return res.data;
+    return res;
+};
+
 export const hrPayrollApi = {
     // Salary Components
-    listComponents: () => api.get<HrSalaryComponent[]>('/hr/salary-components').then(r => r.data),
-    getComponent: (id: string) => api.get<HrSalaryComponent>(`/hr/salary-components/${id}`).then(r => r.data),
-    createComponent: (data: any) => api.post('/hr/salary-components', data).then(r => r.data),
-    updateComponent: (id: string, data: any) => api.put(`/hr/salary-components/${id}`, data).then(r => r.data),
-    deleteComponent: (id: string) => api.delete(`/hr/salary-components/${id}`).then(r => r.data),
+    listComponents: () => api.get<any>('/hr/salary-components').then(r => safeArray<HrSalaryComponent>(r.data)),
+    getComponent: (id: string) => api.get<any>(`/hr/salary-components/${id}`).then(r => safeData<HrSalaryComponent>(r.data)),
+    createComponent: (data: any) => api.post('/hr/salary-components', data).then(r => safeData<any>(r.data)),
+    updateComponent: (id: string, data: any) => api.put(`/hr/salary-components/${id}`, data).then(r => safeData<any>(r.data)),
+    deleteComponent: (id: string) => api.delete(`/hr/salary-components/${id}`).then(r => safeData<any>(r.data)),
     
     // Salary Structures
-    listStructures: () => api.get<HrSalaryStructure[]>('/hr/salary-structures').then(r => r.data),
-    getStructure: (id: string) => api.get<HrSalaryStructure>(`/hr/salary-structures/${id}`).then(r => r.data),
-    createStructure: (data: any) => api.post('/hr/salary-structures', data).then(r => r.data),
-    updateStructure: (id: string, data: any) => api.put(`/hr/salary-structures/${id}`, data).then(r => r.data),
-    deleteStructure: (id: string) => api.delete(`/hr/salary-structures/${id}`).then(r => r.data),
+    listStructures: () => api.get<any>('/hr/salary-structures').then(r => safeArray<HrSalaryStructure>(r.data)),
+    getStructure: (id: string) => api.get<any>(`/hr/salary-structures/${id}`).then(r => safeData<HrSalaryStructure>(r.data)),
+    createStructure: (data: any) => api.post('/hr/salary-structures', data).then(r => safeData<any>(r.data)),
+    updateStructure: (id: string, data: any) => api.put(`/hr/salary-structures/${id}`, data).then(r => safeData<any>(r.data)),
+    deleteStructure: (id: string) => api.delete(`/hr/salary-structures/${id}`).then(r => safeData<any>(r.data)),
     
     // Salary Assignments
-    listAssignments: () => api.get<HrSalaryAssignment[]>('/hr/salary-assignments').then(r => r.data),
-    createAssignment: (data: any) => api.post('/hr/salary-assignments', data).then(r => r.data),
+    listAssignments: () => api.get<any>('/hr/salary-assignments').then(r => safeArray<HrSalaryAssignment>(r.data)),
+    createAssignment: (data: any) => api.post('/hr/salary-assignments', data).then(r => safeData<any>(r.data)),
     
     // Payroll Entries
-    listPayrollEntries: () => api.get<HrPayrollEntry[]>('/hr/payroll-entries').then(r => r.data),
-    runPayroll: (data: any) => api.post('/hr/payroll-entries', data).then(r => r.data),
+    listPayrollEntries: () => api.get<any>('/hr/payroll-entries').then(r => safeArray<HrPayrollEntry>(r.data)),
+    runPayroll: (data: any) => api.post('/hr/payroll-entries', data).then(r => safeData<any>(r.data)),
     
     // Salary Slips
-    listSalarySlips: (params?: any) => api.get<HrSalarySlip[]>('/hr/salary-slips', { params }).then(r => r.data),
-    getSalarySlip: (id: string) => api.get<HrSalarySlip>(`/hr/salary-slips/${id}`).then(r => r.data),
+    listSalarySlips: (params?: any) => api.get<any>('/hr/salary-slips', { params }).then(r => safeArray<HrSalarySlip>(r.data)),
+    getSalarySlip: (id: string) => api.get<any>(`/hr/salary-slips/${id}`).then(r => safeData<HrSalarySlip>(r.data)),
 };

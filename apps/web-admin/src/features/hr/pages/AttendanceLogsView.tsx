@@ -5,9 +5,9 @@ import dayjs from 'dayjs';
 import { hrAttendanceLogsApi, type HrAttendanceDetail } from'../api/hr-shift-overtime';
 import {
     Button, Card, CardHeader, CardTitle, CardContent, Table, TableHead, TableBody, TableRow, TableTh, TableTd, TableEmpty,
-    Badge, Input, Select, LoadingOverlay, Tabs, TabsList, TabsTrigger, TabsContent, DateInput,
-} from'../../../components/ui';
-import { formatCurrencyIDR } from'../../../utils/decimal';
+    Badge, Input, Select, LoadingOverlay, Tabs, TabsList, TabsTrigger, TabsContent, DateInput, PageHeader,
+} from '../../../components/ui';
+import { formatCurrencyIDR } from '../../../utils/decimal';
 
 export default function AttendanceLogsView() {
     const [startDate, setStartDate] = useState(dayjs().startOf('month').format('YYYY-MM-DD'));
@@ -24,27 +24,26 @@ export default function AttendanceLogsView() {
         queryFn: () => hrAttendanceLogsApi.getRecap({ start_date: startDate, end_date: endDate }),
     });
 
-    const filteredLogs = logs.filter(l =>
+    const logsList = Array.isArray(logs) ? logs : [];
+    const recapList = Array.isArray(recap) ? recap : [];
+
+    const filteredLogs = logsList.filter(l =>
         (l.employee_name || '').toLowerCase().includes(search.toLowerCase()) ||
         (l.employee_nik || '').toLowerCase().includes(search.toLowerCase())
     );
 
-    const filteredRecap = recap.filter(r =>
-        r.employee_name.toLowerCase().includes(search.toLowerCase()) ||
-        r.employee_nik.toLowerCase().includes(search.toLowerCase())
+    const filteredRecap = recapList.filter(r =>
+        (r.employee_name || '').toLowerCase().includes(search.toLowerCase()) ||
+        (r.employee_nik || '').toLowerCase().includes(search.toLowerCase())
     );
 
     return (
-        <div className="p-6 space-y-6">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-                        <Activity className="h-6 w-6 text-emerald-400" />
-                        Log Kehadiran & Rekapitulasi
-                    </h1>
-                    <p className="text-gray-400 text-sm mt-1">Live feed log check-in/out GPS, foto biometrik, telat, dan rekapitulasi jam lembur</p>
-                </div>
-            </div>
+        <div className="space-y-6">
+            <PageHeader
+                title="Log Kehadiran & Rekapitulasi"
+                description="Live feed log check-in/out GPS, foto biometrik, telat, dan rekapitulasi jam lembur"
+                badge={`${filteredLogs.length} Log Hari Ini`}
+            />
 
             <Card>
                 <div className="p-4 border-b border-white/10 flex flex-wrap gap-4 items-center justify-between">

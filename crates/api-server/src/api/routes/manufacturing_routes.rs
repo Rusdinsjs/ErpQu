@@ -1,7 +1,7 @@
 //! Manufacturing & Production Order Routes
 
 use axum::{
-    routing::{get, post, put},
+    routing::{get, put},
     Router,
 };
 

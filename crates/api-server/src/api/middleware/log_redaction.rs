@@ -3,6 +3,8 @@
 //! Redacts passwords, secret keys, tokens, authorization headers, cookies,
 //! and PII from outgoing log streams and request payloads.
 
+#![allow(dead_code)]
+
 use regex::Regex;
 use std::sync::LazyLock;
 

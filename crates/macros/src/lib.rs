@@ -2,7 +2,7 @@ extern crate proc_macro;
 
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{parse_macro_input, DeriveInput, LitBool, LitStr, Meta};
+use syn::{parse_macro_input, DeriveInput, LitBool, LitStr};
 
 #[proc_macro_derive(DocType, attributes(doctype))]
 pub fn doctype_derive(input: TokenStream) -> TokenStream {

@@ -11,8 +11,8 @@ import { profileApi } from'../../../../api/profile';
 import {
     Button, Card, CardHeader, CardTitle, CardContent,
     Badge, Modal, Table, TableHead, TableRow, TableTh, TableBody, TableTd, TableEmpty,
-    Input, Select, Textarea, useToast, LoadingOverlay, Tabs, TabsList, TabsTrigger, TabsContent
-} from'../../../../components/ui';
+    Input, Select, Textarea, useToast, LoadingOverlay, Tabs, TabsList, TabsTrigger, TabsContent, PageHeader,
+} from '../../../../components/ui';
 
 export default function LeaveDashboard() {
     const queryClient = useQueryClient();
@@ -192,10 +192,10 @@ export default function LeaveDashboard() {
 
     const getStatusBadge = (status: string) => {
         switch (status) {
-            case 'approved': return <Badge color="green">Disetujui</Badge>;
-            case 'rejected': return <Badge color="red">Ditolak</Badge>;
-            case 'cancelled': return <Badge color="gray">Dibatalkan</Badge>;
-            default: return <Badge color="yellow">Menunggu Review</Badge>;
+            case 'approved': return <Badge variant="success">Disetujui</Badge>;
+            case 'rejected': return <Badge variant="danger">Ditolak</Badge>;
+            case 'cancelled': return <Badge variant="neutral">Dibatalkan</Badge>;
+            default: return <Badge variant="warning">Menunggu Review</Badge>;
         }
     };
 
@@ -226,12 +226,13 @@ export default function LeaveDashboard() {
     ];
 
     const renderTable = (items: HrLeaveApplication[], showEmployee: boolean = false) => {
-        const filtered = items.filter(a => {
+        const safeItems = Array.isArray(items) ? items : [];
+        const filtered = safeItems.filter(a => {
             const matchesSearch =
                 (a.employee_name || '').toLowerCase().includes(search.toLowerCase()) ||
                 (a.employee_nik || '').toLowerCase().includes(search.toLowerCase()) ||
                 (a.leave_type_name || '').toLowerCase().includes(search.toLowerCase()) ||
-                a.reason.toLowerCase().includes(search.toLowerCase());
+                (a.reason || '').toLowerCase().includes(search.toLowerCase());
             const matchesStatus = !statusFilter || a.status === statusFilter;
             return matchesSearch && matchesStatus;
         });
@@ -249,55 +250,37 @@ export default function LeaveDashboard() {
                             <TableTh>Total Hari</TableTh>
                             <TableTh>Alasan & Lampiran</TableTh>
                             <TableTh>Status</TableTh>
-                            <TableTh>Diajukan Pada</TableTh>
+                            <TableTh>Tanggal Pengajuan</TableTh>
                             <TableTh className="text-right">Aksi</TableTh>
                         </TableRow>
                     </TableHead>
                     <TableBody>
                         {filtered.length === 0 ? (
-                            <TableEmpty colSpan={showEmployee ? 9 : 8} message="Tidak ada data permohonan cuti" />
+                            <TableEmpty colSpan={showEmployee ? 9 : 8} message="Tidak ada data pengajuan cuti" />
                         ) : filtered.map(app => (
                             <TableRow key={app.id}>
                                 {showEmployee && (
                                     <TableTd>
-                                        <div className="font-semibold text-white">{app.employee_name || 'Karyawan'}</div>
-                                        <div className="text-xs text-gray-400 font-mono">{app.employee_nik || '-'}</div>
+                                        <div className="font-medium text-foreground">{app.employee_name}</div>
+                                        <div className="text-xs text-muted-foreground">{app.employee_nik}</div>
                                     </TableTd>
                                 )}
+                                <TableTd className="font-semibold text-foreground">{app.leave_type_name}</TableTd>
+                                <TableTd className="text-foreground">{dayjs(app.from_date).format('DD MMM YYYY')}</TableTd>
+                                <TableTd className="text-foreground">{dayjs(app.to_date).format('DD MMM YYYY')}</TableTd>
                                 <TableTd>
-                                    <span
-                                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-semibold"
-                                        style={{
-                                            backgroundColor: `${app.leave_type_color || '#10B981'}20`,
-                                            color: app.leave_type_color || '#10B981'
-                                        }}
-                                    >
-                                        {app.leave_type_name}
-                                    </span>
+                                    <Badge variant="neutral">{app.total_leave_days} Hari{app.is_half_day ? ' (1/2 Hari)' : ''}</Badge>
                                 </TableTd>
-                                <TableTd className="font-medium text-white">{dayjs(app.from_date).format('DD MMM YYYY')}</TableTd>
-                                <TableTd className="font-medium text-white">{dayjs(app.to_date).format('DD MMM YYYY')}</TableTd>
-                                <TableTd>
-                                    <span className="font-bold text-white">{app.total_leave_days} Hari</span>
-                                    {app.is_half_day && <span className="block text-[11px] text-amber-400 font-medium">(Setengah Hari)</span>}
-                                </TableTd>
-                                <TableTd className="max-w-xs truncate text-gray-300" title={app.reason}>
-                                    <div>{app.reason}</div>
+                                <TableTd className="max-w-xs truncate text-muted-foreground text-xs" title={app.reason}>
+                                    {app.reason}
                                     {app.attachment_url && (
-                                        <span className="inline-flex items-center gap-1 text-xs text-cyan-400 hover:underline cursor-pointer">
-                                            <Paperclip className="h-3 w-3" /> Lampiran
-                                        </span>
+                                        <a href={app.attachment_url} target="_blank" rel="noreferrer" className="ml-1 text-primary hover:underline inline-flex items-center">
+                                            <Paperclip className="h-3 w-3" />
+                                        </a>
                                     )}
                                 </TableTd>
-                                <TableTd>
-                                    {getStatusBadge(app.status)}
-                                    {app.rejection_reason && (
-                                        <div className="text-[11px] text-red-400 mt-0.5 truncate max-w-[120px]" title={app.rejection_reason}>
-                                            Alasan: {app.rejection_reason}
-                                        </div>
-                                    )}
-                                </TableTd>
-                                <TableTd className="text-xs text-gray-400">{dayjs(app.created_at).format('DD MMM YYYY, HH:mm')}</TableTd>
+                                <TableTd>{getStatusBadge(app.status)}</TableTd>
+                                <TableTd className="text-xs text-muted-foreground">{dayjs(app.created_at).format('DD MMM YYYY, HH:mm')}</TableTd>
                                 <TableTd className="text-right">
                                     {app.status === 'pending' ? (
                                         <Button
@@ -309,7 +292,7 @@ export default function LeaveDashboard() {
                                             Review
                                         </Button>
                                     ) : (
-                                        <span className="text-xs text-gray-500 font-medium">
+                                        <span className="text-xs text-muted-foreground font-medium">
                                             {app.approver_name ? `Oleh: ${app.approver_name}` : 'Selesai'}
                                         </span>
                                     )}
@@ -322,26 +305,25 @@ export default function LeaveDashboard() {
         );
     };
 
+    const balancesList = Array.isArray(balances) ? balances : [];
+
     return (
         <div className="p-6 space-y-6">
-            {/* Header */}
-            <div className="flex flex-wrap items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-                        <Calendar className="h-6 w-6 text-emerald-400" />
-                        Cuti & Izin (Leave Management)
-                    </h1>
-                    <p className="text-gray-400 text-sm mt-1">Kelola permohonan cuti karyawan, persetujuan atasan, dan pemantauan sisa saldo kuota</p>
-                </div>
-                <Button onClick={openRequestModal} leftIcon={<Plus className="h-4 w-4" />} variant="filled" color="emerald">
-                    Minta Cuti / Izin
-                </Button>
-            </div>
+            <PageHeader
+                title="Cuti & Izin (Leave Management)"
+                subtitle="Kelola permohonan cuti karyawan, persetujuan atasan, dan pemantauan sisa saldo kuota"
+                icon={<Calendar className="h-6 w-6 text-primary" />}
+                actions={
+                    <Button onClick={openRequestModal} leftIcon={<Plus className="h-4 w-4" />} variant="primary">
+                        Minta Cuti / Izin
+                    </Button>
+                }
+            />
 
             {/* Quick Balance Cards for Current Employee */}
-            {balances.length > 0 && (
+            {balancesList.length > 0 && (
                 <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-                    {balances.map(b => (
+                    {balancesList.map(b => (
                         <div key={b.leave_type_id} className="p-3 bg-white/5 border border-white/10 rounded-xl hover:border-white/20 transition-all">
                             <div className="flex items-center justify-between mb-1">
                                 <span className="text-xs font-semibold text-gray-300 truncate" title={b.leave_type_name}>{b.leave_type_name}</span>

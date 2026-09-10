@@ -6,8 +6,8 @@ import { hrLoansClaimsKpiApi, type HrExpenseClaim } from'../../api/hr-loans-clai
 import { employeeApi } from'../../api/employee';
 import {
     Button, Card, Table, TableHead, TableBody, TableRow, TableTh, TableTd, TableEmpty,
-    Badge, Modal, Input, Select, ActionIcon, useToast, LoadingOverlay
-} from'../../../../components/ui';
+    Badge, Modal, Input, Select, ActionIcon, useToast, LoadingOverlay, PageHeader,
+} from '../../../../components/ui';
 
 export default function ExpenseClaimsView() {
     const qc = useQueryClient();
@@ -83,7 +83,8 @@ export default function ExpenseClaimsView() {
 
     const formatRp = (num: number) => `Rp ${Number(num || 0).toLocaleString('id-ID')}`;
 
-    const filtered = claims.filter(c =>
+    const claimsList = Array.isArray(claims) ? claims : [];
+    const filtered = claimsList.filter(c =>
         (c.employee_name || '').toLowerCase().includes(search.toLowerCase()) ||
         (c.employee_nik || '').toLowerCase().includes(search.toLowerCase()) ||
         (c.claim_type_name || '').toLowerCase().includes(search.toLowerCase()) ||
@@ -100,7 +101,7 @@ export default function ExpenseClaimsView() {
 
     const claimTypeOptions = [
         { value: '', label: 'Pilih Kategori Biaya Reimburse...' },
-        ...claimTypes.map(t => ({
+        ...(Array.isArray(claimTypes) ? claimTypes : []).map(t => ({
             value: t.id,
             label: `${t.name} (Plafon: ${t.max_amount_per_claim ? formatRp(t.max_amount_per_claim) : 'Sesuai Bukti'})`,
         })),
@@ -108,21 +109,19 @@ export default function ExpenseClaimsView() {
 
     return (
         <div className="p-6 space-y-6">
-            <div className="flex flex-wrap items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-                        <Receipt className="h-6 w-6 text-emerald-400" />
-                        Klaim Pengeluaran & Reimbursement (Expense Claims)
-                    </h1>
-                    <p className="text-gray-400 text-sm mt-1">Penggantian biaya operasional BBM, kesehatan, dinas luar, dan konsumsi lembur</p>
-                </div>
-                <Button onClick={() => setApplyModalOpen(true)} leftIcon={<Plus className="h-4 w-4" />} variant="filled" color="emerald">
-                    Ajukan Klaim Reimburse
-                </Button>
-            </div>
+            <PageHeader
+                title="Klaim Pengeluaran & Reimbursement (Expense Claims)"
+                subtitle="Penggantian biaya operasional BBM, kesehatan, dinas luar, dan konsumsi lembur"
+                icon={<Receipt className="h-6 w-6 text-primary" />}
+                actions={
+                    <Button onClick={() => setApplyModalOpen(true)} leftIcon={<Plus className="h-4 w-4" />} variant="primary">
+                        Ajukan Klaim Reimburse
+                    </Button>
+                }
+            />
 
             <Card>
-                <div className="p-4 border-b border-white/10 flex items-center justify-between">
+                <div className="p-4 border-b border-border flex items-center justify-between">
                     <Input
                         placeholder="Cari klaim pengeluaran..."
                         value={search}
@@ -130,7 +129,7 @@ export default function ExpenseClaimsView() {
                         leftIcon={<Search className="h-4 w-4" />}
                         className="max-w-md"
                     />
-                    <Badge color="emerald">{claims.length} Klaim Terdaftar</Badge>
+                    <Badge variant="neutral">{claimsList.length} Klaim Terdaftar</Badge>
                 </div>
 
                 <div className="relative">
@@ -152,26 +151,26 @@ export default function ExpenseClaimsView() {
                                 <TableEmpty colSpan={7} message="Belum ada pengajuan klaim reimbursement" />
                             ) : filtered.map(c => (
                                 <TableRow key={c.id}>
-                                    <TableTd className="text-xs text-gray-300 font-mono">{dayjs(c.claim_date).format('DD MMM YYYY')}</TableTd>
+                                    <TableTd className="text-xs text-muted-foreground font-mono">{dayjs(c.claim_date).format('DD MMM YYYY')}</TableTd>
                                     <TableTd>
-                                        <div className="font-bold text-white">{c.employee_name}</div>
-                                        <div className="text-xs text-gray-400 font-mono">{c.employee_nik}</div>
+                                        <div className="font-medium text-foreground">{c.employee_name}</div>
+                                        <div className="text-xs text-muted-foreground">{c.employee_nik}</div>
                                     </TableTd>
-                                    <TableTd className="font-medium text-emerald-300">{c.claim_type_name}</TableTd>
-                                    <TableTd className="font-bold text-white text-base">{formatRp(c.total_amount)}</TableTd>
-                                    <TableTd className="text-xs text-gray-300 max-w-xs">
+                                    <TableTd className="font-medium text-foreground">{c.claim_type_name}</TableTd>
+                                    <TableTd className="font-semibold text-foreground text-base">{formatRp(c.total_amount)}</TableTd>
+                                    <TableTd className="text-xs text-muted-foreground max-w-xs">
                                         <div className="truncate">{c.description}</div>
                                         {c.receipt_url && (
-                                            <a href={c.receipt_url} target="_blank" rel="noreferrer" className="text-cyan-400 hover:underline flex items-center gap-1 mt-0.5">
+                                            <a href={c.receipt_url} target="_blank" rel="noreferrer" className="text-primary hover:underline flex items-center gap-1 mt-0.5">
                                                 <ExternalLink className="h-3 w-3" /> Bukti Kuitansi
                                             </a>
                                         )}
                                     </TableTd>
                                     <TableTd>
-                                        <Badge color={
-                                            c.status === 'paid' ? 'green' :
-                                            c.status === 'approved' ? 'blue' :
-                                            c.status === 'rejected' ? 'red' : 'amber'
+                                        <Badge variant={
+                                            c.status === 'paid' ? 'success' :
+                                            c.status === 'approved' ? 'info' :
+                                            c.status === 'rejected' ? 'danger' : 'warning'
                                         }>
                                             {c.status === 'paid' ? 'Dicairkan' :
                                              c.status === 'approved' ? 'Disetujui' :
@@ -180,7 +179,7 @@ export default function ExpenseClaimsView() {
                                     </TableTd>
                                     <TableTd className="text-right">
                                         {(c.status === 'pending' || c.status === 'approved') && (
-                                            <Button size="sm" variant="filled" color="emerald" onClick={() => {
+                                            <Button size="sm" variant="primary" onClick={() => {
                                                 setSelectedClaim(c);
                                                 setReviewAction(c.status === 'pending' ? 'approve' : 'mark_paid');
                                                 setReviewModalOpen(true);

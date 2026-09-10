@@ -611,10 +611,15 @@ export default function AdminDashboard() {
             ALL_NAV_ITEMS['stock-workspace'],
             ALL_NAV_ITEMS['buying-workspace'],
             ALL_NAV_ITEMS['selling-workspace'],
-            ALL_NAV_ITEMS['accounting-workspace'],
-            ...(activeModule === 'insights' && (insightsIds.length === 0 || insightsIds.includes('analytics')) ? [ALL_NAV_ITEMS['analytics']] : []),
-            ...(activeModule === 'insights' && (insightsIds.length === 0 || insightsIds.includes('reports')) ? [ALL_NAV_ITEMS['reports']] : []),
-            ALL_NAV_ITEMS['hr-workspace'],
+            ...(activeModule === 'insights' ? [
+                ALL_NAV_ITEMS['executive-cockpit'],
+                ALL_NAV_ITEMS['working-capital'],
+                ALL_NAV_ITEMS['profitability-matrix'],
+                ALL_NAV_ITEMS['central-reports'],
+                ALL_NAV_ITEMS['pivot-explorer'],
+                ...(insightsIds.includes('analytics') ? [ALL_NAV_ITEMS['analytics']] : []),
+                ...(insightsIds.includes('reports') ? [ALL_NAV_ITEMS['reports']] : []),
+            ].filter(Boolean) : []),
             {
                 id: 'organization_group',
                 label: 'Organization',
@@ -957,7 +962,8 @@ export default function AdminDashboard() {
             'commercial': ['selling-workspace', 'analytics', 'reports', 'commercial_group'],
             'finance': ['accounting-workspace', 'analytics', 'reports', 'finance_group'],
             'hr': ['hr-workspace', 'dashboard', 'analytics', 'reports', 'hr_group'],
-            'admin': ['dashboard', 'analytics', 'reports', 'settings_group']
+            'admin': ['dashboard', 'analytics', 'reports', 'settings_group'],
+            'insights': ['executive-cockpit', 'working-capital', 'profitability-matrix', 'central-reports', 'pivot-explorer', 'analytics', 'reports'],
         };
 
         const allowedGroupIds = moduleToGroupId[activeModule] || [];

@@ -994,7 +994,7 @@ export const CompanyManagement: React.FC = () => {
                                                         const file = e.target.files?.[0];
                                                         if (file) {
                                                             try {
-                                                                const uploaded = await settingsApi.uploadFile(file);
+                                                                const uploaded = await settingsApi.uploadFile(file, editingCompany?.id);
                                                                 if (uploaded?.url) {
                                                                     setFormData(prev => ({ ...prev, logo_url: uploaded.url }));
                                                                     showToast('Logo berhasil diunggah', 'success');

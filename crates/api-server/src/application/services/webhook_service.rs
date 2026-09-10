@@ -9,6 +9,8 @@
 //! Events are emitted from domain services via the EventBus and
 //! automatically dispatched to registered webhook subscribers.
 
+#![allow(dead_code)]
+
 use chrono::{DateTime, Utc};
 use management_system_core::domain::errors::{DomainError, DomainResult};
 use serde::{Deserialize, Serialize};

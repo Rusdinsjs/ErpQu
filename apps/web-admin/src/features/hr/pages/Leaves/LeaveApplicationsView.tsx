@@ -5,8 +5,8 @@ import { hrLeavesApi, type HrLeaveApplication } from'../../api/hr-leaves';
 import { employeeApi } from'../../api/employee';
 import {
     Button, Card, Table, TableHead, TableBody, TableRow, TableTh, TableTd, TableEmpty,
-    Badge, ActionIcon, Modal, Input, Select, useToast, LoadingOverlay, Textarea,
-} from'../../../../components/ui';
+    Badge, ActionIcon, Modal, Input, Select, useToast, LoadingOverlay, Textarea, PageHeader,
+} from '../../../../components/ui';
 
 export default function LeaveApplicationsView() {
     const qc = useQueryClient();
@@ -99,19 +99,20 @@ export default function LeaveApplicationsView() {
         setReviewModalOpen(true);
     };
 
-    const filtered = applications.filter(a =>
+    const applicationsList = Array.isArray(applications) ? applications : [];
+    const filtered = applicationsList.filter(a =>
         (a.employee_name || '').toLowerCase().includes(search.toLowerCase()) ||
         (a.employee_nik || '').toLowerCase().includes(search.toLowerCase()) ||
         (a.leave_type_name || '').toLowerCase().includes(search.toLowerCase()) ||
-        a.reason.toLowerCase().includes(search.toLowerCase())
+        (a.reason || '').toLowerCase().includes(search.toLowerCase())
     );
 
     const getStatusBadge = (status: string) => {
         switch (status) {
-            case 'approved': return <Badge color="green">Disetujui</Badge>;
-            case 'rejected': return <Badge color="red">Ditolak</Badge>;
-            case 'cancelled': return <Badge color="gray">Dibatalkan</Badge>;
-            default: return <Badge color="yellow">Menunggu Persetujuan</Badge>;
+            case 'approved': return <Badge variant="success">Disetujui</Badge>;
+            case 'rejected': return <Badge variant="danger">Ditolak</Badge>;
+            case 'cancelled': return <Badge variant="neutral">Dibatalkan</Badge>;
+            default: return <Badge variant="warning">Menunggu Persetujuan</Badge>;
         }
     };
 
@@ -133,18 +134,16 @@ export default function LeaveApplicationsView() {
 
     return (
         <div className="p-6 space-y-6">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-                        <Calendar className="h-6 w-6 text-emerald-400" />
-                        Permohonan Cuti & Izin
-                    </h1>
-                    <p className="text-gray-400 text-sm mt-1">Pengajuan cuti karyawan dan workflow persetujuan atasan/HRD</p>
-                </div>
-                <Button onClick={() => { resetForm(); setModalOpen(true); }} leftIcon={<Plus className="h-4 w-4" />} variant="filled" color="emerald">
-                    Ajukan Cuti
-                </Button>
-            </div>
+            <PageHeader
+                title="Permohonan Cuti & Izin"
+                subtitle="Pengajuan cuti karyawan dan workflow persetujuan atasan/HRD"
+                icon={<Calendar className="h-6 w-6 text-primary" />}
+                actions={
+                    <Button onClick={() => { resetForm(); setModalOpen(true); }} leftIcon={<Plus className="h-4 w-4" />} variant="primary">
+                        Ajukan Cuti
+                    </Button>
+                }
+            />
 
             <Card>
                 <div className="p-4 border-b border-white/10 flex flex-wrap items-center justify-between gap-3">

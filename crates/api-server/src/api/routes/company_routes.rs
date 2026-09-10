@@ -3,7 +3,7 @@
 use crate::api::handlers::company_handler;
 use crate::api::server::AppState;
 use axum::{
-    routing::{delete, get, post, put},
+    routing::{get, post},
     Router,
 };
 

@@ -107,23 +107,37 @@ export interface HrEmployeeAppraisal {
     created_at: string;
 }
 
+const safeArray = <T>(res: any): T[] => {
+    if (!res) return [];
+    if (Array.isArray(res)) return res;
+    if (Array.isArray(res.data)) return res.data;
+    if (res.data && Array.isArray(res.data.data)) return res.data.data;
+    return [];
+};
+
+const safeData = <T>(res: any, fallback: T): T => {
+    if (!res) return fallback;
+    if (res.data !== undefined) return res.data;
+    return res as T;
+};
+
 export const hrLoansClaimsKpiApi = {
     // Loans
-    listLoanTypes: () => api.get<HrLoanType[]>('/hr/loan-types').then(r => r.data),
-    listEmployeeLoans: (params?: any) => api.get<HrEmployeeLoan[]>('/hr/employee-loans', { params }).then(r => r.data),
-    applyLoan: (data: any) => api.post('/hr/employee-loans', data).then(r => r.data),
-    reviewLoan: (id: string, data: any) => api.post(`/hr/employee-loans/${id}/review`, data).then(r => r.data),
-    listSchedules: (loanId: string) => api.get<HrLoanRepaymentSchedule[]>(`/hr/employee-loans/${loanId}/schedules`).then(r => r.data),
+    listLoanTypes: () => api.get<any>('/hr/loan-types').then(r => safeArray<HrLoanType>(r.data)),
+    listEmployeeLoans: (params?: any) => api.get<any>('/hr/employee-loans', { params }).then(r => safeArray<HrEmployeeLoan>(r.data)),
+    applyLoan: (data: any) => api.post('/hr/employee-loans', data).then(r => safeData(r.data, {})),
+    reviewLoan: (id: string, data: any) => api.post(`/hr/employee-loans/${id}/review`, data).then(r => safeData(r.data, {})),
+    listSchedules: (loanId: string) => api.get<any>(`/hr/employee-loans/${loanId}/schedules`).then(r => safeArray<HrLoanRepaymentSchedule>(r.data)),
 
     // Expense Claims
-    listExpenseClaimTypes: () => api.get<HrExpenseClaimType[]>('/hr/expense-claim-types').then(r => r.data),
-    listExpenseClaims: (params?: any) => api.get<HrExpenseClaim[]>('/hr/expense-claims', { params }).then(r => r.data),
-    createExpenseClaim: (data: any) => api.post('/hr/expense-claims', data).then(r => r.data),
-    reviewExpenseClaim: (id: string, data: any) => api.post(`/hr/expense-claims/${id}/review`, data).then(r => r.data),
+    listExpenseClaimTypes: () => api.get<any>('/hr/expense-claim-types').then(r => safeArray<HrExpenseClaimType>(r.data)),
+    listExpenseClaims: (params?: any) => api.get<any>('/hr/expense-claims', { params }).then(r => safeArray<HrExpenseClaim>(r.data)),
+    createExpenseClaim: (data: any) => api.post('/hr/expense-claims', data).then(r => safeData(r.data, {})),
+    reviewExpenseClaim: (id: string, data: any) => api.post(`/hr/expense-claims/${id}/review`, data).then(r => safeData(r.data, {})),
 
     // Appraisal & KPI
-    listAppraisalTemplates: () => api.get<HrAppraisalTemplate[]>('/hr/appraisal-templates').then(r => r.data),
-    listTemplateItems: (templateId: string) => api.get<HrAppraisalTemplateItem[]>(`/hr/appraisal-templates/${templateId}/items`).then(r => r.data),
-    listEmployeeAppraisals: (params?: any) => api.get<HrEmployeeAppraisal[]>('/hr/employee-appraisals', { params }).then(r => r.data),
-    submitAppraisal: (data: any) => api.post('/hr/employee-appraisals', data).then(r => r.data),
+    listAppraisalTemplates: () => api.get<any>('/hr/appraisal-templates').then(r => safeArray<HrAppraisalTemplate>(r.data)),
+    listTemplateItems: (templateId: string) => api.get<any>(`/hr/appraisal-templates/${templateId}/items`).then(r => safeArray<HrAppraisalTemplateItem>(r.data)),
+    listEmployeeAppraisals: (params?: any) => api.get<any>('/hr/employee-appraisals', { params }).then(r => safeArray<HrEmployeeAppraisal>(r.data)),
+    submitAppraisal: (data: any) => api.post('/hr/employee-appraisals', data).then(r => safeData(r.data, {})),
 };

@@ -29,7 +29,7 @@ import {
     Modal,
     Textarea,
     LoadingOverlay,
-    Tabs, TabsContent,
+    Tabs, TabsList, TabsTrigger, TabsContent,
     useToast,
     Input,
     Table, TableHead, TableBody, TableRow, TableTh, TableTd

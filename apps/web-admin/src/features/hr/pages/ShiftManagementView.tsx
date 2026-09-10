@@ -6,8 +6,8 @@ import { hrShiftApi, type HrShiftType, type HrShiftAssignment } from'../api/hr-s
 import { employeeApi } from'../api/employee';
 import {
     Button, Card, CardHeader, CardTitle, CardContent, Table, TableHead, TableBody, TableRow, TableTh, TableTd, TableEmpty,
-    Badge, ActionIcon, Modal, Input, Select, useToast, LoadingOverlay, Tabs, TabsList, TabsTrigger, TabsContent, DateInput,
-} from'../../../components/ui';
+    Badge, ActionIcon, Modal, Input, Select, useToast, LoadingOverlay, Tabs, TabsList, TabsTrigger, TabsContent, DateInput, PageHeader,
+} from '../../../components/ui';
 
 export default function ShiftManagementView() {
     const qc = useQueryClient();
@@ -52,6 +52,10 @@ export default function ShiftManagementView() {
         queryKey: ['employees'],
         queryFn: () => employeeApi.list(),
     });
+
+    const shiftsList = Array.isArray(shifts) ? shifts : [];
+    const assignmentsList = Array.isArray(assignments) ? assignments : [];
+    const employeesList = Array.isArray(employees) ? employees : [];
 
     const createShiftMutation = useMutation({
         mutationFn: hrShiftApi.createShift,
@@ -140,16 +144,12 @@ export default function ShiftManagementView() {
     };
 
     return (
-        <div className="p-6 space-y-6">
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-                        <Clock className="h-6 w-6 text-blue-400" />
-                        Manajemen Shift & Roster
-                    </h1>
-                    <p className="text-gray-400 text-sm mt-1">Pengaturan jam kerja dinamis, toleransi telat, dan penugasan roster karyawan</p>
-                </div>
-            </div>
+        <div className="space-y-6">
+            <PageHeader
+                title="Manajemen Shift & Roster"
+                description="Pengaturan jam kerja dinamis, toleransi telat, dan penugasan roster karyawan"
+                badge={`${shiftsList.length} Shift Terdaftar`}
+            />
 
             <Tabs defaultValue="roster">
                 <TabsList className="grid grid-cols-2 max-w-md mb-4">
@@ -160,9 +160,9 @@ export default function ShiftManagementView() {
                 {/* Roster Assignment */}
                 <TabsContent value="roster">
                     <Card>
-                        <CardHeader className="flex flex-row items-center justify-between border-b border-white/10 pb-4">
+                        <CardHeader className="flex flex-row items-center justify-between border-b border-border pb-4">
                             <CardTitle>Daftar Penugasan Shift Karyawan</CardTitle>
-                            <Button onClick={() => setAssignModalOpen(true)} leftIcon={<Plus className="h-4 w-4" />} variant="filled" color="blue">
+                            <Button onClick={() => setAssignModalOpen(true)} leftIcon={<Plus className="h-4 w-4" />} variant="primary">
                                 Tugaskan Shift Roster
                             </Button>
                         </CardHeader>
@@ -180,26 +180,26 @@ export default function ShiftManagementView() {
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
-                                    {assignments.length === 0 ? (
+                                    {assignmentsList.length === 0 ? (
                                         <TableEmpty colSpan={6} message="Belum ada penugasan shift roster" />
-                                    ) : assignments.map(a => (
+                                    ) : assignmentsList.map(a => (
                                         <TableRow key={a.id}>
                                             <TableTd>
-                                                <div className="font-medium text-white">{a.employee_name}</div>
-                                                <div className="text-xs text-gray-400">{a.employee_nik}</div>
+                                                <div className="font-medium text-foreground">{a.employee_name}</div>
+                                                <div className="text-xs text-muted-foreground">{a.employee_nik}</div>
                                             </TableTd>
                                             <TableTd>
                                                 <span className="px-2 py-1 rounded text-xs font-semibold" style={{ backgroundColor: `${a.color || '#3B82F6'}20`, color: a.color || '#3B82F6' }}>
                                                     {a.shift_name} ({a.shift_code || 'SFT'})
                                                 </span>
                                             </TableTd>
-                                            <TableTd className="font-mono text-xs text-gray-300">
+                                            <TableTd className="font-mono text-xs text-muted-foreground">
                                                 {a.start_time} - {a.end_time}
                                             </TableTd>
-                                            <TableTd className="text-xs text-gray-300">
+                                            <TableTd className="text-xs text-muted-foreground">
                                                 {dayjs(a.start_date).format('DD MMM YYYY')} s/d {a.end_date ? dayjs(a.end_date).format('DD MMM YYYY') : 'Seterusnya'}
                                             </TableTd>
-                                            <TableTd className="text-xs text-gray-400">{a.notes || '-'}</TableTd>
+                                            <TableTd className="text-xs text-muted-foreground">{a.notes || '-'}</TableTd>
                                             <TableTd className="text-right">
                                                 <ActionIcon onClick={() => { if (confirm('Hapus penugasan ini?')) deleteAssignMutation.mutate(a.id); }} color="red" title="Hapus">
                                                     <Trash2 className="h-4 w-4" />
@@ -216,9 +216,9 @@ export default function ShiftManagementView() {
                 {/* Master Shifts */}
                 <TabsContent value="master">
                     <Card>
-                        <CardHeader className="flex flex-row items-center justify-between border-b border-white/10 pb-4">
+                        <CardHeader className="flex flex-row items-center justify-between border-b border-border pb-4">
                             <CardTitle>Master Jenis Shift</CardTitle>
-                            <Button onClick={() => { resetShiftForm(); setShiftModalOpen(true); }} leftIcon={<Plus className="h-4 w-4" />} variant="filled" color="blue">
+                            <Button onClick={() => { resetShiftForm(); setShiftModalOpen(true); }} leftIcon={<Plus className="h-4 w-4" />} variant="primary">
                                 Tambah Shift
                             </Button>
                         </CardHeader>
@@ -237,19 +237,19 @@ export default function ShiftManagementView() {
                                     </TableRow>
                                 </TableHead>
                                 <TableBody>
-                                    {shifts.length === 0 ? (
+                                    {shiftsList.length === 0 ? (
                                         <TableEmpty colSpan={7} message="Belum ada data shift" />
-                                    ) : shifts.map(s => (
+                                    ) : shiftsList.map(s => (
                                         <TableRow key={s.id}>
-                                            <TableTd className="font-medium text-white flex items-center gap-2">
+                                            <TableTd className="font-medium text-foreground flex items-center gap-2">
                                                 <div className="w-3 h-3 rounded-full" style={{ backgroundColor: s.color || '#3B82F6' }} />
                                                 {s.name}
                                             </TableTd>
-                                            <TableTd><span className="font-mono text-xs bg-white/10 px-2 py-1 rounded">{s.code || '-'}</span></TableTd>
+                                            <TableTd><span className="font-mono text-xs bg-muted px-2 py-1 rounded text-foreground">{s.code || '-'}</span></TableTd>
                                             <TableTd className="font-mono text-sm">{s.start_time} - {s.end_time}</TableTd>
-                                            <TableTd><Badge color="yellow">{s.late_tolerance_minutes} Menit</Badge></TableTd>
-                                            <TableTd className="text-xs text-gray-300">{s.break_start_time && s.break_end_time ? `${s.break_start_time} - ${s.break_end_time}` : '-'}</TableTd>
-                                            <TableTd>{s.is_night_shift ? <Badge color="purple">Overnight</Badge> : <Badge color="gray">Day</Badge>}</TableTd>
+                                            <TableTd><Badge variant="warning">{s.late_tolerance_minutes} Menit</Badge></TableTd>
+                                            <TableTd className="text-xs text-muted-foreground">{s.break_start_time && s.break_end_time ? `${s.break_start_time} - ${s.break_end_time}` : '-'}</TableTd>
+                                            <TableTd>{s.is_night_shift ? <Badge variant="info">Overnight</Badge> : <Badge variant="default">Day</Badge>}</TableTd>
                                             <TableTd className="text-right">
                                                 <div className="flex justify-end gap-2">
                                                     <ActionIcon onClick={() => handleOpenEditShift(s)} title="Edit"><Edit className="h-4 w-4" /></ActionIcon>
@@ -283,11 +283,11 @@ export default function ShiftManagementView() {
                         <Input label="Selesai Istirahat" type="time" value={shiftForm.break_end_time} onChange={e => setShiftForm(p => ({ ...p, break_end_time: e.target.value }))} />
                     </div>
                     <div className="flex items-center gap-2">
-                        <input type="checkbox" id="night" checked={shiftForm.is_night_shift} onChange={e => setShiftForm(p => ({ ...p, is_night_shift: e.target.checked }))} className="w-4 h-4 accent-purple-500" />
-                        <label htmlFor="night" className="text-sm text-gray-300">Shift Malam / Lintas Hari (Overnight)</label>
+                        <input type="checkbox" id="night" checked={shiftForm.is_night_shift} onChange={e => setShiftForm(p => ({ ...p, is_night_shift: e.target.checked }))} className="w-4 h-4 accent-primary cursor-pointer" />
+                        <label htmlFor="night" className="text-sm text-foreground cursor-pointer">Shift Malam / Lintas Hari (Overnight)</label>
                     </div>
                     <div className="flex gap-3 pt-2">
-                        <Button variant="filled" color="blue" onClick={handleSaveShift} loading={createShiftMutation.isPending || updateShiftMutation.isPending} className="flex-1">Simpan Shift</Button>
+                        <Button variant="primary" onClick={handleSaveShift} loading={createShiftMutation.isPending || updateShiftMutation.isPending} className="flex-1">Simpan Shift</Button>
                         <Button variant="outline" onClick={() => { setShiftModalOpen(false); resetShiftForm(); }}>Batal</Button>
                     </div>
                 </div>
@@ -296,16 +296,16 @@ export default function ShiftManagementView() {
             {/* Modal Assignment */}
             <Modal opened={assignModalOpen} onClose={() => setAssignModalOpen(false)} title="Penugasan Shift Roster" size="lg">
                 <div className="space-y-4">
-                    <Select label="Pilih Shift *" value={assignForm.shift_type_id} onChange={v => setAssignForm(p => ({ ...p, shift_type_id: v }))} options={[{ value: '', label: 'Pilih Jenis Shift' }, ...(Array.isArray(shifts) ? shifts : []).map(s => ({ value: s.id, label: `${s.name} (${s.start_time} - ${s.end_time})` }))]} />
+                    <Select label="Pilih Shift *" value={assignForm.shift_type_id} onChange={v => setAssignForm(p => ({ ...p, shift_type_id: v }))} options={[{ value: '', label: 'Pilih Jenis Shift' }, ...shiftsList.map(s => ({ value: s.id, label: `${s.name} (${s.start_time} - ${s.end_time})` }))]} />
                     <div className="grid grid-cols-2 gap-4">
                         <DateInput label="Tanggal Mulai *" value={assignForm.start_date} onChange={v => setAssignForm(p => ({ ...p, start_date: v }))} />
                         <DateInput label="Tanggal Selesai (Opsional)" value={assignForm.end_date} onChange={v => setAssignForm(p => ({ ...p, end_date: v }))} />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-2">Pilih Karyawan ({assignForm.employee_ids.length} dipilih)</label>
-                        <div className="max-h-48 overflow-y-auto p-2 bg-white/5 rounded-lg border border-white/10 space-y-1">
-                            {(Array.isArray(employees) ? employees : []).map(emp => (
-                                <label key={emp.id} className="flex items-center gap-2 p-1.5 hover:bg-white/5 rounded cursor-pointer text-sm">
+                        <label className="block text-sm font-medium text-foreground mb-2">Pilih Karyawan ({assignForm.employee_ids.length} dipilih)</label>
+                        <div className="max-h-48 overflow-y-auto p-2 bg-muted/30 rounded-lg border border-border space-y-1">
+                            {employeesList.map(emp => (
+                                <label key={emp.id} className="flex items-center gap-2 p-1.5 hover:bg-muted/50 rounded cursor-pointer text-sm">
                                     <input
                                         type="checkbox"
                                         checked={assignForm.employee_ids.includes(emp.id)}
@@ -313,17 +313,17 @@ export default function ShiftManagementView() {
                                             if (e.target.checked) setAssignForm(p => ({ ...p, employee_ids: [...p.employee_ids, emp.id] }));
                                             else setAssignForm(p => ({ ...p, employee_ids: p.employee_ids.filter(id => id !== emp.id) }));
                                         }}
-                                        className="w-4 h-4 accent-blue-500"
+                                        className="w-4 h-4 accent-primary cursor-pointer"
                                     />
-                                    <span className="text-white">{emp.name}</span>
-                                    <span className="text-gray-500 text-xs">({emp.nik})</span>
+                                    <span className="text-foreground">{emp.name}</span>
+                                    <span className="text-muted-foreground text-xs">({emp.nik})</span>
                                 </label>
                             ))}
                         </div>
                     </div>
                     <Input label="Catatan" value={assignForm.notes} onChange={e => setAssignForm(p => ({ ...p, notes: e.target.value }))} placeholder="Keterangan penugasan roster..." />
                     <div className="flex gap-3 pt-2">
-                        <Button variant="filled" color="blue" onClick={handleSaveAssignment} loading={bulkAssignMutation.isPending} className="flex-1">Tugaskan Karyawan</Button>
+                        <Button variant="primary" onClick={handleSaveAssignment} loading={bulkAssignMutation.isPending} className="flex-1">Tugaskan Karyawan</Button>
                         <Button variant="outline" onClick={() => setAssignModalOpen(false)}>Batal</Button>
                     </div>
                 </div>

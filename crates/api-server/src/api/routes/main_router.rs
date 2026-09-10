@@ -508,6 +508,18 @@ pub fn create_router(state: AppState) -> Router {
             "/api/analytics/executive-bi",
             get(analytics_handler::get_executive_bi_summary),
         )
+        .route(
+            "/api/analytics/working-capital",
+            get(analytics_handler::get_working_capital_analytics),
+        )
+        .route(
+            "/api/analytics/profitability-matrix",
+            get(analytics_handler::get_profitability_matrix),
+        )
+        .route(
+            "/api/analytics/pivot-dataset",
+            get(analytics_handler::get_pivot_dataset),
+        )
         // Settings
         // Settings route moved to settings_routes.rs
         .route("/api/dashboard", get(get_dashboard_stats))

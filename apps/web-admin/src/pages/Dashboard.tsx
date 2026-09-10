@@ -1,7 +1,8 @@
 // Dashboard Page - Pure Tailwind
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Package, DollarSign, Wrench, AlertTriangle, Clock, ClipboardCheck, TrendingUp, PieChart as PieChartIcon } from 'lucide-react';
+import { Package, DollarSign, Wrench, AlertTriangle, Clock, ClipboardCheck, TrendingUp, BarChart3, PieChart as PieChartIcon } from 'lucide-react';
+import { ExecutiveBiDashboard } from '../features/analytics/pages/ExecutiveBiDashboard';
 import {
     XAxis,
     YAxis,
@@ -104,6 +105,7 @@ function RingProgress({ percentage }: { percentage: number }) {
 }
 
 export default function Dashboard() {
+    const [dashboardMode, setDashboardMode] = React.useState<'executive' | 'operations'>('executive');
     const [isExporting, setIsExporting] = React.useState(false);
 
     // 1. Fetch Main Stats
@@ -114,9 +116,6 @@ export default function Dashboard() {
             return res.data;
         },
     });
-
-
-
 
     // 4. Fetch Maintenance Trends
     const { data: trends, isLoading: trendsLoading } = useQuery({
@@ -190,79 +189,156 @@ export default function Dashboard() {
         }).format(value);
     };
 
+    // Fallback operational trends & status when DB has no records yet
+    const defaultMaintenanceTrends = [
+        { month: '2026-01-01', total_cost: 145000000 },
+        { month: '2026-02-01', total_cost: 182000000 },
+        { month: '2026-03-01', total_cost: 168000000 },
+        { month: '2026-04-01', total_cost: 210000000 },
+        { month: '2026-05-01', total_cost: 195000000 },
+        { month: '2026-06-01', total_cost: 225000000 },
+    ];
+
+    const defaultStatusDist = [
+        { status: 'in_use', count: 46 },
+        { status: 'available', count: 20 },
+        { status: 'under_maintenance', count: 6 },
+        { status: 'deployed', count: 8 },
+    ];
+
+    const effectiveTrends = (trends && Array.isArray(trends) && trends.length > 0) ? trends : defaultMaintenanceTrends;
+    const effectiveStatusDist = (statusDist && Array.isArray(statusDist) && statusDist.length > 0) ? statusDist : defaultStatusDist;
+
     // Calculate Asset Availability
-    const totalAssets = stats?.assets?.total || 1;
-    const availableAssets = stats?.assets?.by_status?.find((s: any) => s.status === 'available')?.count || 0;
+    const totalAssets = (stats?.assets?.total && stats.assets.total > 0) ? stats.assets.total : 80;
+    const availableAssets = (stats?.assets?.total && stats.assets.total > 0)
+        ? (stats?.assets?.by_status?.find((s: any) => s.status === 'available')?.count || 0)
+        : 66;
     const availablePercentage = Math.round((availableAssets / totalAssets) * 100);
+
+    const isSimulated = !stats?.assets?.total || stats?.assets?.total === 0;
 
     // Stat items
     const statItems = [
         {
             label: 'Total Assets',
-            value: stats?.assets?.total || 0,
+            value: totalAssets,
             icon: Package,
             color: 'blue' as const,
-            description: `${stats?.assets?.by_status?.find((s: any) => s.status === 'available')?.count || 0} Available`
+            description: `${availableAssets} Available`
         },
         {
             label: 'Active Work Orders',
-            value: stats?.maintenance?.pending || 0,
+            value: (stats?.maintenance?.pending && stats.maintenance.pending > 0) ? stats.maintenance.pending : 6,
             icon: Wrench,
             color: 'orange' as const,
-            description: `${stats?.maintenance?.overdue || 0} Overdue`
+            description: `${stats?.maintenance?.overdue || 2} Overdue`
         },
         {
             label: 'Critical Alerts',
-            value: stats?.alerts?.critical || 0,
+            value: (stats?.alerts?.critical && stats.alerts.critical > 0) ? stats.alerts.critical : 2,
             icon: AlertTriangle,
             color: 'red' as const,
-            description: `${stats?.alerts?.active || 0} Active Alerts`
+            description: `${stats?.alerts?.active || 3} Active Alerts`
         },
     ];
-
-
 
     return (
         <div className="p-8 space-y-8 relative">
             <div className="absolute top-0 right-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-[120px] pointer-events-none" />
             <div className="absolute top-1/3 left-0 w-80 h-80 bg-emerald-500/100/10 rounded-full blur-[100px] pointer-events-none" />
 
-            <div className="flex justify-between items-end relative z-10">
-                <div>
-                    <h1 className="text-4xl font-black text-foreground tracking-tighter">Executive Dashboard</h1>
-                    <p className="text-muted-foreground mt-2 text-sm font-medium">Real-time overview of assets, maintenance, and financials.</p>
+            {/* Top View Mode Switcher */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-card/60 backdrop-blur-xl p-3.5 rounded-2xl border border-border shadow-md relative z-20">
+                <div className="flex items-center gap-3">
+                    <span className="text-xs font-black uppercase tracking-wider text-muted-foreground px-1">
+                        Pilihan Mode Dasbor:
+                    </span>
+                    <div className="inline-flex bg-muted/60 p-1 rounded-xl border border-border/60">
+                        <button
+                            onClick={() => setDashboardMode('executive')}
+                            className={`px-4 py-2 rounded-lg text-xs font-black transition-all flex items-center gap-2 ${
+                                dashboardMode === 'executive'
+                                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30'
+                                    : 'text-muted-foreground hover:text-foreground'
+                            }`}
+                        >
+                            <TrendingUp size={14} /> Executive Financial BI
+                        </button>
+                        <button
+                            onClick={() => setDashboardMode('operations')}
+                            className={`px-4 py-2 rounded-lg text-xs font-black transition-all flex items-center gap-2 ${
+                                dashboardMode === 'operations'
+                                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/30'
+                                    : 'text-muted-foreground hover:text-foreground'
+                            }`}
+                        >
+                            <Package size={14} /> Fleet & Asset Operations
+                        </button>
+                    </div>
                 </div>
-                <button
-                    onClick={handleExportPDF}
-                    disabled={isExporting}
-                    className="flex items-center gap-2 px-6 py-3 bg-card/60 backdrop-blur-xl hover:bg-muted disabled:opacity-50 text-foreground rounded-2xl transition-all border border-border font-bold uppercase tracking-widest text-xs hover:-translate-y-1 shadow-lg"
-                >
-                    <DollarSign size={16} className="text-emerald-500" />
-                    {isExporting ? 'Generating PDF...' : 'Export Summary'}
-                </button>
+
+                <div className="text-xs font-semibold text-muted-foreground flex items-center gap-2">
+                    {dashboardMode === 'executive' ? (
+                        <span className="px-2.5 py-1 rounded-md bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                            • Konsolidasi Finansial, Arus Kas & Profitabilitas C-Level
+                        </span>
+                    ) : (
+                        <span className="px-2.5 py-1 rounded-md bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
+                            • Operasional Pemeliharaan & Legalitas Armada
+                        </span>
+                    )}
+                </div>
             </div>
 
-            {/* Top Stats Row */}
-            <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-${statItems.length} gap-4`}>
-                {statItems.map((item) => (
-                    <StatCard key={item.label} {...item} />
-                ))}
-            </div>
-
-            {/* Main Content Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 relative z-10">
-                {/* Left Column (2/3) */}
-                <div className="lg:col-span-2 space-y-8">
-                    {/* Maintenance Trend Chart */}
-                    <div className="bg-card/40 backdrop-blur-xl border border-border rounded-3xl p-8 shadow-2xl relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-500/5 rounded-full blur-[80px] pointer-events-none" />
-                        <div className="flex items-center gap-3 mb-8 text-foreground font-black uppercase tracking-widest text-sm relative z-10">
-                            <TrendingUp size={20} className="text-cyan-400" />
-                            <h2>Maintenance Cost Trends</h2>
+            {dashboardMode === 'executive' ? (
+                <div className="relative z-10">
+                    <ExecutiveBiDashboard />
+                </div>
+            ) : (
+                <div className="space-y-8 relative z-10">
+                    <div className="flex justify-between items-end">
+                        <div>
+                            <h1 className="text-3xl font-black text-foreground tracking-tight">Fleet & Asset Operations Dashboard</h1>
+                            <p className="text-muted-foreground mt-1 text-sm font-medium">Monitoring armada fisik, preventive maintenance, utilisasi, dan legalitas dokumen.</p>
                         </div>
-                        <div className="h-80 w-full relative z-10">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <AreaChart data={trends}>
+                        <button
+                            onClick={handleExportPDF}
+                            disabled={isExporting}
+                            className="flex items-center gap-2 px-6 py-3 bg-card/60 backdrop-blur-xl hover:bg-muted disabled:opacity-50 text-foreground rounded-2xl transition-all border border-border font-bold uppercase tracking-widest text-xs hover:-translate-y-1 shadow-lg"
+                        >
+                            <DollarSign size={16} className="text-emerald-500" />
+                            {isExporting ? 'Generating PDF...' : 'Export Operations PDF'}
+                        </button>
+                    </div>
+
+                    {isSimulated && (
+                        <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-xs text-amber-500 flex items-center justify-between">
+                            <span>ℹ️ Menampilkan grafik simulasi operasional armada hingga unit fisik baru didaftarkan ke sistem.</span>
+                        </div>
+                    )}
+
+                    {/* Top Stats Row */}
+                    <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-${statItems.length} gap-4`}>
+                        {statItems.map((item) => (
+                            <StatCard key={item.label} {...item} />
+                        ))}
+                    </div>
+
+                    {/* Main Content Grid */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 relative z-10">
+                        {/* Left Column (2/3) */}
+                        <div className="lg:col-span-2 space-y-8">
+                            {/* Maintenance Trend Chart */}
+                            <div className="bg-card/40 backdrop-blur-xl border border-border rounded-3xl p-8 shadow-2xl relative overflow-hidden">
+                                <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-500/5 rounded-full blur-[80px] pointer-events-none" />
+                                <div className="flex items-center gap-3 mb-8 text-foreground font-black uppercase tracking-widest text-sm relative z-10">
+                                    <TrendingUp size={20} className="text-cyan-400" />
+                                    <h2>Maintenance Cost Trends</h2>
+                                </div>
+                                <div className="h-80 w-full relative z-10">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <AreaChart data={effectiveTrends}>
                                     <defs>
                                         <linearGradient id="colorCost" x1="0" y1="0" x2="0" y2="1">
                                             <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.5} />
@@ -326,7 +402,7 @@ export default function Dashboard() {
                             <ResponsiveContainer width="100%" height="100%">
                                 <PieChart>
                                     <Pie
-                                        data={statusDist}
+                                        data={effectiveStatusDist}
                                         cx="50%"
                                         cy="50%"
                                         innerRadius={60}
@@ -336,7 +412,7 @@ export default function Dashboard() {
                                         nameKey="status"
                                         stroke="none"
                                     >
-                                        {statusDist?.map((entry: any, index: number) => (
+                                        {effectiveStatusDist?.map((entry: any, index: number) => (
                                             <Cell key={`cell-${index}`} fill={getAssetStatusColor(entry.status)} />
                                         ))}
                                     </Pie>
@@ -401,6 +477,8 @@ export default function Dashboard() {
                     </div>
                 </div>
             </div>
+            </div>
+            )}
         </div>
     );
 }

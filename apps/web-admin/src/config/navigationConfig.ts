@@ -17,6 +17,11 @@ export const ALL_NAV_ITEMS: Record<string, NavItem> = {
     'dashboard': { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard Overview', minLevel: 5 },
     'analytics': { id: 'analytics', icon: TrendingUp, label: 'Performance Analytics', minLevel: 3 },
     'reports': { id: 'reports', icon: FileText, label: 'Management Reports', minLevel: 3 },
+    'executive-cockpit': { id: 'executive-cockpit', icon: LayoutDashboard, label: 'Executive Cockpit BI', path: '/insights/executive-cockpit', minLevel: 3 },
+    'working-capital': { id: 'working-capital', icon: Activity, label: 'Working Capital & CCC', path: '/insights/working-capital', minLevel: 3 },
+    'profitability-matrix': { id: 'profitability-matrix', icon: TrendingUp, label: 'Profitability Matrix', path: '/insights/profitability-matrix', minLevel: 3 },
+    'central-reports': { id: 'central-reports', icon: FileSpreadsheet, label: 'Central Report Hub', path: '/insights/central-reports', minLevel: 3 },
+    'pivot-explorer': { id: 'pivot-explorer', icon: BarChart2, label: 'Interactive Pivot Explorer', path: '/insights/pivot-explorer', minLevel: 3 },
 
     'assets-workspace': { id: 'assets-workspace', icon: Box, label: 'Assets Workspace', path: '/assets-workspace', minLevel: 5 },
     'assets': { id: 'assets', icon: Box, label: 'All Assets', minLevel: 5 },

@@ -1,7 +1,8 @@
 import { lazy, Suspense } from 'react';
-import { PageLoading } from'../../../components/ui';
+import { PageLoading } from '../../../components/ui';
+import { ErrorBoundary } from '../../../components/ErrorBoundary';
 import { ShieldAlert } from 'lucide-react';
-import { MENU_TO_RESOURCE } from'../../../config/launchpadConfig';
+import { MENU_TO_RESOURCE } from '../../../config/launchpadConfig';
 
 // Lazy load view components
 const DashboardView = lazy(() => import('../../../pages/Dashboard'));
@@ -204,6 +205,10 @@ const BankReconciliationView = lazy(() => import('../../finance/pages/BankReconc
 const WhatsAppGatewayView = lazy(() => import('../../settings/pages/WhatsAppGatewayView').then(m => ({ default: m.WhatsAppGatewayView })));
 const DataMigrationView = lazy(() => import('../../tools/pages/DataMigrationView').then(m => ({ default: m.DataMigrationView })));
 const ExecutiveBiDashboard = lazy(() => import('../../analytics/pages/ExecutiveBiDashboard').then(m => ({ default: m.ExecutiveBiDashboard })));
+const WorkingCapitalDashboard = lazy(() => import('../../analytics/pages/WorkingCapitalDashboard').then(m => ({ default: m.WorkingCapitalDashboard })));
+const ProfitabilityMatrixView = lazy(() => import('../../analytics/pages/ProfitabilityMatrixView').then(m => ({ default: m.ProfitabilityMatrixView })));
+const CentralReportHub = lazy(() => import('../../reports/pages/CentralReportHub').then(m => ({ default: m.CentralReportHub })));
+const PivotExplorerView = lazy(() => import('../../analytics/pages/PivotExplorerView').then(m => ({ default: m.PivotExplorerView })));
 
 interface AdminContentRouterProps {
     activeTab: string;
@@ -562,6 +567,12 @@ export function AdminContentRouter({
         'data-import': () => <DataMigrationView />,
         'data-export': () => <DataMigrationView />,
         'executive-bi': () => <ExecutiveBiDashboard />,
+        'cockpit': () => <ExecutiveBiDashboard />,
+        'executive-cockpit': () => <ExecutiveBiDashboard />,
+        'working-capital': () => <WorkingCapitalDashboard />,
+        'profitability-matrix': () => <ProfitabilityMatrixView />,
+        'central-reports': () => <CentralReportHub />,
+        'pivot-explorer': () => <PivotExplorerView />,
         'profile': () => <ProfileView />,
     };
 
@@ -579,8 +590,10 @@ export function AdminContentRouter({
     };
 
     return (
-        <Suspense fallback={<PageLoading />}>
-            {renderActiveView()}
-        </Suspense>
+        <ErrorBoundary>
+            <Suspense fallback={<PageLoading />}>
+                {renderActiveView()}
+            </Suspense>
+        </ErrorBoundary>
     );
 }

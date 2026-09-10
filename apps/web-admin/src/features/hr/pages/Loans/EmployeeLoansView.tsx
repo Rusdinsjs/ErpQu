@@ -6,8 +6,8 @@ import { hrLoansClaimsKpiApi, type HrEmployeeLoan, type HrLoanRepaymentSchedule 
 import { employeeApi } from'../../api/employee';
 import {
     Button, Card, Table, TableHead, TableBody, TableRow, TableTh, TableTd, TableEmpty,
-    Badge, Modal, Input, Select, ActionIcon, useToast, LoadingOverlay
-} from'../../../../components/ui';
+    Badge, Modal, Input, Select, ActionIcon, useToast, LoadingOverlay, PageHeader,
+} from '../../../../components/ui';
 
 export default function EmployeeLoansView() {
     const qc = useQueryClient();
@@ -112,7 +112,8 @@ export default function EmployeeLoansView() {
 
     const formatRp = (num: number) => `Rp ${Number(num || 0).toLocaleString('id-ID')}`;
 
-    const filtered = loans.filter(l =>
+    const loansList = Array.isArray(loans) ? loans : [];
+    const filtered = loansList.filter(l =>
         (l.employee_name || '').toLowerCase().includes(search.toLowerCase()) ||
         (l.employee_nik || '').toLowerCase().includes(search.toLowerCase()) ||
         (l.loan_type_name || '').toLowerCase().includes(search.toLowerCase())
@@ -128,7 +129,7 @@ export default function EmployeeLoansView() {
 
     const loanTypeOptions = [
         { value: '', label: 'Pilih Jenis Pinjaman / Kasbon...' },
-        ...loanTypes.map(t => ({
+        ...(Array.isArray(loanTypes) ? loanTypes : []).map(t => ({
             value: t.id,
             label: `${t.name} (Maks ${formatRp(t.max_amount)}, Tenor Maks ${t.max_tenure_months} Bln)`,
         })),
@@ -136,21 +137,19 @@ export default function EmployeeLoansView() {
 
     return (
         <div className="p-6 space-y-6">
-            <div className="flex flex-wrap items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-                        <HandCoins className="h-6 w-6 text-amber-400" />
-                        Pinjaman Karyawan & Kasbon (Employee Loans)
-                    </h1>
-                    <p className="text-gray-400 text-sm mt-1">Pengajuan kasbon darurat, amortisasi cicilan, dan auto-deduct ke slip gaji bulanan</p>
-                </div>
-                <Button onClick={() => setApplyModalOpen(true)} leftIcon={<Plus className="h-4 w-4" />} variant="filled" color="amber">
-                    Ajukan Pinjaman / Kasbon
-                </Button>
-            </div>
+            <PageHeader
+                title="Pinjaman Karyawan & Kasbon (Employee Loans)"
+                subtitle="Pengajuan kasbon darurat, amortisasi cicilan, dan auto-deduct ke slip gaji bulanan"
+                icon={<HandCoins className="h-6 w-6 text-primary" />}
+                actions={
+                    <Button onClick={() => setApplyModalOpen(true)} leftIcon={<Plus className="h-4 w-4" />} variant="primary">
+                        Ajukan Pinjaman / Kasbon
+                    </Button>
+                }
+            />
 
             <Card>
-                <div className="p-4 border-b border-white/10 flex items-center justify-between">
+                <div className="p-4 border-b border-border flex items-center justify-between">
                     <Input
                         placeholder="Cari karyawan, NIK, atau tipe kasbon..."
                         value={search}
@@ -158,7 +157,7 @@ export default function EmployeeLoansView() {
                         leftIcon={<Search className="h-4 w-4" />}
                         className="max-w-md"
                     />
-                    <Badge color="amber">{loans.length} Pinjaman Terdata</Badge>
+                    <Badge variant="neutral">{loansList.length} Pinjaman Terdata</Badge>
                 </div>
 
                 <div className="relative">
@@ -181,25 +180,25 @@ export default function EmployeeLoansView() {
                             ) : filtered.map(l => (
                                 <TableRow key={l.id}>
                                     <TableTd>
-                                        <div className="font-bold text-white">{l.employee_name}</div>
-                                        <div className="text-xs text-gray-400 font-mono">{l.employee_nik}</div>
+                                        <div className="font-medium text-foreground">{l.employee_name}</div>
+                                        <div className="text-xs text-muted-foreground">{l.employee_nik}</div>
                                     </TableTd>
-                                    <TableTd className="font-medium text-amber-300">{l.loan_type_name}</TableTd>
-                                    <TableTd className="font-bold text-white">{formatRp(l.loan_amount)}</TableTd>
-                                    <TableTd className="text-xs text-gray-300">
-                                        <div className="font-semibold text-white">{formatRp(l.monthly_installment)} / bln</div>
+                                    <TableTd className="font-medium text-foreground">{l.loan_type_name}</TableTd>
+                                    <TableTd className="font-semibold text-foreground">{formatRp(l.loan_amount)}</TableTd>
+                                    <TableTd className="text-xs text-muted-foreground">
+                                        <div className="font-semibold text-foreground">{formatRp(l.monthly_installment)} / bln</div>
                                         <div>{l.tenure_months} Bulan Tenor</div>
                                     </TableTd>
-                                    <TableTd className="font-bold text-emerald-400">
+                                    <TableTd className="font-semibold text-foreground">
                                         {formatRp(l.remaining_balance)}
-                                        <span className="block text-[10px] text-gray-400">Terbayar: {formatRp(l.total_paid)}</span>
+                                        <span className="block text-[10px] text-muted-foreground">Terbayar: {formatRp(l.total_paid)}</span>
                                     </TableTd>
                                     <TableTd>
-                                        <Badge color={
-                                            l.status === 'disbursed' ? 'green' :
-                                            l.status === 'approved' ? 'blue' :
-                                            l.status === 'closed' ? 'gray' :
-                                            l.status === 'rejected' ? 'red' : 'amber'
+                                        <Badge variant={
+                                            l.status === 'disbursed' ? 'success' :
+                                            l.status === 'approved' ? 'info' :
+                                            l.status === 'closed' ? 'neutral' :
+                                            l.status === 'rejected' ? 'danger' : 'warning'
                                         }>
                                             {l.status === 'disbursed' ? 'Dicairkan (Aktif)' :
                                              l.status === 'approved' ? 'Disetujui' :
@@ -215,7 +214,7 @@ export default function EmployeeLoansView() {
                                                 </Button>
                                             )}
                                             {(l.status === 'pending' || l.status === 'approved') && (
-                                                <Button size="sm" variant="filled" color="amber" onClick={() => openReview(l)}>
+                                                <Button size="sm" variant="primary" onClick={() => openReview(l)}>
                                                     Review / Cairkan
                                                 </Button>
                                             )}

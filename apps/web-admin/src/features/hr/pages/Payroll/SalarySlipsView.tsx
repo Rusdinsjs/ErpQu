@@ -7,7 +7,7 @@ import { useAuthStore } from '../../../../store/useAuthStore';
 import { fetchCompanies } from '../../../company/api/companyApi';
 import {
     Button, Card, Table, TableHead, TableBody, TableRow, TableTh, TableTd, TableEmpty,
-    Badge, ActionIcon, Modal, Input, Select, LoadingOverlay
+    Badge, ActionIcon, Modal, Input, Select, LoadingOverlay, PageHeader
 } from '../../../../components/ui';
 import { OfficialDocumentPrintModal } from '../../../../components/print/OfficialDocumentPrintModal';
 import { SalarySlipPrintTemplate } from '../../../../components/print/templates/SalarySlipPrintTemplate';
@@ -25,12 +25,15 @@ export default function SalarySlipsView() {
         queryKey: ['companies'],
         queryFn: fetchCompanies,
     });
-    const activeCompany = companies.find((c: any) => c.id === activeCompanyId) || companies[0];
+    const companiesList = Array.isArray(companies) ? companies : [];
+    const activeCompany = companiesList.find((c: any) => c.id === activeCompanyId) || companiesList[0];
 
     const { data: slips = [], isLoading } = useQuery({
         queryKey: ['hr-salary-slips'],
         queryFn: () => hrPayrollApi.listSalarySlips(),
     });
+
+    const slipsList = Array.isArray(slips) ? slips : [];
 
     const openSlipDetail = (slip: HrSalarySlip) => {
         setSelectedSlip(slip);
@@ -41,7 +44,7 @@ export default function SalarySlipsView() {
         window.print();
     };
 
-    const filtered = slips.filter(s =>
+    const filtered = slipsList.filter(s =>
         (s.employee_name || '').toLowerCase().includes(search.toLowerCase()) ||
         (s.employee_nik || '').toLowerCase().includes(search.toLowerCase()) ||
         (s.department_name || '').toLowerCase().includes(search.toLowerCase())
@@ -50,16 +53,12 @@ export default function SalarySlipsView() {
     const formatRp = (num: number) => `Rp ${Number(num || 0).toLocaleString('id-ID')}`;
 
     return (
-        <div className="p-6 space-y-6">
-            <div className="flex flex-wrap items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-                        <FileText className="h-6 w-6 text-emerald-400" />
-                        Slip Gaji Karyawan (Salary Slips)
-                    </h1>
-                    <p className="text-gray-400 text-sm mt-1">Daftar slip gaji resmi lengkap dengan rincian BPJS, PPh 21 TER, dan Take Home Pay</p>
-                </div>
-            </div>
+        <div className="space-y-6">
+            <PageHeader
+                title="Slip Gaji Karyawan (Salary Slips)"
+                description="Daftar slip gaji resmi lengkap dengan rincian BPJS, PPh 21 TER, dan Take Home Pay"
+                badge={`${filtered.length} Slip Gaji`}
+            />
 
             <Card>
                 <div className="p-4 border-b border-white/10 flex items-center justify-between">
