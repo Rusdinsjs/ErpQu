@@ -155,6 +155,7 @@ impl HrLeavesService {
     pub async fn create_application(
         &self,
         req: CreateLeaveApplicationRequest,
+        created_by: Option<Uuid>,
     ) -> Result<HrLeaveApplication, AppError> {
         // 1. Check blackout date
         if let Some(reason) = self.repo.is_date_blocked(req.from_date).await? {
@@ -197,7 +198,9 @@ impl HrLeavesService {
             }
         }
 
-        self.repo.create_application(req, effective_days).await
+        self.repo
+            .create_application(req, effective_days, created_by)
+            .await
     }
 
     pub async fn review_application(

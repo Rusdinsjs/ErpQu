@@ -6,7 +6,11 @@ use sqlx::FromRow;
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow, utoipa::ToSchema, DocType)]
-#[doctype(module = "Purchase", description = "Entity PurchaseBill")]
+#[doctype(
+    name = "ProcurementPurchaseBill",
+    module = "Purchase",
+    description = "Entity ProcurementPurchaseBill"
+)]
 pub struct PurchaseBill {
     pub id: Uuid,
     pub bill_number: String,
@@ -24,7 +28,11 @@ pub struct PurchaseBill {
 }
 
 #[derive(Debug, Deserialize, utoipa::ToSchema, DocType)]
-#[doctype(module = "Purchase", description = "Entity CreatePurchaseBillRequest")]
+#[doctype(
+    name = "ProcurementCreatePurchaseBillRequest",
+    module = "Purchase",
+    description = "Entity ProcurementCreatePurchaseBillRequest"
+)]
 pub struct CreatePurchaseBillRequest {
     pub vendor_id: Uuid,
     pub bill_date: chrono::NaiveDate,

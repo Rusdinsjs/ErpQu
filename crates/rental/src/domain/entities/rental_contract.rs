@@ -38,7 +38,12 @@ impl ContractStatus {
 
 /// Rental Contract Entity
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
-#[doctype(module = "Rentals", description = "Entity RentalContract")]
+#[doctype(
+    name = "RentalContract",
+    module = "Rentals",
+    description = "Kontrak Sewa Aset",
+    is_submittable = true
+)]
 pub struct RentalContract {
     pub id: Uuid,
     pub contract_number: String,

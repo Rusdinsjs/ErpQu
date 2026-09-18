@@ -141,6 +141,8 @@ pub async fn default_deny_middleware(request: Request, next: Next) -> Result<Res
     // Resolve explicit action permission from RouteActionRegistry (create, submit, approve, reject, post, reverse, release, disburse, cancel)
     if let Some(required_perm) = resolve_route_permission(request.method(), &matched_path) {
         let is_sensitive_action = required_perm.ends_with(".approve")
+            || required_perm.ends_with(".reject")
+            || required_perm.ends_with(".pay")
             || required_perm.ends_with(".post")
             || required_perm.ends_with(".disburse")
             || required_perm.ends_with(".release");

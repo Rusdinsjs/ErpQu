@@ -195,22 +195,29 @@ pub async fn get_employee_history(
     Ok(Json(AttendanceResponse::success(records)))
 }
 
-/// Scan face for attendance (Placeholder for now)
+/// Face recognition is not implemented; fail explicitly instead of returning
+/// a false success response.
 pub async fn scan_face(
     State(_state): State<AppState>,
     Json(_payload): Json<serde_json::Value>,
 ) -> Result<Json<AttendanceResponse<String>>, (StatusCode, Json<serde_json::Value>)> {
-    Ok(Json(AttendanceResponse::success(
-        "Face scan received".to_string(),
-    )))
+    Err((
+        StatusCode::NOT_IMPLEMENTED,
+        Json(serde_json::json!({
+            "error": "Face recognition attendance is not available yet"
+        })),
+    ))
 }
 
-/// List attendance logs (Placeholder for now)
+/// Use the implemented HR attendance log endpoint for operational reporting.
 pub async fn list_logs(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
 ) -> Result<Json<AttendanceResponse<Vec<AttendanceRecord>>>, (StatusCode, Json<serde_json::Value>)>
 {
-    Ok(Json(AttendanceResponse::success(vec![])))
+    let records = AttendanceService::get_all_today(&state.pool)
+        .await
+        .map_err(internal_error)?;
+    Ok(Json(AttendanceResponse::success(records)))
 }
 
 // Helper functions
@@ -220,7 +227,7 @@ async fn get_employee_id_for_user(
     user_id: Uuid,
 ) -> Result<Option<Uuid>, (StatusCode, Json<serde_json::Value>)> {
     let result = sqlx::query_scalar::<_, Uuid>(
-        "SELECT id FROM employees WHERE user_id = $1 AND is_active = true",
+        "SELECT id FROM hr.employees WHERE user_id = $1 AND is_active = true",
     )
     .bind(user_id)
     .fetch_optional(&state.pool)

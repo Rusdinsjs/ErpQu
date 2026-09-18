@@ -20,6 +20,18 @@ pub fn resolve_route_permission(method: &Method, path: &str) -> Option<String> {
     if path.ends_with("/approve") {
         return Some(format!("{}.approve", module));
     }
+    if path.ends_with("/review") {
+        if path.starts_with("/api/hr/employee-loans") {
+            return Some("employee_loan.approve".to_string());
+        }
+        if path.starts_with("/api/hr/expense-claims") {
+            return Some("expense_claim.approve".to_string());
+        }
+        if path.starts_with("/api/hr/leave-applications") {
+            return Some("leave_application.approve".to_string());
+        }
+        return Some(format!("{}.approve", module));
+    }
     if path.ends_with("/reject") {
         return Some(format!("{}.reject", module));
     }
@@ -37,6 +49,9 @@ pub fn resolve_route_permission(method: &Method, path: &str) -> Option<String> {
     }
     if path.ends_with("/disburse") {
         return Some(format!("{}.disburse", module));
+    }
+    if path.ends_with("/pay") || path.ends_with("/mark-paid") {
+        return Some(format!("{}.pay", module));
     }
     if path.ends_with("/cancel") {
         return Some(format!("{}.cancel", module));
@@ -83,6 +98,12 @@ fn get_module_prefix(path: &str) -> Option<&'static str> {
         Some("department")
     } else if path.starts_with("/api/hrd/attendance") || path.starts_with("/api/attendance") {
         Some("attendance")
+    } else if path.starts_with("/api/hr/leave-applications") {
+        Some("leave_application")
+    } else if path.starts_with("/api/hr/expense-claims") {
+        Some("expense_claim")
+    } else if path.starts_with("/api/hr/employee-loans") {
+        Some("employee_loan")
     } else if path.starts_with("/api/hrd/leaves") {
         Some("leave")
     } else if path.starts_with("/api/hr") {
@@ -123,6 +144,8 @@ fn get_module_prefix(path: &str) -> Option<&'static str> {
         Some("dashboard")
     } else if path.starts_with("/api/audit") {
         Some("audit")
+    } else if path.starts_with("/api/workflows/apply-action") {
+        Some("workflow_action")
     } else if path.starts_with("/api/workflows") {
         Some("workflow")
     } else if path.starts_with("/api/data-imports") {

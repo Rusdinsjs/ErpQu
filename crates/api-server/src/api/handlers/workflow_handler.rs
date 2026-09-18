@@ -355,7 +355,14 @@ pub async fn apply_workflow_action(
     State(state): State<AppState>,
     Json(payload): Json<ApplyWorkflowActionRequest>,
 ) -> AppResult<impl IntoResponse> {
-    // 1. Fetch transition rule
+    if payload.action_name.trim().is_empty() {
+        return Err(AppError::BadRequest(
+            "Nama aksi workflow wajib diisi".into(),
+        ));
+    }
+
+    // 1. Fetch transition rule; the requested state is validated again below
+    // against the locked business document, never trusted as current state.
     let transition = sqlx::query_as::<_, WorkflowTransitionDetail>(
         r#"
         SELECT 
@@ -379,7 +386,30 @@ pub async fn apply_workflow_action(
         "Transisi alur kerja tidak valid atau tidak ditemukan".to_string(),
     ))?;
 
-    // 2. Validate User Role Authorization (User must have the allowed_role_id or role_level <= 2)
+    // 2. Validate the transition state belongs to this workflow and require
+    // the configured role. Super-admin remains the only explicit bypass.
+    let state_workflow_ok = sqlx::query_scalar::<_, bool>(
+        "SELECT EXISTS (SELECT 1 FROM workflow_states WHERE id = $1 AND workflow_id = $2)",
+    )
+    .bind(transition.state_id)
+    .bind(transition.workflow_id)
+    .fetch_one(&state.pool)
+    .await
+    .map_err(|e| AppError::Database(e.to_string()))?;
+    let next_state_workflow_ok = sqlx::query_scalar::<_, bool>(
+        "SELECT EXISTS (SELECT 1 FROM workflow_states WHERE id = $1 AND workflow_id = $2)",
+    )
+    .bind(transition.next_state_id)
+    .bind(transition.workflow_id)
+    .fetch_one(&state.pool)
+    .await
+    .map_err(|e| AppError::Database(e.to_string()))?;
+    if !state_workflow_ok || !next_state_workflow_ok {
+        return Err(AppError::BadRequest(
+            "Transisi workflow tidak konsisten".into(),
+        ));
+    }
+
     let user_role_count = sqlx::query_scalar::<_, i64>(
         "SELECT COUNT(*) FROM user_roles WHERE user_id = $1 AND role_id = $2",
     )
@@ -389,22 +419,199 @@ pub async fn apply_workflow_action(
     .await
     .map_err(|e: sqlx::Error| AppError::Database(e.to_string()))?;
 
-    let is_admin = claims.role_level <= 2;
-    if user_role_count == 0 && !is_admin {
+    let is_super_admin = claims.role == "super_admin";
+    if user_role_count == 0 && !is_super_admin {
         return Err(AppError::Forbidden(format!(
             "Aksi '{}' membutuhkan Role '{}'",
             transition.action_name, transition.allowed_role_name
         )));
     }
 
-    // 3. Log Audit Trail in workflow_action_logs
+    // 3. Resolve the active workflow and canonical DocType before mutation.
+    let wf_info = sqlx::query_as::<_, WorkflowWithDocType>(
+        r#"
+        SELECT w.id, w.workflow_name, w.doctype_id, dt.name as doctype_name,
+               w.is_active, w.document_status_field, w.created_at, w.updated_at
+        FROM workflows w
+        JOIN doctypes dt ON dt.id = w.doctype_id
+        WHERE w.id = $1 AND w.is_active = TRUE
+        "#,
+    )
+    .bind(payload.workflow_id)
+    .fetch_optional(&state.pool)
+    .await
+    .map_err(|e| AppError::Database(e.to_string()))?
+    .ok_or_else(|| AppError::BadRequest("Workflow tidak aktif atau tidak ditemukan".into()))?;
+
+    if !matches!(
+        wf_info.doctype_name.as_str(),
+        "LeaveApplication"
+            | "ExpenseClaim"
+            | "EmployeeLoan"
+            | "WorkOrder"
+            | "PurchaseOrder"
+            | "RentalContract"
+    ) {
+        return Err(AppError::BadRequest(
+            "DocType belum mendukung transisi domain-aware".into(),
+        ));
+    }
+
+    // Derive the current state from the document itself. Caller-supplied state
+    // is only an optimistic-concurrency token, never the source of truth.
+    let actual_state = match wf_info.doctype_name.as_str() {
+        "LeaveApplication" => {
+            sqlx::query_scalar::<_, String>(
+                "SELECT workflow_state FROM hr_leave_applications WHERE id = $1",
+            )
+            .bind(payload.document_id)
+            .fetch_optional(&state.pool)
+            .await?
+        }
+        "ExpenseClaim" => {
+            sqlx::query_scalar::<_, String>(
+                "SELECT workflow_state FROM hr_expense_claims WHERE id = $1",
+            )
+            .bind(payload.document_id)
+            .fetch_optional(&state.pool)
+            .await?
+        }
+        "EmployeeLoan" => {
+            sqlx::query_scalar::<_, String>(
+                "SELECT workflow_state FROM hr_employee_loans WHERE id = $1",
+            )
+            .bind(payload.document_id)
+            .fetch_optional(&state.pool)
+            .await?
+        }
+        "WorkOrder" => {
+            sqlx::query_scalar::<_, String>(
+                "SELECT status FROM maintenance_work_orders WHERE id = $1",
+            )
+            .bind(payload.document_id)
+            .fetch_optional(&state.pool)
+            .await?
+        }
+        "PurchaseOrder" => {
+            sqlx::query_scalar::<_, String>("SELECT status FROM purchase_orders WHERE id = $1")
+                .bind(payload.document_id)
+                .fetch_optional(&state.pool)
+                .await?
+        }
+        "RentalContract" => {
+            sqlx::query_scalar::<_, String>("SELECT status FROM contracts WHERE id = $1")
+                .bind(payload.document_id)
+                .fetch_optional(&state.pool)
+                .await?
+        }
+        _ => None,
+    };
+    let actual_state = actual_state
+        .ok_or_else(|| AppError::NotFound("Dokumen workflow tidak ditemukan".into()))?;
+    if actual_state != payload.current_state_name {
+        return Err(AppError::BadRequest(format!(
+            "State dokumen berubah; state aktual adalah '{}'",
+            actual_state
+        )));
+    }
+
+    // 4. Update the domain document and propagate failures. The business
+    // status remains machine-readable while workflow_state stores the label.
+    let status_val = &transition.next_state_name;
+    let updated = match wf_info.doctype_name.as_str() {
+        "WorkOrder" => sqlx::query(
+            "UPDATE maintenance_work_orders SET status = $1, updated_at = NOW() WHERE id = $2 AND status = $3",
+        )
+        .bind(status_val)
+        .bind(payload.document_id)
+        .bind(&payload.current_state_name)
+        .execute(&state.pool)
+        .await?,
+        "PurchaseOrder" => sqlx::query(
+            "UPDATE purchase_orders SET status = $1, updated_at = NOW() WHERE id = $2 AND status = $3",
+        )
+        .bind(status_val)
+        .bind(payload.document_id)
+        .bind(&payload.current_state_name)
+        .execute(&state.pool)
+        .await?,
+        "LeaveApplication" => {
+            let business_status = match status_val.to_lowercase().as_str() {
+                "approved" => "approved",
+                "rejected" => "rejected",
+                "pending hr approval" | "pending" => "pending",
+                "cancelled" => "cancelled",
+                _ => return Err(AppError::BadRequest("Unsupported LeaveApplication workflow state".into())),
+            };
+            sqlx::query(
+                "UPDATE hr_leave_applications SET status = $1, workflow_state = $2, updated_at = NOW() WHERE id = $3 AND workflow_state = $4",
+            )
+            .bind(business_status)
+            .bind(status_val)
+            .bind(payload.document_id)
+            .bind(&payload.current_state_name)
+            .execute(&state.pool)
+            .await?
+        }
+        "ExpenseClaim" => {
+            let business_status = match status_val.to_lowercase().as_str() {
+                "approved" => "approved",
+                "rejected" => "rejected",
+                "pending finance review" | "pending" => "pending",
+                "paid" => "paid",
+                "included in payroll" => "included_in_payroll",
+                _ => return Err(AppError::BadRequest("Unsupported ExpenseClaim workflow state".into())),
+            };
+            sqlx::query(
+                "UPDATE hr_expense_claims SET status = $1, workflow_state = $2, updated_at = NOW() WHERE id = $3 AND workflow_state = $4",
+            )
+            .bind(business_status)
+            .bind(status_val)
+            .bind(payload.document_id)
+            .bind(&payload.current_state_name)
+            .execute(&state.pool)
+            .await?
+        }
+        "EmployeeLoan" => {
+            let business_status = match status_val.to_lowercase().as_str() {
+                "approved" => "approved",
+                "rejected" => "rejected",
+                "disbursed" => "disbursed",
+                "closed" => "closed",
+                _ => return Err(AppError::BadRequest("Unsupported EmployeeLoan workflow state".into())),
+            };
+            sqlx::query(
+                "UPDATE hr_employee_loans SET status = $1, workflow_state = $2, updated_at = NOW() WHERE id = $3 AND workflow_state = $4",
+            )
+            .bind(business_status)
+            .bind(status_val)
+            .bind(payload.document_id)
+            .bind(&payload.current_state_name)
+            .execute(&state.pool)
+            .await?
+        }
+        "RentalContract" => sqlx::query(
+            "UPDATE contracts SET status = $1, updated_at = NOW() WHERE id = $2 AND status = $3",
+        )
+        .bind(status_val)
+        .bind(payload.document_id)
+        .bind(&payload.current_state_name)
+        .execute(&state.pool)
+        .await?,
+        _ => return Err(AppError::BadRequest("DocType belum mendukung transisi domain-aware".into())),
+    };
+    if updated.rows_affected() != 1 {
+        return Err(AppError::BadRequest(
+            "Dokumen sudah berubah atau transisi tidak valid".into(),
+        ));
+    }
+
+    // 5. Audit only after the domain mutation succeeds.
     let log_entry = sqlx::query_as::<_, WorkflowActionLog>(
         r#"
         INSERT INTO workflow_action_logs (
             workflow_id, document_id, action_by_user_id, from_state, action_name, to_state, comments
-        ) VALUES (
-            $1, $2, $3, $4, $5, $6, $7
-        )
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7)
         RETURNING *
         "#,
     )
@@ -416,72 +623,7 @@ pub async fn apply_workflow_action(
     .bind(&transition.next_state_name)
     .bind(payload.comments)
     .fetch_one(&state.pool)
-    .await
-    .map_err(|e: sqlx::Error| AppError::Database(e.to_string()))?;
-
-    // 4. Automatically sync status on the target document table if known
-    let wf_info = sqlx::query_as::<_, WorkflowWithDocType>(
-        r#"
-        SELECT 
-            w.id, w.workflow_name, w.doctype_id, dt.name as doctype_name,
-            w.is_active, w.document_status_field, w.created_at, w.updated_at
-        FROM workflows w
-        JOIN doctypes dt ON dt.id = w.doctype_id
-        WHERE w.id = $1
-        "#,
-    )
-    .bind(payload.workflow_id)
-    .fetch_optional(&state.pool)
-    .await
-    .map_err(|e| AppError::Database(e.to_string()))?;
-
-    if let Some(wf) = wf_info {
-        let status_val = &transition.next_state_name;
-        match wf.doctype_name.to_lowercase().as_str() {
-            "workorder" => {
-                let _ = sqlx::query("UPDATE maintenance_work_orders SET status = $1, updated_at = NOW() WHERE id = $2")
-                    .bind(status_val)
-                    .bind(payload.document_id)
-                    .execute(&state.pool)
-                    .await;
-            }
-            "purchaseorder" => {
-                let _ = sqlx::query(
-                    "UPDATE purchase_orders SET status = $1, updated_at = NOW() WHERE id = $2",
-                )
-                .bind(status_val)
-                .bind(payload.document_id)
-                .execute(&state.pool)
-                .await;
-            }
-            "leaveapplication" => {
-                let _ = sqlx::query("UPDATE hr_leave_applications SET status = $1, updated_at = NOW() WHERE id = $2")
-                    .bind(status_val)
-                    .bind(payload.document_id)
-                    .execute(&state.pool)
-                    .await;
-            }
-            "expenseclaim" => {
-                let _ = sqlx::query(
-                    "UPDATE hr_expense_claims SET status = $1, updated_at = NOW() WHERE id = $2",
-                )
-                .bind(status_val)
-                .bind(payload.document_id)
-                .execute(&state.pool)
-                .await;
-            }
-            "rentalcontract" => {
-                let _ = sqlx::query(
-                    "UPDATE contracts SET status = $1, updated_at = NOW() WHERE id = $2",
-                )
-                .bind(status_val)
-                .bind(payload.document_id)
-                .execute(&state.pool)
-                .await;
-            }
-            _ => {}
-        }
-    }
+    .await?;
 
     Ok(Json(serde_json::json!({
         "success": true,

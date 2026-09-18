@@ -95,7 +95,11 @@ export default function PayrollProcessingView() {
                                     <TableTd className="font-semibold text-white">{formatRp(e.total_gross_pay)}</TableTd>
                                     <TableTd className="text-red-400 font-medium">{formatRp(e.total_deductions)}</TableTd>
                                     <TableTd className="font-bold text-emerald-400 text-base">{formatRp(e.total_net_pay)}</TableTd>
-                                    <TableTd><Badge color="green">Selesai Dihitung</Badge></TableTd>
+                                    <TableTd>
+                                        <Badge color={e.status === 'cancelled' ? 'red' : e.status === 'submitted' ? 'blue' : e.status === 'calculated' ? 'green' : 'yellow'}>
+                                            {e.status === 'cancelled' ? 'Dibatalkan' : e.status === 'submitted' ? 'Diajukan' : e.status === 'calculated' ? 'Selesai Dihitung' : 'Draft'}
+                                        </Badge>
+                                    </TableTd>
                                 </TableRow>
                             ))}
                         </TableBody>

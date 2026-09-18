@@ -13,7 +13,7 @@ interface CheckInModalProps {
 export const CheckInModal = ({ isOpen, onClose, onConfirm, type, isLoading }: CheckInModalProps) => {
     const { error: showError } = useToast();
     const [notes, setNotes] = useState('');
-    const [location, setLocation] = useState<{ lat: number; lng: number } | null>({ lat: -6.2088, lng: 106.8456 });
+    const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
     const [locationError, setLocationError] = useState<string | null>(null);
     const [locating, setLocating] = useState(false);
 
@@ -42,7 +42,8 @@ export const CheckInModal = ({ isOpen, onClose, onConfirm, type, isLoading }: Ch
                 setLocating(false);
             },
             () => {
-                setLocation({ lat: -6.2088, lng: 106.8456 });
+                setLocation(null);
+                setLocationError('Unable to determine your location. Please enable GPS and try again.');
                 setLocating(false);
             },
             { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
@@ -54,15 +55,11 @@ export const CheckInModal = ({ isOpen, onClose, onConfirm, type, isLoading }: Ch
             showError('Location is required', 'Error');
             return;
         }
-        // In a real app, we would handle camera/photo here using a file input or camera API
-        // For now we simulate a photo URL
-        const mockPhotoUrl = "https://ui-avatars.com/api/?name=User&background=random";
-
         onConfirm({
             latitude: location.lat,
             longitude: location.lng,
             notes,
-            photo_url: mockPhotoUrl
+            photo_url: ''
         });
     };
 
@@ -89,10 +86,10 @@ export const CheckInModal = ({ isOpen, onClose, onConfirm, type, isLoading }: Ch
                     )}
                 </div>
 
-                {/* Photo Placeholder */}
-                <div className="border-2 border-dashed border-border rounded-lg p-6 flex flex-col items-center justify-center text-muted-foreground bg-muted/30 hover:bg-muted transition-colors cursor-pointer">
+                {/* Photo status: camera upload is optional; never submit a fake URL. */}
+                <div className="border-2 border-dashed border-border rounded-lg p-6 flex flex-col items-center justify-center text-muted-foreground bg-muted/30">
                     <Camera className="h-8 w-8 mb-2" />
-                    <span className="text-xs">Take Photo (Simulated)</span>
+                    <span className="text-xs">Photo optional</span>
                 </div>
 
                 <Textarea

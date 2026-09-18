@@ -145,9 +145,13 @@ pub async fn get_application(
 
 pub async fn create_application(
     State(state): State<AppState>,
+    Extension(claims): Extension<UserClaims>,
     Json(payload): Json<CreateLeaveApplicationRequest>,
 ) -> Result<(StatusCode, Json<ApiResponse<HrLeaveApplication>>), AppError> {
-    let data = state.hr_leaves_service.create_application(payload).await?;
+    let data = state
+        .hr_leaves_service
+        .create_application(payload, Some(claims.user_id()))
+        .await?;
     Ok((
         StatusCode::CREATED,
         Json(ApiResponse::success_with_message(

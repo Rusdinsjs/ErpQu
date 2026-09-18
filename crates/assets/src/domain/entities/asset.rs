@@ -18,6 +18,7 @@ use management_system_macros::DocType;
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow, ToSchema, DocType)]
 #[doctype(
+    name = "Asset",
     module = "Assets",
     description = "Manajemen Aset Perusahaan",
     is_submittable = false

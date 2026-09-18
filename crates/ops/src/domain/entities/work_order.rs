@@ -74,7 +74,12 @@ impl WorkOrderStatus {
 
 /// Maintenance Work Order
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
-#[doctype(module = "Maintenance", description = "Entity WorkOrder")]
+#[doctype(
+    name = "WorkOrder",
+    module = "Maintenance",
+    description = "Perintah Kerja Pemeliharaan",
+    is_submittable = true
+)]
 pub struct WorkOrder {
     pub id: Uuid,
     pub wo_number: String,

@@ -44,7 +44,16 @@ impl UserRole {
     pub fn default_permissions(&self) -> Vec<&'static str> {
         match self {
             Self::SuperAdmin => vec!["*"],
-            Self::Admin => vec!["asset.*", "user.read", "report.*", "maintenance.*"],
+            Self::Admin => vec![
+                "asset.*",
+                "user.read",
+                "report.*",
+                "maintenance.*",
+                "leave_application.*",
+                "expense_claim.*",
+                "employee_loan.*",
+                "workflow_action.*",
+            ],
             Self::AdminAlatBerat | Self::AdminKendaraan | Self::AdminInfrastruktur => {
                 vec!["asset.*", "user.read", "report.*", "maintenance.*"]
             }
@@ -53,6 +62,15 @@ impl UserRole {
                 "asset.update",
                 "maintenance.*",
                 "loan.approve",
+                "leave_application.approve",
+                "leave_application.reject",
+                "expense_claim.approve",
+                "expense_claim.reject",
+                "expense_claim.pay",
+                "employee_loan.approve",
+                "employee_loan.reject",
+                "employee_loan.disburse",
+                "workflow_action.approve",
             ],
             Self::Technician => vec!["maintenance.read", "maintenance.update", "asset.read"],
             Self::Staff => vec!["asset.read", "loan.request", "maintenance.request"],

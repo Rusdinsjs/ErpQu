@@ -46,6 +46,7 @@ impl EmploymentStatus {
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, FromRow, DocType)]
 #[doctype(
+    name = "Employee",
     module = "HR",
     description = "Data Karyawan & Kepegawaian",
     is_submittable = false

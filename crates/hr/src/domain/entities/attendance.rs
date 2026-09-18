@@ -49,7 +49,12 @@ impl AttendanceStatus {
 
 /// Attendance record entity
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
-#[doctype(module = "HR", description = "Entity AttendanceRecord")]
+#[doctype(
+    name = "Attendance",
+    module = "HR",
+    description = "Manajemen absensi dan kehadiran karyawan",
+    is_submittable = false
+)]
 pub struct AttendanceRecord {
     pub id: Uuid,
     pub employee_id: Uuid,

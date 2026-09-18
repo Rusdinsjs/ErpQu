@@ -36,14 +36,21 @@ impl HrLoansClaimsKpiService {
         self.repo.list_employee_loans(employee_id).await
     }
 
-    pub async fn apply_loan(&self, req: CreateLoanRequest) -> Result<HrEmployeeLoan, AppError> {
+    pub async fn apply_loan(
+        &self,
+        req: CreateLoanRequest,
+        created_by: Option<Uuid>,
+    ) -> Result<HrEmployeeLoan, AppError> {
         if req.tenure_months <= 0 {
             return Err(AppError::BadRequest(
                 "Tenor pinjaman minimal 1 bulan".into(),
             ));
         }
         let monthly = (req.loan_amount / Decimal::from(req.tenure_months)).round_dp(0);
-        let loan = self.repo.create_employee_loan(req, monthly).await?;
+        let loan = self
+            .repo
+            .create_employee_loan(req, monthly, created_by)
+            .await?;
         Ok(loan)
     }
 
@@ -54,6 +61,11 @@ impl HrLoansClaimsKpiService {
         reviewer_id: Option<Uuid>,
     ) -> Result<HrEmployeeLoan, AppError> {
         let loan = self.repo.get_employee_loan(id).await?;
+        if loan.created_by.is_some() && loan.created_by == reviewer_id {
+            return Err(AppError::Forbidden(
+                "Pembuat pengajuan tidak boleh menyetujui atau mencairkan pinjaman sendiri".into(),
+            ));
+        }
 
         match req.action.as_str() {
             "approve" => {
@@ -62,7 +74,12 @@ impl HrLoansClaimsKpiService {
                     .await
             }
             "disburse" => {
-                // Generate Amortization Repayment Schedule
+                if loan.status != "approved" {
+                    return Err(AppError::BadRequest(
+                        "Pinjaman harus berstatus approved sebelum dicairkan".into(),
+                    ));
+                }
+                // Generate Amortization Repayment Schedule before disbursement.
                 let curr_date = loan.start_date;
                 for i in 1..=loan.tenure_months {
                     let due_date = Self::add_months(curr_date, i as u32);
@@ -123,8 +140,9 @@ impl HrLoansClaimsKpiService {
     pub async fn create_expense_claim(
         &self,
         req: CreateExpenseClaimRequest,
+        created_by: Option<Uuid>,
     ) -> Result<HrExpenseClaim, AppError> {
-        self.repo.create_expense_claim(req).await
+        self.repo.create_expense_claim(req, created_by).await
     }
 
     pub async fn review_expense_claim(
@@ -133,6 +151,19 @@ impl HrLoansClaimsKpiService {
         req: ReviewExpenseClaimRequest,
         reviewer_id: Option<Uuid>,
     ) -> Result<HrExpenseClaim, AppError> {
+        let claim = self
+            .repo
+            .list_expense_claims(None)
+            .await?
+            .into_iter()
+            .find(|claim| claim.id == id)
+            .ok_or_else(|| AppError::NotFound("Klaim tidak ditemukan".into()))?;
+        if claim.created_by.is_some() && claim.created_by == reviewer_id {
+            return Err(AppError::Forbidden(
+                "Pembuat klaim tidak boleh menyetujui atau membayar klaim sendiri".into(),
+            ));
+        }
+
         match req.action.as_str() {
             "approve" => {
                 self.repo

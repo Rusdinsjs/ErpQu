@@ -138,7 +138,7 @@ impl HrLeavesRepository {
             SELECT a.*, e.name as employee_name, e.nik as employee_nik,
                    lt.name as leave_type_name, lt.code as leave_type_code
             FROM hr_leave_allocations a
-            JOIN employees e ON a.employee_id = e.id
+            JOIN hr.employees e ON a.employee_id = e.id
             JOIN hr_leave_types lt ON a.leave_type_id = lt.id
             WHERE ($1::uuid IS NULL OR a.employee_id = $1) AND a.is_active = TRUE
             ORDER BY a.from_date DESC, e.name ASC
@@ -268,7 +268,7 @@ impl HrLeavesRepository {
                    lt.name as leave_type_name, lt.color as leave_type_color,
                    u.email as approver_name
             FROM hr_leave_applications a
-            JOIN employees e ON a.employee_id = e.id
+            JOIN hr.employees e ON a.employee_id = e.id
             JOIN hr_leave_types lt ON a.leave_type_id = lt.id
             LEFT JOIN users u ON a.approved_by = u.id
             WHERE ($1::uuid IS NULL OR a.employee_id = $1)
@@ -296,7 +296,7 @@ impl HrLeavesRepository {
                    lt.name as leave_type_name, lt.color as leave_type_color,
                    u.email as approver_name
             FROM hr_leave_applications a
-            JOIN employees e ON a.employee_id = e.id
+            JOIN hr.employees e ON a.employee_id = e.id
             JOIN hr_leave_types lt ON a.leave_type_id = lt.id
             LEFT JOIN users u ON a.approved_by = u.id
             WHERE a.id = $1
@@ -313,14 +313,17 @@ impl HrLeavesRepository {
         &self,
         req: CreateLeaveApplicationRequest,
         days: Decimal,
+        created_by: Option<Uuid>,
     ) -> Result<HrLeaveApplication, AppError> {
         sqlx::query_as::<_, HrLeaveApplication>(
             r#"
             INSERT INTO hr_leave_applications (
                 id, employee_id, leave_type_id, from_date, to_date,
-                total_leave_days, is_half_day, half_day_date, reason, attachment_url, status
+                total_leave_days, is_half_day, half_day_date, reason, attachment_url,
+                status, workflow_state, created_by
             ) VALUES (
-                uuid_generate_v4(), $1, $2, $3, $4, $5, $6, $7, $8, $9, 'pending'
+                uuid_generate_v4(), $1, $2, $3, $4, $5, $6, $7, $8, $9,
+                'pending', 'Pending HR Approval', $10
             )
             RETURNING *, NULL::text as employee_name, NULL::text as employee_nik,
                       NULL::text as leave_type_name, NULL::text as leave_type_color,
@@ -336,6 +339,7 @@ impl HrLeavesRepository {
         .bind(req.half_day_date)
         .bind(&req.reason)
         .bind(&req.attachment_url)
+        .bind(created_by)
         .fetch_one(&self.pool)
         .await
         .map_err(|e| AppError::Database(e.to_string()))
@@ -348,11 +352,18 @@ impl HrLeavesRepository {
         approved_by: Option<Uuid>,
         rejection_reason: Option<String>,
     ) -> Result<HrLeaveApplication, AppError> {
+        let workflow_state = match status {
+            "approved" => "Approved",
+            "rejected" => "Rejected",
+            "cancelled" => "Cancelled",
+            _ => return Err(AppError::BadRequest("Status cuti tidak valid".into())),
+        };
         sqlx::query_as::<_, HrLeaveApplication>(
             r#"
             UPDATE hr_leave_applications
-            SET status = $2, approved_by = $3, approved_at = NOW(), rejection_reason = $4, updated_at = NOW()
-            WHERE id = $1
+            SET status = $2, workflow_state = $3, approved_by = $4,
+                approved_at = NOW(), rejection_reason = $5, updated_at = NOW()
+            WHERE id = $1 AND status = 'pending'
             RETURNING *, NULL::text as employee_name, NULL::text as employee_nik,
                       NULL::text as leave_type_name, NULL::text as leave_type_color,
                       NULL::text as approver_name
@@ -360,11 +371,15 @@ impl HrLeavesRepository {
         )
         .bind(id)
         .bind(status)
+        .bind(workflow_state)
         .bind(approved_by)
         .bind(rejection_reason)
-        .fetch_one(&self.pool)
+        .fetch_optional(&self.pool)
         .await
-        .map_err(|e| AppError::Database(e.to_string()))
+        .map_err(|e| AppError::Database(e.to_string()))?
+        .ok_or_else(|| {
+            AppError::BadRequest("Pengajuan cuti sudah diproses atau tidak ditemukan".into())
+        })
     }
 
     // ---- HOLIDAYS ----

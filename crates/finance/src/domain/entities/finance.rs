@@ -130,7 +130,12 @@ pub struct ExpenseAnalysis {
 // --- Operational Finance Entities ---
 
 #[derive(Debug, Clone, Serialize, Deserialize, DocType)]
-#[doctype(module = "Finance", description = "Entity SalesInvoice")]
+#[doctype(
+    name = "SalesInvoice",
+    module = "Sales",
+    description = "Faktur Penjualan",
+    is_submittable = true
+)]
 pub struct SalesInvoice {
     pub id: Uuid,
     pub invoice_number: String,
@@ -202,7 +207,12 @@ pub struct SalesInvoiceDetailResponse {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, DocType)]
-#[doctype(module = "Finance", description = "Entity PurchaseBill")]
+#[doctype(
+    name = "PurchaseBill",
+    module = "Finance",
+    description = "Tagihan Pembelian dari Vendor",
+    is_submittable = true
+)]
 pub struct PurchaseBill {
     pub id: Uuid,
     pub bill_number: String,
@@ -222,7 +232,11 @@ pub struct PurchaseBill {
 }
 
 #[derive(Debug, Deserialize, DocType)]
-#[doctype(module = "Finance", description = "Entity CreatePurchaseBillRequest")]
+#[doctype(
+    name = "CreatePurchaseBillRequest",
+    module = "Finance",
+    description = "Request pembuatan tagihan pembelian"
+)]
 pub struct CreatePurchaseBillRequest {
     pub company_id: Option<Uuid>,
     pub bill_number: String,
@@ -342,7 +356,12 @@ pub struct CreateSalesQuoteRequest {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, DocType)]
-#[doctype(module = "Finance", description = "Entity SalesOrder")]
+#[doctype(
+    name = "SalesOrder",
+    module = "Sales",
+    description = "Pesanan Penjualan",
+    is_submittable = true
+)]
 pub struct SalesOrder {
     pub id: Uuid,
     pub order_number: String,
@@ -453,7 +472,12 @@ pub struct CreatePurchaseQuoteRequest {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, DocType)]
-#[doctype(module = "Finance", description = "Entity PurchaseOrder")]
+#[doctype(
+    name = "PurchaseOrder",
+    module = "Purchase",
+    description = "Pesanan Pembelian",
+    is_submittable = true
+)]
 pub struct PurchaseOrder {
     pub id: Uuid,
     pub order_number: String,

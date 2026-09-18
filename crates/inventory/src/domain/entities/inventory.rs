@@ -18,7 +18,12 @@ pub struct InventoryCategory {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow, DocType)]
-#[doctype(module = "Inventory", description = "Entity InventoryItem")]
+#[doctype(
+    name = "InventoryItem",
+    module = "Inventory",
+    description = "Stok & Barang Material",
+    is_submittable = false
+)]
 pub struct InventoryItem {
     pub id: Uuid,
     pub category_id: Uuid,

@@ -46,11 +46,12 @@ pub async fn list_employee_loans(
 
 pub async fn apply_loan(
     State(state): State<AppState>,
+    Extension(claims): Extension<UserClaims>,
     Json(payload): Json<CreateLoanRequest>,
 ) -> Result<(StatusCode, Json<ApiResponse<HrEmployeeLoan>>), AppError> {
     let data = state
         .hr_loans_claims_kpi_service
-        .apply_loan(payload)
+        .apply_loan(payload, Some(claims.user_id()))
         .await?;
     Ok((
         StatusCode::CREATED,
@@ -113,11 +114,12 @@ pub async fn list_expense_claims(
 
 pub async fn create_expense_claim(
     State(state): State<AppState>,
+    Extension(claims): Extension<UserClaims>,
     Json(payload): Json<CreateExpenseClaimRequest>,
 ) -> Result<(StatusCode, Json<ApiResponse<HrExpenseClaim>>), AppError> {
     let data = state
         .hr_loans_claims_kpi_service
-        .create_expense_claim(payload)
+        .create_expense_claim(payload, Some(claims.user_id()))
         .await?;
     Ok((
         StatusCode::CREATED,

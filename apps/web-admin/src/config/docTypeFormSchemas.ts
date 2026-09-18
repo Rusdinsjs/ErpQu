@@ -28,12 +28,66 @@ export interface FormField {
 
 export interface DocTypeSchema {
     title: string;
-    module: 'Selling' | 'Buying' | 'Stock' | 'Finance' | 'Assets';
+    module: 'Selling' | 'Buying' | 'Stock' | 'Finance' | 'Assets' | 'HR';
     namingSeriesPrefix?: string;
     fields: FormField[];
 }
 
 export const DOCTYPE_SCHEMAS: Record<string, DocTypeSchema> = {
+    // ─── HR TRANSACTION DOCTYPES ────────────────────────────────────────────────
+    'Attendance': {
+        title: 'Attendance',
+        module: 'HR',
+        fields: [
+            { name: 'employee_id', label: 'Karyawan', type: 'Link', required: true, targetLink: 'Employee' },
+            { name: 'check_in_time', label: 'Waktu Check-in', type: 'Time', readOnly: true },
+            { name: 'check_out_time', label: 'Waktu Check-out', type: 'Time', readOnly: true },
+            { name: 'check_in_status', label: 'Status Check-in', type: 'Select', options: ['on_time', 'late'], readOnly: true },
+            { name: 'check_out_status', label: 'Status Check-out', type: 'Select', options: ['on_time', 'early'], readOnly: true },
+            { name: 'notes', label: 'Catatan', type: 'Text' },
+        ],
+    },
+    'LeaveApplication': {
+        title: 'Leave Application',
+        module: 'HR',
+        fields: [
+            { name: 'employee_id', label: 'Karyawan', type: 'Link', required: true, targetLink: 'Employee' },
+            { name: 'leave_type_id', label: 'Jenis Cuti', type: 'Link', required: true, targetLink: 'HrLeaveType' },
+            { name: 'from_date', label: 'Tanggal Mulai', type: 'Date', required: true },
+            { name: 'to_date', label: 'Tanggal Selesai', type: 'Date', required: true },
+            { name: 'reason', label: 'Alasan', type: 'Text', required: true },
+            { name: 'status', label: 'Status Bisnis', type: 'Select', options: ['pending', 'approved', 'rejected', 'cancelled'], readOnly: true },
+            { name: 'workflow_state', label: 'Workflow State', type: 'Select', options: ['Pending HR Approval', 'Approved', 'Rejected', 'Cancelled'], readOnly: true },
+        ],
+    },
+    'ExpenseClaim': {
+        title: 'Expense Claim',
+        module: 'HR',
+        fields: [
+            { name: 'employee_id', label: 'Karyawan', type: 'Link', required: true, targetLink: 'Employee' },
+            { name: 'claim_type_id', label: 'Jenis Klaim', type: 'Link', required: true, targetLink: 'HrExpenseClaimType' },
+            { name: 'claim_date', label: 'Tanggal Klaim', type: 'Date', required: true },
+            { name: 'total_amount', label: 'Total Klaim', type: 'Currency', required: true },
+            { name: 'description', label: 'Deskripsi', type: 'Text', required: true },
+            { name: 'status', label: 'Status Bisnis', type: 'Select', options: ['pending', 'approved', 'rejected', 'paid', 'included_in_payroll'], readOnly: true },
+            { name: 'workflow_state', label: 'Workflow State', type: 'Select', options: ['Pending Finance Review', 'Approved', 'Rejected', 'Paid', 'Included in Payroll'], readOnly: true },
+        ],
+    },
+    'EmployeeLoan': {
+        title: 'Employee Loan',
+        module: 'HR',
+        fields: [
+            { name: 'employee_id', label: 'Karyawan', type: 'Link', required: true, targetLink: 'Employee' },
+            { name: 'loan_type_id', label: 'Jenis Pinjaman', type: 'Link', required: true, targetLink: 'HrLoanType' },
+            { name: 'loan_amount', label: 'Nilai Pinjaman', type: 'Currency', required: true },
+            { name: 'tenure_months', label: 'Tenor (Bulan)', type: 'Int', required: true },
+            { name: 'start_date', label: 'Tanggal Mulai', type: 'Date', required: true },
+            { name: 'reason', label: 'Alasan', type: 'Text', required: true },
+            { name: 'status', label: 'Status Bisnis', type: 'Select', options: ['pending', 'approved', 'disbursed', 'rejected', 'closed'], readOnly: true },
+            { name: 'workflow_state', label: 'Workflow State', type: 'Select', options: ['Pending Loan Approval', 'Approved', 'Rejected', 'Disbursed', 'Closed'], readOnly: true },
+        ],
+    },
+
     // ─── SELLING DOCTYPES ────────────────────────────────────────────────────────
     'Customer': {
         title: 'Customer',
@@ -1139,7 +1193,7 @@ export const DOCTYPE_SCHEMAS: Record<string, DocTypeSchema> = {
 };
 
 // Fallback Schema Generator for any of the 122 DocTypes not explicitly listed above
-export function getDocTypeSchema(title: string, moduleName: 'Selling' | 'Buying' | 'Stock' | 'Finance' | 'Assets'): DocTypeSchema {
+export function getDocTypeSchema(title: string, moduleName: 'Selling' | 'Buying' | 'Stock' | 'Finance' | 'Assets' | 'HR'): DocTypeSchema {
     if (DOCTYPE_SCHEMAS[title]) {
         return DOCTYPE_SCHEMAS[title];
     }

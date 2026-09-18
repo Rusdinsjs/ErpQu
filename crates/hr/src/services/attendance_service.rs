@@ -28,8 +28,8 @@ impl AttendanceService {
             SELECT ar.*,
                    e.name as employee_name,
                    e.nik as employee_nik
-            FROM attendance_records ar
-            JOIN employees e ON e.id = ar.employee_id
+            FROM hr.attendance_records ar
+            JOIN hr.employees e ON e.id = ar.employee_id
             WHERE ar.employee_id = $1
               AND DATE(ar.check_in_time AT TIME ZONE 'Asia/Jakarta') = $2
             ORDER BY ar.check_in_time DESC
@@ -82,8 +82,8 @@ impl AttendanceService {
         let office = sqlx::query_as::<_, (Option<Uuid>, Option<f64>, Option<f64>, Option<i32>)>(
             r#"
             SELECT e.office_location_id, l.latitude, l.longitude, COALESCE(e.allowed_radius, l.radius, 50) as radius
-            FROM employees e
-            LEFT JOIN locations l ON l.id = e.office_location_id
+            FROM hr.employees e
+            LEFT JOIN public.locations l ON l.id = e.office_location_id
             WHERE e.id = $1
             "#
         )
@@ -119,7 +119,7 @@ impl AttendanceService {
         // 5. Create attendance record
         let record = sqlx::query_as::<_, AttendanceRecord>(
             r#"
-            INSERT INTO attendance_records (
+            INSERT INTO hr.attendance_records (
                 employee_id, check_in_time, check_in_location_id,
                 check_in_lat, check_in_long, check_in_status,
                 device_info, check_in_photo_url
@@ -171,7 +171,7 @@ impl AttendanceService {
         // 3. Update attendance record
         let record = sqlx::query_as::<_, AttendanceRecord>(
             r#"
-            UPDATE attendance_records
+            UPDATE hr.attendance_records
             SET check_out_time = $2,
                 check_out_lat = $3,
                 check_out_long = $4,
@@ -208,8 +208,8 @@ impl AttendanceService {
             SELECT ar.*,
                    e.name as employee_name,
                    e.nik as employee_nik
-            FROM attendance_records ar
-            JOIN employees e ON e.id = ar.employee_id
+            FROM hr.attendance_records ar
+            JOIN hr.employees e ON e.id = ar.employee_id
             WHERE ar.employee_id = $1
             ORDER BY ar.check_in_time DESC
             LIMIT $2 OFFSET $3
@@ -234,8 +234,8 @@ impl AttendanceService {
             SELECT ar.*,
                    e.name as employee_name,
                    e.nik as employee_nik
-            FROM attendance_records ar
-            JOIN employees e ON e.id = ar.employee_id
+            FROM hr.attendance_records ar
+            JOIN hr.employees e ON e.id = ar.employee_id
             WHERE DATE(ar.check_in_time AT TIME ZONE 'Asia/Jakarta') = $1
             ORDER BY ar.check_in_time DESC
             "#,
@@ -256,7 +256,7 @@ impl AttendanceService {
     ) -> AppResult<String> {
         if let Some(location_id) = office_location_id {
             let office = sqlx::query_as::<_, (Option<NaiveTime>, Option<i32>)>(
-                "SELECT check_in_time, check_in_tolerance FROM locations WHERE id = $1",
+                "SELECT check_in_time, check_in_tolerance FROM public.locations WHERE id = $1",
             )
             .bind(location_id)
             .fetch_optional(pool)

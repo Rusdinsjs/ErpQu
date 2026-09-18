@@ -52,7 +52,12 @@ pub struct HrLeaveAllocation {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
-#[doctype(module = "HR", description = "Entity HrLeaveApplication")]
+#[doctype(
+    name = "LeaveApplication",
+    module = "HR",
+    description = "Pengajuan cuti dan izin karyawan",
+    is_submittable = true
+)]
 pub struct HrLeaveApplication {
     pub id: Uuid,
     pub employee_id: Uuid,
@@ -65,6 +70,8 @@ pub struct HrLeaveApplication {
     pub reason: String,
     pub attachment_url: Option<String>,
     pub status: String,
+    pub workflow_state: String,
+    pub created_by: Option<Uuid>,
     pub approved_by: Option<Uuid>,
     pub approved_at: Option<DateTime<Utc>>,
     pub rejection_reason: Option<String>,

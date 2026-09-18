@@ -9,6 +9,7 @@ pub fn doctype_derive(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
     let struct_name = &input.ident;
 
+    let mut name = String::new();
     let mut module = String::new();
     let mut description = String::new();
     let mut is_submittable = false;
@@ -17,7 +18,11 @@ pub fn doctype_derive(input: TokenStream) -> TokenStream {
     for attr in input.attrs.iter() {
         if attr.path().is_ident("doctype") {
             let _ = attr.parse_nested_meta(|meta| {
-                if meta.path.is_ident("module") {
+                if meta.path.is_ident("name") {
+                    let value = meta.value()?;
+                    let lit: LitStr = value.parse()?;
+                    name = lit.value();
+                } else if meta.path.is_ident("module") {
                     let value = meta.value()?;
                     let lit: LitStr = value.parse()?;
                     module = lit.value();
@@ -36,6 +41,11 @@ pub fn doctype_derive(input: TokenStream) -> TokenStream {
     }
 
     let struct_name_str = struct_name.to_string();
+    let registration_name = if name.is_empty() {
+        struct_name_str.clone()
+    } else {
+        name
+    };
 
     let pkg_name = std::env::var("CARGO_PKG_NAME").unwrap_or_default();
     let core_path = if pkg_name == "management-system-core" {
@@ -47,7 +57,7 @@ pub fn doctype_derive(input: TokenStream) -> TokenStream {
     let expanded = quote! {
         #core_path::inventory::submit! {
             #core_path::shared::doctype_registry::DocTypeRegistration {
-                name: #struct_name_str,
+                name: #registration_name,
                 module: #module,
                 description: #description,
                 is_submittable: #is_submittable,

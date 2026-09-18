@@ -456,7 +456,11 @@ impl FromStr for ConversionStatus {
 
 /// Asset conversion request (database entity)
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow, DocType)]
-#[doctype(module = "Assets", description = "Entity AssetConversion")]
+#[doctype(
+    name = "AssetLifecycleConversion",
+    module = "Assets",
+    description = "Entity AssetLifecycleConversion"
+)]
 pub struct AssetConversion {
     pub id: uuid::Uuid,
     pub asset_id: uuid::Uuid,

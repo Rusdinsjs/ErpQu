@@ -13,6 +13,20 @@ use api::{create_app, AppState};
 use management_system_core::shared::config::AppConfig;
 use management_system_core::shared::utils::jwt::JwtConfig;
 
+fn duplicate_doctype_names(
+    registrations: &[&management_system_core::shared::doctype_registry::DocTypeRegistration],
+) -> Vec<&'static str> {
+    let mut names = registrations
+        .iter()
+        .map(|doctype| doctype.name)
+        .collect::<Vec<_>>();
+    names.sort_unstable();
+    names
+        .windows(2)
+        .filter_map(|pair| (pair[0] == pair[1]).then_some(pair[0]))
+        .collect()
+}
+
 #[tokio::main]
 async fn main() {
     // Load .env file
@@ -151,18 +165,30 @@ async fn main() {
 
     tracing::info!("Database connected successfully");
 
-    // Synchronize registered DocTypes to the database
+    // Synchronize registered DocTypes to the database. Registry names are
+    // canonical identifiers; duplicate names are rejected before any upsert.
     tracing::info!("Synchronizing DocTypes from registry...");
-    for doctype in
-        inventory::iter::<management_system_core::shared::doctype_registry::DocTypeRegistration>
-    {
+    let mut registrations =
+        inventory::iter::<management_system_core::shared::doctype_registry::DocTypeRegistration>()
+            .collect::<Vec<_>>();
+    registrations.sort_by_key(|doctype| doctype.name);
+
+    let duplicate_names = duplicate_doctype_names(&registrations);
+    if !duplicate_names.is_empty() {
+        panic!(
+            "CRITICAL: Duplicate canonical DocType registrations: {}",
+            duplicate_names.join(", ")
+        );
+    }
+
+    for doctype in registrations {
         let result = sqlx::query(
             r#"
-            INSERT INTO doctypes (name, module, description, is_submittable) 
-            VALUES ($1, $2, $3, $4) 
-            ON CONFLICT (name) DO UPDATE SET 
-                module = EXCLUDED.module, 
-                description = EXCLUDED.description, 
+            INSERT INTO doctypes (name, module, description, is_submittable)
+            VALUES ($1, $2, $3, $4)
+            ON CONFLICT (name) DO UPDATE SET
+                module = EXCLUDED.module,
+                description = EXCLUDED.description,
                 is_submittable = EXCLUDED.is_submittable
             "#,
         )
@@ -221,4 +247,48 @@ async fn main() {
     )
     .await
     .expect("Server error during execution");
+}
+
+#[cfg(test)]
+mod tests {
+    use super::duplicate_doctype_names;
+    use management_system_core::shared::doctype_registry::DocTypeRegistration;
+
+    #[test]
+    fn canonical_doctype_names_must_be_unique() {
+        let first = DocTypeRegistration {
+            name: "Attendance",
+            module: "HR",
+            description: "Attendance",
+            is_submittable: false,
+        };
+        let second = DocTypeRegistration {
+            name: "Attendance",
+            module: "HR",
+            description: "Attendance duplicate",
+            is_submittable: false,
+        };
+        let registrations = vec![&first, &second];
+
+        assert_eq!(duplicate_doctype_names(&registrations), vec!["Attendance"]);
+    }
+
+    #[test]
+    fn distinct_canonical_doctype_names_are_accepted() {
+        let first = DocTypeRegistration {
+            name: "Attendance",
+            module: "HR",
+            description: "Attendance",
+            is_submittable: false,
+        };
+        let second = DocTypeRegistration {
+            name: "EmployeeLoan",
+            module: "HR",
+            description: "Employee loan",
+            is_submittable: true,
+        };
+        let registrations = vec![&first, &second];
+
+        assert!(duplicate_doctype_names(&registrations).is_empty());
+    }
 }

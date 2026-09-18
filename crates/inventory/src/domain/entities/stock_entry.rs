@@ -131,7 +131,12 @@ pub struct StockEntryItem {
 
 /// Material Request document for internal requisitions (QSTK-019)
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow, DocType)]
-#[doctype(module = "Inventory", description = "Entity MaterialRequest")]
+#[doctype(
+    name = "MaterialRequest",
+    module = "Inventory",
+    description = "Permintaan Barang / Material Gudang",
+    is_submittable = true
+)]
 pub struct MaterialRequest {
     pub id: Uuid,
     pub company_id: Uuid,

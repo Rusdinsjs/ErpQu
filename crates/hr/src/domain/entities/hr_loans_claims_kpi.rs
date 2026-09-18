@@ -22,7 +22,12 @@ pub struct HrLoanType {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
-#[doctype(module = "HR", description = "Entity HrEmployeeLoan")]
+#[doctype(
+    name = "EmployeeLoan",
+    module = "HR",
+    description = "Pengajuan pinjaman karyawan",
+    is_submittable = true
+)]
 pub struct HrEmployeeLoan {
     pub id: Uuid,
     pub employee_id: Uuid,
@@ -32,6 +37,8 @@ pub struct HrEmployeeLoan {
     pub tenure_months: i32,
     pub start_date: NaiveDate,
     pub status: String, // 'pending', 'approved', 'disbursed', 'rejected', 'closed'
+    pub workflow_state: String,
+    pub created_by: Option<Uuid>,
     pub total_paid: Decimal,
     pub remaining_balance: Decimal,
     pub reason: String,
@@ -80,7 +87,12 @@ pub struct HrExpenseClaimType {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow, DocType)]
-#[doctype(module = "HR", description = "Entity HrExpenseClaim")]
+#[doctype(
+    name = "ExpenseClaim",
+    module = "HR",
+    description = "Klaim pengeluaran dan reimbursement karyawan",
+    is_submittable = true
+)]
 pub struct HrExpenseClaim {
     pub id: Uuid,
     pub employee_id: Uuid,
@@ -90,6 +102,8 @@ pub struct HrExpenseClaim {
     pub description: String,
     pub receipt_url: Option<String>,
     pub status: String, // 'pending', 'approved', 'rejected', 'paid', 'included_in_payroll'
+    pub workflow_state: String,
+    pub created_by: Option<Uuid>,
     pub approved_by: Option<Uuid>,
     pub approved_at: Option<DateTime<Utc>>,
     pub rejection_reason: Option<String>,

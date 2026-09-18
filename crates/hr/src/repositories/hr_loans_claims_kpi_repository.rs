@@ -39,7 +39,7 @@ impl HrLoansClaimsKpiRepository {
             r#"
             SELECT l.*, e.name as employee_name, e.nik as employee_nik, lt.name as loan_type_name
             FROM hr_employee_loans l
-            JOIN employees e ON l.employee_id = e.id
+            JOIN hr.employees e ON l.employee_id = e.id
             JOIN hr_loan_types lt ON l.loan_type_id = lt.id
             WHERE ($1::uuid IS NULL OR l.employee_id = $1)
             ORDER BY l.created_at DESC
@@ -56,7 +56,7 @@ impl HrLoansClaimsKpiRepository {
             r#"
             SELECT l.*, e.name as employee_name, e.nik as employee_nik, lt.name as loan_type_name
             FROM hr_employee_loans l
-            JOIN employees e ON l.employee_id = e.id
+            JOIN hr.employees e ON l.employee_id = e.id
             JOIN hr_loan_types lt ON l.loan_type_id = lt.id
             WHERE l.id = $1
             "#,
@@ -72,14 +72,17 @@ impl HrLoansClaimsKpiRepository {
         &self,
         req: CreateLoanRequest,
         monthly_installment: Decimal,
+        created_by: Option<Uuid>,
     ) -> Result<HrEmployeeLoan, AppError> {
         sqlx::query_as::<_, HrEmployeeLoan>(
             r#"
             INSERT INTO hr_employee_loans (
                 id, employee_id, loan_type_id, loan_amount, monthly_installment,
-                tenure_months, start_date, status, total_paid, remaining_balance, reason
+                tenure_months, start_date, status, workflow_state, created_by,
+                total_paid, remaining_balance, reason
             ) VALUES (
-                uuid_generate_v4(), $1, $2, $3, $4, $5, $6, 'pending', 0, $3, $7
+                uuid_generate_v4(), $1, $2, $3, $4, $5, $6, 'pending',
+                'Pending Loan Approval', $7, 0, $3, $8
             )
             RETURNING *, NULL::text as employee_name, NULL::text as employee_nik, NULL::text as loan_type_name
             "#,
@@ -90,6 +93,7 @@ impl HrLoansClaimsKpiRepository {
         .bind(monthly_installment)
         .bind(req.tenure_months)
         .bind(req.start_date)
+        .bind(created_by)
         .bind(&req.reason)
         .fetch_one(&self.pool)
         .await
@@ -103,6 +107,13 @@ impl HrLoansClaimsKpiRepository {
         approved_by: Option<Uuid>,
         rejection_reason: Option<&str>,
     ) -> Result<HrEmployeeLoan, AppError> {
+        let (from_status, workflow_state) = match status {
+            "approved" => ("pending", "Approved"),
+            "rejected" => ("pending", "Rejected"),
+            "disbursed" => ("approved", "Disbursed"),
+            "closed" => ("disbursed", "Closed"),
+            _ => return Err(AppError::BadRequest("Status pinjaman tidak valid".into())),
+        };
         let is_disbursed = status == "disbursed";
         let is_approved = status == "approved" || is_disbursed;
 
@@ -110,24 +121,28 @@ impl HrLoansClaimsKpiRepository {
             r#"
             UPDATE hr_employee_loans
             SET status = $2,
-                approved_by = CASE WHEN $3 THEN COALESCE(approved_by, $4) ELSE approved_by END,
-                approved_at = CASE WHEN $3 THEN COALESCE(approved_at, NOW()) ELSE approved_at END,
-                rejection_reason = $5,
-                disbursed_at = CASE WHEN $6 THEN NOW() ELSE disbursed_at END,
+                workflow_state = $3,
+                approved_by = CASE WHEN $4 THEN COALESCE(approved_by, $5) ELSE approved_by END,
+                approved_at = CASE WHEN $4 THEN COALESCE(approved_at, NOW()) ELSE approved_at END,
+                rejection_reason = $6,
+                disbursed_at = CASE WHEN $7 THEN NOW() ELSE disbursed_at END,
                 updated_at = NOW()
-            WHERE id = $1
+            WHERE id = $1 AND status = $8
             RETURNING *, NULL::text as employee_name, NULL::text as employee_nik, NULL::text as loan_type_name
             "#,
         )
         .bind(id)
         .bind(status)
+        .bind(workflow_state)
         .bind(is_approved)
         .bind(approved_by)
         .bind(rejection_reason)
         .bind(is_disbursed)
-        .fetch_one(&self.pool)
+        .bind(from_status)
+        .fetch_optional(&self.pool)
         .await
-        .map_err(|e| AppError::Database(e.to_string()))
+        .map_err(|e| AppError::Database(e.to_string()))?
+        .ok_or_else(|| AppError::BadRequest("Transisi pinjaman tidak valid atau sudah diproses".into()))
     }
 
     pub async fn create_repayment_schedule(
@@ -268,13 +283,16 @@ impl HrLoansClaimsKpiRepository {
     pub async fn create_expense_claim(
         &self,
         req: CreateExpenseClaimRequest,
+        created_by: Option<Uuid>,
     ) -> Result<HrExpenseClaim, AppError> {
         sqlx::query_as::<_, HrExpenseClaim>(
             r#"
             INSERT INTO hr_expense_claims (
-                id, employee_id, claim_type_id, claim_date, total_amount, description, receipt_url, payment_method, status
+                id, employee_id, claim_type_id, claim_date, total_amount, description,
+                receipt_url, payment_method, status, workflow_state, created_by
             ) VALUES (
-                uuid_generate_v4(), $1, $2, $3, $4, $5, $6, COALESCE($7, 'payroll_transfer'), 'pending'
+                uuid_generate_v4(), $1, $2, $3, $4, $5, $6,
+                COALESCE($7, 'payroll_transfer'), 'pending', 'Pending Finance Review', $8
             )
             RETURNING *, NULL::text as employee_name, NULL::text as employee_nik, NULL::text as claim_type_name
             "#,
@@ -286,6 +304,7 @@ impl HrLoansClaimsKpiRepository {
         .bind(&req.description)
         .bind(&req.receipt_url)
         .bind(&req.payment_method)
+        .bind(created_by)
         .fetch_one(&self.pool)
         .await
         .map_err(|e| AppError::Database(e.to_string()))
@@ -298,26 +317,38 @@ impl HrLoansClaimsKpiRepository {
         approved_by: Option<Uuid>,
         rejection_reason: Option<&str>,
     ) -> Result<HrExpenseClaim, AppError> {
+        let (from_status, workflow_state) = match status {
+            "approved" => ("pending", "Approved"),
+            "rejected" => ("pending", "Rejected"),
+            "paid" => ("approved", "Paid"),
+            "included_in_payroll" => ("paid", "Included in Payroll"),
+            _ => return Err(AppError::BadRequest("Status klaim tidak valid".into())),
+        };
+
         sqlx::query_as::<_, HrExpenseClaim>(
             r#"
             UPDATE hr_expense_claims
             SET status = $2,
-                approved_by = COALESCE(approved_by, $3),
+                workflow_state = $3,
+                approved_by = COALESCE(approved_by, $4),
                 approved_at = CASE WHEN $2 = 'approved' THEN NOW() ELSE approved_at END,
-                rejection_reason = $4,
+                rejection_reason = $5,
                 payment_date = CASE WHEN $2 = 'paid' THEN CURRENT_DATE ELSE payment_date END,
                 updated_at = NOW()
-            WHERE id = $1
+            WHERE id = $1 AND status = $6
             RETURNING *, NULL::text as employee_name, NULL::text as employee_nik, NULL::text as claim_type_name
             "#,
         )
         .bind(id)
         .bind(status)
+        .bind(workflow_state)
         .bind(approved_by)
         .bind(rejection_reason)
-        .fetch_one(&self.pool)
+        .bind(from_status)
+        .fetch_optional(&self.pool)
         .await
-        .map_err(|e| AppError::Database(e.to_string()))
+        .map_err(|e| AppError::Database(e.to_string()))?
+        .ok_or_else(|| AppError::BadRequest("Transisi klaim tidak valid atau sudah diproses".into()))
     }
 
     // ---- APPRAISAL TEMPLATES & PERFORMANCE ----

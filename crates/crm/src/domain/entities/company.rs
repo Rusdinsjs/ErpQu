@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, sqlx::FromRow, DocType)]
-#[doctype(module = "CRM", description = "Entity Company")]
+#[doctype(name = "CrmCompany", module = "CRM", description = "Entity CrmCompany")]
 pub struct Company {
     pub id: Uuid,
     pub tenant_id: Uuid,
