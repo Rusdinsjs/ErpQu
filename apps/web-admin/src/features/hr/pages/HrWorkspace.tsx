@@ -133,10 +133,10 @@ const sections: SectionCard[] = [
         icon: Users,
         gradient: 'from-blue-500/20 to-cyan-500/5',
         links: [
-            { label: 'Direktori Pegawai', route: '/admin?menu=employees', icon: Users },
-            { label: 'Struktur Departemen', route: '/admin?menu=departments', icon: Building2 },
-            { label: 'Master Jabatan (Designations)', route: '/admin?menu=designations', icon: Briefcase },
-            { label: 'Riwayat Karir & Lifecycle', route: '/admin?menu=employee-lifecycle', icon: Activity },
+            { label: 'Direktori Pegawai', route: '/employees', icon: Users },
+            { label: 'Struktur Departemen', route: '/departments', icon: Building2 },
+            { label: 'Master Jabatan (Designations)', route: '/designations', icon: Briefcase },
+            { label: 'Riwayat Karir & Lifecycle', route: '/employee-lifecycle', icon: Activity },
         ]
     },
     {
@@ -144,10 +144,10 @@ const sections: SectionCard[] = [
         icon: Clock,
         gradient: 'from-emerald-500/20 to-teal-500/5',
         links: [
-            { label: 'Manajemen Shift Kerja', route: '/admin?menu=shifts', icon: Clock },
-            { label: 'Log Kehadiran & Biometrik', route: '/admin?menu=attendance-logs', icon: UserCheck },
-            { label: 'Pengajuan Cuti (Leaves)', route: '/admin?menu=leaves', icon: Calendar },
-            { label: 'Lembur & Surat Tugas (SPKL)', route: '/admin?menu=overtime', icon: FileText },
+            { label: 'Manajemen Shift Kerja', route: '/shifts', icon: Clock },
+            { label: 'Log Kehadiran & Biometrik', route: '/attendance-logs', icon: UserCheck },
+            { label: 'Pengajuan Cuti (Leaves)', route: '/leaves', icon: Calendar },
+            { label: 'Lembur & Surat Tugas (SPKL)', route: '/overtime', icon: FileText },
         ]
     },
     {
@@ -155,10 +155,10 @@ const sections: SectionCard[] = [
         icon: DollarSign,
         gradient: 'from-violet-500/20 to-purple-500/5',
         links: [
-            { label: 'Komponen & Struktur Gaji', route: '/admin?menu=salary-structures', icon: Layers },
-            { label: 'Penetapan Gaji Karyawan', route: '/admin?menu=salary-assignments', icon: DollarSign },
-            { label: 'Proses Slip Gaji Bulanan', route: '/admin?menu=payroll-processing', icon: FileText },
-            { label: 'Pinjaman & Kasbon Pegawai', route: '/admin?menu=employee-loans', icon: HandCoins },
+            { label: 'Komponen & Struktur Gaji', route: '/salary-structures', icon: Layers },
+            { label: 'Penetapan Gaji Karyawan', route: '/salary-assignments', icon: DollarSign },
+            { label: 'Proses Slip Gaji Bulanan', route: '/payroll-processing', icon: FileText },
+            { label: 'Pinjaman & Kasbon Pegawai', route: '/employee-loans', icon: HandCoins },
         ]
     },
     {
@@ -166,9 +166,9 @@ const sections: SectionCard[] = [
         icon: Award,
         gradient: 'from-orange-500/20 to-amber-500/5',
         links: [
-            { label: 'Evaluasi Kinerja (Appraisal KPI)', route: '/admin?menu=appraisal', icon: Award },
-            { label: 'Pelatihan & Sertifikasi K3', route: '/admin?menu=training-certifications', icon: CheckCircle2 },
-            { label: 'Rekrutmen & Pelamar (ATS)', route: '/admin?menu=recruitment', icon: UserPlus },
+            { label: 'Evaluasi Kinerja (Appraisal KPI)', route: '/appraisal', icon: Award },
+            { label: 'Pelatihan & Sertifikasi K3', route: '/training-certifications', icon: CheckCircle2 },
+            { label: 'Rekrutmen & Pelamar (ATS)', route: '/recruitment', icon: UserPlus },
         ]
     },
     {
@@ -176,10 +176,10 @@ const sections: SectionCard[] = [
         icon: Shield,
         gradient: 'from-rose-500/20 to-red-500/5',
         links: [
-            { label: 'Surat Peringatan (Disiplin)', route: '/admin?menu=disciplinary-actions', icon: ShieldAlert },
-            { label: 'Inspeksi Harian P2H (Driver)', route: '/admin?menu=p2h-inspections', icon: CheckCircle2 },
-            { label: 'Penugasan Alat Berat / Kendaraan', route: '/admin?menu=driver-assignments', icon: Truck },
-            { label: 'Klaim Pengobatan & Asuransi', route: '/admin?menu=claims', icon: HeartHandshake },
+            { label: 'Surat Peringatan (Disiplin)', route: '/disciplinary-actions', icon: ShieldAlert },
+            { label: 'Inspeksi Harian P2H (Driver)', route: '/p2h-inspections', icon: CheckCircle2 },
+            { label: 'Penugasan Alat Berat / Kendaraan', route: '/driver-assignments', icon: Truck },
+            { label: 'Klaim Pengobatan & Asuransi', route: '/expense-claims', icon: HeartHandshake },
         ]
     }
 ];
@@ -232,9 +232,9 @@ export default function HrWorkspace() {
     ];
 
     const quickActions = [
-        { label: 'Tambah Pegawai', icon: UserPlus, route: '/admin?menu=employees&new=1', color: 'bg-blue-600 hover:bg-blue-500 text-white shadow-blue-600/20' },
-        { label: 'Pengajuan Cuti', icon: Calendar, route: '/admin?menu=leaves&new=1', color: 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/20' },
-        { label: 'Input P2H Driver', icon: CheckCircle2, route: '/admin?menu=p2h-inspections', color: 'bg-amber-600 hover:bg-amber-500 text-white shadow-amber-600/20' },
+        { label: 'Tambah Pegawai', icon: UserPlus, route: '/employees?new=1', color: 'bg-blue-600 hover:bg-blue-500 text-white shadow-blue-600/20' },
+        { label: 'Pengajuan Cuti', icon: Calendar, route: '/leaves?new=1', color: 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-600/20' },
+        { label: 'Input P2H Driver', icon: CheckCircle2, route: '/p2h-inspections', color: 'bg-amber-600 hover:bg-amber-500 text-white shadow-amber-600/20' },
     ];
 
     return (

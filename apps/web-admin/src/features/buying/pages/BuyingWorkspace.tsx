@@ -59,11 +59,11 @@ export default function BuyingWorkspace() {
             icon: ShoppingCart,
             color: 'text-rose-500',
             links: [
-                { label: 'Material Request (Permintaan Barang)', route: '/admin?menu=material-requests' },
-                { label: 'Request for Quotation (RFQ)', route: '/admin?menu=rfqs' },
-                { label: 'Supplier Quotation (Penawaran Masuk)', route: '/admin?menu=supplier-quotations' },
-                { label: 'Purchase Order (Pesanan Beli)', route: '/admin?menu=purchase-orders' },
-                { label: 'Purchase Invoice (Tagihan Vendor)', route: '/admin?menu=purchase-bills' },
+                { label: 'Material Request (Permintaan Barang)', route: '/material-requests' },
+                { label: 'Request for Quotation (RFQ)', route: '/rfqs' },
+                { label: 'Supplier Quotation (Penawaran Masuk)', route: '/supplier-quotations' },
+                { label: 'Purchase Order (Pesanan Beli)', route: '/purchase-orders' },
+                { label: 'Purchase Invoice (Tagihan Vendor)', route: '/purchase-bills' },
             ]
         },
         {
@@ -71,10 +71,10 @@ export default function BuyingWorkspace() {
             icon: Truck,
             color: 'text-amber-500',
             links: [
-                { label: 'Direktori Vendor / Supplier', route: '/admin?menu=suppliers' },
-                { label: 'Supplier Groups (Kategori Mitra)', route: '/admin?menu=supplier-groups' },
-                { label: 'Supplier Contacts (PIC Vendor)', route: '/admin?menu=supplier-contacts' },
-                { label: 'Supplier Addresses (Alamat Pabrik)', route: '/admin?menu=supplier-addresses' },
+                { label: 'Direktori Vendor / Supplier', route: '/suppliers' },
+                { label: 'Supplier Groups (Kategori Mitra)', route: '/supplier-groups' },
+                { label: 'Supplier Contacts (PIC Vendor)', route: '/supplier-contacts' },
+                { label: 'Supplier Addresses (Alamat Pabrik)', route: '/supplier-addresses' },
             ]
         },
         {
@@ -82,8 +82,8 @@ export default function BuyingWorkspace() {
             icon: Star,
             color: 'text-yellow-500',
             links: [
-                { label: 'Supplier Scorecard (Rating Vendor)', route: '/admin?menu=supplier-scorecards' },
-                { label: 'Scorecard Criteria & Standing', route: '/admin?menu=scorecard-standings' },
+                { label: 'Supplier Scorecard (Rating Vendor)', route: '/supplier-scorecards' },
+                { label: 'Scorecard Criteria & Standing', route: '/scorecard-standings' },
             ]
         },
         {
@@ -91,9 +91,9 @@ export default function BuyingWorkspace() {
             icon: BarChart3,
             color: 'text-blue-500',
             links: [
-                { label: 'Purchase Analytics (Analisis Belanja)', route: '/admin?menu=purchase-analytics' },
-                { label: 'Purchase Order Trends (Tren PO)', route: '/admin?menu=po-trends' },
-                { label: 'Procurement Tracker (Pelacakan)', route: '/admin?menu=procurement-tracker' },
+                { label: 'Purchase Analytics (Analisis Belanja)', route: '/purchase-analytics' },
+                { label: 'Purchase Order Trends (Tren PO)', route: '/po-trends' },
+                { label: 'Procurement Tracker (Pelacakan)', route: '/procurement-tracker' },
             ]
         },
         {
@@ -101,9 +101,9 @@ export default function BuyingWorkspace() {
             icon: Package,
             color: 'text-emerald-500',
             links: [
-                { label: 'Item Persediaan (Inventory Items)', route: '/admin?menu=items' },
-                { label: 'Item Groups (Kategori Barang)', route: '/admin?menu=item-groups' },
-                { label: 'Item Prices (Daftar Harga Beli)', route: '/admin?menu=buying-item-prices' },
+                { label: 'Item Persediaan (Inventory Items)', route: '/items' },
+                { label: 'Item Groups (Kategori Barang)', route: '/item-groups' },
+                { label: 'Item Prices (Daftar Harga Beli)', route: '/buying-item-prices' },
             ]
         },
         {
@@ -111,19 +111,14 @@ export default function BuyingWorkspace() {
             icon: Settings,
             color: 'text-indigo-500',
             links: [
-                { label: 'Purchase Taxes & Charges Template', route: '/admin?menu=purchase-tax-templates' },
-                { label: 'Terms & Conditions Template', route: '/admin?menu=buying-terms-templates' },
+                { label: 'Purchase Taxes & Charges Template', route: '/purchase-tax-templates' },
+                { label: 'Terms & Conditions Template', route: '/buying-terms-templates' },
             ]
         }
     ];
 
     const handleNavigate = (route: string) => {
-        if (route.startsWith('/admin?menu=')) {
-            const menuKey = route.split('menu=')[1];
-            navigate(`/admin?menu=${menuKey}`);
-        } else {
-            navigate(route);
-        }
+        navigate(route);
     };
 
     return (

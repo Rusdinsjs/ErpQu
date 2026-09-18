@@ -56,10 +56,10 @@ export default function AccountingWorkspace() {
             icon: BookOpen,
             color: 'text-blue-500',
             links: [
-                { label: 'Chart of Accounts (Bagan Akun)', route: '/admin?menu=finance' },
-                { label: 'Journal Entry (Jurnal Umum)', route: '/admin?menu=journal-entries' },
-                { label: 'Payment Entry (Pelunasan Faktur)', route: '/admin?menu=payment-entries' },
-                { label: 'General Ledger (Buku Besar)', route: '/admin?menu=general-ledger' },
+                { label: 'Chart of Accounts (Bagan Akun)', route: '/chart-of-accounts' },
+                { label: 'Journal Entry (Jurnal Umum)', route: '/journal-entries' },
+                { label: 'Payment Entry (Pelunasan Faktur)', route: '/payment-entries' },
+                { label: 'General Ledger (Buku Besar)', route: '/general-ledger' },
             ]
         },
         {
@@ -67,10 +67,10 @@ export default function AccountingWorkspace() {
             icon: ArrowDownLeft,
             color: 'text-emerald-500',
             links: [
-                { label: 'Sales Invoice (Faktur Penjualan)', route: '/admin?menu=sales-invoices' },
-                { label: 'Credit Note (Nota Kredit / Retur)', route: '/admin?menu=credit-notes' },
-                { label: 'AR Aging Report (Umur Piutang)', route: '/admin?menu=ar-aging' },
-                { label: 'Dunning (Surat Tagihan)', route: '/admin?menu=dunnings' },
+                { label: 'Sales Invoice (Faktur Penjualan)', route: '/sales-invoices' },
+                { label: 'Credit Note (Nota Kredit / Retur)', route: '/credit-notes' },
+                { label: 'AR Aging Report (Umur Piutang)', route: '/ar-aging' },
+                { label: 'Dunning (Surat Tagihan)', route: '/dunnings' },
             ]
         },
         {
@@ -78,9 +78,9 @@ export default function AccountingWorkspace() {
             icon: ArrowUpRight,
             color: 'text-amber-500',
             links: [
-                { label: 'Purchase Invoice (Tagihan Pemasok)', route: '/admin?menu=purchase-bills' },
-                { label: 'Debit Note (Nota Debit / Retur)', route: '/admin?menu=debit-notes' },
-                { label: 'AP Aging Report (Umur Hutang)', route: '/admin?menu=ap-aging' },
+                { label: 'Purchase Invoice (Tagihan Pemasok)', route: '/purchase-bills' },
+                { label: 'Debit Note (Nota Debit / Retur)', route: '/debit-notes' },
+                { label: 'AP Aging Report (Umur Hutang)', route: '/ap-aging' },
             ]
         },
         {
@@ -88,9 +88,9 @@ export default function AccountingWorkspace() {
             icon: Landmark,
             color: 'text-cyan-500',
             links: [
-                { label: 'Bank Account (Master Rekening)', route: '/admin?menu=bank-accounts' },
-                { label: 'Cash & Bank Transactions (Mutasi)', route: '/admin?menu=cash-bank' },
-                { label: 'Cashier Closing Entry', route: '/admin?menu=cashier-closing' },
+                { label: 'Bank Account (Master Rekening)', route: '/bank-accounts' },
+                { label: 'Cash & Bank Transactions (Mutasi)', route: '/cash-bank' },
+                { label: 'Cashier Closing Entry', route: '/cashier-closing' },
             ]
         },
         {
@@ -98,9 +98,9 @@ export default function AccountingWorkspace() {
             icon: Layers,
             color: 'text-indigo-500',
             links: [
-                { label: 'Cost Center (Pusat Biaya)', route: '/admin?menu=cost-centers' },
-                { label: 'Budget (Anggaran & Varian)', route: '/admin?menu=budgets-view' },
-                { label: 'Tax Templates (Template Pajak)', route: '/admin?menu=sales-tax-templates' },
+                { label: 'Cost Center (Pusat Biaya)', route: '/cost-centers' },
+                { label: 'Budget (Anggaran & Varian)', route: '/budgets-view' },
+                { label: 'Tax Templates (Template Pajak)', route: '/sales-tax-templates' },
             ]
         },
         {
@@ -108,21 +108,16 @@ export default function AccountingWorkspace() {
             icon: Activity,
             color: 'text-purple-500',
             links: [
-                { label: 'Balance Sheet (Neraca Keuangan)', route: '/admin?menu=balance-sheet' },
-                { label: 'Profit and Loss (Laba Rugi)', route: '/admin?menu=profit-loss' },
-                { label: 'Cash Flow Statement (Arus Kas)', route: '/admin?menu=cash-flow' },
-                { label: 'Trial Balance (Neraca Saldo)', route: '/admin?menu=trial-balance' },
+                { label: 'Balance Sheet (Neraca Keuangan)', route: '/balance-sheet' },
+                { label: 'Profit and Loss (Laba Rugi)', route: '/profit-loss' },
+                { label: 'Cash Flow Statement (Arus Kas)', route: '/cash-flow' },
+                { label: 'Trial Balance (Neraca Saldo)', route: '/trial-balance' },
             ]
         }
     ];
 
     const handleNavigate = (route: string) => {
-        if (route.startsWith('/admin?menu=')) {
-            const menuKey = route.split('menu=')[1];
-            navigate(`/admin?menu=${menuKey}`);
-        } else {
-            navigate(route);
-        }
+        navigate(route);
     };
 
     return (

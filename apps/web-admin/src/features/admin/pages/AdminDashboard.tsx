@@ -265,7 +265,20 @@ export default function AdminDashboard() {
 
     // Sync URL with State
     useEffect(() => {
+        // Handle legacy or workspace query param: ?menu=xyz (e.g. /admin?menu=customers)
+        const searchParams = new URLSearchParams(location.search);
+        const menuParam = searchParams.get('menu');
+        if (menuParam) {
+            navigate(`/${menuParam}`, { replace: true });
+            return;
+        }
+
         const path = location.pathname;
+
+        if (path === '/admin') {
+            navigate('/dashboard', { replace: true });
+            return;
+        }
 
         const isUuid = (str: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
 
@@ -425,34 +438,36 @@ export default function AdminDashboard() {
             setActiveTab(foundTab);
 
             // Auto-expand group if child is active
-            // Recursive finder for nested groups
-            const findParentGroup = (items: NavEntry[], targetId: TabId): NavGroup | undefined => {
+            // Recursive finder for nested groups to collect all ancestor group IDs
+            const findAllParentGroupIds = (items: NavEntry[], targetId: TabId): string[] => {
                 if (targetId === 'work-orders') {
-                    return items.find(i => !isNavHeader(i) && i.id === 'maintenance_group') as NavGroup;
+                    return ['maintenance_group'];
                 }
 
                 for (const item of items) {
                     if (isNavHeader(item)) continue;
                     if (isNavGroup(item)) {
                         if (item.children.some(child => !isNavHeader(child) && child.id === targetId)) {
-                            return item;
+                            return [item.id];
                         }
-                        const foundInChild = findParentGroup(item.children, targetId);
-                        if (foundInChild) return item;
-                    } else if (item.id === targetId) {
-                        return undefined; // At root
+                        const foundInChild = findAllParentGroupIds(item.children, targetId);
+                        if (foundInChild.length > 0) {
+                            return [item.id, ...foundInChild];
+                        }
                     }
                 }
-                return undefined;
+                return [];
             };
 
             // Guard against UUIDs being interpreted as tabs (which causes Dashboard fallback)
             const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(foundTab);
 
             if (!isUuid) {
-                const foundGroup = findParentGroup(navItems, foundTab);
-                if (foundGroup) {
-                    setOpenGroups(prev => ({ ...prev, [foundGroup.id]: true }));
+                const parentGroupIds = findAllParentGroupIds(navItems, foundTab);
+                if (parentGroupIds.length > 0) {
+                    const updates: Record<string, boolean> = {};
+                    parentGroupIds.forEach(id => { updates[id] = true; });
+                    setOpenGroups(prev => ({ ...prev, ...updates }));
                 } else if (['assets-workspace', 'assets', 'categories', 'locations', 'asset-lifecycle', 'asset-audit'].includes(foundTab)) {
                     setOpenGroups(prev => ({ ...prev, asset_operations: true }));
                 } else if (['accounting-workspace', 'chart-of-accounts', 'cash-bank', 'journal-entries', 'payment-entries', 'payment-reconciliation', 'sales-invoices', 'purchase-bills', 'credit-notes', 'debit-notes', 'dunnings', 'bank-accounts', 'bank-transactions', 'cost-centers', 'accounting-dimensions', 'budgets', 'sales-tax-templates', 'purchase-tax-templates-view', 'tax-categories', 'tax-rules', 'balance-sheet', 'profit-loss', 'cash-flow', 'trial-balance', 'general-ledger-report', 'ar-aging', 'ap-aging', 'efaktur-management'].includes(foundTab)) {
@@ -467,7 +482,6 @@ export default function AdminDashboard() {
                 }
 
                 // Only set active tab if it's not a UUID and seems to be a valid tab
-                // (Though ideally we should validate against valid TabIds)
                 setActiveTab(foundTab);
             }
 
@@ -484,7 +498,7 @@ export default function AdminDashboard() {
             setSelectedRentalId(null);
             setSelectedEmployeeId(null);
         }
-    }, [location.pathname]);
+    }, [location.pathname, location.search, navigate, navItems]);
 
     const handleLogout = () => {
         setLogoutModalOpen(true);
@@ -500,15 +514,15 @@ export default function AdminDashboard() {
         setOpenGroups(prev => ({ ...prev, [groupId]: !prev[groupId] }));
     };
 
-    // Auto-detect module from current tab when no module is set
-    // (e.g., direct URL access without going through Launchpad)
+    // Auto-detect module from current tab
+    // (e.g., direct URL access without going through Launchpad or navigating across module boundaries)
     useEffect(() => {
-        if (!activeModule && activeTab !== 'dashboard') {
+        if (activeTab && activeTab !== 'dashboard') {
             const menuId = activeTab as MenuId;
             const matchingModule = launchpadConfig.modules.find(m =>
                 (m.menuIds || []).includes(menuId)
             );
-            if (matchingModule) {
+            if (matchingModule && matchingModule.id !== activeModule) {
                 setActiveModule(matchingModule.id);
             }
         }

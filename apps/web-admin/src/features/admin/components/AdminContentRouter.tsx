@@ -291,6 +291,7 @@ export function AdminContentRouter({
 
     const VIEW_MAP: Record<string, () => React.ReactNode> = {
         'dashboard': () => <DashboardView />,
+        'admin': () => <DashboardView />,
         'assets-workspace': () => <AssetsWorkspaceView />,
         'assets': () => <AssetsView />,
         'categories': () => <CategoriesView />,
@@ -356,6 +357,7 @@ export function AdminContentRouter({
         // HR Fase 5 - Loans, Claims & KPI
         'employee-loans': () => <EmployeeLoansView />,
         'expense-claims': () => <ExpenseClaimsView />,
+        'claims': () => <ExpenseClaimsView />,
         'appraisal': () => <AppraisalView />,
 
         // HR Fase 6 - Recruitment ATS, Training & Disciplinary Actions

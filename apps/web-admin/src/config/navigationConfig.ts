@@ -251,6 +251,7 @@ export const ALL_NAV_ITEMS: Record<string, NavItem> = {
     'salary-structures': { id: 'salary-structures', icon: Layers, label: 'Struktur Gaji', minLevel: 3 },
     'employee-loans': { id: 'employee-loans', icon: HandCoins, label: 'Pinjaman & Kasbon', minLevel: 3 },
     'expense-claims': { id: 'expense-claims', icon: Receipt, label: 'Klaim Reimbursement', minLevel: 3 },
+    'claims': { id: 'claims', icon: Receipt, label: 'Klaim Pengobatan & Asuransi', path: '/expense-claims', minLevel: 3 },
     'appraisal': { id: 'appraisal', icon: Award, label: 'Evaluasi Kinerja (KPI)', minLevel: 3 },
     'recruitment': { id: 'recruitment', icon: UserPlus, label: 'Rekrutmen & ATS', minLevel: 3 },
     'training-certifications': { id: 'training-certifications', icon: GraduationCap, label: 'Pelatihan & Sertifikasi', minLevel: 3 },

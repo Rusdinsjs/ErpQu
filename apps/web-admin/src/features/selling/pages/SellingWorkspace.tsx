@@ -52,12 +52,12 @@ export default function SellingWorkspace() {
             icon: ShoppingCart,
             color: 'text-blue-500',
             links: [
-                { label: 'Direktori Pelanggan (Customers)', route: '/admin?menu=customers' },
-                { label: 'Penawaran Harga (Sales Quotation)', route: '/admin?menu=quotations' },
-                { label: 'Pesanan Penjualan (Sales Order)', route: '/admin?menu=sales-orders' },
-                { label: 'Faktur Penjualan (Sales Invoice)', route: '/admin?menu=sales-invoices' },
-                { label: 'Kontrak Payung (Blanket Order)', route: '/admin?menu=blanket-orders' },
-                { label: 'Mitra & Tim Sales (Sales Team)', route: '/admin?menu=sales-partners' },
+                { label: 'Direktori Pelanggan (Customers)', route: '/customers' },
+                { label: 'Penawaran Harga (Sales Quotation)', route: '/quotations' },
+                { label: 'Pesanan Penjualan (Sales Order)', route: '/sales-orders' },
+                { label: 'Faktur Penjualan (Sales Invoice)', route: '/sales-invoices' },
+                { label: 'Kontrak Payung (Blanket Order)', route: '/blanket-orders' },
+                { label: 'Mitra & Tim Sales (Sales Team)', route: '/sales-partners' },
             ]
         },
         {
@@ -65,9 +65,9 @@ export default function SellingWorkspace() {
             icon: Store,
             color: 'text-rose-500',
             links: [
-                { label: 'Terminal Kasir (POS Profile)', route: '/admin?menu=pos-profiles' },
-                { label: 'Shift Kasir (Opening & Closing)', route: '/admin?menu=pos-opening' },
-                { label: 'Program Loyalitas & Poin', route: '/admin?menu=loyalty-programs' },
+                { label: 'Terminal Kasir (POS Profile)', route: '/pos-profiles' },
+                { label: 'Shift Kasir (Opening & Closing)', route: '/pos-opening' },
+                { label: 'Program Loyalitas & Poin', route: '/loyalty-programs' },
             ]
         },
         {
@@ -75,9 +75,9 @@ export default function SellingWorkspace() {
             icon: Tag,
             color: 'text-orange-500',
             links: [
-                { label: 'Aturan Diskon (Pricing Rules)', route: '/admin?menu=pricing-rules' },
-                { label: 'Voucher Promo (Coupon Codes)', route: '/admin?menu=coupon-codes' },
-                { label: 'Aturan Ongkir (Shipping Rules)', route: '/admin?menu=shipping-rules' },
+                { label: 'Aturan Diskon (Pricing Rules)', route: '/pricing-rules' },
+                { label: 'Voucher Promo (Coupon Codes)', route: '/coupon-codes' },
+                { label: 'Aturan Ongkir (Shipping Rules)', route: '/shipping-rules' },
             ]
         },
         {
@@ -85,9 +85,9 @@ export default function SellingWorkspace() {
             icon: Users,
             color: 'text-violet-500',
             links: [
-                { label: 'Customer Groups (Kategori)', route: '/admin?menu=customer-groups' },
-                { label: 'Wilayah Distribusi (Territories)', route: '/admin?menu=territories' },
-                { label: 'Kampanye Promo (Campaigns)', route: '/admin?menu=campaigns' },
+                { label: 'Customer Groups (Kategori)', route: '/customer-groups' },
+                { label: 'Wilayah Distribusi (Territories)', route: '/territories' },
+                { label: 'Kampanye Promo (Campaigns)', route: '/campaigns' },
             ]
         },
         {
@@ -95,9 +95,9 @@ export default function SellingWorkspace() {
             icon: BarChart3,
             color: 'text-emerald-500',
             links: [
-                { label: 'Sales Analytics & Tren SO', route: '/admin?menu=sales-analytics' },
-                { label: 'Analisis Status Order (SO)', route: '/admin?menu=so-analysis' },
-                { label: 'Sales Funnel (Konversi)', route: '/admin?menu=sales-funnel' },
+                { label: 'Sales Analytics & Tren SO', route: '/sales-analytics' },
+                { label: 'Analisis Status Order (SO)', route: '/so-analysis' },
+                { label: 'Sales Funnel (Konversi)', route: '/sales-funnel' },
             ]
         },
         {
@@ -105,19 +105,14 @@ export default function SellingWorkspace() {
             icon: Settings,
             color: 'text-teal-500',
             links: [
-                { label: 'Template Pajak Penjualan (PPN)', route: '/admin?menu=tax-templates' },
-                { label: 'Syarat & Ketentuan (Terms)', route: '/admin?menu=terms-templates' },
+                { label: 'Template Pajak Penjualan (PPN)', route: '/tax-templates' },
+                { label: 'Syarat & Ketentuan (Terms)', route: '/terms-templates' },
             ]
         }
     ];
 
     const handleNavigate = (route: string) => {
-        if (route.startsWith('/admin?menu=')) {
-            const menuKey = route.split('menu=')[1];
-            navigate(`/admin?menu=${menuKey}`);
-        } else {
-            navigate(route);
-        }
+        navigate(route);
     };
 
     return (
