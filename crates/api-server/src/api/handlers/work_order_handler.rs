@@ -332,17 +332,36 @@ pub async fn cancel_work_order(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
+    payload: Option<Json<CancelWorkOrderRequest>>,
 ) -> Result<Json<ApiResponse<WorkOrder>>, AppError> {
     // Check role: Manager (2) or higher
     check_role(&claims, ROLE_MANAGER)?;
 
-    // TODO: Implement cancel in service
-    let order = state.work_order_service.get_by_id(id).await?;
+    // Actor identity comes from the JWT, never from the request body.
+    let actor_id = claims.user_id();
+    let order = state.work_order_service.cancel(id, actor_id).await?;
+
+    let reason = payload
+        .and_then(|Json(p)| p.reason)
+        .filter(|r| !r.trim().is_empty());
+
+    tracing::info!(
+        "SECURITY AUDIT WORK_ORDER_CANCELLED: WOID={} WONumber={} ActorID={} Reason={:?}",
+        order.id,
+        order.wo_number,
+        actor_id,
+        reason
+    );
 
     Ok(Json(ApiResponse::success_with_message(
         order,
         "Work order cancelled",
     )))
+}
+
+#[derive(Deserialize)]
+pub struct CancelWorkOrderRequest {
+    pub reason: Option<String>,
 }
 
 #[derive(Deserialize)]

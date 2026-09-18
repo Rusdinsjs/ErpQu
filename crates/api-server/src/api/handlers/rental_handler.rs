@@ -18,7 +18,7 @@ use management_system_core::application::dto::{
 };
 use management_system_core::domain::entities::UserClaims;
 use management_system_core::shared::errors::AppError;
-use management_system_rental::domain::entities::{Rental, RentalHandover, RentalRate};
+use management_system_rental::domain::entities::{Rental, RentalRate};
 use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]
@@ -38,13 +38,22 @@ pub struct UpdateRentalPayload {
 // ==================== RENTAL ENDPOINTS ====================
 
 /// List all rentals
+///
+/// Pagination is applied in-memory after the service filters by the caller's
+/// tenant/asset scope, so the response contract stays a plain array (as the web
+/// client expects) while `page`/`per_page` still bound the payload size.
 pub async fn list_rentals(
     State(state): State<AppState>,
     Extension(claims): Extension<UserClaims>,
-    Query(_params): Query<PaginationParams>, // Pagination not implemented in service yet
+    Query(params): Query<PaginationParams>,
 ) -> Result<Json<Vec<Rental>>, AppError> {
     let rentals = state.rental_service.list_rentals(&claims).await?;
-    Ok(Json(rentals))
+
+    let per_page = params.per_page() as usize;
+    let offset = ((params.page() - 1) as usize).saturating_mul(per_page);
+    let page_items = rentals.into_iter().skip(offset).take(per_page).collect();
+
+    Ok(Json(page_items))
 }
 
 /// Get rental by ID
@@ -216,20 +225,111 @@ pub async fn list_overdue_rentals(
 
 // ==================== HANDOVERS ====================
 
+/// Handover record shaped to match `public.rental_handovers`.
+///
+/// The previous entity (`RentalHandover` in the rental crate) declares columns
+/// such as `handover_date` / `conducted_by` / `notes` that do not exist in the
+/// table, which is why the list endpoint had to return an empty vector. This
+/// struct mirrors the actual schema used by the web client.
+#[derive(Debug, serde::Serialize, sqlx::FromRow)]
+pub struct RentalHandoverRecord {
+    pub id: Uuid,
+    pub rental_id: Uuid,
+    pub rental_item_id: Option<Uuid>,
+    pub handover_type: String,
+    pub condition_rating: Option<String>,
+    pub condition_notes: Option<String>,
+    pub photos: Option<serde_json::Value>,
+    pub has_damage: Option<bool>,
+    pub damage_description: Option<String>,
+    pub damage_photos: Option<serde_json::Value>,
+    pub recorded_by: Option<Uuid>,
+    pub recorded_at: Option<chrono::DateTime<chrono::Utc>>,
+    pub signature_data: Option<String>,
+    pub created_at: Option<chrono::DateTime<chrono::Utc>>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct AddHandoverPhotoRequest {
+    pub photo_url: String,
+    /// Optional caption. Kept for API compatibility with the web client.
+    #[allow(dead_code)]
+    pub description: Option<String>,
+}
+
 pub async fn get_rental_handovers(
-    State(_state): State<AppState>,
-    Path(_id): Path<Uuid>,
-) -> Result<Json<Vec<RentalHandover>>, AppError> {
-    // TODO: Implement fetching handovers
-    Ok(Json(vec![]))
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+) -> Result<Json<Vec<RentalHandoverRecord>>, AppError> {
+    let handovers = sqlx::query_as::<_, RentalHandoverRecord>(
+        r#"
+        SELECT id, rental_id, rental_item_id, handover_type, condition_rating,
+               condition_notes, photos, has_damage, damage_description, damage_photos,
+               recorded_by, recorded_at, signature_data, created_at
+        FROM public.rental_handovers
+        WHERE rental_id = $1
+        ORDER BY recorded_at DESC NULLS LAST, created_at DESC
+        "#,
+    )
+    .bind(id)
+    .fetch_all(&state.pool)
+    .await
+    .map_err(|e| AppError::Internal(format!("Failed to load rental handovers: {}", e)))?;
+
+    Ok(Json(handovers))
 }
 
 pub async fn add_handover_photo(
-    State(_state): State<AppState>,
-    Path(_id): Path<Uuid>,
-) -> Result<Json<ApiResponse<()>>, AppError> {
-    // TODO: Implement photo upload
-    Ok(Json(ApiResponse::success(())))
+    State(state): State<AppState>,
+    Extension(claims): Extension<UserClaims>,
+    Path(id): Path<Uuid>,
+    Json(payload): Json<AddHandoverPhotoRequest>,
+) -> Result<Json<ApiResponse<RentalHandoverRecord>>, AppError> {
+    let photo_url = payload.photo_url.trim();
+    if photo_url.is_empty() {
+        return Err(AppError::BadRequest("photo_url is required".to_string()));
+    }
+    // Only accept server-managed upload paths; block external URLs and traversal.
+    if !photo_url.starts_with("/api/uploads/") || photo_url.contains("..") {
+        return Err(AppError::BadRequest(
+            "photo_url must reference an uploaded file under /api/uploads/".to_string(),
+        ));
+    }
+
+    let photo = serde_json::json!({
+        "url": photo_url,
+        "uploaded_by": claims.sub,
+        "uploaded_at": chrono::Utc::now().to_rfc3339(),
+    });
+
+    let record = sqlx::query_as::<_, RentalHandoverRecord>(
+        r#"
+        UPDATE public.rental_handovers
+        SET photos = COALESCE(photos, '[]'::jsonb) || $2::jsonb
+        WHERE id = $1
+        RETURNING id, rental_id, rental_item_id, handover_type, condition_rating,
+                  condition_notes, photos, has_damage, damage_description, damage_photos,
+                  recorded_by, recorded_at, signature_data, created_at
+        "#,
+    )
+    .bind(id)
+    .bind(serde_json::json!([photo]))
+    .fetch_optional(&state.pool)
+    .await
+    .map_err(|e| AppError::Internal(format!("Failed to add handover photo: {}", e)))?
+    .ok_or_else(|| AppError::NotFound("Rental handover not found".to_string()))?;
+
+    tracing::info!(
+        "SECURITY AUDIT HANDOVER_PHOTO_ADDED: HandoverID={} RentalID={} UserID={}",
+        id,
+        record.rental_id,
+        claims.sub
+    );
+
+    Ok(Json(ApiResponse::success_with_message(
+        record,
+        "Handover photo added",
+    )))
 }
 
 // ==================== RATES ====================

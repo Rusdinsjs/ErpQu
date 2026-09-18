@@ -227,6 +227,60 @@ impl WorkOrderService {
         Ok(updated)
     }
 
+    /// Cancel a work order.
+    ///
+    /// Cancellation is a terminal state, so it is only allowed while work has not
+    /// yet been finalized. Once a work order is completed/verified/cancelled the
+    /// costs and parts it produced are already posted, and "cancelling" would
+    /// silently leave those postings in place.
+    pub async fn cancel(&self, id: Uuid, _cancelled_by: Uuid) -> DomainResult<WorkOrder> {
+        let wo = self.get_by_id(id).await?;
+
+        let cancellable = [
+            WorkOrderStatus::Pending.as_str(),
+            WorkOrderStatus::Approved.as_str(),
+            WorkOrderStatus::Assigned.as_str(),
+            WorkOrderStatus::InProgress.as_str(),
+            WorkOrderStatus::OnHold.as_str(),
+            WorkOrderStatus::PendingReview.as_str(),
+        ];
+
+        if !cancellable.contains(&wo.status.as_str()) {
+            let msg = format!(
+                "Work order in status '{}' cannot be cancelled; it is already finalized",
+                wo.status
+            );
+            return Err(DomainError::business_rule("work_order_status", &msg));
+        }
+
+        // Refuse to cancel work that already recorded parts, so inventory and
+        // expense postings are not orphaned by the status change.
+        let parts = self.repository.get_parts(id).await.unwrap_or_default();
+        if !parts.is_empty() {
+            return Err(DomainError::business_rule(
+                "work_order_has_parts",
+                "Remove recorded parts before cancelling this work order",
+            ));
+        }
+
+        self.repository
+            .update_status(id, WorkOrderStatus::Cancelled.as_str())
+            .await
+            .map_err(|e| DomainError::ExternalServiceError {
+                service: "database".to_string(),
+                message: e.to_string(),
+            })?;
+
+        let updated = self.get_by_id(id).await?;
+
+        let _ = self
+            .notification_service
+            .broadcast("WORK_ORDER_CANCELLED", serde_json::json!(updated))
+            .await;
+
+        Ok(updated)
+    }
+
     pub async fn assign(&self, id: Uuid, technician_id: Uuid) -> DomainResult<WorkOrder> {
         self.repository
             .assign_technician(id, technician_id)

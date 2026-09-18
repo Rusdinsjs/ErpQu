@@ -3,7 +3,7 @@
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
-    Json,
+    Extension, Json,
 };
 use chrono::{DateTime, Utc};
 use serde::Deserialize;
@@ -11,6 +11,7 @@ use uuid::Uuid;
 
 use crate::api::server::AppState;
 use management_system_core::application::dto::ApiResponse;
+use management_system_core::domain::entities::UserClaims;
 use management_system_core::shared::errors::AppError;
 use management_system_ops::{SensorAlert, SensorReading, SensorThreshold};
 
@@ -115,11 +116,19 @@ pub async fn list_active_alerts(
 
 pub async fn acknowledge_alert(
     State(state): State<AppState>,
+    Extension(claims): Extension<UserClaims>,
     Path(id): Path<Uuid>,
 ) -> Result<Json<ApiResponse<()>>, AppError> {
-    // TODO: Get user from auth context
-    let user_id = Uuid::new_v4();
+    // Actor identity must come from the authenticated session, not a random UUID.
+    let user_id = claims.user_id();
     state.sensor_service.acknowledge_alert(id, user_id).await?;
+
+    tracing::info!(
+        "SECURITY AUDIT SENSOR_ALERT_ACKNOWLEDGED: AlertID={} ActorID={}",
+        id,
+        user_id
+    );
+
     Ok(Json(ApiResponse::success_with_message(
         (),
         "Alert acknowledged",

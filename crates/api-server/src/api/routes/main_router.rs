@@ -30,9 +30,21 @@ pub fn create_router(state: AppState) -> Router {
         .route("/api/auth/login", post(login))
         .route("/api/auth/register", post(register))
         .route("/api/auth/refresh", post(auth_handler::refresh_token))
-        .route("/ws", get(notification_ws::ws_handler))
+        .route("/ws", get(notification_ws::ws_handler));
+
+    // Uploaded file storage.
+    //
+    // These are no longer anonymously reachable: `private_file_gate_middleware`
+    // requires a bearer token, a valid signed URL, or the HttpOnly file-gate
+    // cookie. Public branding files under `uploads/avatars/` stay open because
+    // company logos and avatars render on the pre-authentication login page.
+    let file_routes: Router<AppState> = Router::new()
         .nest_service("/api/uploads", ServeDir::new("uploads"))
-        .nest_service("/uploads", ServeDir::new("uploads"));
+        .nest_service("/uploads", ServeDir::new("uploads"))
+        .layer(axum_middleware::from_fn_with_state(
+            state.clone(),
+            crate::api::middleware::private_files::private_file_gate_middleware,
+        ));
 
     // Lookup routes
     let lookup_routes: Router<AppState> = Router::new()
@@ -43,9 +55,6 @@ pub fn create_router(state: AppState) -> Router {
             "/api/lookups/maintenance-types",
             get(list_maintenance_types),
         );
-
-    // Transactional & Finance Routes (Strict Authorization)
-    let transactional_routes = Router::new().route("/api/placeholder_tx", get(list_currencies));
 
     // Protected routes (QSEC-006: Private file uploads & access)
     let protected_routes = Router::new()
@@ -640,8 +649,8 @@ pub fn create_router(state: AppState) -> Router {
 
     Router::new()
         .merge(public_routes)
+        .merge(file_routes)
         .merge(lookup_routes)
-        .merge(transactional_routes)
         .merge(protected_routes)
         .merge(crate::api::routes::settings_routes::settings_routes(
             state.clone(),

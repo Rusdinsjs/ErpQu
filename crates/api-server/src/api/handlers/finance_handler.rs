@@ -94,11 +94,34 @@ pub async fn list_expenses(State(state): State<AppState>) -> Result<Json<Value>,
     Ok(Json(json!({ "success": true, "data": expenses })))
 }
 
+/// Query parameters for the cash/bank ledger listing.
+#[derive(Debug, serde::Deserialize)]
+pub struct CashBankListParams {
+    pub date_from: Option<chrono::NaiveDate>,
+    pub date_to: Option<chrono::NaiveDate>,
+    pub limit: Option<i64>,
+    pub offset: Option<i64>,
+}
+
 pub async fn list_cash_bank_transactions(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
+    Extension(tenant_ctx): Extension<TenantContext>,
+    axum::extract::Query(params): axum::extract::Query<CashBankListParams>,
 ) -> Result<Json<Value>, AppError> {
-    let transactions: Vec<serde_json::Value> = vec![]; // TODO: implement list_cash_bank_transactions
-    Ok(Json(json!({ "success": true, "data": transactions })))
+    let company_id = tenant_ctx.company_id.unwrap_or(tenant_ctx.tenant_id);
+    let limit = params.limit.unwrap_or(50).clamp(1, 200);
+    let offset = params.offset.unwrap_or(0).max(0);
+
+    let transactions = state
+        .finance_service
+        .list_cash_bank_transactions(company_id, params.date_from, params.date_to, limit, offset)
+        .await?;
+
+    Ok(Json(json!({
+        "success": true,
+        "data": transactions,
+        "meta": { "limit": limit, "offset": offset }
+    })))
 }
 
 pub async fn create_sales_invoice(
@@ -221,11 +244,13 @@ pub async fn create_expense(
 pub async fn create_cash_bank_transaction(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
+    Extension(tenant_ctx): Extension<TenantContext>,
     Json(payload): Json<CreateCashBankTransactionRequest>,
 ) -> Result<Json<Value>, AppError> {
+    let company_id = tenant_ctx.company_id.unwrap_or(tenant_ctx.tenant_id);
     let tx = state
         .finance_service
-        .create_cash_bank_transaction(Some(claims.user_id()), payload)
+        .create_cash_bank_transaction(Some(claims.user_id()), company_id, payload)
         .await?;
     Ok(Json(json!({ "success": true, "data": tx })))
 }

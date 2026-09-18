@@ -1,420 +1,205 @@
-# Gitleaks
+# ERPQu — Enterprise Resource Planning
 
-```
-┌─○───┐
-│ │╲  │
-│ │ ○ │
-│ ○ ░ │
-└─░───┘
-```
+ERPQu adalah sistem ERP modular untuk perusahaan Indonesia. Backend ditulis dengan
+Rust (Axum + SQLx + PostgreSQL), dengan Web Admin berbasis React/TypeScript dan
+aplikasi mobile Expo/React Native untuk operasional lapangan.
 
-<p align="left">
-  <p align="left">
-	  <a href="https://github.com/zricethezav/gitleaks/actions/workflows/test.yml">
-		  <img alt="Github Test" src="https://github.com/zricethezav/gitleaks/actions/workflows/test.yml/badge.svg">
-	  </a>
-	  <a href="https://hub.docker.com/r/zricethezav/gitleaks">
-		  <img src="https://img.shields.io/docker/pulls/zricethezav/gitleaks.svg" />
-	  </a>
-	  <a href="https://github.com/zricethezav/gitleaks-action">
-        	<img alt="gitleaks badge" src="https://img.shields.io/badge/protected%20by-gitleaks-blue">
-    	 </a>
-	  <a href="https://twitter.com/intent/follow?screen_name=zricethezav">
-		  <img src="https://img.shields.io/twitter/follow/zricethezav?label=Follow%20zricethezav&style=social&color=blue" alt="Follow @zricethezav" />
-	  </a>
-  </p>
-</p>
+## Arsitektur
 
-### Join our Discord! [![Discord](https://img.shields.io/discord/1102689410522284044.svg?label=&logo=discord&logoColor=ffffff&color=7389D8&labelColor=6A7EC2)](https://discord.gg/8Hzbrnkr7E)
-
-Gitleaks is a SAST tool for **detecting** and **preventing** hardcoded secrets like passwords, api keys, and tokens in git repos. Gitleaks is an **easy-to-use, all-in-one solution** for detecting secrets, past or present, in your code.
-
-```
-➜  ~/code(master) gitleaks detect --source . -v
-
-    ○
-    │╲
-    │ ○
-    ○ ░
-    ░    gitleaks
-
-
-Finding:     "export BUNDLE_ENTERPRISE__CONTRIBSYS__COM=cafebabe:deadbeef",
-Secret:      cafebabe:deadbeef
-RuleID:      sidekiq-secret
-Entropy:     2.609850
-File:        cmd/generate/config/rules/sidekiq.go
-Line:        23
-Commit:      cd5226711335c68be1e720b318b7bc3135a30eb2
-Author:      John
-Email:       john@users.noreply.github.com
-Date:        2022-08-03T12:31:40Z
-Fingerprint: cd5226711335c68be1e720b318b7bc3135a30eb2:cmd/generate/config/rules/sidekiq.go:sidekiq-secret:23
+```text
+apps/web-admin (React 19 + Vite)  ─┐
+                                   ├── crates/api-server (Axum, :8181) ── PostgreSQL 17
+apps/mobile (Expo / React Native) ─┘                                   └── Redis 7
 ```
 
-## Getting Started
+Backend disusun sebagai **modular monolith**: satu proses API, tetapi domain
+dipisah menjadi crate tersendiri.
 
-Gitleaks can be installed using Homebrew, Docker, or Go. Gitleaks is also available in binary form for many popular platforms and OS types on the [releases page](https://github.com/zricethezav/gitleaks/releases). In addition, Gitleaks can be implemented as a pre-commit hook directly in your repo or as a GitHub action using [Gitleaks-Action](https://github.com/gitleaks/gitleaks-action).
+| Crate | Tanggung jawab |
+| :--- | :--- |
+| `crates/api-server` | HTTP API, router, handler, middleware, Swagger |
+| `crates/core` | Auth, RBAC, tenant, audit, outbox, metadata kernel |
+| `crates/finance` | COA, jurnal, GL, posting, penyusutan, rekonsiliasi |
+| `crates/assets` | Aset tetap, lifecycle, disposal |
+| `crates/ops` | Work order, maintenance, BOM, quality, fuel, trip |
+| `crates/hr` | Karyawan, absensi, payroll, cuti, pinjaman, klaim |
+| `crates/crm` | Client, lead, opportunity, pipeline |
+| `crates/rental` | Kontrak rental, handover, billing |
+| `crates/inventory` | Stock ledger, dokumen stok, valuasi, FIFO |
+| `crates/commercial` | Pricing, quotation, kontrak komersial |
+| `crates/procurement` | Purchase request/order/bill |
+| `crates/telemetry` | Sensor dan telemetry armada |
+| `crates/macros` | Proc macro internal |
 
-### Installing
+Modul bisnis yang tersedia: Keuangan, Aset Tetap, Maintenance & Work Order, HR &
+Payroll, Inventory & Procurement, Rental, CRM & Penjualan, Manufacturing,
+Analytics, Approval Workflow, RBAC, dan Reporting.
+
+## Prasyarat
+
+- Rust (stable, edition 2021) — proyek diuji dengan rustc 1.97
+- Node.js 20+ dan npm (Web Admin) serta Bun (opsional, dipakai `start-dev.sh`)
+- Docker + Docker Compose (PostgreSQL 17 dan Redis 7)
+- `sqlx-cli` (`cargo install sqlx-cli --no-default-features --features postgres`)
+
+## Menjalankan Development
+
+Cara tercepat:
 
 ```bash
-# MacOS
-brew install gitleaks
-
-# Docker (DockerHub)
-docker pull zricethezav/gitleaks:latest
-docker run -v ${path_to_host_folder_to_scan}:/path zricethezav/gitleaks:latest [COMMAND] --source="/path" [OPTIONS]
-
-# Docker (ghcr.io)
-docker pull ghcr.io/gitleaks/gitleaks:latest
-docker run -v ${path_to_host_folder_to_scan}:/path ghcr.io/gitleaks/gitleaks:latest [COMMAND] --source="/path" [OPTIONS]
-
-# From Source
-git clone https://github.com/gitleaks/gitleaks.git
-cd gitleaks
-make build
+./start-dev.sh
 ```
 
-### GitHub Action
+Script ini menyalakan container `postgres` + `redis`, menjalankan migrasi,
+memberi hak akses role aplikasi, lalu menjalankan frontend (`:5174`) dan
+backend (`:8181`).
 
-Check out the official [Gitleaks GitHub Action](https://github.com/gitleaks/gitleaks-action)
+Alternatif manual:
 
-```
-name: gitleaks
-on: [pull_request, push, workflow_dispatch]
-jobs:
-  scan:
-    name: gitleaks
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-      - uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE}} # Only required for Organizations, not personal accounts.
+```bash
+docker compose up -d postgres redis
+export SQLX_OFFLINE=false
+cargo sqlx migrate run --source database/migrations
+cargo run -p api-server
 ```
 
-### Pre-Commit
+Layanan:
 
-1. Install pre-commit from https://pre-commit.com/#install
-2. Create a `.pre-commit-config.yaml` file at the root of your repository with the following content:
+| Layanan | URL |
+| :--- | :--- |
+| Web Admin | http://localhost:5174 |
+| Backend API | http://localhost:8181 |
+| Health / Readiness | `GET /health`, `GET /ready` |
+| Metrics | `GET /metrics` |
+| Swagger UI | http://localhost:8181/swagger-ui/ |
+| PostgreSQL (host) | `localhost:5436` |
+| Redis | `localhost:6379` |
 
-   ```
-   repos:
-     - repo: https://github.com/gitleaks/gitleaks
-       rev: v8.16.1
-       hooks:
-         - id: gitleaks
-   ```
+## Konfigurasi Environment
 
-   for a [native execution of GitLeaks](https://github.com/zricethezav/gitleaks/releases) or use the [`gitleaks-docker` pre-commit ID](https://github.com/zricethezav/gitleaks/blob/master/.pre-commit-hooks.yaml) for executing GitLeaks using the [official Docker images](#docker)
+Salin `.env.example` menjadi `.env`. Variabel penting:
 
-3. Auto-update the config to the latest repos' versions by executing `pre-commit autoupdate`
-4. Install with `pre-commit install`
-5. Now you're all set!
-
-```
-➜ git commit -m "this commit contains a secret"
-Detect hardcoded secrets.................................................Failed
-```
-
-Note: to disable the gitleaks pre-commit hook you can prepend `SKIP=gitleaks` to the commit command
-and it will skip running gitleaks
-
-```
-➜ SKIP=gitleaks git commit -m "skip gitleaks check"
-Detect hardcoded secrets................................................Skipped
+```env
+SERVER_HOST=0.0.0.0
+SERVER_PORT=8181
+DATABASE_URL=postgres://erpqu_app:<password>@localhost:5436/management_system?options=-c%20search_path=public,hr,crm,rental,inventory,commercial,finance,ops
+MIGRATION_DATABASE_URL=postgres://postgres:<password>@localhost:5436/management_system?options=-c%20search_path=public,hr,crm,rental,inventory,commercial,finance,ops
+REDIS_URL=redis://localhost:6379
+JWT_SECRET=<minimal 32 karakter, wajib di produksi>
+JWT_EXPIRY_HOURS=24
+ALLOW_PUBLIC_REGISTRATION=false
+ALLOW_DEV_TEST_ROUTES=false
+UPLOAD_MAX_SIZE_MB=10
 ```
 
-## Usage
+Catatan penting:
 
-```
-Usage:
-  gitleaks [command]
+- `DATABASE_URL` harus memakai role least-privilege `erpqu_app`, sedangkan
+  `MIGRATION_DATABASE_URL` memakai role migrasi. Jangan gunakan superuser untuk
+  koneksi runtime — hal itu menyembunyikan pelanggaran RLS.
+- Produksi wajib menyediakan `JWT_SECRET`; aplikasi menolak start bila kosong.
+- Jangan pernah commit `.env` atau file kunci.
 
-Available Commands:
-  completion  generate the autocompletion script for the specified shell
-  detect      detect secrets in code
-  help        Help about any command
-  protect     protect secrets in code
-  version     display gitleaks version
+Untuk Web Admin, `apps/web-admin/.env` cukup berisi:
 
-Flags:
-  -b, --baseline-path string       path to baseline with issues that can be ignored
-  -c, --config string              config file path
-                                   order of precedence:
-                                   1. --config/-c
-                                   2. env var GITLEAKS_CONFIG
-                                   3. (--source/-s)/.gitleaks.toml
-                                   If none of the three options are used, then gitleaks will use the default config
-      --exit-code int              exit code when leaks have been encountered (default 1)
-  -h, --help                       help for gitleaks
-  -l, --log-level string           log level (trace, debug, info, warn, error, fatal) (default "info")
-      --max-target-megabytes int   files larger than this will be skipped
-      --no-color                   turn off color for verbose output
-      --no-banner                  suppress banner
-      --redact                     redact secrets from logs and stdout
-  -f, --report-format string       output format (json, csv, junit, sarif) (default "json")
-  -r, --report-path string         report file
-  -s, --source string              path to source (default ".")
-  -v, --verbose                    show verbose output from scan
-
-Use "gitleaks [command] --help" for more information about a command.
+```env
+VITE_API_URL=/api
 ```
 
-### Commands
+## Migrasi Database
 
-There are two commands you will use to detect secrets; `detect` and `protect`.
+```bash
+# jalankan migrasi
+cargo sqlx migrate run --source database/migrations
 
-#### Detect
-
-The `detect` command is used to scan repos, directories, and files. This command can be used on developer machines and in CI environments.
-
-When running `detect` on a git repository, gitleaks will parse the output of a `git log -p` command (you can see how this executed
-[here](https://github.com/zricethezav/gitleaks/blob/7240e16769b92d2a1b137c17d6bf9d55a8562899/git/git.go#L17-L25)).
-[`git log -p` generates patches](https://git-scm.com/docs/git-log#_generating_patch_text_with_p) which gitleaks will use to detect secrets.
-You can configure what commits `git log` will range over by using the `--log-opts` flag. `--log-opts` accepts any option for `git log -p`.
-For example, if you wanted to run gitleaks on a range of commits you could use the following command: `gitleaks detect --source . --log-opts="--all commitA..commitB"`.
-See the `git log` [documentation](https://git-scm.com/docs/git-log) for more information.
-
-You can scan files and directories by using the `--no-git` option.
-
-If you want to run only specific rules you can do so by using the `--enable-rule` option (with a rule ID as a parameter), this flag can be used multiple times. For example: `--enable-rule=atlassian-api-token` will only apply that rule. You can find a list of rules [here](config/gitleaks.toml).
-
-#### Protect
-
-The `protect` command is used to scan uncommitted changes in a git repo. This command should be used on developer machines in accordance with
-[shifting left on security](https://cloud.google.com/architecture/devops/devops-tech-shifting-left-on-security).
-When running `protect` on a git repository, gitleaks will parse the output of a `git diff` command (you can see how this executed
-[here](https://github.com/zricethezav/gitleaks/blob/7240e16769b92d2a1b137c17d6bf9d55a8562899/git/git.go#L48-L49)). You can set the
-`--staged` flag to check for changes in commits that have been `git add`ed. The `--staged` flag should be used when running Gitleaks
-as a pre-commit.
-
-**NOTE**: the `protect` command can only be used on git repos, running `protect` on files or directories will result in an error message.
-
-### Creating a baseline
-
-When scanning large repositories or repositories with a long history, it can be convenient to use a baseline. When using a baseline,
-gitleaks will ignore any old findings that are present in the baseline. A baseline can be any gitleaks report. To create a gitleaks report, run gitleaks with the `--report-path` parameter.
-
-```
-gitleaks detect --report-path gitleaks-report.json # This will save the report in a file called gitleaks-report.json
+# status
+cargo sqlx migrate info --source database/migrations
 ```
 
-Once as baseline is created it can be applied when running the detect command again:
+Seluruh migrasi berada di `database/migrations/`. Backend juga dapat menjalankan
+migrasi saat startup (fail-closed) dan tersedia mode *migration-only* untuk
+runner terpisah di deployment.
 
-```
-gitleaks detect --baseline-path gitleaks-report.json --report-path findings.json
-```
+## Testing dan Lint
 
-After running the detect command with the --baseline-path parameter, report output (findings.json) will only contain new issues.
+```bash
+# gerbang kualitas lengkap (TypeScript, build, test integritas, audit migrasi)
+./scripts/dev/pre-push.sh
 
-### Verify Findings
+# backend
+cargo fmt --all -- --check
+cargo clippy --workspace --all-targets
+cargo test --workspace --tests
 
-You can verify a finding found by gitleaks using a `git log` command.
-Example output:
-
-```
-Finding:     aws_secret="AKIAIMNOJVGFDXXXE4OA"
-RuleID:      aws-access-token
-Secret       AKIAIMNOJVGFDXXXE4OA
-Entropy:     3.65
-File:        checks_test.go
-Line:        37
-Commit:      ec2fc9d6cb0954fb3b57201cf6133c48d8ca0d29
-Author:      Zachary Rice
-Email:       z@email.com
-Date:        2018-01-28T17:39:00Z
-Fingerprint: ec2fc9d6cb0954fb3b57201cf6133c48d8ca0d29:checks_test.go:aws-access-token:37
+# frontend
+cd apps/web-admin
+npx tsc --noEmit
+npm run lint
+npm test
+npm run build
 ```
 
-We can use the following format to verify the leak:
+CI berada di `.github/workflows/ci.yml` (fmt, clippy, migrasi, test backend,
+typecheck/lint/test/build frontend, validasi mobile, Gitleaks).
 
-```
-git log -L {StartLine,EndLine}:{File} {Commit}
-```
+## Deployment
 
-So in this example it would look like:
+Panduan lengkap ada di `docs/runbook/DEPLOYMENT_RUNBOOK.md`. Ringkasnya:
 
-```
-git log -L 37,37:checks_test.go ec2fc9d6cb0954fb3b57201cf6133c48d8ca0d29
-```
-
-Which gives us:
-
-```
-commit ec2fc9d6cb0954fb3b57201cf6133c48d8ca0d29
-Author: zricethezav <thisispublicanyways@gmail.com>
-Date:   Sun Jan 28 17:39:00 2018 -0500
-
-    [update] entropy check
-
-diff --git a/checks_test.go b/checks_test.go
---- a/checks_test.go
-+++ b/checks_test.go
-@@ -28,0 +37,1 @@
-+               "aws_secret= \"AKIAIMNOJVGFDXXXE4OA\"":          true,
-
+```bash
+docker compose -f docker-compose.prod.yml up -d
 ```
 
-## Pre-Commit hook
+Komponen produksi: PostgreSQL, Redis, backend, frontend (Nginx), dan migration
+runner terpisah. Konfigurasi Nginx ada di `deploy/nginx/`.
 
-You can run Gitleaks as a pre-commit hook by copying the example `pre-commit.py` script into
-your `.git/hooks/` directory.
+## Keamanan
 
-## Configuration
+- Autentikasi JWT dengan rotating refresh token dan revokasi via Redis.
+- Password di-hash dengan Argon2.
+- RBAC default-deny per route.
+- Multi-company dengan PostgreSQL Row Level Security (RLS).
+- Audit trail append-only, idempotency key, dan transactional outbox.
+- File upload tervalidasi (magic bytes, decode ulang gambar, kuota tenant) dan
+  hanya dapat diakses melalui sesi terautentikasi.
 
-Gitleaks offers a configuration format you can follow to write your own secret detection rules:
+Dokumen terkait:
 
-```toml
-# Title for the gitleaks configuration file.
-title = "Gitleaks title"
+- `docs/security/` — hardening auth, token, upload
+- `docs/architecture/` — desain tenant, RBAC, SoD, RLS
+- `docs/hardening/STATUS.md` — status gate hardening (sumber kebenaran status)
+- `SECURITY.md` — kebijakan pelaporan kerentanan
 
-# Extend the base (this) configuration. When you extend a configuration
-# the base rules take precedence over the extended rules. I.e., if there are
-# duplicate rules in both the base configuration and the extended configuration
-# the base rules will override the extended rules.
-# Another thing to know with extending configurations is you can chain together
-# multiple configuration files to a depth of 2. Allowlist arrays are appended
-# and can contain duplicates.
-# useDefault and path can NOT be used at the same time. Choose one.
-[extend]
-# useDefault will extend the base configuration with the default gitleaks config:
-# https://github.com/zricethezav/gitleaks/blob/master/config/gitleaks.toml
-useDefault = true
-# or you can supply a path to a configuration. Path is relative to where gitleaks
-# was invoked, not the location of the base config.
-path = "common_config.toml"
+## Dokumentasi Lain
 
-# An array of tables that contain information that define instructions
-# on how to detect secrets
-[[rules]]
+| Dokumen | Isi |
+| :--- | :--- |
+| `docs/ARCHITECTURE.md` | Arsitektur sistem |
+| `docs/OPENAPI_REFERENCE.md`, `docs/openapi.yaml` | Referensi API |
+| `docs/USER_GUIDE.md` | Panduan pengguna |
+| `docs/SOP_MANUAL.md` | SOP operasional |
+| `docs/runbook/` | Deployment, disaster recovery, release readiness |
+| `docs/database/` | Role database dan pemisahan hak akses |
 
-# Unique identifier for this rule
-id = "awesome-rule-1"
+## Struktur Repository
 
-# Short human readable description of the rule.
-description = "awesome rule 1"
-
-# Golang regular expression used to detect secrets. Note Golang's regex engine
-# does not support lookaheads.
-regex = '''one-go-style-regex-for-this-rule'''
-
-# Golang regular expression used to match paths. This can be used as a standalone rule or it can be used
-# in conjunction with a valid `regex` entry.
-path = '''a-file-path-regex'''
-
-# Array of strings used for metadata and reporting purposes.
-tags = ["tag","another tag"]
-
-# Int used to extract secret from regex match and used as the group that will have
-# its entropy checked if `entropy` is set.
-secretGroup = 3
-
-# Float representing the minimum shannon entropy a regex group must have to be considered a secret.
-entropy = 3.5
-
-# Keywords are used for pre-regex check filtering. Rules that contain
-# keywords will perform a quick string compare check to make sure the
-# keyword(s) are in the content being scanned. Ideally these values should
-# either be part of the idenitifer or unique strings specific to the rule's regex
-# (introduced in v8.6.0)
-keywords = [
-  "auth",
-  "password",
-  "token",
-]
-
-# You can include an allowlist table for a single rule to reduce false positives or ignore commits
-# with known/rotated secrets
-[rules.allowlist]
-description = "ignore commit A"
-commits = [ "commit-A", "commit-B"]
-paths = [
-  '''go\.mod''',
-  '''go\.sum'''
-]
-# note: (rule) regexTarget defaults to check the _Secret_ in the finding.
-# if regexTarget is not specified then _Secret_ will be used.
-# Acceptable values for regexTarget are "match" and "line"
-regexTarget = "match"
-regexes = [
-  '''process''',
-  '''getenv''',
-]
-# note: stopwords targets the extracted secret, not the entire regex match
-# like 'regexes' does. (stopwords introduced in 8.8.0)
-stopwords = [
-  '''client''',
-  '''endpoint''',
-]
-
-
-# This is a global allowlist which has a higher order of precedence than rule-specific allowlists.
-# If a commit listed in the `commits` field below is encountered then that commit will be skipped and no
-# secrets will be detected for said commit. The same logic applies for regexes and paths.
-[allowlist]
-description = "global allow list"
-commits = [ "commit-A", "commit-B", "commit-C"]
-paths = [
-  '''gitleaks\.toml''',
-  '''(.*?)(jpg|gif|doc)'''
-]
-
-# note: (global) regexTarget defaults to check the _Secret_ in the finding.
-# if regexTarget is not specified then _Secret_ will be used.
-# Acceptable values for regexTarget are "match" and "line"
-regexTarget = "match"
-
-regexes = [
-  '''219-09-9999''',
-  '''078-05-1120''',
-  '''(9[0-9]{2}|666)-\d{2}-\d{4}''',
-]
-# note: stopwords targets the extracted secret, not the entire regex match
-# like 'regexes' does. (stopwords introduced in 8.8.0)
-stopwords = [
-  '''client''',
-  '''endpoint''',
-]
+```text
+apps/
+  web-admin/        React + TypeScript + Vite
+  mobile/           Expo / React Native
+crates/             Backend Rust (domain + api-server)
+database/
+  migrations/       Migrasi SQL
+  seeds/            Seed data
+deploy/             Konfigurasi Nginx dan deployment
+docs/               Dokumentasi
+scripts/            Script dev, db, testing, deploy
+tests/              Integration test
 ```
 
-Refer to the default [gitleaks config](https://github.com/zricethezav/gitleaks/blob/master/config/gitleaks.toml) for examples or follow the [contributing guidelines](https://github.com/zricethezav/gitleaks/blob/master/README.md) if you would like to contribute to the default configuration. Additionally, you can check out [this gitleaks blog post](https://blog.gitleaks.io/stop-leaking-secrets-configuration-2-3-aeed293b1fbf) which covers advanced configuration setups.
+## Kontribusi
 
-### Additional Configuration
-
-#### gitleaks:allow
-
-If you are knowingly committing a test secret that gitleaks will catch you can add a `gitleaks:allow` comment to that line which will instruct gitleaks
-to ignore that secret. Ex:
-
-```
-class CustomClass:
-    discord_client_secret = '8dyfuiRyq=vVc3RRr_edRk-fK__JItpZ'  #gitleaks:allow
-
-```
-
-#### .gitleaksignore
-
-You can ignore specific findings by creating a `.gitleaksignore` file at the root of your repo. In release v8.10.0 Gitleaks added a `Fingerprint` value to the Gitleaks report. Each leak, or finding, has a Fingerprint that uniquely identifies a secret. Add this fingerprint to the `.gitleaksignore` file to ignore that specific secret. See Gitleaks' [.gitleaksignore](https://github.com/zricethezav/gitleaks/blob/master/.gitleaksignore) for an example. Note: this feature is experimental and is subject to change in the future.
-
-## Sponsorships
-
-<p align="left">
-	  <a href="https://www.tines.com/?utm_source=oss&utm_medium=sponsorship&utm_campaign=gitleaks">
-		  <img alt="Tines Sponsorship" src="https://user-images.githubusercontent.com/15034943/146411864-4878f936-b4f7-49a0-b625-f9f40c704bfa.png" width=200>
-	  </a>
-  </p>
-
-## Exit Codes
-
-You can always set the exit code when leaks are encountered with the --exit-code flag. Default exit codes below:
-
-```
-0 - no leaks present
-1 - leaks or error encountered
-126 - unknown flag
-```
+1. Buat branch dari `master`.
+2. Jalankan `./scripts/dev/pre-push.sh` sampai hijau.
+3. Sertakan bukti pengujian pada deskripsi perubahan.
+4. Jangan commit kredensial atau data produksi.

@@ -64,17 +64,17 @@ cargo sqlx migrate run --source database/migrations > migrate.log 2>&1 || true
 
 
 
-# Fix: Grant permissions ke role aplikasi untuk semua schema
+# Fix: Grant least-privilege DML permissions ke role aplikasi untuk schema runtime
 docker exec -e PGPASSWORD=${POSTGRES_PASSWORD:-postgres} mgmt-db psql -U ${POSTGRES_USER:-postgres} -d ${DB_NAME:-management_system} -c "
   DO \$\$
   DECLARE s text;
   BEGIN
     FOR s IN SELECT unnest(ARRAY['public', 'hr', 'crm', 'rental', 'inventory', 'commercial']) LOOP
-      EXECUTE format('GRANT ALL ON SCHEMA %I TO erpqu_app;', s);
-      EXECUTE format('GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA %I TO erpqu_app;', s);
-      EXECUTE format('GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA %I TO erpqu_app;', s);
-      EXECUTE format('ALTER DEFAULT PRIVILEGES IN SCHEMA %I GRANT ALL ON TABLES TO erpqu_app;', s);
-      EXECUTE format('ALTER DEFAULT PRIVILEGES IN SCHEMA %I GRANT ALL ON SEQUENCES TO erpqu_app;', s);
+      EXECUTE format('GRANT USAGE ON SCHEMA %I TO erpqu_app;', s);
+      EXECUTE format('GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA %I TO erpqu_app;', s);
+      EXECUTE format('GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA %I TO erpqu_app;', s);
+      EXECUTE format('ALTER DEFAULT PRIVILEGES IN SCHEMA %I GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO erpqu_app;', s);
+      EXECUTE format('ALTER DEFAULT PRIVILEGES IN SCHEMA %I GRANT USAGE, SELECT ON SEQUENCES TO erpqu_app;', s);
     END LOOP;
   END \$\$;
 " > /dev/null 2>&1 || true

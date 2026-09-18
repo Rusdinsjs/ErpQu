@@ -1,5 +1,24 @@
 # Final Release Readiness, Masterplan Completion Seal, and Production Pilot Handover (Fase 14 - FINAL)
 
+> ## ⚠️ DOKUMEN HISTORIS — JANGAN DIJADIKAN DASAR KEPUTUSAN RILIS
+>
+> Dokumen ini mencatat klaim penutupan Fase 0–14 pada tanggal penulisannya. Audit
+> ulang pada **2026-09-10** menemukan regresi nyata yang membatalkan sebagian klaim
+> di bawah, antara lain:
+>
+> - RLS aktif **tanpa policy** pada `refresh_tokens`, `user_sessions`,
+>   `scheduled_job_executions`, `outbox_dlq`, dan `cash_bank_transactions`, sehingga
+>   role runtime `erpqu_app` tidak dapat membaca/menulis tabel tersebut. Akibatnya
+>   refresh token gagal disimpan dan sesi mati setelah access token kedaluwarsa.
+> - Direktori `uploads/` disajikan sebagai static file **publik**, sehingga seluruh
+>   dokumen dapat diunduh tanpa autentikasi.
+> - Sejumlah endpoint mengembalikan data kosong atau status sukses padahal fitur
+>   belum diimplementasikan.
+>
+> Status yang benar dan terkini ada di **`docs/hardening/STATUS.md`**. Gunakan
+> dokumen itu sebagai sumber kebenaran. Klaim "VERIFIED & SEALED" di bawah hanya
+> berlaku pada commit saat dokumen ini dibuat dan **tidak** berlaku pada HEAD.
+
 ## 1. Pernyataan Kesiapan Rilis Produksi (Production Readiness Seal)
 Dengan selesainya pelaksanaan penguatan arsitektural dan audit menyeluruh dari **Fase 0 hingga Fase 14**, sistem **ERPQu Enterprise Resource Planning** dinyatakan secara resmi:
 

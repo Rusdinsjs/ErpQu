@@ -1368,12 +1368,13 @@ impl FinanceRepository {
     pub async fn create_cash_bank_transaction(
         &self,
         tx: &CashBankTransaction,
+        company_id: Option<Uuid>,
     ) -> DomainResult<CashBankTransaction> {
         let row = sqlx::query_as::<_, CashBankTransactionRow>(
             r#"
-            INSERT INTO cash_bank_transactions (id, transaction_number, transaction_type, date, amount, from_account_id, to_account_id, account_id, contact_name, description, journal_entry_id, created_at)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-            RETURNING id, transaction_number, transaction_type, date, amount, from_account_id, to_account_id, account_id, contact_name, description, journal_entry_id, created_at
+            INSERT INTO cash_bank_transactions (id, transaction_number, transaction_type, date, amount, from_account_id, to_account_id, account_id, contact_name, description, journal_entry_id, created_at, company_id)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+            RETURNING id, transaction_number, transaction_type, date, amount, from_account_id, to_account_id, account_id, contact_name, description, journal_entry_id, created_at, company_id
             "#,
         )
         .bind(tx.id)
@@ -1388,11 +1389,48 @@ impl FinanceRepository {
         .bind(&tx.description)
         .bind(tx.journal_entry_id)
         .bind(tx.created_at)
+        .bind(company_id)
         .fetch_one(&self.pool)
         .await
         .map_err(|e| DomainError::Database(e.to_string()))?;
 
         Ok(row.into())
+    }
+
+    /// List cash/bank transactions for a company, optionally bounded by date range.
+    /// RLS already restricts rows to the active company; keeping the explicit
+    /// predicate makes the scope unambiguous and keeps the index in play.
+    pub async fn list_cash_bank_transactions(
+        &self,
+        company_id: Uuid,
+        date_from: Option<chrono::NaiveDate>,
+        date_to: Option<chrono::NaiveDate>,
+        limit: i64,
+        offset: i64,
+    ) -> DomainResult<Vec<CashBankTransaction>> {
+        let rows = sqlx::query_as::<_, CashBankTransactionRow>(
+            r#"
+            SELECT id, transaction_number, transaction_type, date, amount, from_account_id,
+                   to_account_id, account_id, contact_name, description, journal_entry_id,
+                   created_at, company_id
+            FROM cash_bank_transactions
+            WHERE company_id = $1
+              AND ($2::date IS NULL OR date >= $2)
+              AND ($3::date IS NULL OR date <= $3)
+            ORDER BY date DESC, created_at DESC
+            LIMIT $4 OFFSET $5
+            "#,
+        )
+        .bind(company_id)
+        .bind(date_from)
+        .bind(date_to)
+        .bind(limit)
+        .bind(offset)
+        .fetch_all(&self.pool)
+        .await
+        .map_err(|e| DomainError::Database(e.to_string()))?;
+
+        Ok(rows.into_iter().map(Into::into).collect())
     }
 
     pub async fn list_sales_quotes(&self) -> DomainResult<Vec<SalesQuote>> {

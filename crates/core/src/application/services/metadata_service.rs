@@ -146,12 +146,67 @@ impl MetadataService {
             .map_err(|e| e.to_string())
     }
 
+    /// Validate a dynamic entity payload against its registered `FieldDefinition`s.
+    ///
+    /// Rejects:
+    ///   * unknown fields (typos would otherwise be silently persisted),
+    ///   * missing required fields,
+    ///   * values whose JSON type does not match the declared `data_type`.
     pub async fn validate_entity_data(
         &self,
-        _entity_name: &str,
-        _data: &serde_json::Value,
+        entity_name: &str,
+        data: &serde_json::Value,
     ) -> Result<(), String> {
-        // TODO: Implement actual metadata validation based on FieldDefinitions
-        Ok(())
+        let object = data
+            .as_object()
+            .ok_or_else(|| "Entity payload must be a JSON object".to_string())?;
+
+        let bundle = self.get_entity_bundle(entity_name).await?;
+
+        // 1. Reject fields that are not part of the entity definition.
+        let known: std::collections::HashSet<&str> = bundle
+            .fields
+            .iter()
+            .map(|f| f.field_name.as_str())
+            .collect();
+
+        let unknown: Vec<&str> = object
+            .keys()
+            .map(|k| k.as_str())
+            .filter(|k| !known.contains(*k))
+            .collect();
+        if !unknown.is_empty() {
+            return Err(format!(
+                "Unknown field(s) for entity '{}': {}",
+                entity_name,
+                unknown.join(", ")
+            ));
+        }
+
+        // 2. Validate required fields and per-field types.
+        let mut errors: Vec<String> = Vec::new();
+        for field in &bundle.fields {
+            match object.get(&field.field_name) {
+                Some(value) => {
+                    if let Err(e) = field.validate_value(value) {
+                        errors.push(e);
+                    }
+                }
+                None => {
+                    if field.is_required {
+                        // A declared default satisfies the requirement.
+                        if field.default_value.is_none() {
+                            errors.push(format!("Field '{}' is required", field.label));
+                        }
+                    }
+                }
+            }
+        }
+
+        if errors.is_empty() {
+            Ok(())
+        } else {
+            Err(errors.join("; "))
+        }
     }
 }

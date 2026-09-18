@@ -2,13 +2,15 @@
 
 use axum::{
     extract::State,
-    http::{header, HeaderMap},
+    http::{header, HeaderMap, HeaderValue},
+    response::IntoResponse,
     Json,
 };
 use chrono::{Duration, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
+use crate::api::middleware::private_files::{build_file_gate_ticket, FILE_GATE_COOKIE};
 use crate::api::server::AppState;
 use management_system_core::domain::entities::UserClaims;
 use management_system_core::shared::errors::AppError;
@@ -16,6 +18,36 @@ use management_system_core::shared::utils::crypto::{generate_secure_token, hash_
 use management_system_core::shared::utils::jwt::create_token;
 
 use utoipa::ToSchema;
+
+/// Lifetime of the file-gate ticket. `<img>` render requests are short-lived, so a
+/// modest TTL keeps the cookie useful without outliving the user's attention span.
+const FILE_GATE_TTL_SECONDS: i64 = 60 * 60 * 8; // 8 hours
+
+/// Build the `Set-Cookie` header that lets `<img src>` load private uploads.
+///
+/// The cookie carries an HMAC-signed ticket (not the access token) scoped to the
+/// user and active company, and is only honoured by the upload storage gate.
+/// `SameSite=Lax` prevents cross-site use; the ticket is signed so it cannot be
+/// forged, which keeps the non-idempotent endpoints unaffected.
+fn file_gate_set_cookie(secret: &str, user_id: &str, company_id: Option<&str>) -> HeaderValue {
+    let expires_at = Utc::now().timestamp() + FILE_GATE_TTL_SECONDS;
+    let ticket = build_file_gate_ticket(secret, user_id, company_id, expires_at);
+    let secure = if std::env::var("ENVIRONMENT").unwrap_or_default() == "production" {
+        "; Secure"
+    } else {
+        ""
+    };
+    let value = format!(
+        "{}={}; Path=/; Max-Age={}; HttpOnly; SameSite=Lax{}",
+        FILE_GATE_COOKIE, ticket, FILE_GATE_TTL_SECONDS, secure
+    );
+    HeaderValue::from_str(&value).unwrap_or_else(|_| HeaderValue::from_static("erpqu_file_gate="))
+}
+
+/// Build the `Set-Cookie` header that clears the file-gate ticket.
+fn file_gate_clear_cookie() -> HeaderValue {
+    HeaderValue::from_static("erpqu_file_gate=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax")
+}
 
 #[derive(Deserialize, ToSchema)]
 pub struct LoginRequest {
@@ -58,7 +90,7 @@ pub async fn login(
     State(state): State<AppState>,
     headers: HeaderMap,
     Json(payload): Json<LoginRequest>,
-) -> Result<Json<LoginResponse>, AppError> {
+) -> Result<impl IntoResponse, AppError> {
     let email_clean = payload.email.trim().to_lowercase();
 
     // QSEC-009: Check lockout status before proceeding with authentication
@@ -113,19 +145,27 @@ pub async fn login(
                 user.role
             );
 
-            Ok(Json(LoginResponse {
-                success: true,
-                token: access_token,
-                refresh_token: Some(raw_refresh_token),
-                user: UserInfo {
-                    id: user.id.to_string(),
-                    email: user.email,
-                    name: user.name,
-                    role: user.role,
-                    phone: user.phone,
-                    avatar_url: user.avatar_url,
-                },
-            }))
+            // Issue the file-gate cookie so uploaded documents render in the browser
+            // without exposing the access token to JavaScript.
+            let file_gate =
+                file_gate_set_cookie(&state.jwt_config.secret, &user.id.to_string(), None);
+
+            Ok((
+                [(header::SET_COOKIE, file_gate)],
+                Json(LoginResponse {
+                    success: true,
+                    token: access_token,
+                    refresh_token: Some(raw_refresh_token),
+                    user: UserInfo {
+                        id: user.id.to_string(),
+                        email: user.email,
+                        name: user.name,
+                        role: user.role,
+                        phone: user.phone,
+                        avatar_url: user.avatar_url,
+                    },
+                }),
+            ))
         }
         Err(err) => {
             let (count, is_locked) = state
@@ -180,7 +220,7 @@ pub async fn refresh_token(
     State(state): State<AppState>,
     headers: HeaderMap,
     payload: Option<Json<RefreshRequest>>,
-) -> Result<Json<RefreshResponse>, AppError> {
+) -> Result<impl IntoResponse, AppError> {
     // 1. Try to extract raw refresh token from payload or authorization header
     let raw_refresh_token = payload
         .and_then(|p| p.refresh_token.clone())
@@ -296,12 +336,18 @@ pub async fn refresh_token(
             user_id
         );
 
-        Ok(Json(RefreshResponse {
-            success: true,
-            token: new_access_token,
-            refresh_token: Some(new_raw_refresh),
-            expires_at: access_expiry.to_rfc3339(),
-        }))
+        // Refresh the file-gate cookie so it tracks the new session.
+        let file_gate = file_gate_set_cookie(&state.jwt_config.secret, &user.id.to_string(), None);
+
+        Ok((
+            [(header::SET_COOKIE, file_gate)],
+            Json(RefreshResponse {
+                success: true,
+                token: new_access_token,
+                refresh_token: Some(new_raw_refresh),
+                expires_at: access_expiry.to_rfc3339(),
+            }),
+        ))
     } else {
         Err(AppError::Unauthorized("Invalid refresh token".to_string()))
     }
@@ -322,7 +368,7 @@ pub async fn refresh_token(
 pub async fn logout(
     State(state): State<AppState>,
     axum::Extension(claims): axum::Extension<UserClaims>,
-) -> Result<Json<LogoutResponse>, AppError> {
+) -> Result<impl IntoResponse, AppError> {
     // Revoke the current access token JTI
     let expiry = chrono::DateTime::from_timestamp(claims.exp, 0)
         .unwrap_or_else(|| Utc::now() + Duration::hours(24));
@@ -338,17 +384,20 @@ pub async fn logout(
         claims.jti
     );
 
-    Ok(Json(LogoutResponse {
-        success: true,
-        message: "Successfully logged out".to_string(),
-    }))
+    Ok((
+        [(header::SET_COOKIE, file_gate_clear_cookie())],
+        Json(LogoutResponse {
+            success: true,
+            message: "Successfully logged out".to_string(),
+        }),
+    ))
 }
 
 /// Logout from all devices (revoke all sessions and refresh tokens)
 pub async fn logout_all(
     State(state): State<AppState>,
     axum::Extension(claims): axum::Extension<UserClaims>,
-) -> Result<Json<LogoutResponse>, AppError> {
+) -> Result<impl IntoResponse, AppError> {
     let user_id = claims.user_id();
 
     // 1. Invalidate all active JWT tokens across Redis cluster
@@ -370,10 +419,13 @@ pub async fn logout_all(
         user_id
     );
 
-    Ok(Json(LogoutResponse {
-        success: true,
-        message: "All sessions have been revoked successfully".to_string(),
-    }))
+    Ok((
+        [(header::SET_COOKIE, file_gate_clear_cookie())],
+        Json(LogoutResponse {
+            success: true,
+            message: "All sessions have been revoked successfully".to_string(),
+        }),
+    ))
 }
 
 #[utoipa::path(

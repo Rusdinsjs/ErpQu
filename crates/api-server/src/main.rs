@@ -112,17 +112,20 @@ async fn main() {
 
         tracing::info!("Database migrations applied successfully.");
 
-        // Automatically grant all permissions to application user (erpqu_app)
+        // Grant least-privilege DML permissions to the application role (erpqu_app).
+        // Schema DDL, ownership, and TRUNCATE/REFERENCES rights stay with the migration role.
+        // Only the schemas actually used by the runtime are touched.
         let grant_query = r#"
         DO $$
         DECLARE s text;
         BEGIN
-          FOR s IN SELECT schema_name FROM information_schema.schemata WHERE schema_name NOT LIKE 'pg_%' AND schema_name != 'information_schema'
+          FOR s IN SELECT unnest(ARRAY['public', 'hr', 'crm', 'rental', 'inventory', 'commercial'])
           LOOP
-            EXECUTE format('GRANT ALL ON ALL TABLES IN SCHEMA %I TO erpqu_app;', s);
-            EXECUTE format('GRANT ALL ON ALL SEQUENCES IN SCHEMA %I TO erpqu_app;', s);
-            EXECUTE format('ALTER DEFAULT PRIVILEGES IN SCHEMA %I GRANT ALL ON TABLES TO erpqu_app;', s);
-            EXECUTE format('ALTER DEFAULT PRIVILEGES IN SCHEMA %I GRANT ALL ON SEQUENCES TO erpqu_app;', s);
+            EXECUTE format('GRANT USAGE ON SCHEMA %I TO erpqu_app;', s);
+            EXECUTE format('GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA %I TO erpqu_app;', s);
+            EXECUTE format('GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA %I TO erpqu_app;', s);
+            EXECUTE format('ALTER DEFAULT PRIVILEGES IN SCHEMA %I GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO erpqu_app;', s);
+            EXECUTE format('ALTER DEFAULT PRIVILEGES IN SCHEMA %I GRANT USAGE, SELECT ON SEQUENCES TO erpqu_app;', s);
           END LOOP;
         END $$;
         "#;

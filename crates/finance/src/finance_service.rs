@@ -1070,9 +1070,23 @@ impl FinanceService {
         self.repo.list_expenses().await
     }
 
+    pub async fn list_cash_bank_transactions(
+        &self,
+        company_id: Uuid,
+        date_from: Option<chrono::NaiveDate>,
+        date_to: Option<chrono::NaiveDate>,
+        limit: i64,
+        offset: i64,
+    ) -> DomainResult<Vec<CashBankTransaction>> {
+        self.repo
+            .list_cash_bank_transactions(company_id, date_from, date_to, limit, offset)
+            .await
+    }
+
     pub async fn create_cash_bank_transaction(
         &self,
         actor_id: Option<Uuid>,
+        company_id: Uuid,
         req: CreateCashBankTransactionRequest,
     ) -> DomainResult<CashBankTransaction> {
         let tx_number = req
@@ -1092,11 +1106,14 @@ impl FinanceService {
             description: req.description,
             journal_entry_id: None,
             created_at: Utc::now(),
-            company_id: None,
+            company_id: Some(company_id),
         };
 
         let mut uow = UnitOfWork::begin(self.repo.pool()).await?;
-        let created_tx = self.repo.create_cash_bank_transaction(&tx).await?;
+        let created_tx = self
+            .repo
+            .create_cash_bank_transaction(&tx, Some(company_id))
+            .await?;
 
         // If transfer/inflow/outflow accounts provided, create Journal Entry
         if let (Some(from_acc), Some(to_acc)) = (req.from_account_id, req.to_account_id) {

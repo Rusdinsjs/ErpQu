@@ -1,12 +1,13 @@
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
-    Json,
+    Extension, Json,
 };
 use uuid::Uuid;
 
 use crate::api::server::AppState;
 use management_system_core::application::dto::ApiResponse;
+use management_system_core::domain::entities::UserClaims;
 use management_system_core::shared::errors::AppError;
 use management_system_hr::dto::hr_lifecycle_dto::{
     CreateDesignationRequest, CreateEmployeeDocumentRequest, CreateEmployeeEducationRequest,
@@ -127,6 +128,7 @@ pub async fn list_lifecycle_events(
 
 pub async fn create_lifecycle_event(
     State(state): State<AppState>,
+    Extension(claims): Extension<UserClaims>,
     Json(payload): Json<CreateLifecycleEventRequest>,
 ) -> Result<
     (
@@ -135,10 +137,10 @@ pub async fn create_lifecycle_event(
     ),
     AppError,
 > {
-    // TODO: extract performed_by from JWT claims
+    // Actor identity is taken from the authenticated session, never from the payload.
     let data = state
         .hr_lifecycle_service
-        .create_lifecycle_event(payload, None)
+        .create_lifecycle_event(payload, Some(claims.user_id()))
         .await?;
     Ok((
         StatusCode::CREATED,

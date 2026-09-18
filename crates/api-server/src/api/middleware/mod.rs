@@ -3,6 +3,7 @@
 pub mod api_version;
 pub mod auth;
 pub mod log_redaction;
+pub mod private_files;
 pub mod rate_limit;
 pub mod rbac;
 pub mod request_context;
