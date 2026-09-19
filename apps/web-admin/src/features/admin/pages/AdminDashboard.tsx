@@ -36,6 +36,27 @@ import {
 
 import { ALL_NAV_ITEMS } from'../../../config/navigationConfig';
 
+// Recursive finder for nested groups to collect all ancestor group IDs
+export function findAllParentGroupIds(items: NavEntry[], targetId: TabId): string[] {
+    if (targetId === 'work-orders') {
+        return ['maintenance_group'];
+    }
+
+    for (const item of items) {
+        if (isNavHeader(item)) continue;
+        if (isNavGroup(item)) {
+            if (item.children.some(child => !isNavHeader(child) && child.id === targetId)) {
+                return [item.id];
+            }
+            const foundInChild = findAllParentGroupIds(item.children, targetId);
+            if (foundInChild.length > 0) {
+                return [item.id, ...foundInChild];
+            }
+        }
+    }
+    return [];
+}
+
 export default function AdminDashboard() {
     const { theme, setTheme } = useTheme();
     const [activeTab, setActiveTab] = useState<TabId>('dashboard');
@@ -262,293 +283,6 @@ export default function AdminDashboard() {
             }
         }
     }, [publicSettings, setLaunchpadConfig]);
-
-    // Sync URL with State
-    useEffect(() => {
-        // Handle legacy or workspace query param: ?menu=xyz (e.g. /admin?menu=customers)
-        const searchParams = new URLSearchParams(location.search);
-        const menuParam = searchParams.get('menu');
-        if (menuParam) {
-            navigate(`/${menuParam}`, { replace: true });
-            return;
-        }
-
-        const path = location.pathname;
-
-        if (path === '/admin') {
-            navigate('/dashboard', { replace: true });
-            return;
-        }
-
-        const isUuid = (str: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
-
-        // 1. Handle Deep Links (Priority)
-        const lifecycleMatch = matchPath('/assets/:id/lifecycle', path);
-        if (lifecycleMatch?.params.id) {
-            setActiveTab('assets');
-            setSelectedAssetId(lifecycleMatch.params.id);
-            setAssetViewMode('lifecycle');
-            setSelectedWorkOrderId(null);
-            setOpenGroups(prev => ({ ...prev, asset_operations: true }));
-            return;
-        }
-
-        // Handle specific asset settings & report sub-routes before :id matching
-        if (path === '/assets/settings' || path === '/assets/asset-settings') {
-            setActiveTab('asset-settings');
-            setSelectedAssetId(null);
-            setOpenGroups(prev => ({ ...prev, asset_operations: true }));
-            return;
-        }
-
-        if (path === '/assets/depreciation-methods') {
-            setActiveTab('depreciation-methods');
-            setSelectedAssetId(null);
-            setOpenGroups(prev => ({ ...prev, asset_operations: true }));
-            return;
-        }
-
-        if (path === '/assets/maintenance-types') {
-            setActiveTab('maintenance-types');
-            setSelectedAssetId(null);
-            setOpenGroups(prev => ({ ...prev, asset_operations: true }));
-            return;
-        }
-
-        if (path.startsWith('/assets/reports/')) {
-            const reportKey = path.replace('/assets/reports/', '');
-            setActiveTab(reportKey as TabId);
-            setSelectedAssetId(null);
-            setOpenGroups(prev => ({ ...prev, asset_operations: true }));
-            return;
-        }
-
-        const assetDetailMatch = matchPath('/assets/:id', path);
-        if (assetDetailMatch?.params.id && isUuid(assetDetailMatch.params.id)) {
-            setActiveTab('assets');
-            setSelectedAssetId(assetDetailMatch.params.id);
-            setAssetViewMode('details');
-            setSelectedWorkOrderId(null);
-            setOpenGroups(prev => ({ ...prev, asset_operations: true }));
-            return;
-        }
-
-        const rentalFormMatch = matchPath('/rentals/new', path);
-        if (rentalFormMatch) {
-            setActiveTab('rental-form');
-            setSelectedRentalId(null);
-            return;
-        }
-
-        const rentalDetailMatch = matchPath('/rentals/:id', path);
-        if (rentalDetailMatch?.params.id) {
-            setActiveTab('rentals');
-            setSelectedRentalId(rentalDetailMatch.params.id);
-            setSelectedWorkOrderId(null);
-            setSelectedAssetId(null);
-            return;
-        }
-
-        const employee360Match = matchPath('/employees/:id/360', path);
-        if (employee360Match?.params.id) {
-            setActiveTab('employee-360');
-            setSelectedEmployeeId(employee360Match.params.id);
-            setSelectedAssetId(null);
-            setSelectedWorkOrderId(null);
-            return;
-        }
-
-        const woMatch = matchPath('/work-orders/:id', path);
-        if (woMatch?.params.id) {
-            setActiveTab('work-orders');
-            setSelectedWorkOrderId(woMatch.params.id);
-            setSelectedAssetId(null);
-            setSelectedInventoryId(null);
-            setOpenGroups(prev => ({ ...prev, maintenance_group: true }));
-            return;
-        }
-
-        const invMatch = matchPath('/inventory-items/:id', path);
-        if (invMatch?.params.id) {
-            setActiveTab('inventory-items');
-            setSelectedInventoryId(invMatch.params.id);
-            setSelectedAssetId(null);
-            setSelectedWorkOrderId(null);
-            setOpenGroups(prev => ({ ...prev, inventory_group: true }));
-            return;
-        }
-
-        const contractsMatch = matchPath('/rentals/contracts', path);
-        if (contractsMatch) {
-            setActiveTab('contracts');
-            setOpenGroups(prev => ({ ...prev, rental_group: true }));
-            return;
-        }
-
-        const journalNewMatch = matchPath('/finance/journals/new', path);
-        if (journalNewMatch) {
-            setActiveTab('journal-form');
-            setOpenGroups(prev => ({ ...prev, finance_group: true }));
-            setSelectedAssetId(null);
-            setSelectedWorkOrderId(null);
-            return;
-        }
-
-        const journalListMatch = matchPath('/finance/journals', path);
-        if (journalListMatch) {
-            setActiveTab('journal-entries');
-            setOpenGroups(prev => ({ ...prev, finance_group: true }));
-            setSelectedAssetId(null);
-            setSelectedWorkOrderId(null);
-            return;
-        }
-
-        if (path === '/accounting-workspace') {
-            setActiveTab('accounting-workspace');
-            setOpenGroups(prev => ({ ...prev, finance_group: true }));
-            setSelectedAssetId(null);
-            setSelectedWorkOrderId(null);
-            return;
-        }
-
-        if (path.startsWith('/accounting/reports/')) {
-            const reportKey = path.replace('/accounting/reports/', '');
-            setActiveTab(reportKey as TabId);
-            setOpenGroups(prev => ({ ...prev, finance_group: true }));
-            setSelectedAssetId(null);
-            setSelectedWorkOrderId(null);
-            return;
-        }
-
-        if (path.startsWith('/accounting/')) {
-            const accKey = path.replace('/accounting/', '');
-            setActiveTab(accKey as TabId);
-            setOpenGroups(prev => ({ ...prev, finance_group: true }));
-            setSelectedAssetId(null);
-            setSelectedWorkOrderId(null);
-            return;
-        }
-
-        // 2. Handle Simple Tabs
-        const segments = path.split('/').filter(Boolean);
-        const lastSegment = segments[segments.length - 1];
-
-        if (lastSegment) {
-            const foundTab = lastSegment as TabId;
-            setActiveTab(foundTab);
-
-            // Auto-expand group if child is active
-            // Recursive finder for nested groups to collect all ancestor group IDs
-            const findAllParentGroupIds = (items: NavEntry[], targetId: TabId): string[] => {
-                if (targetId === 'work-orders') {
-                    return ['maintenance_group'];
-                }
-
-                for (const item of items) {
-                    if (isNavHeader(item)) continue;
-                    if (isNavGroup(item)) {
-                        if (item.children.some(child => !isNavHeader(child) && child.id === targetId)) {
-                            return [item.id];
-                        }
-                        const foundInChild = findAllParentGroupIds(item.children, targetId);
-                        if (foundInChild.length > 0) {
-                            return [item.id, ...foundInChild];
-                        }
-                    }
-                }
-                return [];
-            };
-
-            // Guard against UUIDs being interpreted as tabs (which causes Dashboard fallback)
-            const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(foundTab);
-
-            if (!isUuid) {
-                const parentGroupIds = findAllParentGroupIds(navItems, foundTab);
-                if (parentGroupIds.length > 0) {
-                    const updates: Record<string, boolean> = {};
-                    parentGroupIds.forEach(id => { updates[id] = true; });
-                    setOpenGroups(prev => ({ ...prev, ...updates }));
-                } else if (['assets-workspace', 'assets', 'categories', 'locations', 'asset-lifecycle', 'asset-audit'].includes(foundTab)) {
-                    setOpenGroups(prev => ({ ...prev, asset_operations: true }));
-                } else if (['accounting-workspace', 'chart-of-accounts', 'cash-bank', 'journal-entries', 'payment-entries', 'payment-reconciliation', 'sales-invoices', 'purchase-bills', 'credit-notes', 'debit-notes', 'dunnings', 'bank-accounts', 'bank-transactions', 'cost-centers', 'accounting-dimensions', 'budgets', 'sales-tax-templates', 'purchase-tax-templates-view', 'tax-categories', 'tax-rules', 'balance-sheet', 'profit-loss', 'cash-flow', 'trial-balance', 'general-ledger-report', 'ar-aging', 'ap-aging', 'efaktur-management'].includes(foundTab)) {
-                    setOpenGroups(prev => ({ ...prev, finance_group: true }));
-                } else if (['webhooks', 'whatsapp-gateway'].includes(foundTab)) {
-                    setOpenGroups(prev => ({ ...prev, organization_group: true }));
-                } else if (['hr-workspace'].includes(foundTab)) {
-                    setOpenGroups(prev => ({ ...prev, hr_group: true }));
-                } else if (foundTab === 'work-orders') {
-                    // Explicit fallback for work-orders to ensure group opens
-                    setOpenGroups(prev => ({ ...prev, maintenance_group: true }));
-                }
-
-                // Only set active tab if it's not a UUID and seems to be a valid tab
-                setActiveTab(foundTab);
-            }
-
-            setSelectedAssetId(null);
-            setAssetViewMode('list');
-            setSelectedWorkOrderId(null);
-            setSelectedRentalId(null);
-            setSelectedEmployeeId(null);
-        } else if (path === '/') {
-            setActiveTab('dashboard');
-            setSelectedAssetId(null);
-            setAssetViewMode('list');
-            setSelectedWorkOrderId(null);
-            setSelectedRentalId(null);
-            setSelectedEmployeeId(null);
-        }
-    }, [location.pathname, location.search, navigate, navItems]);
-
-    const handleLogout = () => {
-        setLogoutModalOpen(true);
-    };
-
-    const confirmLogout = () => {
-        logout();
-        navigate('/login');
-        setLogoutModalOpen(false);
-    };
-
-    const toggleGroup = (groupId: string) => {
-        setOpenGroups(prev => ({ ...prev, [groupId]: !prev[groupId] }));
-    };
-
-    // Auto-detect module from current tab
-    // (e.g., direct URL access without going through Launchpad or navigating across module boundaries)
-    useEffect(() => {
-        if (activeTab && activeTab !== 'dashboard') {
-            const menuId = activeTab as MenuId;
-            const matchingModule = launchpadConfig.modules.find(m =>
-                (m.menuIds || []).includes(menuId)
-            );
-            if (matchingModule && matchingModule.id !== activeModule) {
-                setActiveModule(matchingModule.id);
-            }
-        }
-    }, [activeTab, activeModule, launchpadConfig, setActiveModule]);
-
-    // Auto-open primary sidebar group when switching modules
-    useEffect(() => {
-        if (activeModule) {
-            const groupMapping: Record<string, string> = {
-                'organization': 'organization_group',
-                'asset-management': 'asset_management_group',
-                'supply-chain': 'inventory_group',
-                'rental': 'rental_module',
-                'procurement': 'procurement_group',
-                'commercial': 'commercial_group',
-                'finance': 'finance_group',
-                'hr': 'hr_group',
-                'admin': 'settings_group'
-            };
-
-            const groupId = groupMapping[activeModule];
-            if (groupId) {
-                setOpenGroups(prev => ({ ...prev, [groupId]: true }));
-            }
-        }
-    }, [activeModule]);
 
     // Dynamically construct navItems structure based on launchpadConfig
     const navItems: NavEntry[] = useMemo(() => {
@@ -957,7 +691,7 @@ export default function AdminDashboard() {
                 ]
             },
         ];
-    }, [launchpadConfig]);
+    }, [launchpadConfig, dynamicDoctypes, activeModule]);
 
     // Filtered Nav Items based on active Launchpad module
     const visibleNavItems = useMemo(() => {
@@ -1003,8 +737,274 @@ export default function AdminDashboard() {
             const leafIds = getLeafIds(item);
             return leafIds.some(id => visibleMenuIds.includes(id as MenuId));
         });
-    }, [user, activeModule, getVisibleMenuIds, navItems]);
+    }, [activeModule, getVisibleMenuIds, navItems]);
 
+
+
+    // Sync URL with State
+    useEffect(() => {
+        // Handle legacy or workspace query param: ?menu=xyz (e.g. /admin?menu=customers)
+        const searchParams = new URLSearchParams(location.search);
+        const menuParam = searchParams.get('menu');
+        if (menuParam) {
+            navigate(`/${menuParam}`, { replace: true });
+            return;
+        }
+
+        const path = location.pathname;
+
+        if (path === '/admin') {
+            navigate('/dashboard', { replace: true });
+            return;
+        }
+
+        const isUuid = (str: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+
+        // 1. Handle Deep Links (Priority)
+        const lifecycleMatch = matchPath('/assets/:id/lifecycle', path);
+        if (lifecycleMatch?.params.id) {
+            setActiveTab('assets');
+            setSelectedAssetId(lifecycleMatch.params.id);
+            setAssetViewMode('lifecycle');
+            setSelectedWorkOrderId(null);
+            setOpenGroups(prev => ({ ...prev, asset_operations: true }));
+            return;
+        }
+
+        // Handle specific asset settings & report sub-routes before :id matching
+        if (path === '/assets/settings' || path === '/assets/asset-settings') {
+            setActiveTab('asset-settings');
+            setSelectedAssetId(null);
+            setOpenGroups(prev => ({ ...prev, asset_operations: true }));
+            return;
+        }
+
+        if (path === '/assets/depreciation-methods') {
+            setActiveTab('depreciation-methods');
+            setSelectedAssetId(null);
+            setOpenGroups(prev => ({ ...prev, asset_operations: true }));
+            return;
+        }
+
+        if (path === '/assets/maintenance-types') {
+            setActiveTab('maintenance-types');
+            setSelectedAssetId(null);
+            setOpenGroups(prev => ({ ...prev, asset_operations: true }));
+            return;
+        }
+
+        if (path.startsWith('/assets/reports/')) {
+            const reportKey = path.replace('/assets/reports/', '');
+            setActiveTab(reportKey as TabId);
+            setSelectedAssetId(null);
+            setOpenGroups(prev => ({ ...prev, asset_operations: true }));
+            return;
+        }
+
+        const assetDetailMatch = matchPath('/assets/:id', path);
+        if (assetDetailMatch?.params.id && isUuid(assetDetailMatch.params.id)) {
+            setActiveTab('assets');
+            setSelectedAssetId(assetDetailMatch.params.id);
+            setAssetViewMode('details');
+            setSelectedWorkOrderId(null);
+            setOpenGroups(prev => ({ ...prev, asset_operations: true }));
+            return;
+        }
+
+        const rentalFormMatch = matchPath('/rentals/new', path);
+        if (rentalFormMatch) {
+            setActiveTab('rental-form');
+            setSelectedRentalId(null);
+            return;
+        }
+
+        const rentalDetailMatch = matchPath('/rentals/:id', path);
+        if (rentalDetailMatch?.params.id) {
+            setActiveTab('rentals');
+            setSelectedRentalId(rentalDetailMatch.params.id);
+            setSelectedWorkOrderId(null);
+            setSelectedAssetId(null);
+            return;
+        }
+
+        const employee360Match = matchPath('/employees/:id/360', path);
+        if (employee360Match?.params.id) {
+            setActiveTab('employee-360');
+            setSelectedEmployeeId(employee360Match.params.id);
+            setSelectedAssetId(null);
+            setSelectedWorkOrderId(null);
+            return;
+        }
+
+        const woMatch = matchPath('/work-orders/:id', path);
+        if (woMatch?.params.id) {
+            setActiveTab('work-orders');
+            setSelectedWorkOrderId(woMatch.params.id);
+            setSelectedAssetId(null);
+            setSelectedInventoryId(null);
+            setOpenGroups(prev => ({ ...prev, maintenance_group: true }));
+            return;
+        }
+
+        const invMatch = matchPath('/inventory-items/:id', path);
+        if (invMatch?.params.id) {
+            setActiveTab('inventory-items');
+            setSelectedInventoryId(invMatch.params.id);
+            setSelectedAssetId(null);
+            setSelectedWorkOrderId(null);
+            setOpenGroups(prev => ({ ...prev, inventory_group: true }));
+            return;
+        }
+
+        const contractsMatch = matchPath('/rentals/contracts', path);
+        if (contractsMatch) {
+            setActiveTab('contracts');
+            setOpenGroups(prev => ({ ...prev, rental_group: true }));
+            return;
+        }
+
+        const journalNewMatch = matchPath('/finance/journals/new', path);
+        if (journalNewMatch) {
+            setActiveTab('journal-form');
+            setOpenGroups(prev => ({ ...prev, finance_group: true }));
+            setSelectedAssetId(null);
+            setSelectedWorkOrderId(null);
+            return;
+        }
+
+        const journalListMatch = matchPath('/finance/journals', path);
+        if (journalListMatch) {
+            setActiveTab('journal-entries');
+            setOpenGroups(prev => ({ ...prev, finance_group: true }));
+            setSelectedAssetId(null);
+            setSelectedWorkOrderId(null);
+            return;
+        }
+
+        if (path === '/accounting-workspace') {
+            setActiveTab('accounting-workspace');
+            setOpenGroups(prev => ({ ...prev, finance_group: true }));
+            setSelectedAssetId(null);
+            setSelectedWorkOrderId(null);
+            return;
+        }
+
+        if (path.startsWith('/accounting/reports/')) {
+            const reportKey = path.replace('/accounting/reports/', '');
+            setActiveTab(reportKey as TabId);
+            setOpenGroups(prev => ({ ...prev, finance_group: true }));
+            setSelectedAssetId(null);
+            setSelectedWorkOrderId(null);
+            return;
+        }
+
+        if (path.startsWith('/accounting/')) {
+            const accKey = path.replace('/accounting/', '');
+            setActiveTab(accKey as TabId);
+            setOpenGroups(prev => ({ ...prev, finance_group: true }));
+            setSelectedAssetId(null);
+            setSelectedWorkOrderId(null);
+            return;
+        }
+
+        // 2. Handle Simple Tabs
+        const segments = path.split('/').filter(Boolean);
+        const lastSegment = segments[segments.length - 1];
+
+        if (lastSegment) {
+            const foundTab = lastSegment as TabId;
+            setActiveTab(foundTab);
+
+            // Guard against UUIDs being interpreted as tabs (which causes Dashboard fallback)
+            const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(foundTab);
+
+            if (!isUuid) {
+                const parentGroupIds = findAllParentGroupIds(navItems, foundTab);
+                if (parentGroupIds.length > 0) {
+                    const updates: Record<string, boolean> = {};
+                    parentGroupIds.forEach(id => { updates[id] = true; });
+                    setOpenGroups(prev => ({ ...prev, ...updates }));
+                } else if (['assets-workspace', 'assets', 'categories', 'locations', 'asset-lifecycle', 'asset-audit'].includes(foundTab)) {
+                    setOpenGroups(prev => ({ ...prev, asset_operations: true }));
+                } else if (['accounting-workspace', 'chart-of-accounts', 'cash-bank', 'journal-entries', 'payment-entries', 'payment-reconciliation', 'sales-invoices', 'purchase-bills', 'credit-notes', 'debit-notes', 'dunnings', 'bank-accounts', 'bank-transactions', 'cost-centers', 'accounting-dimensions', 'budgets', 'sales-tax-templates', 'purchase-tax-templates-view', 'tax-categories', 'tax-rules', 'balance-sheet', 'profit-loss', 'cash-flow', 'trial-balance', 'general-ledger-report', 'ar-aging', 'ap-aging', 'efaktur-management'].includes(foundTab)) {
+                    setOpenGroups(prev => ({ ...prev, finance_group: true }));
+                } else if (['webhooks', 'whatsapp-gateway'].includes(foundTab)) {
+                    setOpenGroups(prev => ({ ...prev, organization_group: true }));
+                } else if (['hr-workspace'].includes(foundTab)) {
+                    setOpenGroups(prev => ({ ...prev, hr_group: true }));
+                } else if (foundTab === 'work-orders') {
+                    // Explicit fallback for work-orders to ensure group opens
+                    setOpenGroups(prev => ({ ...prev, maintenance_group: true }));
+                }
+
+                // Only set active tab if it's not a UUID and seems to be a valid tab
+                setActiveTab(foundTab);
+            }
+
+            setSelectedAssetId(null);
+            setAssetViewMode('list');
+            setSelectedWorkOrderId(null);
+            setSelectedRentalId(null);
+            setSelectedEmployeeId(null);
+        } else if (path === '/') {
+            setActiveTab('dashboard');
+            setSelectedAssetId(null);
+            setAssetViewMode('list');
+            setSelectedWorkOrderId(null);
+            setSelectedRentalId(null);
+            setSelectedEmployeeId(null);
+        }
+    }, [location.pathname, location.search, navigate, navItems]);
+
+    const handleLogout = () => {
+        setLogoutModalOpen(true);
+    };
+
+    const confirmLogout = () => {
+        logout();
+        navigate('/login');
+        setLogoutModalOpen(false);
+    };
+
+    const toggleGroup = (groupId: string) => {
+        setOpenGroups(prev => ({ ...prev, [groupId]: !prev[groupId] }));
+    };
+
+    // Auto-detect module from current tab
+    // (e.g., direct URL access without going through Launchpad or navigating across module boundaries)
+    useEffect(() => {
+        if (activeTab && activeTab !== 'dashboard') {
+            const menuId = activeTab as MenuId;
+            const matchingModule = launchpadConfig.modules.find(m =>
+                (m.menuIds || []).includes(menuId)
+            );
+            if (matchingModule && matchingModule.id !== activeModule) {
+                setActiveModule(matchingModule.id);
+            }
+        }
+    }, [activeTab, activeModule, launchpadConfig, setActiveModule]);
+
+    // Auto-open primary sidebar group when switching modules
+    useEffect(() => {
+        if (activeModule) {
+            const groupMapping: Record<string, string> = {
+                'organization': 'organization_group',
+                'asset-management': 'asset_management_group',
+                'supply-chain': 'inventory_group',
+                'rental': 'rental_module',
+                'procurement': 'procurement_group',
+                'commercial': 'commercial_group',
+                'finance': 'finance_group',
+                'hr': 'hr_group',
+                'admin': 'settings_group'
+            };
+
+            const groupId = groupMapping[activeModule];
+            if (groupId) {
+                setOpenGroups(prev => ({ ...prev, [groupId]: true }));
+            }
+        }
+    }, [activeModule]);
 
     // Check if user is admin
     const isAdmin = (user?.role_level ?? 5) <= 2;
