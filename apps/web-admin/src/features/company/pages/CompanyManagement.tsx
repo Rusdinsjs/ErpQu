@@ -422,6 +422,9 @@ export const CompanyManagement: React.FC = () => {
                                                 <img
                                                     src={getImageUrl(comp.logo_url)}
                                                     alt={comp.name}
+                                                    onError={(e) => {
+                                                        (e.target as HTMLImageElement).src = '/logo-sjs.png';
+                                                    }}
                                                     className="w-11 h-11 rounded-xl object-contain bg-muted/30 border border-border p-1 shrink-0"
                                                 />
                                             ) : (
@@ -580,6 +583,9 @@ export const CompanyManagement: React.FC = () => {
                                     <img
                                         src={getImageUrl(viewingCompany.logo_url)}
                                         alt={viewingCompany.name}
+                                        onError={(e) => {
+                                            (e.target as HTMLImageElement).src = '/logo-sjs.png';
+                                        }}
                                         className="w-14 h-14 rounded-2xl object-contain bg-muted/40 border border-border p-1.5 shrink-0 shadow-sm"
                                     />
                                 ) : (
@@ -969,6 +975,9 @@ export const CompanyManagement: React.FC = () => {
                                                     <img
                                                         src={getImageUrl(formData.logo_url)}
                                                         alt="Logo Preview"
+                                                        onError={(e) => {
+                                                            (e.target as HTMLImageElement).src = '/logo-sjs.png';
+                                                        }}
                                                         className="w-16 h-16 rounded-xl object-contain border border-border bg-card p-1 shadow-sm"
                                                     />
                                                     <button
@@ -994,7 +1003,7 @@ export const CompanyManagement: React.FC = () => {
                                                         const file = e.target.files?.[0];
                                                         if (file) {
                                                             try {
-                                                                const uploaded = await settingsApi.uploadFile(file, editingCompany?.id);
+                                                                 const uploaded = await settingsApi.uploadFile(file, editingCompany?.id, 'company_logo');
                                                                 if (uploaded?.url) {
                                                                     setFormData(prev => ({ ...prev, logo_url: uploaded.url }));
                                                                     showToast('Logo berhasil diunggah', 'success');

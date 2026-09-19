@@ -39,9 +39,12 @@ export const settingsApi = {
         }
     },
 
-    uploadFile: async (file: File, companyId?: string): Promise<{ url: string; id: string }> => {
+    uploadFile: async (file: File, companyId?: string, entityType: string = 'company_logo'): Promise<{ url: string; id: string }> => {
         const formData = new FormData();
         formData.append('file', file);
+        if (entityType) {
+            formData.append('entity_type', entityType);
+        }
 
         // Gunakan fetch native (bukan axios) agar Content-Type multipart/boundary di-set otomatis
         // dan tidak ada masalah dengan proxy atau interceptor axios
@@ -58,7 +61,8 @@ export const settingsApi = {
         }
         // JANGAN set Content-Type — biarkan browser set otomatis dengan boundary yang benar
 
-        const response = await fetch('/api/upload', {
+        const uploadUrl = entityType ? `/api/upload?entity_type=${encodeURIComponent(entityType)}` : '/api/upload';
+        const response = await fetch(uploadUrl, {
             method: 'POST',
             headers,
             body: formData,

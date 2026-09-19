@@ -4,6 +4,7 @@ import { Save, Globe, Palette, Bot, Play, Sparkles, Eye, EyeOff, CheckCircle2, L
 import { useTheme } from'../../../contexts/ThemeContext';
 import { settingsApi } from'../api/settings';
 import { aiApi } from'../../../api/ai';
+import { getImageUrl } from'../../../utils/image';
 
 import {
     Button,
@@ -450,8 +451,11 @@ export default function Settings() {
                                         <div className="w-24 h-24 rounded-xl bg-muted border border-border flex items-center justify-center overflow-hidden relative group">
                                             {formData['company_logo'] ? (
                                                 <img
-                                                    src={formData['company_logo']}
+                                                    src={getImageUrl(formData['company_logo'])}
                                                     alt="Company Logo"
+                                                    onError={(e) => {
+                                                        (e.target as HTMLImageElement).src = '/logo-sjs.png';
+                                                    }}
                                                     className="w-full h-full object-contain"
                                                 />
                                             ) : (

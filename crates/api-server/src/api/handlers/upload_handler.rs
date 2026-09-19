@@ -27,6 +27,12 @@ const MAX_UPLOAD_SIZE: u64 = 10 * 1024 * 1024; // 10MB
 const DEFAULT_TENANT_STORAGE_QUOTA: i64 = 5 * 1024 * 1024 * 1024; // 5GB limit (B.12)
 const ALLOWED_EXTENSIONS: &[&str] = &["jpg", "jpeg", "png", "webp", "pdf", "csv", "xlsx", "docx"];
 
+#[derive(Debug, Deserialize, Default)]
+pub struct UploadQuery {
+    pub entity_type: Option<String>,
+    pub category: Option<String>,
+}
+
 #[derive(Debug, Deserialize)]
 pub struct SignedUrlQuery {
     #[allow(dead_code)]
@@ -152,14 +158,17 @@ pub async fn upload_file(
     Extension(claims): Extension<UserClaims>,
     Extension(tenant_ctx): Extension<TenantContext>,
     State(state): State<AppState>,
+    Query(query): Query<UploadQuery>,
     mut multipart: Multipart,
 ) -> AppResult<Json<UploadResponse>> {
     tracing::info!(
-        "SECURITY AUDIT UPLOAD_REQUEST: UserID={} CompanyID={:?}",
+        "SECURITY AUDIT UPLOAD_REQUEST: UserID={} CompanyID={:?} EntityType={:?}",
         claims.sub,
-        tenant_ctx.company_id
+        tenant_ctx.company_id,
+        query.entity_type
     );
 
+    let mut target_entity_type = query.entity_type.clone().or(query.category.clone());
     let mut uploaded_file = None;
 
     while let Some(field) = multipart
@@ -168,6 +177,26 @@ pub async fn upload_file(
         .map_err(|e| AppError::BadRequest(e.to_string()))?
     {
         let name = field.name().unwrap_or("").to_string();
+
+        if name == "entity_type" {
+            if let Ok(val) = field.text().await {
+                let trimmed = val.trim();
+                if !trimmed.is_empty() {
+                    target_entity_type = Some(trimmed.to_string());
+                }
+            }
+            continue;
+        }
+
+        if name == "category" {
+            if let Ok(val) = field.text().await {
+                let trimmed = val.trim();
+                if target_entity_type.is_none() && !trimmed.is_empty() {
+                    target_entity_type = Some(trimmed.to_string());
+                }
+            }
+            continue;
+        }
 
         if name == "file" {
             let file_name = field.file_name().unwrap_or("unknown").to_string();
@@ -285,14 +314,37 @@ pub async fn upload_file(
                 (data.to_vec(), ext)
             };
 
-            // Generate permanent destination path: uploads/YYYY/MM/DD/uuid.ext
+            // Generate permanent destination path
+            let is_public_asset = target_entity_type
+                .as_deref()
+                .map(|et| matches!(et, "company_logo" | "logo" | "avatar" | "branding"))
+                .unwrap_or(false);
+
             let now = Utc::now();
-            let relative_dir = format!(
-                "uploads/{}/{:02}/{:02}",
-                now.format("%Y"),
-                now.format("%m"),
-                now.format("%d")
-            );
+            let relative_dir = if is_public_asset {
+                if target_entity_type.as_deref() == Some("avatar") {
+                    format!(
+                        "uploads/avatars/{}/{:02}/{:02}",
+                        now.format("%Y"),
+                        now.format("%m"),
+                        now.format("%d")
+                    )
+                } else {
+                    format!(
+                        "uploads/logos/{}/{:02}/{:02}",
+                        now.format("%Y"),
+                        now.format("%m"),
+                        now.format("%d")
+                    )
+                }
+            } else {
+                format!(
+                    "uploads/{}/{:02}/{:02}",
+                    now.format("%Y"),
+                    now.format("%m"),
+                    now.format("%d")
+                )
+            };
 
             let new_filename = format!("{}.{}", file_id, final_ext);
             let file_path = format!("{}/{}", relative_dir, new_filename);
@@ -323,10 +375,13 @@ pub async fn upload_file(
                 )));
             }
 
+            let effective_role_level = if is_public_asset { 5 } else { claims.role_level };
+            let final_entity_type = target_entity_type.as_deref().or(if is_public_asset { Some("company_logo") } else { None });
+
             let insert_res = sqlx::query(
                 r#"
-                INSERT INTO public.uploads (id, file_path, original_name, content_type, file_size, uploaded_by, company_id, role_level_required)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                INSERT INTO public.uploads (id, file_path, original_name, content_type, file_size, uploaded_by, company_id, role_level_required, entity_type)
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
                 "#
             )
             .bind(file_id)
@@ -335,8 +390,9 @@ pub async fn upload_file(
             .bind(verified_content_type)
             .bind(final_data.len() as i32)
             .bind(claims.user_id())
-            .bind(tenant_ctx.company_id)
-            .bind(claims.role_level)
+            .bind(if is_public_asset { None } else { tenant_ctx.company_id })
+            .bind(effective_role_level)
+            .bind(final_entity_type)
             .execute(&mut *tx)
             .await;
 

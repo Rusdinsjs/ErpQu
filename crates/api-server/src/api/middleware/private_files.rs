@@ -34,8 +34,13 @@ use management_system_core::shared::utils::jwt::decode_token;
 
 pub const FILE_GATE_COOKIE: &str = "erpqu_file_gate";
 
-/// Path prefix that stays publicly readable for pre-auth branding (logos/avatars).
-const PUBLIC_FILE_PREFIX: &str = "uploads/avatars/";
+/// Path prefixes that stay publicly readable for pre-auth branding (logos/avatars).
+const PUBLIC_FILE_PREFIXES: &[&str] = &[
+    "uploads/avatars/",
+    "uploads/logos/",
+    "uploads/branding/",
+    "uploads/public/",
+];
 
 fn hmac_sign(secret: &[u8], payload: &str) -> String {
     let mut mac = Hmac::<Sha256>::new_from_slice(secret).expect("HMAC accepts any key size");
@@ -91,6 +96,53 @@ fn read_cookie(headers: &header::HeaderMap, name: &str) -> Option<String> {
     })
 }
 
+/// Check whether a file is a public branding asset (company logo, branding, avatar).
+/// Files in public prefixes or registered in companies/settings/uploads as logos
+/// are served without requiring user authentication.
+async fn is_public_branding_asset(pool: &sqlx::PgPool, relative_path: &str) -> bool {
+    if PUBLIC_FILE_PREFIXES.iter().any(|p| relative_path.starts_with(p)) {
+        return true;
+    }
+
+    let mut tx = match pool.begin().await {
+        Ok(tx) => tx,
+        Err(_) => return false,
+    };
+
+    let _ = sqlx::query("SET LOCAL app.is_super_tenant = 'true'")
+        .execute(&mut *tx)
+        .await;
+
+    let path_with_api = format!("/api/{}", relative_path);
+    let path_with_slash = format!("/{}", relative_path);
+
+    let is_public: bool = sqlx::query_scalar::<_, bool>(
+        r#"
+        SELECT EXISTS (
+            SELECT 1 FROM public.uploads 
+            WHERE file_path = $1 
+              AND (entity_type IN ('company_logo', 'logo', 'avatar', 'branding') OR role_level_required >= 5)
+        ) OR EXISTS (
+            SELECT 1 FROM public.companies 
+            WHERE logo_url IN ($1, $2, $3)
+        ) OR EXISTS (
+            SELECT 1 FROM public.settings 
+            WHERE key = 'company_logo' 
+              AND (value::text IN ($1, $2, $3) OR trim(both '"' from value::text) IN ($1, $2, $3))
+        )
+        "#
+    )
+    .bind(relative_path)
+    .bind(&path_with_api)
+    .bind(&path_with_slash)
+    .fetch_one(&mut *tx)
+    .await
+    .unwrap_or(false);
+
+    let _ = tx.commit().await;
+    is_public
+}
+
 /// Check that a requester's identity is authorized for the exact upload path.
 async fn upload_record_allows(
     state: &AppState,
@@ -99,20 +151,37 @@ async fn upload_record_allows(
     requester_role_level: Option<i32>,
     requested_company: Option<Uuid>,
 ) -> bool {
-    let row = sqlx::query_as::<_, (Uuid, Option<Uuid>, i32)>(
-        "SELECT uploaded_by, company_id, role_level_required FROM public.uploads WHERE file_path = $1",
+    let mut tx = match state.pool.begin().await {
+        Ok(tx) => tx,
+        Err(_) => return false,
+    };
+
+    let _ = sqlx::query("SET LOCAL app.is_super_tenant = 'true'")
+        .execute(&mut *tx)
+        .await;
+
+    let row = sqlx::query_as::<_, (Uuid, Option<Uuid>, i32, Option<String>)>(
+        "SELECT uploaded_by, company_id, role_level_required, entity_type FROM public.uploads WHERE file_path = $1",
     )
     .bind(relative_path)
-    .fetch_optional(&state.pool)
+    .fetch_optional(&mut *tx)
     .await
     .ok()
     .flatten();
 
-    let Some((uploaded_by, company_id, role_level_required)) = row else {
+    let _ = tx.commit().await;
+
+    let Some((uploaded_by, company_id, role_level_required, entity_type)) = row else {
         // A private path without metadata is not trusted. This also prevents
         // UUID/path guessing against legacy files that bypassed the upload table.
         return false;
     };
+
+    if let Some(ref et) = entity_type {
+        if matches!(et.as_str(), "company_logo" | "logo" | "avatar" | "branding") {
+            return true;
+        }
+    }
 
     if uploaded_by == requester_id {
         return true;
@@ -193,8 +262,8 @@ pub async fn private_file_gate_middleware(
         StoragePath::Private(rel) => rel,
     };
 
-    // Public branding assets (logos/avatars) render before authentication.
-    if relative.starts_with(PUBLIC_FILE_PREFIX) {
+    // Public branding assets (logos/avatars/company logos) render before authentication.
+    if is_public_branding_asset(&state.pool, &relative).await {
         return Ok(next.run(request).await);
     }
 
