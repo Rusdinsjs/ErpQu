@@ -36,8 +36,8 @@ export default function Rentals() {
             {/* Main Content Card */}
             <Card className="overflow-hidden border border-border rounded-2xl bg-card/60 backdrop-blur-xl p-0 shadow-2xl">
                 <Tabs defaultValue="active" className="flex flex-col">
-                    <div className="px-6 py-2 border-b border-border bg-background/20 backdrop-blur-md sticky top-0 z-50">
-                        <TabsList className="bg-transparent gap-2 h-14">
+                    <div className="px-6 py-2.5 border-b border-border bg-card/50 backdrop-blur-md sticky top-0 z-50">
+                        <TabsList className="bg-muted/40 gap-1.5 p-1.5 h-auto rounded-2xl border border-border/80">
                             {[
                                 { value: 'active', label: 'Active Rentals', icon: <Truck size={16} /> },
                                 { value: 'scheduler', label: 'Scheduler', icon: <Clock size={16} /> },
@@ -50,7 +50,7 @@ export default function Rentals() {
                                     key={tab.value}
                                     value={tab.value}
                                     icon={tab.icon}
-                                    className="px-6 data-[state=active]:bg-primary/10 data-[state=active]:text-primary rounded-xl transition-all duration-300 font-bold uppercase tracking-widest text-[10px]"
+                                    className="px-5 py-2.5 rounded-xl transition-all duration-200 font-bold uppercase tracking-wider text-xs border border-transparent data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md data-[state=active]:border-primary/20 data-[state=inactive]:text-muted-foreground data-[state=inactive]:hover:text-foreground data-[state=inactive]:hover:bg-card/50"
                                 >
                                     {tab.label}
                                 </TabsTrigger>

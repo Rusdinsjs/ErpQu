@@ -75,7 +75,7 @@ export function TimesheetList({ rentalId }: TimesheetListProps) {
                         variant="primary"
                         leftIcon={<Plus size={18} />}
                         onClick={() => setCreateModalOpen(true)}
-                        className="rounded-xl shadow-lg shadow-primary/20 bg-primary hover:bg-primary/90 h-11 px-6 text-[11px] font-black uppercase tracking-widest text-primary-foreground"
+                        className="rounded-xl shadow-lg shadow-primary/20 h-11 px-6 text-xs font-bold uppercase tracking-wider"
                     >
                         Register Entry
                     </Button>
@@ -190,9 +190,10 @@ export function TimesheetList({ rentalId }: TimesheetListProps) {
                                             </div>
                                             <p className="text-sm font-bold uppercase tracking-widest opacity-50 mt-4">No operational records found for this stream</p>
                                             <Button
-                                                variant="secondary"
+                                                variant="primary"
+                                                leftIcon={<Plus size={16} />}
                                                 onClick={() => setCreateModalOpen(true)}
-                                                className="rounded-xl px-8 mt-2 hover:scale-105 transition-transform"
+                                                className="rounded-xl px-8 mt-2 shadow-lg hover:scale-105 transition-all font-bold text-xs uppercase tracking-wider"
                                             >
                                                 Initialize Log Entry
                                             </Button>

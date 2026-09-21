@@ -1,5 +1,6 @@
 // Action Icon Button - Pure Tailwind UI Design System
 import { type ReactNode, type ButtonHTMLAttributes } from 'react';
+import { cn } from '../../utils/cn';
 
 export interface ActionIconProps extends ButtonHTMLAttributes<HTMLButtonElement> {
     children: ReactNode;
@@ -16,12 +17,12 @@ export function ActionIcon({
     ...props
 }: ActionIconProps) {
     const variants = {
-        default: 'text-slate-300 bg-slate-800/60 hover:bg-slate-700 hover:text-white border border-slate-700/60',
-        danger: 'text-rose-400 bg-rose-500/10 hover:bg-rose-600 hover:text-white border border-rose-500/20',
-        success: 'text-emerald-400 bg-emerald-500/10 hover:bg-emerald-600 hover:text-white border border-emerald-500/20',
-        warning: 'text-amber-400 bg-amber-500/10 hover:bg-amber-500 hover:text-slate-950 border border-amber-500/20',
-        info: 'text-cyan-400 bg-cyan-500/10 hover:bg-cyan-500 hover:text-slate-950 border border-cyan-500/20',
-        ghost: 'text-slate-400 bg-transparent hover:bg-slate-800 hover:text-slate-100',
+        default: 'text-foreground bg-muted/60 hover:bg-muted hover:text-foreground border border-border',
+        danger: 'text-rose-500 bg-rose-500/10 hover:bg-rose-600 hover:text-white border border-rose-500/20',
+        success: 'text-emerald-500 bg-emerald-500/10 hover:bg-emerald-600 hover:text-white border border-emerald-500/20',
+        warning: 'text-amber-500 bg-amber-500/10 hover:bg-amber-500 hover:text-slate-950 border border-amber-500/20',
+        info: 'text-cyan-500 bg-cyan-500/10 hover:bg-cyan-500 hover:text-slate-950 border border-cyan-500/20',
+        ghost: 'text-muted-foreground bg-transparent hover:bg-muted hover:text-foreground',
     };
 
     const sizes = {
@@ -34,15 +35,12 @@ export function ActionIcon({
     return (
         <button
             type="button"
-            className={`
-                inline-flex items-center justify-center shrink-0
-                transition-all duration-200 active:scale-90 select-none
-                disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none
-                focus:outline-none focus:ring-2 focus:ring-cyan-500/50
-                ${variants[variant]}
-                ${sizes[size]}
-                ${className}
-            `}
+            className={cn(
+                'inline-flex items-center justify-center shrink-0 transition-all duration-200 active:scale-90 select-none disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none focus:outline-none focus:ring-2 focus:ring-primary/50',
+                variants[variant],
+                sizes[size],
+                className
+            )}
             disabled={disabled}
             {...props}
         >

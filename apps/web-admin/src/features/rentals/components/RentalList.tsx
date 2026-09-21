@@ -156,10 +156,10 @@ export function RentalList() {
                     </div>
 
                     <Button
-                        variant="primary"
+                        variant="success"
                         leftIcon={<Plus size={18} />}
                         onClick={() => navigate('/rentals/new')}
-                        className="rounded-xl shadow-lg shadow-emerald-500/10 bg-emerald-600 hover:bg-emerald-500 h-11 px-6 text-[11px] font-black uppercase tracking-widest text-white"
+                        className="rounded-xl shadow-lg shadow-emerald-500/20 h-11 px-6 text-xs font-bold uppercase tracking-wider"
                     >
                         New Rental Order
                     </Button>
@@ -348,9 +348,10 @@ export function RentalList() {
                                             </div>
                                             <p className="text-sm font-bold uppercase tracking-widest opacity-50 mt-4">No active rentals found in the system</p>
                                             <Button
-                                                variant="secondary"
+                                                variant="primary"
+                                                leftIcon={<Plus size={16} />}
                                                 onClick={() => navigate('/rentals/new')}
-                                                className="rounded-xl px-8 mt-2 hover:scale-105 transition-transform"
+                                                className="rounded-xl px-8 mt-2 shadow-lg hover:scale-105 transition-all font-bold text-xs uppercase tracking-wider"
                                             >
                                                 Initialize New Order
                                             </Button>

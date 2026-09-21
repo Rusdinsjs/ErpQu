@@ -1,4 +1,5 @@
 import { type ReactNode, createContext, useContext, useState } from 'react';
+import { cn } from '../../utils/cn';
 
 // Context for tabs
 interface TabsContextValue {
@@ -49,10 +50,11 @@ interface TabsListProps {
 export function TabsList({ children, className = '' }: TabsListProps) {
     return (
         <div
-            className={`
-                flex gap-1 p-1 bg-muted border border-border rounded-xl
-                ${className}
-            `}
+            role="tablist"
+            className={cn(
+                'flex gap-1 p-1 bg-muted/60 border border-border rounded-xl backdrop-blur-sm',
+                className
+            )}
         >
             {children}
         </div>
@@ -77,19 +79,20 @@ export function TabsTrigger({ children, value, icon, className = '' }: TabsTrigg
     return (
         <button
             type="button"
+            role="tab"
+            aria-selected={isActive}
+            data-state={isActive ? 'active' : 'inactive'}
             onClick={() => setActiveTab(value)}
-            className={`
-                flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg
-                transition-all duration-200
-                ${isActive
-                    ? 'bg-background text-primary shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-background/50'
-                }
-                ${className}
-            `}
+            className={cn(
+                'flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-200 cursor-pointer select-none',
+                isActive
+                    ? 'bg-card text-foreground shadow-sm font-bold'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-card/40',
+                className
+            )}
         >
-            {icon}
-            {children}
+            {icon && <span className="shrink-0">{icon}</span>}
+            <span>{children}</span>
         </button>
     );
 }
@@ -107,5 +110,5 @@ export function TabsContent({ children, value, className = '' }: TabsContentProp
 
     if (context.activeTab !== value) return null;
 
-    return <div className={`mt-4 ${className}`}>{children}</div>;
+    return <div role="tabpanel" className={cn('mt-4', className)}>{children}</div>;
 }

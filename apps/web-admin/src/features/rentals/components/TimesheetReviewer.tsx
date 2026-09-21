@@ -253,11 +253,11 @@ export function TimesheetReviewer() {
                                             Decline / Revision
                                         </Button>
                                         <Button
-                                            variant="primary"
+                                            variant="success"
                                             leftIcon={<Check size={20} />}
                                             onClick={() => handleVerify('approved')}
                                             loading={verifyMutation.isPending}
-                                            className="rounded-2xl h-14 font-black uppercase tracking-widest text-[11px] bg-emerald-600 hover:bg-emerald-500 shadow-lg shadow-emerald-500/20 transition-all"
+                                            className="rounded-2xl h-14 font-black uppercase tracking-widest text-[11px] shadow-lg shadow-emerald-500/20 transition-all"
                                         >
                                             Verify & Approve
                                         </Button>

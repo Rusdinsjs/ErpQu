@@ -1,5 +1,6 @@
 // Standardized Button Component - Pure Tailwind UI Design System
 import { type ReactNode, type ButtonHTMLAttributes } from 'react';
+import { cn } from '../../utils/cn';
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
     children: ReactNode;
@@ -27,7 +28,7 @@ export function Button({
 
     const variants = {
         primary: 'bg-primary text-primary-foreground hover:bg-primary/90 shadow-md shadow-primary/20 focus:ring-primary',
-        secondary: 'bg-slate-800 text-slate-200 hover:bg-slate-700 border border-slate-700/80 focus:ring-slate-700',
+        secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80 border border-border focus:ring-ring shadow-sm',
         outline: 'border border-border bg-background/50 hover:bg-accent text-foreground focus:ring-border',
         ghost: 'bg-transparent hover:bg-muted/80 text-muted-foreground hover:text-foreground focus:ring-accent',
         danger: 'bg-rose-600 text-white hover:bg-rose-500 shadow-md shadow-rose-600/20 focus:ring-rose-600',
@@ -46,7 +47,13 @@ export function Button({
 
     return (
         <button
-            className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${fullWidth ? 'w-full' : ''} ${className}`}
+            className={cn(
+                baseStyles,
+                variants[variant],
+                sizes[size],
+                fullWidth && 'w-full',
+                className
+            )}
             disabled={disabled || loading}
             {...props}
         >

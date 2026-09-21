@@ -55,7 +55,7 @@ export function BillingList() {
                     leftIcon={<Plus size={18} />}
                     disabled={!selectedRental}
                     onClick={() => setCreateModalOpen(true)}
-                    className="rounded-xl shadow-lg shadow-purple-500/20 bg-purple-600 hover:bg-purple-500 h-11 px-6 text-[11px] font-black uppercase tracking-widest disabled:opacity-30 text-white"
+                    className="rounded-xl shadow-lg shadow-purple-500/20 bg-purple-600 hover:bg-purple-500 text-white h-11 px-6 text-xs font-bold uppercase tracking-wider disabled:opacity-30"
                 >
                     Manual Invoice Cycle
                 </Button>
@@ -132,11 +132,12 @@ export function BillingList() {
                                                 </div>
                                                 <p className="text-sm font-bold uppercase tracking-widest opacity-50">No billing history found for this ledger</p>
                                                 <Button
-                                                    variant="secondary"
+                                                    variant="primary"
                                                     size="sm"
+                                                    leftIcon={<Plus size={14} />}
                                                     disabled={!selectedRental}
                                                     onClick={() => setCreateModalOpen(true)}
-                                                    className="rounded-xl mt-2 hover:scale-105 transition-transform"
+                                                    className="rounded-xl mt-2 px-6 shadow-md hover:scale-105 transition-all font-bold text-xs uppercase tracking-wider"
                                                 >
                                                     Initialize First Cycle
                                                 </Button>
