@@ -375,8 +375,16 @@ pub async fn upload_file(
                 )));
             }
 
-            let effective_role_level = if is_public_asset { 5 } else { claims.role_level };
-            let final_entity_type = target_entity_type.as_deref().or(if is_public_asset { Some("company_logo") } else { None });
+            let effective_role_level = if is_public_asset {
+                5
+            } else {
+                claims.role_level
+            };
+            let final_entity_type = target_entity_type.as_deref().or(if is_public_asset {
+                Some("company_logo")
+            } else {
+                None
+            });
 
             let insert_res = sqlx::query(
                 r#"

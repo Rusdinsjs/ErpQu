@@ -100,7 +100,10 @@ fn read_cookie(headers: &header::HeaderMap, name: &str) -> Option<String> {
 /// Files in public prefixes or registered in companies/settings/uploads as logos
 /// are served without requiring user authentication.
 async fn is_public_branding_asset(pool: &sqlx::PgPool, relative_path: &str) -> bool {
-    if PUBLIC_FILE_PREFIXES.iter().any(|p| relative_path.starts_with(p)) {
+    if PUBLIC_FILE_PREFIXES
+        .iter()
+        .any(|p| relative_path.starts_with(p))
+    {
         return true;
     }
 
