@@ -27,6 +27,7 @@ export const aiApi = {
             provider === 'openai' ? 'gpt-4o-mini' :
             provider === 'groq' ? 'llama-3.3-70b-versatile' :
             provider === 'anthropic' ? 'claude-3-5-sonnet-latest' :
+            provider === 'freellmapi' ? 'auto' :
             provider === '9router' ? 'combo-kantor' : 'llama3'
         );
 
@@ -73,6 +74,7 @@ Aturan Gaya Bahasa:
         // Clean up endpoint formatting
         if (!endpoint) {
             if (provider === 'ollama') endpoint = 'http://localhost:11434';
+            else if (provider === 'freellmapi') endpoint = 'https://llm.sjsgroup.online/v1';
             else if (provider === '9router') endpoint = 'http://localhost:20128/v1';
             else if (provider === 'openai') endpoint = 'https://api.openai.com/v1';
             else if (provider === 'groq') endpoint = 'https://api.groq.com/openai/v1';
@@ -93,15 +95,23 @@ Aturan Gaya Bahasa:
                 ? `${endpoint}/api/generate`
                 : '/ollama/api/generate';
 
-            const resp = await fetch(targetUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    model: model,
-                    prompt: fullPrompt,
-                    stream: false,
-                }),
-            });
+            let resp: Response;
+            try {
+                resp = await fetch(targetUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        model: model,
+                        prompt: fullPrompt,
+                        stream: false,
+                    }),
+                });
+            } catch (fetchErr: any) {
+                if (fetchErr?.name === 'TypeError' || fetchErr?.message?.includes('fetch')) {
+                    throw new Error(`Gagal terhubung ke Ollama (${targetUrl}). Pastikan Ollama aktif dan OLLAMA_ORIGINS="*" telah diatur.`);
+                }
+                throw fetchErr;
+            }
 
             if (!resp.ok) {
                 const errText = await resp.text().catch(() => '');
@@ -123,21 +133,29 @@ Aturan Gaya Bahasa:
                 { role: 'user', content: userPrompt }
             ];
 
-            const resp = await fetch(targetUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'x-api-key': apiKey,
-                    'anthropic-version': '2023-06-01',
-                    'dangerously-allow-browser': 'true'
-                },
-                body: JSON.stringify({
-                    model: model,
-                    max_tokens: 1024,
-                    system: finalSystemPrompt,
-                    messages: formattedMessages,
-                }),
-            });
+            let resp: Response;
+            try {
+                resp = await fetch(targetUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-api-key': apiKey,
+                        'anthropic-version': '2023-06-01',
+                        'dangerously-allow-browser': 'true'
+                    },
+                    body: JSON.stringify({
+                        model: model,
+                        max_tokens: 1024,
+                        system: finalSystemPrompt,
+                        messages: formattedMessages,
+                    }),
+                });
+            } catch (fetchErr: any) {
+                if (fetchErr?.name === 'TypeError' || fetchErr?.message?.includes('fetch')) {
+                    throw new Error(`Gagal terhubung ke Anthropic API (${targetUrl}).`);
+                }
+                throw fetchErr;
+            }
 
             if (!resp.ok) {
                 const errJson = await resp.json().catch(() => ({}));
@@ -148,10 +166,16 @@ Aturan Gaya Bahasa:
             return data.content?.[0]?.text || `Tidak ada respon dari ${agentName}.`;
         }
 
-        // 3. OpenAI / Groq / 9router / Custom OpenAI-Compatible Chat Completions Provider
-        const targetUrl = endpoint.endsWith('/chat/completions')
-            ? endpoint
-            : `${endpoint}/chat/completions`;
+        // 3. OpenAI / Groq / FreeLLMAPI / 9router / Custom OpenAI-Compatible Chat Completions Provider
+        let targetUrl: string;
+        if (endpoint.endsWith('/chat/completions')) {
+            targetUrl = endpoint;
+        } else if (endpoint.endsWith('/v1')) {
+            targetUrl = `${endpoint}/chat/completions`;
+        } else {
+            // Automatically ensure /v1/chat/completions if user entered base host
+            targetUrl = `${endpoint}/v1/chat/completions`;
+        }
 
         const headers: Record<string, string> = {
             'Content-Type': 'application/json'
@@ -169,16 +193,27 @@ Aturan Gaya Bahasa:
             { role: 'user', content: userPrompt }
         ];
 
-        const resp = await fetch(targetUrl, {
-            method: 'POST',
-            headers,
-            body: JSON.stringify({
-                model: model,
-                messages: messages,
-                temperature: 0.7,
-                stream: false,
-            }),
-        });
+        let resp: Response;
+        try {
+            resp = await fetch(targetUrl, {
+                method: 'POST',
+                headers,
+                body: JSON.stringify({
+                    model: model,
+                    messages: messages,
+                    temperature: 0.7,
+                    stream: false,
+                }),
+            });
+        } catch (fetchErr: any) {
+            if (fetchErr?.name === 'TypeError' || fetchErr?.message?.includes('fetch')) {
+                throw new Error(
+                    `Koneksi jaringan ke "${targetUrl}" gagal (CORS/Network Error). ` +
+                    `Pastikan server AI aktif, URL menyertakan "/v1", mendukung CORS, atau gunakan proxy same-origin /api/llm/v1.`
+                );
+            }
+            throw fetchErr;
+        }
 
         if (!resp.ok) {
             const errText = await resp.text().catch(() => '');

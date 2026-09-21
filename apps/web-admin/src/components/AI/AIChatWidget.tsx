@@ -32,6 +32,7 @@ export const AIChatWidget: React.FC = () => {
     const model = settingsMap['ai_model'] || (
         provider === 'openai' ? 'gpt-4o-mini' : 
         provider === 'groq' ? 'llama-3.3-70b-versatile' : 
+        provider === 'freellmapi' ? 'auto' :
         provider === '9router' ? 'combo-kantor' : 'llama3'
     );
 

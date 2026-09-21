@@ -209,21 +209,22 @@ export default function Settings() {
                                         <label className="block text-sm font-medium text-foreground mb-2">Select AI Provider</label>
                                         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                                             {[
+                                                { id: 'freellmapi', name: 'FreeLLMAPI / SJS LLM', desc: 'Unified Router (Gemini, Claude, GPT)', defaultEndpoint: 'https://llm.sjsgroup.online/v1', defaultModel: 'auto' },
+                                                { id: 'custom', name: 'Custom API', desc: 'OpenAI-Compatible (vLLM, LM Studio)', defaultEndpoint: 'https://llm.sjsgroup.online/v1', defaultModel: 'auto' },
                                                 { id: 'ollama', name: 'Ollama', desc: 'Local LLM (Llama 3, Mistral)', defaultEndpoint: 'http://localhost:11434', defaultModel: 'llama3' },
                                                 { id: 'openai', name: 'OpenAI', desc: 'ChatGPT (gpt-4o, gpt-4o-mini)', defaultEndpoint: 'https://api.openai.com/v1', defaultModel: 'gpt-4o-mini' },
                                                 { id: 'groq', name: 'Groq', desc: 'Ultra-fast Llama 3.3 70B', defaultEndpoint: 'https://api.groq.com/openai/v1', defaultModel: 'llama-3.3-70b-versatile' },
                                                 { id: 'anthropic', name: 'Anthropic', desc: 'Claude 3.5 Sonnet', defaultEndpoint: 'https://api.anthropic.com', defaultModel: 'claude-3-5-sonnet-latest' },
-                                                { id: 'custom', name: 'Custom API', desc: 'OpenAI-Compatible (vLLM, LM Studio)', defaultEndpoint: 'http://localhost:1234/v1', defaultModel: 'custom-model' }
                                             ].map(p => {
-                                                const isSelected = (formData['ai_provider'] || 'ollama') === p.id;
+                                                const isSelected = (formData['ai_provider'] || 'freellmapi') === p.id;
                                                 return (
                                                     <button
                                                         key={p.id}
                                                         type="button"
                                                         onClick={() => {
                                                             handleChange('ai_provider', p.id);
-                                                            if (!formData['ai_endpoint']) handleChange('ai_endpoint', p.defaultEndpoint);
-                                                            if (!formData['ai_model']) handleChange('ai_model', p.defaultModel);
+                                                            handleChange('ai_endpoint', p.defaultEndpoint);
+                                                            handleChange('ai_model', p.defaultModel);
                                                         }}
                                                         className={`p-4 rounded-xl border text-left transition-all relative overflow-hidden ${
                                                             isSelected
@@ -251,7 +252,7 @@ export default function Settings() {
                                             <Input
                                                 value={formData['ai_endpoint'] ?? ''}
                                                 onChange={(e) => handleChange('ai_endpoint', e.target.value)}
-                                                placeholder="e.g. http://localhost:11434 atau https://api.openai.com/v1"
+                                                placeholder="e.g. https://llm.sjsgroup.online/v1 atau /api/llm/v1"
                                                 className="flex-1"
                                             />
                                             <Button
@@ -259,13 +260,14 @@ export default function Settings() {
                                                 variant="ghost"
                                                 size="sm"
                                                 onClick={() => {
-                                                    const p = formData['ai_provider'] || 'ollama';
-                                                    if (p === 'ollama') handleChange('ai_endpoint', 'http://localhost:11434');
+                                                    const p = formData['ai_provider'] || 'freellmapi';
+                                                    if (p === 'freellmapi') handleChange('ai_endpoint', 'https://llm.sjsgroup.online/v1');
+                                                    else if (p === 'ollama') handleChange('ai_endpoint', 'http://localhost:11434');
                                                     else if (p === 'openai') handleChange('ai_endpoint', 'https://api.openai.com/v1');
                                                     else if (p === 'groq') handleChange('ai_endpoint', 'https://api.groq.com/openai/v1');
                                                     else if (p === '9router') handleChange('ai_endpoint', 'http://localhost:20128/v1');
                                                     else if (p === 'anthropic') handleChange('ai_endpoint', 'https://api.anthropic.com');
-                                                    else handleChange('ai_endpoint', 'http://localhost:1234/v1');
+                                                    else handleChange('ai_endpoint', 'https://llm.sjsgroup.online/v1');
                                                 }}
                                                 className="text-xs text-muted-foreground"
                                             >
@@ -273,7 +275,7 @@ export default function Settings() {
                                             </Button>
                                         </div>
                                         <p className="text-xs text-muted-foreground">
-                                            URL dasar server AI. Untuk Ollama lokal: <code>http://localhost:11434</code>
+                                            URL dasar server AI. Untuk FreeLLMAPI: <code>https://llm.sjsgroup.online/v1</code> atau proxy same-origin: <code>/api/llm/v1</code>. Untuk Ollama lokal: <code>http://localhost:11434</code>
                                         </p>
                                     </div>
 
@@ -306,13 +308,13 @@ export default function Settings() {
                                         <Input
                                             value={formData['ai_model'] ?? ''}
                                             onChange={(e) => handleChange('ai_model', e.target.value)}
-                                            placeholder="e.g. llama3, gpt-4o-mini, llama-3.3-70b-versatile"
+                                            placeholder="e.g. auto, llama3, gpt-4o-mini, llama-3.3-70b-versatile"
                                         />
                                         
                                         {/* Popular Model Quick Picks */}
                                         <div className="flex flex-wrap gap-2 pt-1">
                                             <span className="text-xs text-muted-foreground py-1">Rekomendasi Quick Pick:</span>
-                                            {['combo-kantor', 'llama3', 'gpt-4o-mini', 'llama-3.3-70b-versatile', 'claude-3-5-sonnet-latest', 'mistral', 'qwen2.5'].map(m => (
+                                            {['auto', 'combo-kantor', 'llama3', 'gpt-4o-mini', 'llama-3.3-70b-versatile', 'claude-3-5-sonnet-latest', 'mistral', 'qwen2.5'].map(m => (
                                                 <button
                                                     key={m}
                                                     type="button"
